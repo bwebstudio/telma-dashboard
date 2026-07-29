@@ -44,8 +44,22 @@ export function isCrmAdmin(user: AppUser | null): boolean {
 }
 
 // Where a user lands after signing in.
-export function homePathFor(user: AppUser): string {
+//
+// Somebody can be both admin and rep: Domingos runs the team and also spends the
+// day calling clinics. For him the useful first screen is his own list of calls,
+// not the client operation, so anyone carrying an active rep row starts in the
+// CRM. A pure internal user starts on the client panel.
+export async function resolveHomePath(user: AppUser): Promise<string> {
+  if (user.role === 'clinica') return '/hoje'
   if (user.role === 'comercial') return '/crm/hoje'
-  if (user.role === 'interno') return '/clinicas'
-  return '/hoje'
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('crm_reps')
+    .select('id')
+    .eq('id', user.id)
+    .eq('active', true)
+    .maybeSingle()
+
+  return data ? '/crm/hoje' : '/clinicas'
 }

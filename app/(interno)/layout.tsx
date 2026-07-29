@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getAppUser, homePathFor } from '@/lib/auth'
+import { getAppUser, resolveHomePath } from '@/lib/auth'
 import { getDict } from '@/lib/i18n'
 import { Shell, type NavItem } from '@/components/Shell'
 import { IconClinic, IconUsage, IconActivity, IconSales } from '@/components/icons'
@@ -15,7 +15,7 @@ export default async function InternoLayout({
 }) {
   const user = await getAppUser()
   if (!user) redirect('/login')
-  if (user.role !== 'interno') redirect(homePathFor(user))
+  if (user.role !== 'interno') redirect(await resolveHomePath(user))
 
   const { locale, dict } = await getDict()
 

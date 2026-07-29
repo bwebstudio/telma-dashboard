@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
-import type { Locale } from '@/content'
+import { locales, type Locale } from '@/content'
 import { setLocale, signOut } from '@/lib/actions/session'
 import { IconSignOut, IconAccount } from './icons'
 
@@ -13,27 +13,39 @@ export interface NavItem {
   icon: ReactNode
 }
 
+const VARIANT_LABEL: Record<string, string> = {
+  clinica: 'Clínica',
+  interno: 'Interno',
+  crm: 'Comercial',
+}
+
 export function Shell({
   nav,
   variant,
+  variantLabel,
   locale,
   userLabel,
   langLabel,
   signOutLabel,
   accountHref,
+  aside,
   children,
 }: {
   nav: NavItem[]
-  variant: 'clinica' | 'interno'
+  variant: 'clinica' | 'interno' | 'crm'
+  variantLabel?: string
   locale: Locale
   userLabel: string
   langLabel: string
   signOutLabel: string
   accountHref?: string
+  aside?: ReactNode
   children: ReactNode
 }) {
   const pathname = usePathname()
-  const other: Locale = locale === 'pt' ? 'en' : 'pt'
+  // Cycles through every registered language, so adding one needs no change
+  // here either.
+  const other: Locale = locales[(locales.indexOf(locale) + 1) % locales.length]
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/')
 
@@ -46,7 +58,7 @@ export function Shell({
             Telma
           </span>
           <span className="label-caps mt-1">
-            {variant === 'interno' ? 'Interno' : 'Clínica'}
+            {variantLabel ?? VARIANT_LABEL[variant]}
           </span>
         </div>
         <nav className="flex-1 px-3 py-4" aria-label={variant}>
@@ -65,6 +77,7 @@ export function Shell({
               {item.label}
             </Link>
           ))}
+          {aside}
         </nav>
         <div className="border-t border-line px-4 py-4">
           {accountHref ? (

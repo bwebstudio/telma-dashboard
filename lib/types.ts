@@ -1,6 +1,10 @@
 export type PlanType = 'essencial' | 'clinica' | 'rede' | 'personalizado'
 export type ClinicStatus = 'ativa' | 'pausada' | 'cancelada'
-export type UserRole = 'interno' | 'clinica'
+// 'interno' is the Bweb Studio team (full reach, including the CRM admin
+// views). 'comercial' is a sales rep: internal, but scoped to their own
+// prospects. 'clinica' is a paying client.
+export type UserRole = 'interno' | 'clinica' | 'comercial'
+export const INTERNAL_ROLES: UserRole[] = ['interno', 'comercial']
 export type AppointmentStatus = 'pendente' | 'confirmada' | 'rejeitada' | 'copiada'
 export type AppointmentOrigin = 'telefone' | 'whatsapp'
 export type CallResult = 'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida'

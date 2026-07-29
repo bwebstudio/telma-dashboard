@@ -6,7 +6,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Run on everything except static assets and the internal API (which uses
-  // its own token auth, not user sessions).
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|woff2)$).*)'],
+  // Run on everything except static assets, the PWA files (which have to be
+  // reachable before signing in) and the voice webhooks (token auth, not user
+  // sessions). /api/crm is deliberately included: the offline queue on the
+  // phone posts there and needs a refreshed session.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/availability|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|ico|webmanifest|woff2)$).*)',
+  ],
 }

@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
-import { getAppUser } from '@/lib/auth'
+import { getAppUser, homePathFor } from '@/lib/auth'
 import { getDict } from '@/lib/i18n'
 import { Shell, type NavItem } from '@/components/Shell'
-import { IconClinic, IconUsage, IconActivity } from '@/components/icons'
+import { IconClinic, IconUsage, IconActivity, IconSales } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { isDemo } from '@/lib/demo/config'
 
@@ -15,14 +15,18 @@ export default async function InternoLayout({
 }) {
   const user = await getAppUser()
   if (!user) redirect('/login')
-  if (user.role !== 'interno') redirect('/hoje')
+  if (user.role !== 'interno') redirect(homePathFor(user))
 
   const { locale, dict } = await getDict()
 
+  // "Clínicas" is the operation of paying clients. "Comercial" is the sales
+  // funnel of clinics that are not clients yet. Two separate sections so the
+  // team never reads a prospect as a customer.
   const nav: NavItem[] = [
     { href: '/clinicas', label: dict.internoNav.clinicas, icon: <IconClinic /> },
     { href: '/consumo', label: dict.internoNav.consumo, icon: <IconUsage /> },
     { href: '/atividade', label: dict.internoNav.atividade, icon: <IconActivity /> },
+    { href: '/crm', label: dict.crm.nav.section, icon: <IconSales /> },
   ]
 
   return (

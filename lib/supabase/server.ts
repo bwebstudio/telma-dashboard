@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { isDemo, DEMO_ROLE_COOKIE } from '@/lib/demo/config'
 import { createDemoClient } from '@/lib/demo/client'
-import { DEMO_CLINIC_ID } from '@/lib/demo/data'
+import { DEMO_CLINIC_ID, DEMO_REP_PT } from '@/lib/demo/data'
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
@@ -12,9 +12,13 @@ export async function createClient() {
   const cookieStore = await cookies()
 
   // Demo mode: serve the in memory store, scoped like RLS would scope it.
+  // Only a clinic user is scoped to one clinic; internal roles see everything.
   if (isDemo()) {
     const role = cookieStore.get(DEMO_ROLE_COOKIE)?.value ?? 'clinica'
-    return createDemoClient(role === 'interno' ? undefined : DEMO_CLINIC_ID)
+    return createDemoClient(
+      role === 'clinica' ? DEMO_CLINIC_ID : undefined,
+      role === 'comercial' ? DEMO_REP_PT : undefined
+    )
   }
 
   return createServerClient(

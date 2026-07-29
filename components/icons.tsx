@@ -117,6 +117,60 @@ export function IconSignOut({ className }: P) {
     </svg>
   )
 }
+export function IconSales({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 19V9M10 19V5M16 19v-6M4 19h16" />
+      <path d="M19 9l-2-2 2-2" />
+    </svg>
+  )
+}
+export function IconTeam({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 19a6 6 0 0 1 12 0" />
+      <path d="M16 5.5a3.2 3.2 0 0 1 0 5M18 19a6 6 0 0 0-2-4.4" />
+    </svg>
+  )
+}
+export function IconPhone({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6.6 10.8a11 11 0 0 0 4.6 4.6l1.6-1.6a1 1 0 0 1 1-.25 8 8 0 0 0 2.5.4 1 1 0 0 1 1 1v2.55a1 1 0 0 1-1 1A14 14 0 0 1 4 5a1 1 0 0 1 1-1h2.55a1 1 0 0 1 1 1 8 8 0 0 0 .4 2.5 1 1 0 0 1-.25 1z" />
+    </svg>
+  )
+}
+export function IconWhatsApp({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M3.5 20.5l1.3-4.2A8.2 8.2 0 1 1 8 19.4z" />
+      <path d="M9 9.2c.2 1.2.8 2.3 1.7 3.2.9.9 2 1.5 3.1 1.7l.9-1.2 1.6.7-.2 1.4c-1.9.4-4-.5-5.6-2.1S8 9.5 8.4 7.6l1.4-.2.7 1.6z" />
+    </svg>
+  )
+}
+export function IconClock({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 1.8" />
+    </svg>
+  )
+}
+export function IconFilter({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 6h16M7 12h10M10 18h4" />
+    </svg>
+  )
+}
+export function IconDownload({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 4v11M8 11l4 4 4-4M5 19h14" />
+    </svg>
+  )
+}
 export function IconChevron({ className }: P) {
   return (
     <svg {...base} className={className}>

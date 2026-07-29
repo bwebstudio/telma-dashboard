@@ -26,6 +26,7 @@ export function DemoBar({ role }: { role: UserRole }) {
       <div className="inline-flex items-center gap-1 rounded-full border border-line-strong bg-paper p-1">
         <Btn value="clinica" label="Clínica" />
         <Btn value="interno" label="Interno" />
+        <Btn value="comercial" label="Comercial" />
       </div>
     </div>
   )

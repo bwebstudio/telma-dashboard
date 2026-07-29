@@ -80,6 +80,22 @@ export async function createClinic(_prev: CreateState, formData: FormData): Prom
       type: 'clinic_created',
       message: `Clinica ${name} criada`,
     })
+
+    // Came from the CRM: close the loop so the prospect points at the client
+    // it became. The two records stay separate, they are only linked.
+    const prospectId = String(formData.get('prospect_id') || '')
+    if (prospectId) {
+      await admin
+        .from('crm_prospects')
+        .update({
+          converted_clinic_id: clinicId,
+          converted_at: new Date().toISOString(),
+          stage: 'won',
+          next_action_at: null,
+          next_action_text: null,
+        })
+        .eq('id', prospectId)
+    }
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'unknown' }
   }

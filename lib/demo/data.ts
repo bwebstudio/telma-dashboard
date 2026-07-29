@@ -9,9 +9,17 @@ import type {
   ActivityEvent,
   UserRole,
 } from '@/lib/types'
+import type {
+  CrmActivity,
+  CrmContact,
+  CrmProspect,
+  CrmRep,
+} from '@/lib/crm/types'
 
 export const DEMO_CLINIC_ID = 'demo-clinic-1'
 const CLINIC_2 = 'demo-clinic-2'
+export const DEMO_REP_PT = 'demo-rep-pt'
+export const DEMO_REP_ES = 'demo-rep-es'
 
 const now = new Date()
 const iso = (offsetMinutes: number) =>
@@ -40,6 +48,11 @@ export interface DemoStore {
   calls: Call[]
   usage: Usage[]
   activity_log: ActivityEvent[]
+  // Sales CRM. Separate tables from the client ones on purpose.
+  crm_reps: CrmRep[]
+  crm_prospects: CrmProspect[]
+  crm_contacts: CrmContact[]
+  crm_activities: CrmActivity[]
 }
 
 function seedSlots(clinicId: string): AvailabilitySlot[] {
@@ -56,6 +69,34 @@ function seedSlots(clinicId: string): AvailabilitySlot[] {
       active: true,
     }))
   )
+}
+
+// Keeps the seed rows readable: fills in every column a real crm_prospects row
+// has, including the phone_digits that Postgres generates for us in production.
+function prospect(p: Partial<CrmProspect> & { id: string; name: string }): CrmProspect {
+  return {
+    specialty: 'other',
+    country: 'PT',
+    zone: null,
+    address: null,
+    phone: null,
+    website: null,
+    origin: 'cold',
+    origin_note: null,
+    rep_id: null,
+    stage: 'new',
+    next_action_text: null,
+    next_action_at: null,
+    last_activity_at: null,
+    conversion_requested_at: null,
+    converted_clinic_id: null,
+    converted_at: null,
+    created_by: null,
+    created_at: iso(-60 * 24 * 10),
+    updated_at: iso(-60),
+    phone_digits: (p.phone ?? '').replace(/\D/g, ''),
+    ...p,
+  }
 }
 
 export const store: DemoStore = {
@@ -108,6 +149,15 @@ export const store: DemoStore = {
       email: 'equipa@bwebstudio.com',
       full_name: 'Equipa Bweb',
       role: 'interno',
+      clinic_id: null,
+      locale: 'pt',
+      clinic: null,
+    },
+    {
+      id: DEMO_REP_PT,
+      email: 'domingos@telma.pt',
+      full_name: 'Domingos',
+      role: 'comercial',
       clinic_id: null,
       locale: 'pt',
       clinic: null,
@@ -241,12 +291,214 @@ export const store: DemoStore = {
     { id: 'act-3', clinic_id: CLINIC_2, type: 'limit_warning', message: 'A clínica passou 80% do limite de chamadas (214/250)', created_at: iso(-60 * 4) },
     { id: 'act-4', clinic_id: CLINIC_2, type: 'call_received', message: 'A Telma atendeu uma chamada', created_at: iso(-60 * 3) },
   ],
+  crm_reps: [
+    {
+      id: DEMO_REP_PT,
+      full_name: 'Domingos',
+      email: 'domingos@telma.pt',
+      country: 'PT',
+      territory: 'Grande Lisboa',
+      role: 'comercial',
+      active: true,
+      created_at: iso(-60 * 24 * 90),
+    },
+    {
+      id: DEMO_REP_ES,
+      full_name: 'Sonia',
+      email: 'sonia@telma.es',
+      country: 'ES',
+      territory: 'Madrid',
+      role: 'comercial',
+      active: true,
+      created_at: iso(-60 * 24 * 20),
+    },
+  ],
+  // Notes written the way the reps actually write them on WhatsApp today.
+  crm_prospects: [
+    prospect({
+      id: 'demo-prospect-1',
+      name: 'MP Aesthetic Clinic',
+      specialty: 'aesthetic',
+      zone: 'Lisboa',
+      phone: '+351 213 456 789',
+      rep_id: DEMO_REP_PT,
+      stage: 'attempting',
+      next_action_text: 'Está em horário de almoço. Ligar às 15h',
+      next_action_at: atToday(15, 0),
+      last_activity_at: atToday(13, 7),
+    }),
+    prospect({
+      id: 'demo-prospect-2',
+      name: 'All Family Dental Clinic',
+      specialty: 'dental',
+      zone: 'Algés',
+      phone: '912 345 678',
+      rep_id: DEMO_REP_PT,
+      stage: 'attempting',
+      next_action_text: 'A recepcionista Ana diz que aí talvez tenhamos sorte',
+      next_action_at: atToday(14, 30),
+      last_activity_at: iso(-60 * 26),
+    }),
+    prospect({
+      id: 'demo-prospect-3',
+      name: 'Clínica Dr Tomás Rebelo Pinto',
+      specialty: 'dental',
+      zone: 'Cascais',
+      phone: '+351 214 000 111',
+      rep_id: DEMO_REP_PT,
+      stage: 'attempting',
+      next_action_text: 'De férias até dia 3. Ligar a partir das 10h',
+      next_action_at: iso(-60 * 5),
+      last_activity_at: iso(-60 * 30),
+    }),
+    prospect({
+      id: 'demo-prospect-4',
+      name: 'Sorriso Branco',
+      specialty: 'dental',
+      zone: 'Oeiras',
+      phone: '+351 214 555 222',
+      rep_id: DEMO_REP_PT,
+      stage: 'interested',
+      origin: 'referral',
+      origin_note: 'Mónica, Colgate',
+      next_action_text: 'Quer proposta por email',
+      next_action_at: inDays(1, 9),
+      last_activity_at: iso(-60 * 4),
+    }),
+    prospect({
+      id: 'demo-prospect-5',
+      name: 'Clínica Dental Chamberí',
+      specialty: 'dental',
+      country: 'ES',
+      zone: 'Madrid',
+      phone: '+34 910 000 111',
+      rep_id: DEMO_REP_ES,
+      stage: 'meeting',
+      next_action_text: 'Reunión con la Dra. Ruiz',
+      next_action_at: inDays(2, 11),
+      last_activity_at: iso(-60 * 20),
+    }),
+    prospect({
+      id: 'demo-prospect-6',
+      name: 'Estética Nova Luz',
+      specialty: 'aesthetic',
+      zone: 'Amadora',
+      phone: '+351 214 777 333',
+      rep_id: null,
+      stage: 'new',
+      last_activity_at: null,
+    }),
+    prospect({
+      id: 'demo-prospect-7',
+      name: 'Clínica Dentária Bem-Estar',
+      specialty: 'dental',
+      zone: 'Sintra',
+      phone: '+351 219 111 444',
+      rep_id: DEMO_REP_PT,
+      stage: 'attempting',
+      last_activity_at: iso(-60 * 72),
+    }),
+  ],
+  crm_contacts: [
+    {
+      id: 'demo-crm-contact-1',
+      prospect_id: 'demo-prospect-2',
+      name: 'Dra Maria Baptista Fernandes',
+      role: 'doctor',
+      phone: null,
+      notes: 'Ligar às 12h50, é quando está entre consultas',
+      created_at: iso(-60 * 48),
+    },
+    {
+      id: 'demo-crm-contact-2',
+      prospect_id: 'demo-prospect-2',
+      name: 'Ana',
+      role: 'reception',
+      phone: null,
+      notes: 'Simpática, disse para tentarmos às 14h30',
+      created_at: iso(-60 * 27),
+    },
+  ],
+  crm_activities: [
+    {
+      id: 'demo-crm-act-1',
+      prospect_id: 'demo-prospect-1',
+      rep_id: DEMO_REP_PT,
+      type: 'call',
+      result: 'no_answer',
+      note: 'Liguei 2x, n atende',
+      next_action_at: null,
+      next_action_text: null,
+      client_ref: null,
+      created_at: atToday(11, 7),
+    },
+    {
+      id: 'demo-crm-act-2',
+      prospect_id: 'demo-prospect-1',
+      rep_id: DEMO_REP_PT,
+      type: 'call',
+      result: 'lunch_break',
+      note: 'Está em horário de almoço',
+      next_action_at: atToday(15, 0),
+      next_action_text: 'Está em horário de almoço. Ligar às 15h',
+      client_ref: null,
+      created_at: atToday(13, 7),
+    },
+    {
+      id: 'demo-crm-act-3',
+      prospect_id: 'demo-prospect-2',
+      rep_id: DEMO_REP_PT,
+      type: 'call',
+      result: 'reception_no_dm',
+      note: 'A recepcionista Ana diz que às 14h30 talvez tenhamos sorte',
+      next_action_at: atToday(14, 30),
+      next_action_text: 'A recepcionista Ana diz que aí talvez tenhamos sorte',
+      client_ref: null,
+      created_at: iso(-60 * 26),
+    },
+    {
+      id: 'demo-crm-act-4',
+      prospect_id: 'demo-prospect-4',
+      rep_id: DEMO_REP_PT,
+      type: 'call',
+      result: 'interested',
+      note: 'Falei com o Dr. Nuno. Quer ver preços, indicada pela Mónica da Colgate',
+      next_action_at: inDays(1, 9),
+      next_action_text: 'Quer proposta por email',
+      client_ref: null,
+      created_at: iso(-60 * 4),
+    },
+    {
+      id: 'demo-crm-act-5',
+      prospect_id: 'demo-prospect-5',
+      rep_id: DEMO_REP_ES,
+      type: 'call',
+      result: 'meeting_set',
+      note: 'Reunión el jueves a las 11h con la Dra. Ruiz',
+      next_action_at: inDays(2, 11),
+      next_action_text: 'Reunión con la Dra. Ruiz',
+      client_ref: null,
+      created_at: iso(-60 * 20),
+    },
+    {
+      id: 'demo-crm-act-6',
+      prospect_id: 'demo-prospect-3',
+      rep_id: DEMO_REP_PT,
+      type: 'call',
+      result: 'on_holiday',
+      note: 'Dr Tomás está de férias até dia 3',
+      next_action_at: iso(-60 * 5),
+      next_action_text: 'De férias até dia 3. Ligar a partir das 10h',
+      client_ref: null,
+      created_at: iso(-60 * 30),
+    },
+  ],
 }
 
 export function getDemoUser(role: UserRole): AppUser {
-  if (role === 'interno') {
-    const u = store.users.find((x) => x.role === 'interno')!
-    return { ...u, clinic: null }
+  if (role === 'interno' || role === 'comercial') {
+    const u = store.users.find((x) => x.role === role)
+    if (u) return { ...u, clinic: null }
   }
   const u = store.users.find((x) => x.role === 'clinica')!
   const clinic = store.clinics.find((c) => c.id === u.clinic_id) ?? null

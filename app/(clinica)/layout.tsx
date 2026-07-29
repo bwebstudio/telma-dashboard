@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getAppUser } from '@/lib/auth'
+import { getAppUser, homePathFor } from '@/lib/auth'
 import { getDict } from '@/lib/i18n'
 import { Shell, type NavItem } from '@/components/Shell'
 import { IconToday, IconBookings, IconHours, IconCalls } from '@/components/icons'
@@ -15,7 +15,9 @@ export default async function ClinicaLayout({
 }) {
   const user = await getAppUser()
   if (!user) redirect('/login')
-  if (user.role === 'interno') redirect('/clinicas')
+  // This panel belongs to a client clinic. Internal roles (including the
+  // sales reps) go to their own section instead.
+  if (user.role !== 'clinica') redirect(homePathFor(user))
 
   const { locale, dict } = await getDict()
 

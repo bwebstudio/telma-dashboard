@@ -17,18 +17,34 @@ function Submit({ dict }: { dict: Dictionary }) {
   )
 }
 
-export function ClinicForm({ dict }: { dict: Dictionary }) {
+export interface ClinicDefaults {
+  name?: string
+  phone?: string
+  address?: string
+}
+
+export function ClinicForm({
+  dict,
+  defaults = {},
+  prospectId,
+}: {
+  dict: Dictionary
+  /** Prefilled when the alta comes from converting a CRM prospect. */
+  defaults?: ClinicDefaults
+  prospectId?: string
+}) {
   const [state, action] = useActionState<CreateState, FormData>(createClinic, {})
   const t = dict.interno
 
   return (
     <form action={action} className="flex flex-col gap-8">
+      {prospectId && <input type="hidden" name="prospect_id" value={prospectId} />}
       <fieldset className="card p-6">
         <legend className="label-caps px-1">{t.fichaData}</legend>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Text name="name" label={t.fieldClinicName} required />
-          <Text name="phone" label={t.fieldPhone} />
-          <Text name="address" label={t.fieldAddress} />
+          <Text name="name" label={t.fieldClinicName} required defaultValue={defaults.name} />
+          <Text name="phone" label={t.fieldPhone} defaultValue={defaults.phone} />
+          <Text name="address" label={t.fieldAddress} defaultValue={defaults.address} />
           <Text name="contact_email" label={t.fieldContactEmail} type="email" />
           <div>
             <label htmlFor="plan" className="field-label">
@@ -77,11 +93,13 @@ function Text({
   label,
   type = 'text',
   required,
+  defaultValue,
 }: {
   name: string
   label: string
   type?: string
   required?: boolean
+  defaultValue?: string
 }) {
   return (
     <div>
@@ -89,7 +107,14 @@ function Text({
         {label}
         {required && <span className="text-accent"> *</span>}
       </label>
-      <input id={name} name={name} type={type} required={required} className="field-input" />
+      <input
+        id={name}
+        name={name}
+        type={type}
+        required={required}
+        defaultValue={defaultValue}
+        className="field-input"
+      />
     </div>
   )
 }

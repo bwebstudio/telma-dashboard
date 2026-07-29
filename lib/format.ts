@@ -1,6 +1,11 @@
 import type { Locale } from '@/content'
 
-const localeTag = (l: Locale) => (l === 'pt' ? 'pt-PT' : 'en-GB')
+const LOCALE_TAGS: Record<Locale, string> = {
+  pt: 'pt-PT',
+  es: 'es-ES',
+  en: 'en-GB',
+}
+const localeTag = (l: Locale) => LOCALE_TAGS[l] ?? 'pt-PT'
 
 export function formatTime(iso: string, l: Locale): string {
   return new Date(iso).toLocaleTimeString(localeTag(l), {
@@ -29,12 +34,11 @@ export function formatWeekdayDate(iso: string, l: Locale): string {
   })
 }
 
-export function formatDuration(seconds: number, l: Locale): string {
+export function formatDuration(seconds: number, _l: Locale): string {
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
-  const unit = l === 'pt' ? 'min' : 'min'
   if (m === 0) return `${s}s`
-  return `${m}${unit} ${s.toString().padStart(2, '0')}s`
+  return `${m}min ${s.toString().padStart(2, '0')}s`
 }
 
 export function formatEuro(value: number, l: Locale): string {

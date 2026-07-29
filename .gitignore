@@ -10,3 +10,7 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# Supabase CLI scratch
+supabase/.temp/
+supabase/.branches/

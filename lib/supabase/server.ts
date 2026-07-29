@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { isDemo, DEMO_ROLE_COOKIE } from '@/lib/demo/config'
 import { createDemoClient } from '@/lib/demo/client'
 import { DEMO_CLINIC_ID, DEMO_REP_PT } from '@/lib/demo/data'
+import { supabaseUrl, supabaseAnonKey } from './env'
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
@@ -22,8 +23,8 @@ export async function createClient() {
   }
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {

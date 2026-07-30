@@ -137,10 +137,12 @@ export function LogSheet({
       ref={dialogRef}
       tabIndex={-1}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+      <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2">
         <div className="min-w-0">
-          <p className="label-caps">{t.log.title}</p>
-          <p className="truncate font-serif text-lg font-semibold text-ink">{prospectName}</p>
+          <p className="truncate font-serif text-lg font-semibold leading-tight text-ink">
+            {prospectName}
+          </p>
+          <p className="text-sm text-ink-mute">{t.log.title}</p>
         </div>
         <button
           type="button"
@@ -152,10 +154,10 @@ export function LogSheet({
         </button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
         <fieldset>
-          <legend className="label-caps mb-2">{t.log.what}</legend>
-          <div className="grid grid-cols-2 gap-2">
+          <legend className="label-caps mb-1">{t.log.what}</legend>
+          <div className="grid grid-cols-2 gap-1.5">
             {CRM_RESULTS.map((r) => {
               const on = result === r
               return (
@@ -167,7 +169,7 @@ export function LogSheet({
                     setResult(r)
                     setWarn(null)
                   }}
-                  className={`flex min-h-[3.25rem] items-center justify-center rounded-2xl border px-3 text-center text-base font-medium leading-tight transition-colors ${
+                  className={`flex min-h-[3rem] items-center justify-center rounded-2xl border px-2 text-center text-base font-medium leading-tight transition-colors ${
                     on
                       ? 'border-accent bg-accent text-paper'
                       : 'border-line-strong bg-paper text-ink hover:border-ink'
@@ -180,8 +182,8 @@ export function LogSheet({
           </div>
         </fieldset>
 
-        <div className="mt-4">
-          <label htmlFor="crm-note" className="label-caps mb-2 block">
+        <div className="mt-3">
+          <label htmlFor="crm-note" className="label-caps mb-1 block">
             {t.log.note}
           </label>
           <textarea
@@ -195,8 +197,8 @@ export function LogSheet({
         </div>
 
         <fieldset className="mt-3">
-          <legend className="label-caps mb-2">{t.log.next}</legend>
-          <div className="grid grid-cols-2 gap-2">
+          <legend className="label-caps mb-1">{t.log.next}</legend>
+          <div className="grid grid-cols-2 gap-1.5">
             {(['2h', 'tomorrow9', 'tomorrow14', 'custom'] as NextChoice[]).map((c) => {
               const on = next === c
               return (
@@ -205,7 +207,7 @@ export function LogSheet({
                   type="button"
                   aria-pressed={on}
                   onClick={() => setNext(on && c !== 'custom' ? 'none' : c)}
-                  className={`flex min-h-[3rem] items-center justify-center rounded-2xl border px-3 text-base font-medium transition-colors ${
+                  className={`flex min-h-[2.75rem] items-center justify-center rounded-2xl border px-3 text-base font-medium transition-colors ${
                     on
                       ? 'border-pine bg-pine text-paper'
                       : 'border-line-strong bg-paper text-ink hover:border-ink'
@@ -228,7 +230,7 @@ export function LogSheet({
         </fieldset>
       </div>
 
-      <footer className="border-t border-line px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+      <footer className="border-t border-line px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2.5">
         {warn && (
           <p role="status" className="mb-2 text-center text-base font-medium text-warn">
             {warn}

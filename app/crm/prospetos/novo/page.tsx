@@ -14,7 +14,7 @@ export default async function NovoProspetoPage() {
     <>
       <Link
         href="/crm/prospetos"
-        className="mb-4 inline-block text-base text-ink-mute hover:text-accent"
+        className="mb-2 inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-accent"
       >
         ← {dict.common.back}
       </Link>

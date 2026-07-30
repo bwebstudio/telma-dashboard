@@ -44,17 +44,18 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
       }
     >
       {isDemo() && <DemoBar role={user.role} />}
-      {/* The sidebar carries this link on a desktop; the bottom tab bar on a
-          phone is reserved for the CRM itself, so the way back lives here. */}
+      {children}
+      {/* The sidebar carries this on a desktop. On a phone it sits after the
+          content: it is an escape hatch used once a day, and above the fold it
+          was pushing the first call down on every screen. */}
       {isAdmin && (
         <Link
           href="/clinicas"
-          className="mb-4 inline-block text-base text-ink-mute hover:text-accent md:hidden"
+          className="mt-8 inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-accent md:hidden"
         >
           ← {t.nav.backToPanel}
         </Link>
       )}
-      {children}
     </Shell>
   )
 }

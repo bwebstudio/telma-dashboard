@@ -76,11 +76,11 @@ export default async function ProspetosPage({
 
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-2 flex flex-wrap items-end justify-between gap-4 sm:mb-5">
         <div>
-          <p className="eyebrow eyebrow-mark mb-3">{t.nav.section}</p>
-          <h1 className="h-display text-3xl sm:text-4xl">{t.list.title}</h1>
-          <p className="mt-2 text-lg text-ink-soft">{t.list.subtitle}</p>
+          <p className="eyebrow eyebrow-mark mb-3 hidden sm:inline-flex">{t.nav.section}</p>
+          <h1 className="h-display sr-only sm:not-sr-only sm:text-4xl">{t.list.title}</h1>
+          <p className="mt-2 hidden text-lg text-ink-soft sm:block">{t.list.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <CrmLive
@@ -88,15 +88,18 @@ export default async function ProspetosPage({
             liveLabel={t.today.live}
             queuedLabel={t.log.offline}
           />
+          {/* Both are desktop jobs. On a phone, "Nova" is already the third
+              item in the bottom tab bar, and nobody exports a spreadsheet
+              between two visits. */}
           <a
             href={`/api/crm/export${query ? `?${query}` : ''}`}
-            className="btn-secondary"
+            className="btn-secondary hidden md:inline-flex"
             download
           >
             <IconDownload className="h-5 w-5" />
             {t.list.export}
           </a>
-          <Link href="/crm/prospetos/novo" className="btn-primary">
+          <Link href="/crm/prospetos/novo" className="btn-primary hidden md:inline-flex">
             <IconPlus className="h-5 w-5" />
             {t.nav.novo}
           </Link>
@@ -111,7 +114,7 @@ export default async function ProspetosPage({
         dict={dict}
       />
 
-      <p className="mb-3 text-base text-ink-mute">
+      <p className="mb-2 text-base text-ink-mute sm:mb-3">
         {prospects.length} {t.list.results}
       </p>
 

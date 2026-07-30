@@ -129,7 +129,7 @@ export function Shell({
               <Link
                 href={accountHref}
                 aria-current={isActive(accountHref) ? 'page' : undefined}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink-soft"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
                 aria-label={userLabel}
               >
                 <IconAccount className="h-5 w-5" />
@@ -140,7 +140,7 @@ export function Shell({
               <input type="hidden" name="next" value={pathname} />
               <button
                 type="submit"
-                className="rounded-full px-3 py-2 text-sm text-ink-soft"
+                className="inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 text-sm text-ink-soft"
                 aria-label={langLabel}
               >
                 {other.toUpperCase()}
@@ -149,7 +149,7 @@ export function Shell({
             <form action={signOut}>
               <button
                 type="submit"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink-soft"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
                 aria-label={signOutLabel}
               >
                 <IconSignOut className="h-5 w-5" />
@@ -158,7 +158,7 @@ export function Shell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-app flex-1 px-4 py-6 pb-28 sm:px-6 md:px-8 md:py-10 md:pb-10">
+        <main className="mx-auto w-full max-w-app flex-1 px-4 py-4 pb-28 sm:px-6 sm:py-6 md:px-8 md:py-10 md:pb-10">
           {children}
         </main>
 

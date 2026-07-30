@@ -105,7 +105,7 @@ export function ProspectFilters({
           </Field>
 
           {showMine && (
-            <label className="flex items-center gap-3 pt-7">
+            <label className="flex min-h-[2.75rem] items-center gap-3 sm:pt-7">
               <input
                 type="checkbox"
                 name="mine"

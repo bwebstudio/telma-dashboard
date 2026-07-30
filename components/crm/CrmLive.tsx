@@ -109,7 +109,8 @@ export function CrmLive({
             }`}
           />
         </span>
-        {liveLabel}
+        {/* The dot says it on a phone; the sentence is for wider screens. */}
+        <span className="sr-only sm:not-sr-only">{liveLabel}</span>
       </span>
       {pending > 0 && (
         <span className="badge bg-warn-soft text-warn" role="status">

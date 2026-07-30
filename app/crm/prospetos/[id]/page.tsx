@@ -65,7 +65,7 @@ export default async function ProspetoPage({
   return (
     <div className="pb-24 md:pb-0">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <Link href="/crm/hoje" className="text-base text-ink-mute hover:text-accent">
+        <Link href="/crm/hoje" className="inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-accent">
           ← {dict.common.back}
         </Link>
         <CrmLive

@@ -34,7 +34,7 @@ export default async function NovaClinicaPage({
 
   return (
     <>
-      <Link href="/clinicas" className="mb-4 inline-block text-base text-ink-mute hover:text-accent">
+      <Link href="/clinicas" className="mb-2 inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-accent">
         ← {dict.common.back}
       </Link>
       <PageHeader eyebrow={dict.internoNav.clinicas} title={dict.interno.newTitle} subtitle={dict.interno.newHelp} />

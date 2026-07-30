@@ -93,33 +93,41 @@ export default async function CrmHojePage({
 
   return (
     <>
-      <div className="mb-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="h-display text-3xl sm:text-4xl">{t.today.title}</h1>
+      <div className="mb-2 sm:mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Kept for screen readers and landmarks, shown from tablet up: on a
+              phone the tab bar already names the screen, and every pixel here
+              pushes the first call further down. */}
+          <h1 className="h-display sr-only sm:not-sr-only sm:text-4xl">{t.today.title}</h1>
+
+          {/* Whose day. One button that names where it takes you, sharing the
+              row with the live dot rather than taking one of its own. */}
+          {canSwitch && (
+            <Link
+              href={
+                teamView
+                  ? `/crm/hoje${tabQuery}`
+                  : `/crm/hoje?scope=team${tabQuery ? '&tab=sem-data' : ''}`
+              }
+              className="flex min-h-[2.75rem] items-center whitespace-nowrap rounded-full border border-line-strong px-4 text-base font-medium text-ink-soft hover:border-ink hover:text-ink sm:order-last"
+            >
+              {teamView ? t.today.scopeMine : t.today.scopeTeam}
+            </Link>
+          )}
+
           <CrmLive
             channel={`crm-hoje-${user.id}`}
             liveLabel={t.today.live}
             queuedLabel={t.log.offline}
           />
         </div>
-        <p className="mt-2 text-lg text-ink-soft">{t.today.subtitle}</p>
+        <p className="mt-2 hidden text-lg text-ink-soft sm:block">{t.today.subtitle}</p>
       </div>
-
-      {canSwitch && (
-        <div className="mb-3 flex gap-2">
-          <Scope href={`/crm/hoje${tabQuery}`} active={!teamView}>
-            {t.today.scopeMine}
-          </Scope>
-          <Scope href={`/crm/hoje?scope=team${tabQuery ? '&tab=sem-data' : ''}`} active={teamView}>
-            {t.today.scopeTeam}
-          </Scope>
-        </div>
-      )}
 
       <div
         role="tablist"
         aria-label={t.today.title}
-        className="mb-5 flex gap-2 rounded-2xl border border-line bg-paper-2 p-1"
+        className="mb-3 flex gap-1 rounded-2xl border border-line bg-paper-2 p-1 sm:mb-5"
       >
         <Tab href={`/crm/hoje${scopeQuery}`} active={!showNoDate} count={dueRows.length}>
           {t.today.tabToday}
@@ -145,30 +153,6 @@ export default async function CrmHojePage({
   )
 }
 
-function Scope({
-  href,
-  active,
-  children,
-}: {
-  href: string
-  active: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={active ? 'true' : undefined}
-      className={`flex min-h-[2.75rem] items-center rounded-full border px-4 text-base font-medium transition-colors ${
-        active
-          ? 'border-accent bg-accent text-paper'
-          : 'border-line-strong text-ink-soft hover:border-ink hover:text-ink'
-      }`}
-    >
-      {children}
-    </Link>
-  )
-}
-
 function Tab({
   href,
   active,
@@ -185,7 +169,7 @@ function Tab({
       href={href}
       role="tab"
       aria-selected={active}
-      className={`flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl px-3 text-base font-medium transition-colors ${
+      className={`flex min-h-[3rem] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-2 text-base font-medium transition-colors ${
         active ? 'bg-ink text-paper' : 'text-ink-soft hover:text-ink'
       }`}
     >

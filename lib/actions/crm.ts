@@ -6,6 +6,7 @@ import { getAppUser, isCrmAdmin, isCrmUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isLocale } from '@/content'
+import { normalisePhone } from '@/lib/crm/phone'
 import type {
   CrmContactRole,
   CrmCountry,
@@ -50,16 +51,20 @@ export async function createProspect(
   const repField = str(formData, 'rep_id')
   const rep_id = admin ? (repField === 'none' || !repField ? null : repField) : me.id
 
+  // Stored with the country code, because a bare national number does not dial
+  // from another country and the reps work across the border.
+  const country = (str(formData, 'country') || 'PT') as CrmCountry
+
   const { data, error } = await supabase
     .from('crm_prospects')
     .insert({
       name,
-      phone: nullable(formData, 'phone'),
+      phone: normalisePhone(nullable(formData, 'phone'), country),
       zone: nullable(formData, 'zone'),
       address: nullable(formData, 'address'),
       website: nullable(formData, 'website'),
       specialty: (str(formData, 'specialty') || 'other') as CrmSpecialty,
-      country: (str(formData, 'country') || 'PT') as CrmCountry,
+      country,
       origin: (str(formData, 'origin') || 'cold') as CrmOrigin,
       origin_note: nullable(formData, 'origin_note'),
       rep_id,
@@ -77,7 +82,7 @@ export async function createProspect(
       prospect_id: prospectId,
       name: contactName,
       role: (str(formData, 'contact_role') || 'other') as CrmContactRole,
-      phone: nullable(formData, 'contact_phone'),
+      phone: normalisePhone(nullable(formData, 'contact_phone'), country),
       notes: nullable(formData, 'contact_notes'),
     })
   }
@@ -144,11 +149,19 @@ export async function addContact(formData: FormData): Promise<void> {
   if (!prospectId || !name) return
 
   const supabase = await createClient()
+
+  // The contact's number belongs to the clinic's country, not the rep's.
+  const { data: prospect } = await supabase
+    .from('crm_prospects')
+    .select('country')
+    .eq('id', prospectId)
+    .maybeSingle()
+
   await supabase.from('crm_contacts').insert({
     prospect_id: prospectId,
     name,
     role: (str(formData, 'role') || 'other') as CrmContactRole,
-    phone: nullable(formData, 'phone'),
+    phone: normalisePhone(nullable(formData, 'phone'), (prospect?.country ?? 'PT') as CrmCountry),
     notes: nullable(formData, 'notes'),
   })
 

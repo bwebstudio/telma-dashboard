@@ -8,6 +8,7 @@ import {
   requireCrmSession,
 } from '@/lib/crm/data'
 import { endOfDayIn, lateness, smartStamp, tzFor } from '@/lib/crm/time'
+import { telHref } from '@/lib/crm/phone'
 import { ProspectCards, type ProspectRow } from '@/components/crm/ProspectCards'
 import { crmStrings } from '@/lib/crm/strings'
 import { CrmLive } from '@/components/crm/CrmLive'
@@ -55,6 +56,7 @@ export default async function CrmHojePage({
       id: p.id,
       name: p.name,
       phone: p.phone,
+      telHref: telHref(p.phone, p.country),
       zone: p.zone,
       stage: p.stage,
       whenLabel: p.next_action_at ? smartStamp(p.next_action_at, locale, tz, now) : null,

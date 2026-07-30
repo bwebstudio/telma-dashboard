@@ -56,7 +56,7 @@ export default async function ProspetoPage({
   const repName = new Map(reps.map((r) => [r.id, r.full_name]))
   const tz = tzFor(prospect.country)
   const now = new Date()
-  const tel = telHref(prospect.phone)
+  const tel = telHref(prospect.phone, prospect.country)
   const wa = waHref(prospect.phone, prospect.country)
   const overdue = Boolean(prospect.next_action_at && new Date(prospect.next_action_at) < now)
   const isMine = prospect.rep_id === user.id
@@ -235,7 +235,7 @@ export default async function ProspetoPage({
         ) : (
           <ul className="flex flex-col gap-2">
             {contacts.map((c) => {
-              const contactTel = telHref(c.phone)
+              const contactTel = telHref(c.phone, prospect.country)
               return (
                 <li key={c.id} className="card p-4">
                   <p className="text-base font-medium text-ink">

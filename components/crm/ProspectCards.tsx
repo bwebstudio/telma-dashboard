@@ -14,7 +14,10 @@ import { LogSheet } from './LogSheet'
 export interface ProspectRow {
   id: string
   name: string
+  /** As written, for reading. */
   phone: string | null
+  /** Ready to dial, international, built server side from the clinic's country. */
+  telHref: string | null
   zone: string | null
   stage: CrmStage
   /** Formatted on the server, in the clinic's own timezone. */
@@ -87,9 +90,9 @@ export function ProspectCards({
             )}
 
             <div className="mt-3 flex gap-2">
-              {row.phone ? (
+              {row.phone && row.telHref ? (
                 <a
-                  href={`tel:${row.phone.replace(/\s/g, '')}`}
+                  href={row.telHref}
                   className="flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 text-base font-semibold text-paper hover:bg-accent-dark"
                 >
                   <IconPhone className="h-5 w-5" />

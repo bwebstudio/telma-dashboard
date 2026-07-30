@@ -11,6 +11,7 @@ import {
   requireCrmSession,
 } from '@/lib/crm/data'
 import { lateness, smartStamp, tzFor } from '@/lib/crm/time'
+import { telHref } from '@/lib/crm/phone'
 import { ProspectCards, type ProspectRow } from '@/components/crm/ProspectCards'
 import { ProspectFilters } from '@/components/crm/ProspectFilters'
 import { crmStrings } from '@/lib/crm/strings'
@@ -61,6 +62,7 @@ export default async function ProspetosPage({
       id: p.id,
       name: p.name,
       phone: p.phone,
+      telHref: telHref(p.phone, p.country),
       zone: p.zone,
       stage: p.stage,
       whenLabel: p.next_action_at ? smartStamp(p.next_action_at, locale, tz, now) : null,
@@ -161,7 +163,7 @@ export default async function ProspetosPage({
                       <Td className="text-ink-soft">{p.zone ?? '—'}</Td>
                       <Td>
                         {p.phone ? (
-                          <a href={`tel:${p.phone.replace(/\s/g, '')}`} className="text-ink hover:text-accent">
+                          <a href={telHref(p.phone, p.country) ?? undefined} className="text-ink hover:text-accent">
                             {p.phone}
                           </a>
                         ) : (

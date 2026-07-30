@@ -90,6 +90,19 @@ export function stageFromResult(result: CrmResult | null): CrmStage | null {
   }
 }
 
+// Mirrors the crm_apply_activity() trigger: what an activity does to the stage.
+//
+// An attempt ("nobody picked up", "they were at lunch") only ever moves a
+// prospect off 'new'. It must not demote a clinic that already said it was
+// interested just because today's call went unanswered. Anything reporting an
+// actual conversation is applied as stated.
+export function nextStage(current: CrmStage, result: CrmResult | null): CrmStage {
+  const proposed = stageFromResult(result)
+  if (proposed === null) return current
+  if (proposed === 'attempting' && current !== 'new') return current
+  return proposed
+}
+
 export interface CrmRep {
   id: string
   full_name: string

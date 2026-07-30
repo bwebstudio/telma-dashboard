@@ -1,5 +1,5 @@
 import { store, type DemoStore } from './data'
-import { stageFromResult, type CrmActivity } from '@/lib/crm/types'
+import { nextStage, stageFromResult, type CrmActivity } from '@/lib/crm/types'
 
 type Filter = ['eq' | 'gte' | 'lte' | 'ilike', string, any]
 type Order = [string, boolean]
@@ -14,9 +14,9 @@ function applyDemoActivity(activity: CrmActivity): void {
   if (!p) return
   if (p.last_activity_at && activity.created_at < p.last_activity_at) return
 
-  const stage = stageFromResult(activity.result)
-  const closed = stage === 'won' || stage === 'lost'
-  if (stage) p.stage = stage
+  const proposed = stageFromResult(activity.result)
+  const closed = proposed === 'won' || proposed === 'lost'
+  p.stage = nextStage(p.stage, activity.result)
   if (activity.next_action_at) {
     p.next_action_at = activity.next_action_at
     p.next_action_text = activity.next_action_text ?? null

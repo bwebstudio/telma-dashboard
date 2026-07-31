@@ -227,6 +227,59 @@ export default async function ProspetoPage({
         </section>
       )}
 
+      {/* What we know about the place. The address is a map link because a rep
+          who is going to visit needs directions, not a string to retype. */}
+      {(prospect.address || prospect.website || prospect.origin_note) && (
+        <section className="mt-4">
+          <h2 className="mb-3 font-serif text-xl font-semibold text-ink">{t.detail.details}</h2>
+          <dl className="card divide-y divide-line">
+            {prospect.address && (
+              <div className="p-4">
+                <dt className="label-caps">{t.detail.address}</dt>
+                <dd className="mt-1">
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(
+                      `${prospect.address}, ${prospect.zone ?? ''} ${t.country[prospect.country]}`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-[2.75rem] items-center text-base text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+                  >
+                    {prospect.address}
+                  </a>
+                </dd>
+              </div>
+            )}
+            {prospect.website && (
+              <div className="p-4">
+                <dt className="label-caps">{t.detail.website}</dt>
+                <dd className="mt-1">
+                  <a
+                    href={
+                      prospect.website.startsWith('http')
+                        ? prospect.website
+                        : `https://${prospect.website}`
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-[2.75rem] items-center break-all text-base text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+                  >
+                    {prospect.website}
+                  </a>
+                </dd>
+              </div>
+            )}
+            <div className="p-4">
+              <dt className="label-caps">{t.detail.origin}</dt>
+              <dd className="mt-1 text-base text-ink-soft">
+                {t.origin[prospect.origin]}
+                {prospect.origin_note ? ` · ${prospect.origin_note}` : ''}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      )}
+
       {/* Contacts: the doctor, the receptionist, each with their own notes. */}
       <section className="mt-4">
         <h2 className="mb-3 font-serif text-xl font-semibold text-ink">{t.detail.contacts}</h2>

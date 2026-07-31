@@ -34,6 +34,7 @@ const STREET = new RegExp(
 )
 const DENTAL = /(dent[aá]ri|dental|dentista|odonto|implant)/i
 const AESTHETIC = /(est[eé]tic|aesthetic|belleza|beauty|derma|medicina est)/i
+const VETERINARY = /(veterinari|veterinár|mascotas|animais|animales)/i
 const WEB = /(https?:\/\/|www\.|[a-z0-9-]+\.(pt|es|com|net|clinic)\b)/i
 
 // A Portuguese or Spanish phone number is 9 digits, often written with spaces
@@ -139,7 +140,8 @@ export function parseProspectText(raw: string): ParsedProspect {
     // field empty for the rep to fill than to save something wrong.
     if (!out.name && isNameish(seg)) {
       out.name = seg
-      if (DENTAL.test(seg)) out.specialty = 'dental'
+      if (VETERINARY.test(seg)) out.specialty = 'veterinary'
+      else if (DENTAL.test(seg)) out.specialty = 'dental'
       else if (AESTHETIC.test(seg)) out.specialty = 'aesthetic'
       continue
     }
@@ -148,7 +150,8 @@ export function parseProspectText(raw: string): ParsedProspect {
   }
 
   if (!out.specialty) {
-    if (DENTAL.test(raw)) out.specialty = 'dental'
+    if (VETERINARY.test(raw)) out.specialty = 'veterinary'
+    else if (DENTAL.test(raw)) out.specialty = 'dental'
     else if (AESTHETIC.test(raw)) out.specialty = 'aesthetic'
   }
 

@@ -229,7 +229,12 @@ export const es: Dictionary = {
       visit: 'Visita',
       note: 'Nota',
     },
-    specialty: { dental: 'Dental', aesthetic: 'Estética', other: 'Otra' },
+    specialty: {
+      dental: 'Dental',
+      aesthetic: 'Estética',
+      veterinary: 'Veterinaria',
+      other: 'Otra',
+    },
     contactRole: { doctor: 'Médico(a)', reception: 'Recepción', other: 'Otro' },
     origin: { cold: 'Prospección fría', referral: 'Recomendado por' },
     country: { PT: 'Portugal', ES: 'España' },

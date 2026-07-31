@@ -4,7 +4,7 @@
 
 export type CrmCountry = 'PT' | 'ES'
 export type CrmRepRole = 'admin' | 'comercial'
-export type CrmSpecialty = 'dental' | 'aesthetic' | 'other'
+export type CrmSpecialty = 'dental' | 'aesthetic' | 'veterinary' | 'other'
 export type CrmOrigin = 'cold' | 'referral'
 export type CrmStage =
   | 'new'
@@ -30,7 +30,7 @@ export type CrmResult =
 export type CrmContactRole = 'doctor' | 'reception' | 'other'
 
 export const CRM_COUNTRIES: CrmCountry[] = ['PT', 'ES']
-export const CRM_SPECIALTIES: CrmSpecialty[] = ['dental', 'aesthetic', 'other']
+export const CRM_SPECIALTIES: CrmSpecialty[] = ['dental', 'aesthetic', 'veterinary', 'other']
 export const CRM_ORIGINS: CrmOrigin[] = ['cold', 'referral']
 export const CRM_CONTACT_ROLES: CrmContactRole[] = ['doctor', 'reception', 'other']
 export const CRM_STAGES: CrmStage[] = [

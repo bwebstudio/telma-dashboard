@@ -15,7 +15,7 @@ export function ContactForm({
   const t = dict.crm
 
   return (
-    <details className="mt-3 rounded-2xl border border-line bg-paper-2 px-4 py-3">
+    <details className="mt-3 rounded-2xl border border-line bg-surface-sunken px-4 py-3">
       <summary className="cursor-pointer text-base font-medium text-ink-soft">
         {t.detail.addContact}
       </summary>
@@ -71,7 +71,7 @@ export function ContactForm({
             id="contact-notes"
             name="notes"
             rows={2}
-            className="w-full rounded-xl border border-line-strong bg-paper px-3.5 py-3 text-base text-ink focus:border-accent"
+            className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-3 text-base text-ink focus:border-brand"
           />
         </div>
         <button type="submit" className="btn-primary min-h-[3rem] self-start">

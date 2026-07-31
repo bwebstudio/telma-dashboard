@@ -41,7 +41,7 @@ export default async function MarcacoesPage({
       <Link
         href={key === 'pending' ? '/marcacoes?f=pending' : '/marcacoes'}
         className={`rounded-full px-4 py-2 text-base font-medium ${
-          active ? 'bg-ink text-paper' : 'text-ink-soft hover:text-ink'
+          active ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
         }`}
       >
         {label}
@@ -53,7 +53,7 @@ export default async function MarcacoesPage({
     <>
       <PageHeader eyebrow={dict.clinicNav.marcacoes} title={dict.marcacoes.title} subtitle={dict.marcacoes.help} />
 
-      <div className="mb-6 inline-flex rounded-full border border-line-strong bg-paper p-1">
+      <div className="mb-6 inline-flex rounded-full border border-line-strong bg-surface p-1">
         {tab('all', dict.marcacoes.filterAll)}
         {tab('pending', dict.marcacoes.filterPending)}
       </div>

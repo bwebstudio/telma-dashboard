@@ -130,7 +130,7 @@ export function LogSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-paper"
+      className="fixed inset-0 z-50 flex flex-col bg-bg"
       role="dialog"
       aria-modal="true"
       aria-label={`${t.logCall} · ${prospectName}`}
@@ -139,7 +139,7 @@ export function LogSheet({
     >
       <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2">
         <div className="min-w-0">
-          <p className="truncate font-serif text-lg font-semibold leading-tight text-ink">
+          <p className="truncate font-mid text-lg font-semibold leading-tight text-ink">
             {prospectName}
           </p>
           <p className="text-sm text-ink-mute">{t.log.title}</p>
@@ -148,7 +148,7 @@ export function LogSheet({
           type="button"
           onClick={onClose}
           aria-label={t.log.close}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-soft hover:bg-paper-3 hover:text-ink"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-soft hover:bg-brand-wash hover:text-ink"
         >
           <IconClose className="h-6 w-6" />
         </button>
@@ -171,8 +171,8 @@ export function LogSheet({
                   }}
                   className={`flex min-h-[3rem] items-center justify-center rounded-2xl border px-2 text-center text-base font-medium leading-tight transition-colors ${
                     on
-                      ? 'border-accent bg-accent text-paper'
-                      : 'border-line-strong bg-paper text-ink hover:border-ink'
+                      ? 'border-brand bg-brand text-white'
+                      : 'border-line-strong bg-surface text-ink hover:border-ink'
                   }`}
                 >
                   {t.result[r]}
@@ -192,7 +192,7 @@ export function LogSheet({
             onChange={(e) => setNote(e.target.value)}
             rows={2}
             placeholder={t.log.notePlaceholder}
-            className="w-full rounded-2xl border border-line-strong bg-paper px-3.5 py-3 text-base text-ink placeholder:text-ink-mute focus:border-accent"
+            className="w-full rounded-2xl border border-line-strong bg-surface px-3.5 py-3 text-base text-ink placeholder:text-ink-mute focus:border-brand"
           />
         </div>
 
@@ -209,8 +209,8 @@ export function LogSheet({
                   onClick={() => setNext(on && c !== 'custom' ? 'none' : c)}
                   className={`flex min-h-[2.75rem] items-center justify-center rounded-2xl border px-3 text-base font-medium transition-colors ${
                     on
-                      ? 'border-pine bg-pine text-paper'
-                      : 'border-line-strong bg-paper text-ink hover:border-ink'
+                      ? 'border-brand bg-brand text-white'
+                      : 'border-line-strong bg-surface text-ink hover:border-ink'
                   }`}
                 >
                   {nextLabels[c]}
@@ -240,7 +240,7 @@ export function LogSheet({
           type="button"
           onClick={save}
           disabled={saving}
-          className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-accent text-lg font-semibold text-paper transition-colors hover:bg-accent-dark disabled:opacity-60"
+          className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-brand text-lg font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
         >
           {saving ? t.log.saving : t.log.save}
         </button>

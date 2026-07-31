@@ -43,7 +43,7 @@ export function ProspectFilters({
         </button>
       </div>
 
-      <details className="mt-2 rounded-2xl border border-line bg-paper-2 px-4 py-3">
+      <details className="mt-2 rounded-2xl border border-line bg-surface-sunken px-4 py-3">
         <summary className="cursor-pointer text-base font-medium text-ink-soft">
           {t.list.filters}
         </summary>
@@ -111,7 +111,7 @@ export function ProspectFilters({
                 name="mine"
                 value="1"
                 defaultChecked={filters.mine}
-                className="h-5 w-5 accent-accent"
+                className="h-5 w-5 accent-brand"
               />
               <span className="text-base text-ink">{t.list.mine}</span>
             </label>

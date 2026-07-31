@@ -3,12 +3,12 @@ import type { ReactNode } from 'react'
 type Tone = 'neutral' | 'pending' | 'ok' | 'warn' | 'danger' | 'info'
 
 const toneClass: Record<Tone, string> = {
-  neutral: 'bg-paper-3 text-ink-soft',
+  neutral: 'bg-brand-wash text-ink-soft',
   pending: 'bg-warn-soft text-warn',
   ok: 'bg-ok-soft text-ok',
   warn: 'bg-warn-soft text-warn',
   danger: 'bg-danger-soft text-danger',
-  info: 'bg-pine text-paper',
+  info: 'bg-brand text-white',
 }
 
 export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
@@ -47,7 +47,7 @@ export function EmptyState({ children }: { children: ReactNode }) {
 export function ErrorState({ title, message }: { title: string; message: string }) {
   return (
     <div className="rounded-2xl border border-danger/30 bg-danger-soft px-6 py-8 text-center">
-      <p className="font-serif text-xl font-semibold text-danger">{title}</p>
+      <p className="font-mid text-xl font-semibold text-danger">{title}</p>
       <p className="mt-2 text-base text-ink-soft">{message}</p>
     </div>
   )
@@ -65,12 +65,12 @@ export function Stat({
   return (
     <div className="card p-5">
       <p className="label-caps">{label}</p>
-      <p className="mt-2 font-serif text-3xl font-semibold text-ink">{value}</p>
+      <p className="mt-2 font-mid text-3xl font-semibold text-ink">{value}</p>
       {hint && <p className="mt-1 text-sm text-ink-mute">{hint}</p>}
     </div>
   )
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 className="mb-4 font-serif text-xl font-semibold text-ink">{children}</h2>
+  return <h2 className="mb-4 font-mid text-xl font-semibold text-ink">{children}</h2>
 }

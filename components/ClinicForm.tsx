@@ -59,7 +59,7 @@ export function ClinicForm({
             </select>
           </div>
           <label className="flex items-center gap-3 pt-8">
-            <input type="checkbox" name="addon" className="h-5 w-5 accent-accent" />
+            <input type="checkbox" name="addon" className="h-5 w-5 accent-brand" />
             <span className="text-base text-ink">{t.fieldAddon}</span>
           </label>
         </div>
@@ -105,7 +105,7 @@ function Text({
     <div>
       <label htmlFor={name} className="field-label">
         {label}
-        {required && <span className="text-accent"> *</span>}
+        {required && <span className="text-brand-accent"> *</span>}
       </label>
       <input
         id={name}

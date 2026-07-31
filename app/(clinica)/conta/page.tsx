@@ -51,7 +51,7 @@ export default async function ContaPage() {
         <section className="card p-6">
           <SectionTitle>{dict.conta.usageTitle}</SectionTitle>
           <div className="flex items-baseline gap-2">
-            <span className="font-serif text-4xl font-semibold text-ink">{used}</span>
+            <span className="font-mid text-4xl font-semibold text-ink">{used}</span>
             <span className="text-lg text-ink-mute">
               {dict.common.of} {limit}
             </span>
@@ -59,7 +59,7 @@ export default async function ContaPage() {
           <p className="mt-1 text-base text-ink-soft">
             {dict.conta.callsUsed} {dict.common.thisMonth}
           </p>
-          <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-paper-3">
+          <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-brand-wash">
             <div
               className={`h-full rounded-full ${pct >= 80 ? 'bg-warn' : 'bg-ok'}`}
               style={{ width: `${pct}%` }}

@@ -82,8 +82,8 @@ export function AvailabilityGrid({
                         aria-label={`${dict.weekdays[wd]} ${pad(h)}:00`}
                         className={`flex h-11 w-full min-w-[2.75rem] items-center justify-center rounded-lg border transition-colors ${
                           on
-                            ? 'border-pine bg-pine text-paper'
-                            : 'border-line bg-paper hover:border-line-strong hover:bg-paper-2'
+                            ? 'border-brand bg-brand text-white'
+                            : 'border-line bg-surface hover:border-line-strong hover:bg-surface-sunken'
                         }`}
                       >
                         {on && <IconCheck className="h-4 w-4" />}

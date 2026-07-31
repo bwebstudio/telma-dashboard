@@ -74,7 +74,7 @@ export default async function ClinicasPage({
       <div className="card overflow-hidden">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-line bg-paper-2">
+            <tr className="border-b border-line bg-surface-sunken">
               <Th>{t.colName}</Th>
               <Th>{t.colPlan}</Th>
               <Th>{t.colStatus}</Th>
@@ -91,9 +91,9 @@ export default async function ClinicasPage({
               const near = pct >= 80 && pct < 100
               const act = lastActivity.get(c.id)
               return (
-                <tr key={c.id} className="border-b border-line last:border-0 hover:bg-paper-2/60">
+                <tr key={c.id} className="border-b border-line last:border-0 hover:bg-surface-sunken/60">
                   <Td>
-                    <Link href={`/clinicas/${c.id}`} className="font-medium text-ink hover:text-accent">
+                    <Link href={`/clinicas/${c.id}`} className="font-medium text-ink hover:text-brand-accent">
                       {c.name}
                     </Link>
                   </Td>
@@ -114,7 +114,7 @@ export default async function ClinicasPage({
                     {act ? formatDate(act, locale) : t.never}
                   </Td>
                   <Td>
-                    <Link href={`/clinicas/${c.id}`} className="inline-flex text-ink-mute hover:text-accent">
+                    <Link href={`/clinicas/${c.id}`} className="inline-flex text-ink-mute hover:text-brand-accent">
                       <IconChevron className="h-5 w-5" />
                     </Link>
                   </Td>

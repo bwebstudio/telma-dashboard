@@ -2,17 +2,141 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   TELMA — DESIGN TOKENS (PANEL)
+
+   The brand block below is copied verbatim from the landing's globals.css.
+   Same numbers, same reasoning, deliberately not "adapted": the panel is the
+   same product as the page that sold it, and the fastest way for the two to
+   drift is to let each keep its own version of the palette.
+
+   Only two things are added, because a marketing page has no use for them:
+   the status tones a CRM needs (overdue, won, refused), and the panel's
+   component classes at the bottom.
+
+   Change a colour, radius or duration in both files, or in neither.
+   ========================================================================== */
+
 @layer base {
   :root {
     color-scheme: light;
+
+    /* --- Brand ------------------------------------------------------------
+       Deep forest. This green carries white text at 12.07:1, so the primary
+       button is simply green with a white label.
+
+       --brand-accent is the lighter green, and the only one that may be read
+       as text: 4.77:1 on the page background. Eyebrows, links and iconography
+       use it, because the deep green at caption size reads as black rather
+       than as green.
+
+       Stored as RGB channels, not hex, so every token composes with
+       `rgb(var(--x) / <alpha>)` and Tailwind's opacity modifiers — bg-bg/85,
+       border-ink/25 — actually emit CSS. A token holding `#183c37` cannot be
+       taken apart, and the utility silently vanishes from the stylesheet. */
+    --brand: 24 60 55;
+    --brand-hover: 33 81 73;
+    --brand-accent: 62 123 115;
+    --brand-wash: 239 243 241;
+    --brand-wash-strong: 221 231 228;
+
+    /* --- Ink --------------------------------------------------------------
+       Every value clears WCAG AA on both --bg and --surface. --ink-mute is
+       pulled toward the green-grey of the borders rather than being neutral,
+       so nothing on the page reads cold. */
+    --ink: 17 24 39;
+    --ink-soft: 75 85 99;
+    --ink-mute: 95 107 102;
+
+    /* --- Surfaces ---------------------------------------------------------
+       The page is warm off-white and the cards are pure white, which is the
+       right way round: an object lifts by being lighter than its ground. */
+    --bg: 252 252 250;
+    --surface: 255 255 255;
+    --surface-sunken: 244 244 240;
+    --border: 231 234 232;
+    --border-strong: 212 217 214;
+
+    /* --- Dark surface -----------------------------------------------------
+       Ink, not the brand green. The green is reserved for marks and actions. */
+    --dark: 17 24 39;
+    --dark-soft: 27 36 48;
+    --dark-line: 42 52 65;
+
+    /* --- Status (panel only) ----------------------------------------------
+       A landing page has no overdue rows. These are the three states a rep
+       reads at a glance, tuned to sit inside the brand rather than beside it:
+       the greens share the brand's family, the amber is ochre rather than
+       yellow, the red is brick rather than alarm.
+
+       Measured against --bg, --surface and their own wash, the worst pair is
+       5.49:1. None of this is decorative — an overdue clinic is the most
+       important thing on the HOJE screen and has to survive being read on a
+       phone in sunlight. */
+    --ok: 21 94 76;
+    --ok-soft: 232 241 237;
+    --warn: 140 84 10;
+    --warn-soft: 250 240 224;
+    --danger: 155 44 38;
+    --danger-soft: 250 235 233;
+
+    /* --- Radius -----------------------------------------------------------
+       Large radii are the loudest tell of a template: they read friendly, and
+       friendly is not the same as expensive. At 8/12/16 the corners stop being
+       a feature and become a finish. */
+    --radius-input: 8px;
+    --radius-card: 12px;
+    --radius-hero: 16px;
+    --radius-pill: 999px;
+
+    /* --- Elevation --------------------------------------------------------
+       Tinted with the brand green rather than neutral grey. Depth comes from
+       hairlines and white space; a shadow exists only to keep a white edge
+       from cutting out against a white ground. */
+    --shadow-1: 0 1px 1px rgba(17, 24, 39, 0.02),
+      0 2px 6px -3px rgba(24, 60, 55, 0.06);
+    --shadow-2: 0 1px 2px rgba(17, 24, 39, 0.02),
+      0 10px 24px -14px rgba(24, 60, 55, 0.1);
+    --shadow-3: 0 2px 4px rgba(17, 24, 39, 0.02),
+      0 24px 52px -30px rgba(24, 60, 55, 0.14);
+    --shadow-brand: 0 10px 28px -14px rgba(24, 60, 55, 0.28);
+
+    /* --- Motion -----------------------------------------------------------
+       A single ease-out curve with no overshoot. Continuity, never spectacle. */
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --dur-fast: 250ms;
+    --dur: 400ms;
+    --dur-slow: 600ms;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    background-color: theme('colors.paper');
-    color: theme('colors.ink');
-    font-family: theme('fontFamily.sans');
+    background-color: rgb(var(--bg));
+    color: rgb(var(--ink));
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    font-optical-sizing: auto;
+    /* DM Sans is drawn a touch loose for reading sizes, so body copy takes a
+       little negative tracking to hold together. */
+    letter-spacing: -0.008em;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgb(var(--brand-wash-strong));
+    color: rgb(var(--ink));
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand));
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -23,64 +147,69 @@
       transition-duration: 0.001ms !important;
     }
   }
-
-  :focus-visible {
-    outline: 2px solid theme('colors.accent');
-    outline-offset: 2px;
-    border-radius: 3px;
-  }
 }
 
 @layer components {
+  /* --- DISPLAY TYPE ------------------------------------------------------
+     With no serif to carry the hierarchy, the weight and the tracking do it.
+     550 is only reachable because DM Sans is variable: 600 reads assertive,
+     500 goes weak at large sizes. */
+  .h-display {
+    font-weight: 550;
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+    color: rgb(var(--ink));
+  }
+
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-medium uppercase tracking-label text-accent;
+    @apply inline-flex items-center gap-2 text-xs font-medium uppercase tracking-label text-brand-accent;
   }
   .eyebrow-mark::before {
     content: '/';
-    @apply font-serif text-sm font-semibold not-italic text-accent;
+    @apply text-sm font-semibold not-italic text-brand-accent;
   }
 
-  .h-display {
-    @apply font-serif font-semibold tracking-tight text-ink;
+  /* A hairline is the brand's structural element — it does the job shadows
+     and borders were doing before. */
+  .rule {
+    @apply h-px w-full bg-line;
   }
 
+  /* The card lifts by being lighter than the page, not by glowing. */
   .card {
-    @apply rounded-2xl border border-line bg-paper;
+    @apply rounded-card border border-line bg-surface;
   }
 
-  /* Buttons: minimum 44px tall for comfortable touch targets. */
+  /* Buttons. Minimum 44px tall, and the primary needs no contrast workaround:
+     white on the forest green is 12.07:1. */
   .btn {
-    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-full px-5 text-base font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-pill px-5 text-base font-medium transition-all duration-fast ease-calm disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-accent text-paper hover:bg-accent-dark;
+    @apply btn bg-brand text-white shadow-brand hover:bg-brand-hover;
   }
   .btn-secondary {
-    @apply btn border border-ink/20 bg-transparent text-ink hover:border-ink hover:bg-ink hover:text-paper;
+    @apply btn border border-line-strong bg-surface text-ink shadow-1 hover:border-ink/25;
   }
   .btn-ghost {
-    @apply btn px-4 text-ink-soft hover:bg-paper-3 hover:text-ink;
+    @apply btn px-4 text-ink-soft hover:text-brand-accent;
   }
   .btn-danger {
-    @apply btn border border-danger/30 bg-transparent text-danger hover:bg-danger hover:text-paper;
+    @apply btn border border-danger/30 bg-surface text-danger hover:bg-danger hover:text-white;
   }
 
   .field-label {
-    @apply mb-1.5 block text-base font-medium text-ink;
+    @apply mb-1.5 block text-sm font-medium text-ink;
   }
   .field-input {
-    @apply min-h-[2.75rem] w-full rounded-xl border border-line-strong bg-paper px-3.5 text-base text-ink placeholder:text-ink-mute focus:border-accent;
+    @apply min-h-[3rem] w-full rounded-input border border-line-strong bg-surface px-3.5 text-base text-ink shadow-1 transition-colors duration-fast ease-calm placeholder:text-ink-mute/70 hover:border-ink/20 focus:border-brand-accent focus:outline-none;
   }
 
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium;
+    @apply inline-flex items-center rounded-pill px-2.5 py-1 text-sm font-medium;
   }
 
   .label-caps {
     @apply text-xs font-medium uppercase tracking-label text-ink-mute;
-  }
-
-  .rule {
-    @apply h-px w-full bg-line;
   }
 }

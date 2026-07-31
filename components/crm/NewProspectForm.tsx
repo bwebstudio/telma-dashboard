@@ -41,7 +41,7 @@ function Submit({ label, busy }: { label: string; busy: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-accent text-lg font-semibold text-paper transition-colors hover:bg-accent-dark disabled:opacity-60 sm:w-auto sm:px-10"
+      className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-brand text-lg font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-60 sm:w-auto sm:px-10"
     >
       {pending ? busy : label}
     </button>
@@ -127,7 +127,7 @@ export function NewProspectForm({
           rows={3}
           placeholder={t.novo.pastePlaceholder}
           aria-label={t.novo.pasteTitle}
-          className="w-full rounded-2xl border border-line-strong bg-paper px-3.5 py-3 text-base text-ink placeholder:text-ink-mute focus:border-accent"
+          className="w-full rounded-2xl border border-line-strong bg-surface px-3.5 py-3 text-base text-ink placeholder:text-ink-mute focus:border-brand"
         />
         <button
           type="button"
@@ -186,7 +186,7 @@ export function NewProspectForm({
           role="status"
           aria-live="polite"
         >
-          <p className="font-serif text-lg font-semibold text-ink">
+          <p className="font-mid text-lg font-semibold text-ink">
             {checking && hits.length === 0 ? t.novo.dupChecking : t.novo.dupTitle}
           </p>
           <ul className="mt-2 flex flex-col gap-2">
@@ -195,7 +195,7 @@ export function NewProspectForm({
                 <span className="font-medium text-ink">{h.name}</span>
                 {h.zone ? ` · ${h.zone}` : ''}
                 {h.phone ? ` · ${h.phone}` : ''}
-                <span className="ml-2 badge bg-paper text-ink-soft">
+                <span className="ml-2 badge bg-surface text-ink-soft">
                   {h.kind === 'client' ? t.novo.dupClient : t.novo.dupProspect}
                 </span>
                 {h.kind === 'prospect' && (
@@ -205,7 +205,7 @@ export function NewProspectForm({
                     </span>
                     <Link
                       href={`/crm/prospetos/${h.id}`}
-                      className="ml-2 text-sm font-medium text-accent underline"
+                      className="ml-2 text-sm font-medium text-brand-accent underline"
                     >
                       {t.novo.dupOpen}
                     </Link>
@@ -217,7 +217,7 @@ export function NewProspectForm({
         </section>
       )}
 
-      <details className="rounded-2xl border border-line bg-paper-2 px-4 py-3">
+      <details className="rounded-2xl border border-line bg-surface-sunken px-4 py-3">
         <summary className="cursor-pointer text-base font-medium text-ink-soft">
           {dict.common.optional}
         </summary>
@@ -309,7 +309,7 @@ export function NewProspectForm({
         </p>
       )}
 
-      <div className="fixed inset-x-0 bottom-[3.5rem] z-20 border-t border-line bg-paper px-4 py-3 md:static md:border-0 md:bg-transparent md:px-0 md:py-0">
+      <div className="fixed inset-x-0 bottom-[3.5rem] z-20 border-t border-line bg-surface px-4 py-3 md:static md:border-0 md:bg-transparent md:px-0 md:py-0">
         <Submit
           label={hits.length > 0 ? t.novo.dupCreateAnyway : t.novo.create}
           busy={t.novo.creating}
@@ -344,7 +344,7 @@ function Text({
     <div>
       <label htmlFor={name} className="field-label">
         {label}
-        {required && <span className="text-accent"> *</span>}
+        {required && <span className="text-brand-accent"> *</span>}
       </label>
       <input
         id={name}

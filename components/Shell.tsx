@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import { locales, type Locale } from '@/content'
 import { setLocale, signOut } from '@/lib/actions/session'
 import { IconSignOut, IconAccount } from './icons'
+import { Logo } from './Logo'
 
 export interface NavItem {
   href: string
@@ -52,11 +53,9 @@ export function Shell({
   return (
     <div className="min-h-screen md:flex">
       {/* Sidebar (desktop) */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-paper-2 md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface-sunken md:flex">
         <div className="flex h-16 items-center gap-2 px-6">
-          <span className="font-serif text-2xl font-semibold tracking-tight text-ink">
-            Telma
-          </span>
+          <Logo height={26} />
           <span className="label-caps mt-1">
             {variantLabel ?? VARIANT_LABEL[variant]}
           </span>
@@ -69,8 +68,8 @@ export function Shell({
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={`mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors ${
                 isActive(item.href)
-                  ? 'bg-ink text-paper'
-                  : 'text-ink-soft hover:bg-paper-3 hover:text-ink'
+                  ? 'bg-ink text-white'
+                  : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
               }`}
             >
               {item.icon}
@@ -84,7 +83,7 @@ export function Shell({
             <Link
               href={accountHref}
               aria-current={isActive(accountHref) ? 'page' : undefined}
-              className="mb-3 flex items-center gap-2 truncate text-sm text-ink-soft hover:text-accent"
+              className="mb-3 flex items-center gap-2 truncate text-sm text-ink-soft hover:text-brand-accent"
             >
               <IconAccount className="h-4 w-4 shrink-0" />
               <span className="truncate">{userLabel}</span>
@@ -107,7 +106,7 @@ export function Shell({
             <form action={signOut}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-ink-soft hover:text-accent"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-ink-soft hover:text-brand-accent"
               >
                 <IconSignOut className="h-4 w-4" />
                 {signOutLabel}
@@ -120,10 +119,8 @@ export function Shell({
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar (mobile) */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-paper/90 px-4 backdrop-blur md:hidden">
-          <span className="font-serif text-xl font-semibold tracking-tight text-ink">
-            Telma
-          </span>
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-bg/90 px-4 backdrop-blur md:hidden">
+          <Logo height={22} />
           <div className="flex items-center gap-1">
             {accountHref && (
               <Link
@@ -164,7 +161,7 @@ export function Shell({
 
         {/* Bottom tab bar (mobile) */}
         <nav
-          className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper/95 backdrop-blur md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-bg/95 backdrop-blur md:hidden"
           aria-label={variant}
         >
           {nav.map((item) => (
@@ -173,7 +170,7 @@ export function Shell({
               href={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={`flex min-h-[3.5rem] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs ${
-                isActive(item.href) ? 'text-accent' : 'text-ink-mute'
+                isActive(item.href) ? 'text-brand-accent' : 'text-ink-mute'
               }`}
             >
               {item.icon}

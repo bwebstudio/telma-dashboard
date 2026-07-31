@@ -65,7 +65,7 @@ export default async function ProspetoPage({
   return (
     <div className="pb-24 md:pb-0">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <Link href="/crm/hoje" className="inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-accent">
+        <Link href="/crm/hoje" className="inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-brand-accent">
           ← {dict.common.back}
         </Link>
         <CrmLive
@@ -93,7 +93,7 @@ export default async function ProspetoPage({
           {tel ? (
             <a
               href={tel}
-              className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-accent px-5 text-lg font-semibold text-paper hover:bg-accent-dark"
+              className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-brand px-5 text-lg font-semibold text-white hover:bg-brand-hover"
             >
               <IconPhone className="h-6 w-6" />
               {prospect.phone}
@@ -108,7 +108,7 @@ export default async function ProspetoPage({
               href={wa}
               target="_blank"
               rel="noreferrer"
-              className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl border border-pine px-5 text-lg font-semibold text-pine hover:bg-pine hover:text-paper sm:w-auto"
+              className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl border border-brand px-5 text-lg font-semibold text-brand hover:bg-brand hover:text-white sm:w-auto"
             >
               <IconWhatsApp className="h-6 w-6" />
               {t.detail.whatsapp}
@@ -189,7 +189,7 @@ export default async function ProspetoPage({
               {isAdmin && (
                 <Link
                   href={`/clinicas/${prospect.converted_clinic_id}`}
-                  className="font-medium text-accent underline"
+                  className="font-medium text-brand-accent underline"
                 >
                   {t.detail.openClient}
                 </Link>
@@ -231,7 +231,7 @@ export default async function ProspetoPage({
           who is going to visit needs directions, not a string to retype. */}
       {(prospect.address || prospect.website || prospect.origin_note) && (
         <section className="mt-4">
-          <h2 className="mb-3 font-serif text-xl font-semibold text-ink">{t.detail.details}</h2>
+          <h2 className="mb-3 font-mid text-xl font-semibold text-ink">{t.detail.details}</h2>
           <dl className="card divide-y divide-line">
             {prospect.address && (
               <div className="p-4">
@@ -243,7 +243,7 @@ export default async function ProspetoPage({
                     )}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex min-h-[2.75rem] items-center text-base text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+                    className="inline-flex min-h-[2.75rem] items-center text-base text-ink underline decoration-line-strong underline-offset-4 hover:text-brand-accent"
                   >
                     {prospect.address}
                   </a>
@@ -262,7 +262,7 @@ export default async function ProspetoPage({
                     }
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex min-h-[2.75rem] items-center break-all text-base text-ink underline decoration-line-strong underline-offset-4 hover:text-accent"
+                    className="inline-flex min-h-[2.75rem] items-center break-all text-base text-ink underline decoration-line-strong underline-offset-4 hover:text-brand-accent"
                   >
                     {prospect.website}
                   </a>
@@ -282,7 +282,7 @@ export default async function ProspetoPage({
 
       {/* Contacts: the doctor, the receptionist, each with their own notes. */}
       <section className="mt-4">
-        <h2 className="mb-3 font-serif text-xl font-semibold text-ink">{t.detail.contacts}</h2>
+        <h2 className="mb-3 font-mid text-xl font-semibold text-ink">{t.detail.contacts}</h2>
         {contacts.length === 0 ? (
           <p className="text-base text-ink-mute">{t.detail.noContacts}</p>
         ) : (
@@ -315,7 +315,7 @@ export default async function ProspetoPage({
 
       {/* The thread. Oldest first, newest at the bottom, like a chat. */}
       <section className="mt-6">
-        <h2 className="mb-3 font-serif text-xl font-semibold text-ink">{t.detail.history}</h2>
+        <h2 className="mb-3 font-mid text-xl font-semibold text-ink">{t.detail.history}</h2>
         {activities.length === 0 ? (
           <p className="text-base text-ink-mute">{t.detail.noHistory}</p>
         ) : (
@@ -323,7 +323,7 @@ export default async function ProspetoPage({
             {activities.map((a) => (
               <li
                 key={a.id}
-                className="rounded-2xl rounded-tl-sm border border-line bg-paper-2 px-4 py-3"
+                className="rounded-2xl rounded-tl-sm border border-line bg-surface-sunken px-4 py-3"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span className="text-base font-semibold text-ink">

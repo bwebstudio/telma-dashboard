@@ -64,7 +64,7 @@ export default async function EquipaPage() {
               <li key={rep.id} className="card p-4 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-serif text-lg font-semibold text-ink">{rep.full_name}</p>
+                    <p className="font-mid text-lg font-semibold text-ink">{rep.full_name}</p>
                     <p className="text-base text-ink-soft">
                       {dict.crm.country[rep.country]}
                       {rep.territory ? ` · ${rep.territory}` : ''}
@@ -93,7 +93,7 @@ export default async function EquipaPage() {
 
                 <Link
                   href={`/crm/prospetos?rep=${rep.id}`}
-                  className="mt-3 inline-block text-base font-medium text-accent hover:underline"
+                  className="mt-3 inline-block text-base font-medium text-brand-accent hover:underline"
                 >
                   {dict.crm.list.title} ({s.total})
                 </Link>
@@ -105,7 +105,7 @@ export default async function EquipaPage() {
 
       <section className="card mb-6 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="font-serif text-lg font-semibold text-ink">{t.unassignedPool}</p>
+          <p className="font-mid text-lg font-semibold text-ink">{t.unassignedPool}</p>
           <Link href="/crm/prospetos?rep=none" className="btn-secondary min-h-[2.75rem]">
             {unassigned.active}
           </Link>
@@ -128,9 +128,9 @@ function Metric({
 }) {
   const color = tone === 'warn' ? 'text-warn' : tone === 'ok' ? 'text-ok' : 'text-ink'
   return (
-    <div className="rounded-xl bg-paper-2 px-3 py-2">
+    <div className="rounded-xl bg-surface-sunken px-3 py-2">
       <dt className="text-sm text-ink-mute">{label}</dt>
-      <dd className={`font-serif text-2xl font-semibold ${color}`}>{value}</dd>
+      <dd className={`font-mid text-2xl font-semibold ${color}`}>{value}</dd>
     </div>
   )
 }

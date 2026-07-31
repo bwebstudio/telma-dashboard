@@ -11,6 +11,6 @@ export const config = {
   // sessions). /api/crm is deliberately included: the offline queue on the
   // phone posts there and needs a refreshed session.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/availability|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|ico|webmanifest|woff2)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/availability|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|webmanifest|woff2)$).*)',
   ],
 }

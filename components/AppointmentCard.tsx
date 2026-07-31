@@ -72,7 +72,7 @@ export function AppointmentCard({
     <article className="card p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-serif text-xl font-semibold text-ink">
+          <h3 className="font-mid text-xl font-semibold text-ink">
             {appt.patient_name}
           </h3>
           <a
@@ -93,7 +93,7 @@ export function AppointmentCard({
       </dl>
 
       {appt.summary && (
-        <p className="mt-4 rounded-xl bg-paper-2 px-4 py-3 text-base leading-relaxed text-ink-soft">
+        <p className="mt-4 rounded-xl bg-surface-sunken px-4 py-3 text-base leading-relaxed text-ink-soft">
           <span className="label-caps mb-1 block">{dict.common.summary}</span>
           {appt.summary}
         </p>
@@ -200,7 +200,7 @@ function AlterPanel({
 }) {
   const [value, setValue] = useState('')
   return (
-    <div className="mt-4 rounded-xl border border-line bg-paper-2 p-4">
+    <div className="mt-4 rounded-xl border border-line bg-surface-sunken p-4">
       <p className="mb-3 flex items-start gap-2 text-sm text-warn">
         <IconClose className="mt-0.5 h-4 w-4 shrink-0 rotate-45" />
         {dict.marcacoes.alterWarning}
@@ -244,7 +244,7 @@ function RejectPanel({
 }) {
   const [reason, setReason] = useState('')
   return (
-    <div className="mt-4 rounded-xl border border-line bg-paper-2 p-4">
+    <div className="mt-4 rounded-xl border border-line bg-surface-sunken p-4">
       <label className="field-label" htmlFor="reject-reason">
         {dict.marcacoes.rejectReason}
       </label>

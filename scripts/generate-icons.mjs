@@ -3,7 +3,7 @@
 // Run with: node scripts/generate-icons.mjs
 // Output:   public/icons/*.png
 //
-// A flat terracotta tile with a cream "T", drawn as rectangles and encoded as
+// A flat forest-green tile with an off-white "T", drawn as rectangles and encoded as
 // a PNG by hand (zlib is in Node). Full bleed with a generous margin, so the
 // same file works as a maskable Android icon and as an iOS home screen icon.
 
@@ -15,8 +15,8 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = join(ROOT, 'public', 'icons')
 
-const TERRACOTTA = [0xa9, 0x4a, 0x27]
-const CREAM = [0xf6, 0xf2, 0xea]
+const BRAND = [0x18, 0x3c, 0x37]
+const CREAM = [0xfc, 0xfc, 0xfa]
 
 const CRC_TABLE = (() => {
   const table = new Int32Array(256)
@@ -90,7 +90,7 @@ function isMark(x, y, size) {
 }
 
 function build(size) {
-  return png(size, (x, y) => (isMark(x, y, size) ? CREAM : TERRACOTTA))
+  return png(size, (x, y) => (isMark(x, y, size) ? CREAM : BRAND))
 }
 
 mkdirSync(OUT, { recursive: true })

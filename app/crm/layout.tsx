@@ -36,7 +36,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
         isAdmin ? (
           <Link
             href="/clinicas"
-            className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base text-ink-mute hover:bg-paper-3 hover:text-ink"
+            className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base text-ink-mute hover:bg-brand-wash hover:text-ink"
           >
             ← {t.nav.backToPanel}
           </Link>
@@ -51,7 +51,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
       {isAdmin && (
         <Link
           href="/clinicas"
-          className="mt-8 inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-accent md:hidden"
+          className="mt-8 inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-brand-accent md:hidden"
         >
           ← {t.nav.backToPanel}
         </Link>

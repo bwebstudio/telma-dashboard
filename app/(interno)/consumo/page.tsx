@@ -45,7 +45,7 @@ export default async function ConsumoPage() {
       <div className="card overflow-hidden">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-line bg-paper-2">
+            <tr className="border-b border-line bg-surface-sunken">
               <th className="label-caps px-4 py-3">{t.colName}</th>
               <th className="label-caps px-4 py-3">{t.totalCalls}</th>
               <th className="label-caps px-4 py-3">{t.totalMinutes}</th>

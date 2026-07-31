@@ -129,7 +129,7 @@ export default async function CrmHojePage({
       <div
         role="tablist"
         aria-label={t.today.title}
-        className="mb-3 flex gap-1 rounded-2xl border border-line bg-paper-2 p-1 sm:mb-5"
+        className="mb-3 flex gap-1 rounded-2xl border border-line bg-surface-sunken p-1 sm:mb-5"
       >
         <Tab href={`/crm/hoje${scopeQuery}`} active={!showNoDate} count={dueRows.length}>
           {t.today.tabToday}
@@ -172,11 +172,11 @@ function Tab({
       role="tab"
       aria-selected={active}
       className={`flex min-h-[3rem] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-2 text-base font-medium transition-colors ${
-        active ? 'bg-ink text-paper' : 'text-ink-soft hover:text-ink'
+        active ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
       }`}
     >
       {children}
-      <span className={active ? 'text-paper/70' : 'text-ink-mute'}>{count}</span>
+      <span className={active ? 'text-white/70' : 'text-ink-mute'}>{count}</span>
     </Link>
   )
 }

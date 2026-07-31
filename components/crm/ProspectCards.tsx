@@ -56,12 +56,12 @@ export function ProspectCards({
           <li
             key={row.id}
             className={`rounded-2xl border p-4 ${
-              row.overdue ? 'border-warn/45 bg-warn-soft' : 'border-line bg-paper'
+              row.overdue ? 'border-warn/45 bg-warn-soft' : 'border-line bg-surface'
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <Link href={`/crm/prospetos/${row.id}`} className="min-w-0 flex-1">
-                <p className="font-serif text-lg font-semibold leading-snug text-ink">
+                <p className="font-mid text-lg font-semibold leading-snug text-ink">
                   {row.name}
                 </p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-ink-soft">
@@ -93,7 +93,7 @@ export function ProspectCards({
               {row.phone && row.telHref ? (
                 <a
                   href={row.telHref}
-                  className="flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 text-base font-semibold text-paper hover:bg-accent-dark"
+                  className="flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-base font-semibold text-white hover:bg-brand-hover"
                 >
                   <IconPhone className="h-5 w-5" />
                   {row.phone}
@@ -106,7 +106,7 @@ export function ProspectCards({
               <button
                 type="button"
                 onClick={() => setLogging(row)}
-                className="min-h-[3rem] shrink-0 rounded-xl border border-ink/25 px-4 text-base font-semibold text-ink hover:border-ink hover:bg-ink hover:text-paper"
+                className="min-h-[3rem] shrink-0 rounded-xl border border-ink/25 px-4 text-base font-semibold text-ink hover:border-ink hover:bg-ink hover:text-white"
               >
                 {t.logShort}
               </button>

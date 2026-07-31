@@ -61,7 +61,7 @@ export default async function FichaPage({ params }: { params: Promise<{ id: stri
 
   return (
     <>
-      <Link href="/clinicas" className="mb-4 inline-block text-base text-ink-mute hover:text-accent">
+      <Link href="/clinicas" className="mb-4 inline-block text-base text-ink-mute hover:text-brand-accent">
         ← {dict.internoNav.clinicas}
       </Link>
       <PageHeader

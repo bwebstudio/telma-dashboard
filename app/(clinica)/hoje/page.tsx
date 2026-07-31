@@ -59,7 +59,7 @@ export default async function HojePage() {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <SectionTitle>{dict.hoje.callsTitle}</SectionTitle>
-          <Link href="/chamadas" className="text-base text-accent hover:text-accent-dark">
+          <Link href="/chamadas" className="text-base text-brand-accent hover:text-brand-hover">
             {dict.hoje.seeAll}
           </Link>
         </div>

@@ -23,7 +23,7 @@ export function LogButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-accent text-lg font-semibold text-paper shadow-lg shadow-ink/10 transition-colors hover:bg-accent-dark md:w-auto md:px-8 md:shadow-none"
+          className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-brand text-lg font-semibold text-white shadow-lg shadow-ink/10 transition-colors hover:bg-brand-hover md:w-auto md:px-8 md:shadow-none"
         >
           {strings.logCall}
         </button>

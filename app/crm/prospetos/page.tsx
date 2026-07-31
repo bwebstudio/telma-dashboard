@@ -70,7 +70,14 @@ export default async function ProspetosPage({
       lateBy: overdue && p.next_action_at ? lateness(p.next_action_at, now) : null,
       lastNote: last?.note ?? null,
       lastResultLabel: last?.result ? t.result[last.result] : null,
-      repLabel: p.rep_id ? (repName.get(p.rep_id) ?? null) : t.list.unassigned,
+      // Naming the owner is only information when it is somebody else. On a
+      // rep's own pipeline it is their own name on every single card.
+      repLabel:
+        p.rep_id === user.id
+          ? null
+          : p.rep_id
+            ? (repName.get(p.rep_id) ?? null)
+            : t.list.unassigned,
     }
   })
 
@@ -133,7 +140,7 @@ export default async function ProspetosPage({
           <div className="card overflow-hidden">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-line bg-paper-2">
+                <tr className="border-b border-line bg-surface-sunken">
                   <Th>{t.list.colName}</Th>
                   <Th>{t.list.colZone}</Th>
                   <Th>{dict.common.phone}</Th>
@@ -148,11 +155,11 @@ export default async function ProspetosPage({
                   const tz = tzFor(p.country)
                   const overdue = Boolean(p.next_action_at && new Date(p.next_action_at) < now)
                   return (
-                    <tr key={p.id} className="border-b border-line last:border-0 hover:bg-paper-2/60">
+                    <tr key={p.id} className="border-b border-line last:border-0 hover:bg-surface-sunken/60">
                       <Td>
                         <Link
                           href={`/crm/prospetos/${p.id}`}
-                          className="font-medium text-ink hover:text-accent"
+                          className="font-medium text-ink hover:text-brand-accent"
                         >
                           {p.name}
                         </Link>
@@ -163,7 +170,7 @@ export default async function ProspetosPage({
                       <Td className="text-ink-soft">{p.zone ?? '—'}</Td>
                       <Td>
                         {p.phone ? (
-                          <a href={telHref(p.phone, p.country) ?? undefined} className="text-ink hover:text-accent">
+                          <a href={telHref(p.phone, p.country) ?? undefined} className="text-ink hover:text-brand-accent">
                             {p.phone}
                           </a>
                         ) : (
@@ -184,7 +191,7 @@ export default async function ProspetosPage({
                       <Td>
                         <Link
                           href={`/crm/prospetos/${p.id}`}
-                          className="inline-flex text-ink-mute hover:text-accent"
+                          className="inline-flex text-ink-mute hover:text-brand-accent"
                           aria-label={p.name}
                         >
                           <IconChevron className="h-5 w-5" />

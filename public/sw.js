@@ -10,7 +10,7 @@
 // Writes do not depend on this file. Logged interactions are queued in
 // localStorage by the app itself and retried when the connection returns.
 
-const VERSION = 'telma-v1'
+const VERSION = 'telma-v2'
 const STATIC_CACHE = `${VERSION}-static`
 
 const PRECACHE = [
@@ -25,12 +25,12 @@ const OFFLINE_HTML = `<!doctype html>
 <title>Sem ligação</title>
 <style>
   body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-       background:#F6F2EA;color:#14110E;font:400 17px/1.5 system-ui,sans-serif;padding:24px}
+       background:#FCFCFA;color:#111827;font:400 17px/1.5 system-ui,sans-serif;padding:24px}
   div{max-width:22rem;text-align:center}
   h1{font-size:1.5rem;margin:0 0 .5rem}
-  p{color:#4A433B;margin:0 0 1.5rem}
+  p{color:#4B5563;margin:0 0 1.5rem}
   button{min-height:3rem;padding:0 1.75rem;border:0;border-radius:999px;
-         background:#A94A27;color:#F6F2EA;font-size:1rem;font-weight:600}
+         background:#183C37;color:#fff;font-size:1rem;font-weight:600}
 </style></head>
 <body><div>
   <h1>Sem ligação</h1>

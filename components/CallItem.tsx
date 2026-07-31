@@ -24,7 +24,7 @@ export function CallItem({
   return (
     <details className="group border-b border-line last:border-b-0">
       <summary className="flex cursor-pointer list-none items-center gap-3 py-3.5 [&::-webkit-details-marker]:hidden">
-        <span className="w-16 shrink-0 font-serif text-lg text-ink">
+        <span className="w-16 shrink-0 font-mid text-lg text-ink">
           {formatTime(call.created_at, locale)}
         </span>
         <span className="min-w-0 flex-1 truncate text-base text-ink-soft">

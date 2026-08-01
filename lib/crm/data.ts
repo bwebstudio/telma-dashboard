@@ -106,6 +106,21 @@ export async function fetchLastActivities(supabase: Db): Promise<Map<string, Crm
   return last
 }
 
+// Everything logged since a moment, for the "last 7 days" block. Scoped by RLS
+// like every other read, so a rep counts their own work and nobody else's.
+export async function fetchActivitiesSince(
+  supabase: Db,
+  sinceIso: string
+): Promise<CrmActivity[]> {
+  const { data } = await supabase
+    .from('crm_activities')
+    .select('*')
+    .gte('created_at', sinceIso)
+    .order('created_at', { ascending: false })
+    .limit(MAX_ROWS)
+  return (data as CrmActivity[] | null) ?? []
+}
+
 // Filters ------------------------------------------------------------------
 
 export interface ProspectFilters {

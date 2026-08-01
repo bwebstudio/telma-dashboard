@@ -125,6 +125,14 @@ export function IconSales({ className }: P) {
     </svg>
   )
 }
+export function IconChart({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 19h16" />
+      <path d="M6.5 19v-5M11 19V8.5M15.5 19v-7M20 19V5.5" />
+    </svg>
+  )
+}
 export function IconTeam({ className }: P) {
   return (
     <svg {...base} className={className}>

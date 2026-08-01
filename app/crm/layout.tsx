@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { requireCrmSession } from '@/lib/crm/data'
 import { Shell, type NavItem } from '@/components/Shell'
-import { IconToday, IconClinic, IconPlus, IconTeam } from '@/components/icons'
+import { IconToday, IconChart, IconClinic, IconPlus, IconTeam } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { isDemo } from '@/lib/demo/config'
 
@@ -16,6 +16,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
 
   const nav: NavItem[] = [
     { href: '/crm/hoje', label: t.nav.hoje, icon: <IconToday /> },
+    { href: '/crm/resumo', label: t.resumo.title, icon: <IconChart /> },
     { href: '/crm/prospetos', label: t.nav.prospetos, icon: <IconClinic /> },
     { href: '/crm/prospetos/novo', label: t.nav.novo, icon: <IconPlus /> },
   ]

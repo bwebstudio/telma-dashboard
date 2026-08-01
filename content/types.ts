@@ -344,6 +344,26 @@ export interface Dictionary {
       dupCreateAnyway: string
       dupChecking: string
     }
+    resumo: {
+      title: string
+      subtitle: string
+      attention: string
+      overdue: string
+      noDate: string
+      unassigned: string
+      funnel: string
+      funnelHint: string
+      byZone: string
+      byZoneHint: string
+      otherZones: string
+      week: string
+      weekCalls: string
+      weekClinics: string
+      weekInterested: string
+      weekWon: string
+      empty: string
+      nothingPending: string
+    }
     team: {
       title: string
       subtitle: string

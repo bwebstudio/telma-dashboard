@@ -124,6 +124,9 @@ export interface CrmProspect {
   phone: string | null
   phone_digits: string
   website: string | null
+  /** WGS84. Null until the address has been geocoded. */
+  lat: number | null
+  lon: number | null
   origin: CrmOrigin
   origin_note: string | null
   rep_id: string | null

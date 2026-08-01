@@ -55,7 +55,7 @@ export function Shell({
       {/* Sidebar (desktop) */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface-sunken md:flex">
         <div className="flex h-16 items-center gap-2 px-6">
-          <Logo height={26} />
+          <Logo height={34} />
           <span className="label-caps mt-1">
             {variantLabel ?? VARIANT_LABEL[variant]}
           </span>
@@ -120,7 +120,7 @@ export function Shell({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar (mobile) */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-bg/90 px-4 backdrop-blur md:hidden">
-          <Logo height={22} />
+          <Logo height={30} />
           <div className="flex items-center gap-1">
             {accountHref && (
               <Link

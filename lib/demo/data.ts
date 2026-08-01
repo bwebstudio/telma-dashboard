@@ -81,6 +81,8 @@ function prospect(p: Partial<CrmProspect> & { id: string; name: string }): CrmPr
     address: null,
     phone: null,
     website: null,
+    lat: null,
+    lon: null,
     origin: 'cold',
     origin_note: null,
     rep_id: null,

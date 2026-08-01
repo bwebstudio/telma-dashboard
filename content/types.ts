@@ -258,6 +258,14 @@ export interface Dictionary {
       colZone: string
       noNext: string
       unassigned: string
+      viewList: string
+      viewMap: string
+      openRecord: string
+      directions: string
+      nearMe: string
+      locating: string
+      noPosition: string
+      noPins: string
     }
     log: {
       title: string

@@ -14,6 +14,7 @@ import { lateness, smartStamp, tzFor } from '@/lib/crm/time'
 import { telHref } from '@/lib/crm/phone'
 import { ProspectCards, type ProspectRow } from '@/components/crm/ProspectCards'
 import { ProspectFilters } from '@/components/crm/ProspectFilters'
+import { ProspectMap, type MapPin } from '@/components/crm/ProspectMap'
 import { crmStrings } from '@/lib/crm/strings'
 import { CrmLive } from '@/components/crm/CrmLive'
 import { Badge } from '@/components/ui'
@@ -41,6 +42,7 @@ export default async function ProspetosPage({
 }) {
   const params = await searchParams
   const filters = parseFilters(params)
+  const onMap = params.view === 'mapa'
   const { user, isAdmin, rep, dict, locale } = await requireCrmSession()
   const t = dict.crm
   const supabase = await createClient()
@@ -81,7 +83,24 @@ export default async function ProspetosPage({
     }
   })
 
+  const pins: MapPin[] = prospects
+    .filter((p) => p.lat !== null && p.lon !== null)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      lat: p.lat as number,
+      lon: p.lon as number,
+      stage: p.stage,
+      zone: p.zone,
+      address: p.address,
+      phone: p.phone,
+      telHref: telHref(p.phone, p.country),
+      specialtyLabel: t.specialty[p.specialty],
+    }))
+
   const query = filtersToQuery(filters)
+  const viewQuery = (view: 'lista' | 'mapa') =>
+    `/crm/prospetos?${new URLSearchParams({ ...(query ? Object.fromEntries(new URLSearchParams(query)) : {}), ...(view === 'mapa' ? { view: 'mapa' } : {}) })}`
 
   return (
     <>
@@ -115,18 +134,54 @@ export default async function ProspetosPage({
         </div>
       </div>
 
-      <ProspectFilters
-        filters={filters}
-        reps={reps}
-        isAdmin={isAdmin}
-        showMine={rep !== null}
-        dict={dict}
-      />
+      <div className={onMap ? 'hidden md:block' : ''}>
+        <ProspectFilters
+          filters={filters}
+          reps={reps}
+          isAdmin={isAdmin}
+          showMine={rep !== null}
+          dict={dict}
+        />
+      </div>
 
-      <p className="mb-2 text-base text-ink-mute sm:mb-3">
-        {prospects.length} {t.list.results}
-      </p>
+      {/* List or map. Same clinics, same filters, two questions: "who do I call
+          next" and "what is around me". A rep who spends the day walking asks
+          the second one far more often. */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-base text-ink-mute">
+          {prospects.length} {t.list.results}
+        </p>
+        <div
+          role="tablist"
+          aria-label={t.list.title}
+          className="flex gap-1 rounded-pill border border-line bg-surface-sunken p-1"
+        >
+          <ViewTab href={viewQuery('lista')} active={!onMap}>
+            {t.list.viewList}
+          </ViewTab>
+          <ViewTab href={viewQuery('mapa')} active={onMap}>
+            {t.list.viewMap}
+          </ViewTab>
+        </div>
+      </div>
 
+      {onMap ? (
+        pins.length === 0 ? (
+          <div className="card px-6 py-10 text-center text-lg text-ink-mute">{t.list.noPins}</div>
+        ) : (
+          <ProspectMap
+            pins={pins}
+            labels={{
+              openRecord: t.list.openRecord,
+              directions: t.list.directions,
+              nearMe: t.list.nearMe,
+              locating: t.list.locating,
+              noPosition: t.list.noPosition,
+            }}
+          />
+        )
+      ) : (
+        <>
       {/* Phone: cards, with the phone number as the main action. */}
       <div className="md:hidden">
         <ProspectCards rows={rows} strings={crmStrings(dict)} emptyMessage={t.list.empty} showStage />
@@ -205,7 +260,32 @@ export default async function ProspetosPage({
           </div>
         )}
       </div>
+        </>
+      )}
     </>
+  )
+}
+
+function ViewTab({
+  href,
+  active,
+  children,
+}: {
+  href: string
+  active: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      href={href}
+      role="tab"
+      aria-selected={active}
+      className={`flex min-h-[2.5rem] items-center rounded-pill px-4 text-base font-medium transition-colors ${
+        active ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
+      }`}
+    >
+      {children}
+    </Link>
   )
 }
 

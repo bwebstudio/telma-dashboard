@@ -43,6 +43,10 @@ export default async function ProspetosPage({
   const params = await searchParams
   const filters = parseFilters(params)
   const onMap = params.view === 'mapa'
+  // Same rule as HOJE: somebody who is both admin and rep sees their own work
+  // first. Giving Domingos a map and opening it on five hundred clinics across
+  // two countries is not giving him a map.
+  const teamView = params.scope === 'team'
   const { user, isAdmin, rep, dict, locale } = await requireCrmSession()
   const t = dict.crm
   const supabase = await createClient()
@@ -53,7 +57,9 @@ export default async function ProspetosPage({
     fetchLastActivities(supabase),
   ])
   const repName = new Map(reps.map((r) => [r.id, r.full_name]))
-  const prospects = applyFilters(all, filters, user.id).sort(byUrgency)
+  const canSwitch = isAdmin && rep !== null
+  const scoped = canSwitch && !teamView ? all.filter((p) => p.rep_id === user.id) : all
+  const prospects = applyFilters(scoped, filters, user.id).sort(byUrgency)
 
   const now = new Date()
   const rows: ProspectRow[] = prospects.map((p) => {
@@ -99,8 +105,16 @@ export default async function ProspetosPage({
     }))
 
   const query = filtersToQuery(filters)
-  const viewQuery = (view: 'lista' | 'mapa') =>
-    `/crm/prospetos?${new URLSearchParams({ ...(query ? Object.fromEntries(new URLSearchParams(query)) : {}), ...(view === 'mapa' ? { view: 'mapa' } : {}) })}`
+  const linkTo = (over: Record<string, string>) => {
+    const base = query ? Object.fromEntries(new URLSearchParams(query)) : {}
+    if (onMap) base.view = 'mapa'
+    if (teamView) base.scope = 'team'
+    const next = { ...base, ...over }
+    for (const [k, v] of Object.entries(next)) if (!v) delete next[k]
+    const qs = new URLSearchParams(next).toString()
+    return `/crm/prospetos${qs ? `?${qs}` : ''}`
+  }
+  const viewQuery = (view: 'lista' | 'mapa') => linkTo({ view: view === 'mapa' ? 'mapa' : '' })
 
   return (
     <>
@@ -151,6 +165,14 @@ export default async function ProspetosPage({
         <p className="text-base text-ink-mute">
           {prospects.length} {t.list.results}
         </p>
+        {canSwitch && (
+          <Link
+            href={linkTo({ scope: teamView ? '' : 'team' })}
+            className="flex min-h-[2.5rem] shrink-0 items-center whitespace-nowrap rounded-pill border border-line-strong px-3 text-sm font-medium text-ink-soft hover:border-ink hover:text-ink"
+          >
+            {teamView ? t.today.scopeMine : t.today.scopeTeam}
+          </Link>
+        )}
         <div
           role="tablist"
           aria-label={t.list.title}

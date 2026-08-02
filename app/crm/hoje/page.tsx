@@ -64,6 +64,8 @@ export default async function CrmHojePage({
       lateBy: overdue && p.next_action_at ? lateness(p.next_action_at, now) : null,
       lastNote: last?.note ?? p.next_action_text ?? null,
       lastResultLabel: last?.result ? t.result[last.result] : null,
+      referral:
+        p.origin === 'referral' ? (p.origin_note || t.origin.referral) : null,
       // Only worth naming the owner when looking at more than your own work.
       repLabel: teamView
         ? p.rep_id

@@ -90,6 +90,14 @@ export function ProspectFilters({
             </select>
           </Field>
 
+          <Field id="origin" label={t.list.filterOrigin}>
+            <select id="origin" name="origin" defaultValue={filters.origin} className="field-input">
+              <option value="">{dict.common.all}</option>
+              <option value="referral">{t.list.referredOnly}</option>
+              <option value="cold">{t.list.coldOnly}</option>
+            </select>
+          </Field>
+
           <Field id="from" label={t.list.filterFrom}>
             <input
               id="from"

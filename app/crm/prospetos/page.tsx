@@ -78,6 +78,8 @@ export default async function ProspetosPage({
       lateBy: overdue && p.next_action_at ? lateness(p.next_action_at, now) : null,
       lastNote: last?.note ?? null,
       lastResultLabel: last?.result ? t.result[last.result] : null,
+      referral:
+        p.origin === 'referral' ? (p.origin_note || t.origin.referral) : null,
       // Naming the owner is only information when it is somebody else. On a
       // rep's own pipeline it is their own name on every single card.
       repLabel:
@@ -102,6 +104,7 @@ export default async function ProspetosPage({
       phone: p.phone,
       telHref: telHref(p.phone, p.country),
       specialtyLabel: t.specialty[p.specialty],
+      referral: p.origin === 'referral' ? (p.origin_note || t.origin.referral) : null,
     }))
 
   const query = filtersToQuery(filters)

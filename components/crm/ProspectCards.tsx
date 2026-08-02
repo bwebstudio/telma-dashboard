@@ -27,6 +27,9 @@ export interface ProspectRow {
   lastNote: string | null
   lastResultLabel: string | null
   repLabel: string | null
+  /** Who sent this lead, when somebody did. Mónica already made the
+      introduction for hers, and that changes how the call opens. */
+  referral: string | null
 }
 
 export function ProspectCards({
@@ -72,6 +75,9 @@ export function ProspectCards({
                     </span>
                   )}
                   {row.zone && <span>{row.zone}</span>}
+                  {row.referral && (
+                    <span className="badge bg-brand-wash text-brand">↗ {row.referral}</span>
+                  )}
                   {showStage && <span>{t.stage[row.stage]}</span>}
                   {row.repLabel && <span>{row.repLabel}</span>}
                 </p>

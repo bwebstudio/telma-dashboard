@@ -86,7 +86,17 @@ export default async function ProspetoPage({
               {prospect.zone ? ` · ${prospect.zone}` : ''} · {t.country[prospect.country]}
             </p>
           </div>
-          <Badge tone={stageTone[prospect.stage]}>{t.stage[prospect.stage]}</Badge>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {/* Mónica already made the introduction for the leads she sent, so
+                how the call opens depends on this. It belongs in the header,
+                not three sections down under "Datos". */}
+            {prospect.origin === 'referral' && (
+              <span className="badge bg-brand-wash text-brand">
+                ↗ {prospect.origin_note || t.origin.referral}
+              </span>
+            )}
+            <Badge tone={stageTone[prospect.stage]}>{t.stage[prospect.stage]}</Badge>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">

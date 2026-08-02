@@ -28,6 +28,7 @@ export interface MapPin {
   phone: string | null
   telHref: string | null
   specialtyLabel: string
+  referral: string | null
 }
 
 // Pins carry the stage as colour, so a district reads as a state of play rather
@@ -142,6 +143,13 @@ export function ProspectMap({
              <p style="margin:0 0 10px;color:#5F6B66;font-size:13px;line-height:1.4">${escapeHtml(
                [pin.specialtyLabel, pin.zone].filter(Boolean).join(' · ')
              )}${pin.address ? `<br>${escapeHtml(pin.address)}` : ''}</p>
+             ${
+               pin.referral
+                 ? `<p style="margin:-6px 0 10px;display:inline-block;padding:2px 8px;
+                      border-radius:999px;background:#EFF3F1;color:#183C37;font-size:12px;
+                      font-weight:550">&#8599; ${escapeHtml(pin.referral)}</p>`
+                 : ''
+             }
              ${
                pin.telHref
                  ? `<a href="${pin.telHref}" style="display:flex;align-items:center;justify-content:center;

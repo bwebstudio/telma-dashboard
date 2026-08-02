@@ -240,6 +240,9 @@ export interface Dictionary {
       filterRep: string
       filterCountry: string
       filterStage: string
+      filterOrigin: string
+      referredOnly: string
+      coldOnly: string
       filterFrom: string
       filterTo: string
       unassignedOnly: string

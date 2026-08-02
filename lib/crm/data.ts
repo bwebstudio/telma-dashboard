@@ -128,6 +128,7 @@ export interface ProspectFilters {
   rep: string // rep id, 'none' for unassigned, '' for any
   country: string
   stage: string
+  origin: string
   from: string // yyyy-mm-dd
   to: string
   mine: boolean
@@ -139,6 +140,7 @@ export function parseFilters(params: Record<string, string | undefined>): Prospe
     rep: params.rep ?? '',
     country: params.country ?? '',
     stage: params.stage ?? '',
+    origin: params.origin ?? '',
     from: params.from ?? '',
     to: params.to ?? '',
     mine: params.mine === '1',
@@ -151,6 +153,7 @@ export function filtersToQuery(f: ProspectFilters): string {
   if (f.rep) p.set('rep', f.rep)
   if (f.country) p.set('country', f.country)
   if (f.stage) p.set('stage', f.stage)
+  if (f.origin) p.set('origin', f.origin)
   if (f.from) p.set('from', f.from)
   if (f.to) p.set('to', f.to)
   if (f.mine) p.set('mine', '1')
@@ -177,6 +180,7 @@ export function applyFilters(
     if (f.rep && f.rep !== 'none' && p.rep_id !== f.rep) return false
     if (f.country && p.country !== (f.country as CrmCountry)) return false
     if (f.stage && p.stage !== (f.stage as CrmStage)) return false
+    if (f.origin && p.origin !== f.origin) return false
 
     if (from !== null || to !== null) {
       if (!p.next_action_at) return false

@@ -62,6 +62,22 @@ export async function alterAppointment(id: string, scheduledAtISO: string) {
   refresh()
 }
 
+// "I know about this one." Takes the cancellation out of the alert band
+// without touching the booking itself: the slot stays cancelled, the agenda
+// still shows it, and the record of when the clinic noticed is kept.
+export async function acknowledgeCancellation(id: string) {
+  const cid = await writableClinicId()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('appointments')
+    .update({ cancel_seen_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('clinic_id', cid)
+    .eq('status', 'cancelada')
+  if (error) throw new Error(error.message)
+  refresh()
+}
+
 export async function rejectAppointment(id: string, reason: string) {
   const cid = await writableClinicId()
   const supabase = await createClient()

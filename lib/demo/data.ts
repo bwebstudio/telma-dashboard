@@ -202,6 +202,7 @@ export const store: DemoStore = {
       cancelled_at: null,
       cancelled_by: null,
       cancel_reason: null,
+      cancel_seen_at: null,
       created_at: iso(-200),
     },
   ],

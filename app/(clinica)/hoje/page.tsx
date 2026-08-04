@@ -20,10 +20,6 @@ import type { Appointment, Call } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
-// A cancellation older than this has already been dealt with; keeping it in the
-// alert band forever would train the reader to scroll past the band.
-const CANCELLED_WINDOW_HOURS = 24
-
 export default async function AgendaPage({
   searchParams,
 }: {
@@ -46,9 +42,8 @@ export default async function AgendaPage({
   // because somebody is looking at next Tuesday.
   const todayStart = startOfDayIn(tz, now)
   const todayEnd = endOfDayIn(tz, now)
-  const cancelledSince = new Date(now.getTime() - CANCELLED_WINDOW_HOURS * 3600_000)
 
-  const [dayRes, pendingRes, cancelledRes, callsRes] = await Promise.all([
+  const [dayRes, pendingRes, cancelledRes, cancelledTodayRes, callsRes] = await Promise.all([
     // The day on screen.
     supabase
       .from('appointments')
@@ -67,13 +62,27 @@ export default async function AgendaPage({
       .eq('status', 'pendente')
       .gte('scheduled_at', todayStart.toISOString())
       .order('scheduled_at', { ascending: true }),
+    // Cancellations nobody has said they have seen, for a slot that has not
+    // already gone by. It used to age out after a day, which is the wrong end
+    // to solve it from — a timer either nags about something already handled
+    // or drops something nobody read. Now the clinic says when it is done.
     supabase
       .from('appointments')
       .select('*')
       .eq('clinic_id', clinicId)
       .eq('status', 'cancelada')
-      .gte('cancelled_at', cancelledSince.toISOString())
+      .is('cancel_seen_at', null)
+      .gte('scheduled_at', todayStart.toISOString())
       .order('cancelled_at', { ascending: false }),
+    // The counter is a different question: how many were cancelled today,
+    // acknowledged or not.
+    supabase
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('clinic_id', clinicId)
+      .eq('status', 'cancelada')
+      .gte('cancelled_at', todayStart.toISOString())
+      .lte('cancelled_at', todayEnd.toISOString()),
     supabase
       .from('calls')
       .select('*')
@@ -93,8 +102,7 @@ export default async function AgendaPage({
     whatsapp: calls.filter((c) => c.channel === 'whatsapp').length,
     bookings: calls.filter((c) => c.result === 'marcacao').length,
     info: calls.filter((c) => c.result === 'informacao').length,
-    cancelled: cancelled.filter((a) => a.cancelled_at && new Date(a.cancelled_at) >= todayStart)
-      .length,
+    cancelled: cancelledTodayRes.count ?? 0,
   }
 
   const dayKey = dayKeyIn(tz, day)
@@ -120,8 +128,8 @@ export default async function AgendaPage({
       {/* The order here is deliberate and it is not "most urgent first".
           Opening onto a stack of things that need answering reads as a list of
           problems, and a receptionist arriving at eight in the morning bounces
-          off it. So: what Telma already handled, then the day, then what is
-          waiting. Reassurance, context, then work. */}
+          off it. So: what Telma already handled, then what needs an answer,
+          then the day itself. Reassurance, then work, then the plan. */}
       <section className="mb-10">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-ink">{t.doneTitle}</h2>
@@ -153,7 +161,16 @@ export default async function AgendaPage({
         </dl>
       </section>
 
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+      <AttentionBand
+        pending={pending}
+        cancelled={cancelled}
+        dict={dict}
+        locale={locale}
+        tz={tz}
+        readOnly={readOnly}
+      />
+
+      <div className="mb-4 mt-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h2 className="text-xl font-semibold text-ink">
           {weekdayDateIn(day.toISOString(), locale, tz)}
         </h2>
@@ -178,17 +195,6 @@ export default async function AgendaPage({
         tz={tz}
         isToday={isToday}
       />
-
-      <div className="mt-10">
-        <AttentionBand
-          pending={pending}
-          cancelled={cancelled}
-          dict={dict}
-          locale={locale}
-          tz={tz}
-          readOnly={readOnly}
-        />
-      </div>
     </>
   )
 }

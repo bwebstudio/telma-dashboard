@@ -22,15 +22,30 @@ pena. Quatro ecrãs:
 **Agenda** ([`/hoje`](app/(clinica)/hoje/page.tsx)) — o ecrã de entrada. Por
 ordem, de cima para baixo:
 
-1. **A precisar de si**: o que foi cancelado nas últimas 24h e o que está por
-   confirmar, uma linha cada, com **Confirmar** ali mesmo. Quando não há nada,
-   di-lo numa frase — um estado vazio que não desenha nada parece uma página
-   que não carregou, e o valor desta faixa está em o silêncio dela ser de fiar.
-2. **O dia**, hora a hora, com ontem / hoje / amanhã e um seletor de data. Uma
-   marcação cancelada **fica na lista**, riscada e marcada como *hora livre*: a
-   hora continua a ser informação, e quem está a ler é quem a pode preencher.
-3. **O que a Telma fez hoje**: chamadas, conversas de WhatsApp, marcações,
+1. **O que a Telma fez hoje**: chamadas, conversas de WhatsApp, marcações,
    informações dadas e cancelamentos.
+2. **A precisar de si**: o que foi cancelado e ainda não foi lido, e o que está
+   por confirmar — uma linha cada, com **Confirmar** ali mesmo. Um cancelamento
+   fica até alguém carregar em **Já vi**; nada aqui desaparece por um
+   temporizador, que ou insiste no que já foi tratado ou deixa cair o que
+   ninguém leu. Quando não há nada, di-lo numa frase — um estado vazio que não
+   desenha nada parece uma página que não carregou, e o valor desta faixa está
+   em o silêncio dela ser de fiar.
+3. **O dia**, hora a hora, com ontem / hoje / amanhã e um seletor de data. Uma
+   marcação cancelada **fica na lista**, riscada: a hora continua a ser
+   informação, e quem está a ler é quem a pode preencher.
+
+A ordem não é "o mais urgente primeiro", e é de propósito. Abrir o painel em
+cima de uma pilha de coisas por responder lê-se como uma lista de problemas, e
+às oito da manhã as pessoas fogem disso. Primeiro o que já foi tratado, depois
+o que falta, depois o plano.
+
+A agenda fala **três palavras**: confirmada, por confirmar, cancelada. A base de
+dados guarda mais — *copiada* diz que a marcação chegou ao software da clínica,
+*rejeitada* diz que foi a clínica a recusar e não o paciente a desmarcar. Ambas
+valem a pena guardar e nenhuma muda o aspeto do dia. Cinco etiquetas numa coluna
+obrigavam a parar para descobrir a diferença; o estado completo continua na
+ficha da marcação, em **Marcações**.
 
 **Conversas** ([`/conversas`](app/(clinica)/conversas/page.tsx)) — chamadas e
 WhatsApp na mesma linha do tempo, filtráveis por canal, resultado e data. Cada
@@ -38,8 +53,20 @@ uma abre para o resumo e a **transcrição completa**, palavra a palavra. Feito
 com `<details>` nativo: funciona antes do JavaScript chegar e não se fecha
 sozinho quando o painel se atualiza por baixo.
 
-**Marcações** e **Horários** — a lista completa (com separador de canceladas) e
-a grelha de disponibilidade.
+**Marcações** — a lista completa, com separador de canceladas.
+
+**Horários** ([`/horarios`](app/(clinica)/horarios/page.tsx)) — duas coisas
+diferentes, por esta ordem:
+
+- **Planeamento**: o calendário, em **semana** ou **mês**. O mês responde a
+  "quando é que posso fechar três dias"; a semana responde a "o que é que a
+  quinta-feira tem, ao certo". Ambos põem por cima as marcações reais e os dias
+  bloqueados, e cada dia abre a agenda desse dia. Num telemóvel cada célula tem
+  50px, onde "Fechado" não cabe: aí o mês mostra o número e a cor, com legenda,
+  e as palavras aparecem a partir de `sm`.
+- **A grelha de horas**: a regra — que horas a clínica oferece numa semana
+  normal. Não é um calendário, e é por isso que o planeamento existe: não se
+  marca umas férias contra uma regra.
 
 #### Estar sempre certo
 
@@ -216,7 +243,8 @@ Ou manualmente, no SQL Editor do Supabase, **por esta ordem**:
 `0001_init.sql`, `0002_rls.sql`, `0003_functions.sql`, `0004_crm_role.sql`,
 `0005_crm.sql`, `0006_crm_rls.sql`, `0007_crm_stage_no_regress.sql`,
 `0007_crm_veterinary.sql`, `0008_crm_geo.sql`, `0009_minute_limits.sql`,
-`0010_one_admin.sql`, `0011_cancel_status.sql`, `0012_clinic_panel.sql`.
+`0010_one_admin.sql`, `0011_cancel_status.sql`, `0012_clinic_panel.sql`,
+`0013_cancel_seen.sql`.
 
 > O `0011` está sozinho pela mesma razão que o `0004`: acrescenta um valor ao
 > enum `appointment_status` e o Postgres recusa usá-lo na transação que o criou.

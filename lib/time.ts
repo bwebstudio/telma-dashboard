@@ -100,6 +100,38 @@ export function fromDayKey(key: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+/** 0 = Sunday … 6 = Saturday, matching Postgres `extract(dow)`. */
+export function weekdayIn(tz: string, date: Date): number {
+  const name = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' }).format(date)
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(name)
+}
+
+/** The Monday of that date's week, as the planner draws weeks Monday first. */
+export function weekStartIn(tz: string, base: Date): Date {
+  const dow = weekdayIn(tz, base)
+  return dayIn(tz, dow === 0 ? -6 : 1 - dow, base)
+}
+
+/** Day 1 of that date's month. */
+export function monthStartIn(tz: string, base: Date): Date {
+  const { y, m } = localParts(base, tz)
+  return new Date(Date.UTC(y, m - 1, 1, 12, 0, 0, 0))
+}
+
+/** How many days that month has. */
+export function daysInMonthIn(tz: string, base: Date): number {
+  const { y, m } = localParts(base, tz)
+  return new Date(Date.UTC(y, m, 0, 12)).getUTCDate()
+}
+
+export function monthLabelIn(base: Date, locale: Locale, tz: string): string {
+  return new Date(base).toLocaleDateString(tag(locale), {
+    timeZone: tz,
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 export function isSameDayIn(a: Date, b: Date, tz: string): boolean {
   const pa = localParts(a, tz)
   const pb = localParts(b, tz)

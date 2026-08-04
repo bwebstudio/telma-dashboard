@@ -1,9 +1,28 @@
 import Link from 'next/link'
 import type { Dictionary, Locale } from '@/content'
-import type { Appointment } from '@/lib/types'
+import type { Appointment, AppointmentStatus } from '@/lib/types'
 import { timeIn } from '@/lib/time'
 import { Badge, APPOINTMENT_TONE } from '@/components/ui'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
+
+/**
+ * The agenda speaks three words: confirmed, to confirm, cancelled.
+ *
+ * The database keeps more — "copiada" means the booking reached the clinic's
+ * own software, "rejeitada" means the clinic turned it down rather than the
+ * patient calling off. Both are worth recording and neither changes what the
+ * day looks like: the appointment is either happening, waiting for an answer,
+ * or not happening. Five labels down a column taught the reader to stop and
+ * work out the difference, which is the opposite of what a day view is for.
+ * The full state is still on the booking's own card in Marcações.
+ */
+const SHOWN_AS: Record<AppointmentStatus, 'confirmada' | 'pendente' | 'cancelada'> = {
+  confirmada: 'confirmada',
+  copiada: 'confirmada',
+  pendente: 'pendente',
+  cancelada: 'cancelada',
+  rejeitada: 'cancelada',
+}
 
 /**
  * The day, in the order it happens.
@@ -132,11 +151,16 @@ function Row({
           <p className={`text-base ${off ? 'text-ink-mute' : 'text-ink-soft'}`}>{appt.reason}</p>
         )}
 
-        {cancelled && (
+        {/* The badge already says "cancelled". What the row adds is the part
+            that changes what somebody does next: who called it off and why. */}
+        {cancelled && (appt.cancelled_by === 'paciente' || appt.cancel_reason) && (
           <p className="mt-1 text-base font-medium text-warn">
-            {appt.cancelled_by === 'paciente' ? dict.agenda.cancelledBy : dict.agenda.justCancelled}
+            {appt.cancelled_by === 'paciente' && dict.agenda.cancelledBy}
             {appt.cancel_reason && (
-              <span className="font-normal text-ink-soft"> · {appt.cancel_reason}</span>
+              <span className="font-normal text-ink-soft">
+                {appt.cancelled_by === 'paciente' ? ' · ' : ''}
+                {appt.cancel_reason}
+              </span>
             )}
           </p>
         )}
@@ -153,8 +177,8 @@ function Row({
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1.5">
-        <Badge tone={APPOINTMENT_TONE[appt.status]}>
-          {cancelled ? dict.agenda.slotFreed : dict.status.appointment[appt.status]}
+        <Badge tone={APPOINTMENT_TONE[SHOWN_AS[appt.status]]}>
+          {dict.status.appointment[SHOWN_AS[appt.status]]}
         </Badge>
         {appt.call_id && (
           <Link

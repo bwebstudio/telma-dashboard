@@ -1,7 +1,7 @@
 import { store, type DemoStore } from './data'
 import { nextStage, stageFromResult, type CrmActivity } from '@/lib/crm/types'
 
-type Filter = ['eq' | 'gte' | 'lte' | 'ilike', string, any]
+type Filter = ['eq' | 'gte' | 'lte' | 'ilike' | 'is', string, any]
 type Order = [string, boolean]
 
 const isIso = (v: any) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)
@@ -37,10 +37,15 @@ class DemoQuery<K extends keyof DemoStore> {
   private payload: any = null
   private one = false
   private limitN?: number
+  // Set by select(_, {count, head}): the caller wants how many, not which.
+  private counting = false
+  private headOnly = false
 
   constructor(private table: K, private scope?: string, private repScope?: string) {}
 
-  select() {
+  select(_cols?: string, opts?: { count?: 'exact'; head?: boolean }) {
+    if (opts?.count) this.counting = true
+    if (opts?.head) this.headOnly = true
     return this
   }
   eq(col: string, val: any) {
@@ -57,6 +62,12 @@ class DemoQuery<K extends keyof DemoStore> {
   }
   ilike(col: string, val: any) {
     this.filters.push(['ilike', col, val])
+    return this
+  }
+  // Postgres `is null`. Only null is ever asked for here, but comparing
+  // loosely keeps `is('x', null)` matching an undefined column in the seed.
+  is(col: string, val: any) {
+    this.filters.push(['is', col, val])
     return this
   }
   order(col: string, opts?: { ascending?: boolean }) {
@@ -119,6 +130,7 @@ class DemoQuery<K extends keyof DemoStore> {
       if (kind === 'lte') return cmp(cell, val) <= 0
       if (kind === 'ilike')
         return String(cell ?? '').toLowerCase().includes(String(val).replace(/%/g, '').toLowerCase())
+      if (kind === 'is') return val === null ? cell == null : cell === val
       return true
     })
   }
@@ -173,6 +185,9 @@ class DemoQuery<K extends keyof DemoStore> {
         res = res.slice().sort((a, b) => (asc ? cmp(a[col], b[col]) : -cmp(a[col], b[col])))
       }
       if (this.limitN != null) res = res.slice(0, this.limitN)
+      if (this.counting || this.headOnly) {
+        return { data: this.headOnly ? null : res, count: res.length, error: null }
+      }
       return { data: this.one ? res[0] ?? null : res, error: null }
     } catch (e) {
       return { data: null, error: { message: e instanceof Error ? e.message : 'demo_error' } }

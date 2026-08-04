@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment } from '@/lib/types'
 import { ConfirmButton } from './ConfirmButton'
+import { SeenButton } from './SeenButton'
 import { smartStamp } from '@/lib/time'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
 
@@ -12,10 +13,14 @@ import { IconPhone, IconWhatsApp } from '@/components/icons'
  * bookings a patient called off in the last day. Both change what a person has
  * to do in the next ten minutes; everything else on the screen is context.
  *
- * It sits at the foot of the agenda, not the head. Opening the panel onto a
- * stack of unanswered things reads as a list of problems and people bounce off
- * it — the counters at the top carry the same numbers without the weight, and
- * this is where somebody comes to act once they have their bearings.
+ * It sits between the day's tally and the day itself, not at the very top.
+ * Opening the panel straight onto a stack of unanswered things reads as a list
+ * of problems and people bounce off it; the counters above soften the landing,
+ * and this is what to do about it.
+ *
+ * A cancellation stays until somebody presses "Já vi". Nothing here ages out
+ * on a timer — a timer either nags about what is already handled or drops what
+ * nobody read.
  *
  * One line each, not a card each. Full cards pushed the day itself off the
  * screen. A line is enough to decide on, Confirmar is right there for the
@@ -64,17 +69,24 @@ export function AttentionBand({
         {cancelled.map((appt) => (
           <li
             key={appt.id}
-            className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-warn-soft/60 px-4 py-3 sm:px-5"
+            className="bg-warn-soft/60 px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-5"
           >
-            <span className="shrink-0 text-base font-semibold text-warn">{t.justCancelled}</span>
-            <span className="text-base text-ink">
-              {appt.patient_name}
-              <span className="text-ink-soft"> · {smartStamp(appt.scheduled_at, locale, tz)}</span>
-            </span>
-            {appt.cancel_reason && (
-              <span className="w-full text-base text-ink-soft sm:w-auto sm:before:mr-1 sm:before:content-['·']">
-                {appt.cancel_reason}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="shrink-0 text-base font-semibold text-warn">{t.justCancelled}</span>
+              <span className="text-base text-ink">
+                {appt.patient_name}
+                <span className="text-ink-soft"> · {smartStamp(appt.scheduled_at, locale, tz)}</span>
               </span>
+              {appt.cancel_reason && (
+                <span className="w-full text-base text-ink-soft sm:w-auto sm:before:mr-1 sm:before:content-['·']">
+                  {appt.cancel_reason}
+                </span>
+              )}
+            </div>
+            {!readOnly && (
+              <div className="mt-3 shrink-0 sm:mt-0">
+                <SeenButton id={appt.id} label={t.seen} />
+              </div>
             )}
           </li>
         ))}

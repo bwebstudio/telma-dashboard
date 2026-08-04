@@ -95,6 +95,8 @@ export interface Appointment {
   cancelled_at: string | null
   cancelled_by: 'paciente' | 'clinica' | null
   cancel_reason: string | null
+  /** When the clinic acknowledged the cancellation. Null means still unread. */
+  cancel_seen_at: string | null
   created_at: string
 }
 

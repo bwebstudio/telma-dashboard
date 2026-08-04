@@ -118,6 +118,8 @@ export interface Dictionary {
     doneInfo: string
     seeConversations: string
     openConversation: string
+    seen: string
+    seenDone: string
   }
   // Calls and WhatsApp threads, in one timeline.
   conversas: {
@@ -181,6 +183,22 @@ export interface Dictionary {
     noBlocked: string
     remove: string
     saving: string
+    // Planning further out than one week.
+    planTitle: string
+    planHelp: string
+    viewWeek: string
+    viewMonth: string
+    prev: string
+    next: string
+    thisWeek: string
+    thisMonth: string
+    closed: string
+    blocked: string
+    free: string
+    booking: string
+    bookings: string
+    openDay: string
+    blockThisDay: string
   }
   chamadas: {
     title: string

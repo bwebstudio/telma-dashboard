@@ -50,6 +50,7 @@ function appt(clinicId: string, s: ApptSeed): Appointment {
     cancelled_at: null,
     cancelled_by: null,
     cancel_reason: null,
+    cancel_seen_at: null,
     created_at: at(-1, 12),
     ...s,
   } as Appointment

@@ -58,12 +58,10 @@ const config: Config = {
         },
       },
       fontWeight: {
-        // Between Tailwind's medium and semibold, and only reachable because
-        // DM Sans is variable. It is the weight the hierarchy turns on: display
-        // type and every sub-heading use it, which is what keeps a 17px title
-        // from reading at the same strength as the paragraph underneath it now
-        // that there is no serif to separate them.
-        mid: '550',
+        // Suisse has four static weights and no axis, so this is Medium. It is
+        // the weight that lifts one figure out of a row of labels — a time, a
+        // count — without turning it into a heading.
+        mid: '500',
       },
       fontFamily: {
         // One family for the entire interface, and the only one loaded.

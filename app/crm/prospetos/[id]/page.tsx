@@ -241,7 +241,7 @@ export default async function ProspetoPage({
           who is going to visit needs directions, not a string to retype. */}
       {(prospect.address || prospect.website || prospect.origin_note) && (
         <section className="mt-4">
-          <h2 className="mb-3 font-mid text-xl font-semibold text-ink">{t.detail.details}</h2>
+          <h2 className="mb-3 text-xl font-semibold text-ink">{t.detail.details}</h2>
           <dl className="card divide-y divide-line">
             {prospect.address && (
               <div className="p-4">
@@ -292,7 +292,7 @@ export default async function ProspetoPage({
 
       {/* Contacts: the doctor, the receptionist, each with their own notes. */}
       <section className="mt-4">
-        <h2 className="mb-3 font-mid text-xl font-semibold text-ink">{t.detail.contacts}</h2>
+        <h2 className="mb-3 text-xl font-semibold text-ink">{t.detail.contacts}</h2>
         {contacts.length === 0 ? (
           <p className="text-base text-ink-mute">{t.detail.noContacts}</p>
         ) : (
@@ -325,7 +325,7 @@ export default async function ProspetoPage({
 
       {/* The thread. Oldest first, newest at the bottom, like a chat. */}
       <section className="mt-6">
-        <h2 className="mb-3 font-mid text-xl font-semibold text-ink">{t.detail.history}</h2>
+        <h2 className="mb-3 text-xl font-semibold text-ink">{t.detail.history}</h2>
         {activities.length === 0 ? (
           <p className="text-base text-ink-mute">{t.detail.noHistory}</p>
         ) : (

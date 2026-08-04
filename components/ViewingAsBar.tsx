@@ -18,8 +18,8 @@ export function ViewingAsBar({
     <div className="border-b border-warn/30 bg-warn-soft">
       <div className="mx-auto flex w-full max-w-app flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">
         <p className="min-w-0 text-sm text-ink">
-          <span className="font-mid font-semibold">{label}</span>{' '}
-          <span className="font-mid font-semibold">{clinicName}</span>
+          <span className="font-semibold">{label}</span>{' '}
+          <span className="font-semibold">{clinicName}</span>
           <span className="text-ink-soft"> · {readOnlyLabel}</span>
         </p>
         <form action={closeClinicPanel}>

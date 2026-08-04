@@ -1,16 +1,20 @@
 import localFont from 'next/font/local'
 
 /**
- * ONE FAMILY: DM SANS. The same file, at the same settings, as the landing.
+ * ONE FAMILY: SUISSE INT'L.
  *
- * The panel used to run Clash Display for headings over General Sans for body —
- * six files and two personalities. The site moved to a single variable family
- * whose optical axis does the work the serif used to do, and a panel that looks
- * like a different product from the page that sold it is a tell nobody can
- * unsee. So: same family, same weights, same tracking.
+ * A neutral Swiss grotesque in four static weights. The panel ran a variable
+ * DM Sans before, whose 550 axis stop carried the display hierarchy; Suisse has
+ * no axis, so that job moves to 600 (Semibold), which on this face holds at
+ * 40px without shouting. See `.h-display` in globals.css.
  *
- * 550 is the weight the whole hierarchy turns on, and it is only reachable
- * because the family is variable. See `.h-display` in globals.css.
+ * Subset to Latin, Latin-1 and Latin Extended-A — the Portuguese and Spanish
+ * accents — plus the punctuation and arrows the interface draws with text:
+ * 146KB for four weights instead of 830KB of unsubset OTF.
+ *
+ * These files are the TEST cut of the family, from FFT_Romina. Before this is
+ * in front of a paying clinic the licensed web fonts have to replace them:
+ * same names, same weights, nothing else changes.
  */
 export const sans = localFont({
   variable: '--font-sans',
@@ -18,10 +22,9 @@ export const sans = localFont({
   adjustFontFallback: 'Arial',
   fallback: ['system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
   src: [
-    {
-      path: '../public/fonts/DMSans-Variable-latin.woff2',
-      weight: '300 700',
-      style: 'normal',
-    },
+    { path: '../public/fonts/SuisseIntl-Regular.woff2', weight: '400', style: 'normal' },
+    { path: '../public/fonts/SuisseIntl-Medium.woff2', weight: '500', style: 'normal' },
+    { path: '../public/fonts/SuisseIntl-Semibold.woff2', weight: '600', style: 'normal' },
+    { path: '../public/fonts/SuisseIntl-Bold.woff2', weight: '700', style: 'normal' },
   ],
 })

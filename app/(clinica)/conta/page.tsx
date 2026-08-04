@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle, Badge } from '@/components/ui'
+import { BrandingForm } from '@/components/clinic/BrandingForm'
 import { currentMonthKey } from '@/lib/format'
 import type { Usage } from '@/lib/types'
 
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ContaPage() {
   const { dict } = await getDict()
-  const { clinicId, clinic } = await requireClinicContext()
+  const { clinicId, clinic, readOnly } = await requireClinicContext()
   const supabase = await createClient()
 
   const { data: usageRow } = await supabase
@@ -51,7 +52,7 @@ export default async function ContaPage() {
         <section className="card p-6">
           <SectionTitle>{dict.conta.usageTitle}</SectionTitle>
           <div className="flex items-baseline gap-2">
-            <span className="font-mid text-4xl font-semibold text-ink">{used}</span>
+            <span className="text-4xl font-semibold text-ink">{used}</span>
             <span className="text-lg text-ink-mute">
               {dict.common.of} {limit}
             </span>
@@ -69,6 +70,22 @@ export default async function ContaPage() {
             {dict.conta.limit}: {limit}
           </p>
         </section>
+
+        {/* How the panel looks is the clinic's own decision, so it sits in the
+            clinic's own screen rather than in a settings menu somewhere. The
+            administrator visiting the panel sees it and cannot change it. */}
+        {!readOnly && clinic && (
+          <section className="card p-6 lg:col-span-2">
+            <SectionTitle>{dict.conta.brandingTitle}</SectionTitle>
+            <p className="mb-6 text-base text-ink-soft">{dict.conta.brandingHelp}</p>
+            <BrandingForm
+              logoUrl={clinic.logo_url}
+              clinicName={clinic.name}
+              accent={clinic.accent}
+              dict={dict}
+            />
+          </section>
+        )}
       </div>
     </>
   )

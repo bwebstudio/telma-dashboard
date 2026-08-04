@@ -1,0 +1,11 @@
+-- A booking that was confirmed and then called off.
+--
+-- 'rejeitada' is the clinic saying no to a booking it never accepted.
+-- 'cancelada' is a booking that existed and stopped existing — almost always
+-- the patient calling Telma back. They are different events for the person
+-- reading the agenda: one is a slot that never was, the other is a slot that
+-- just opened up and somebody has to know about it.
+--
+-- Alone in its own migration on purpose: Postgres refuses to use an enum value
+-- in the same transaction that created it.
+alter type appointment_status add value if not exists 'cancelada';

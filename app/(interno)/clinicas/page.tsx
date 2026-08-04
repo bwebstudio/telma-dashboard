@@ -85,7 +85,7 @@ export default async function ClinicasPage({
             <li key={c.id}>
               <Link href={`/clinicas/${c.id}`} className="card block p-4 active:bg-surface-sunken">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="font-mid text-lg font-semibold text-ink">{c.name}</span>
+                  <span className="text-lg font-semibold text-ink">{c.name}</span>
                   <Badge tone={statusTone[c.status]}>{dict.status.clinic[c.status]}</Badge>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-ink-soft">

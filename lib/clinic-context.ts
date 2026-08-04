@@ -4,7 +4,17 @@ import { redirect } from 'next/navigation'
 import { getAppUser } from './auth'
 import { homePathFor, isAdmin } from './access'
 import { createClient } from './supabase/server'
+import { isDemo } from './demo/config'
+import { readClinicOverride } from './demo/overrides'
 import type { AppUser, Clinic } from './types'
+
+// Demo mode has no database, so what the demo changed about itself lives in
+// process memory. One place applies it, on the way out of the only function
+// that hands a clinic to the panel.
+function withDemoOverrides(clinic: Clinic | null): Clinic | null {
+  if (!clinic || !isDemo()) return clinic
+  return { ...clinic, ...readClinicOverride(clinic.id) }
+}
 
 // Set by the administrator from a clinic's file. Holds the id of the clinic
 // whose panel is being looked at. Nobody else's browser is ever asked for it.
@@ -40,7 +50,7 @@ export const getVisitingClinic = cache(async function getVisitingClinic(): Promi
 
   const supabase = await createClient()
   const { data } = await supabase.from('clinics').select('*').eq('id', id).maybeSingle()
-  return (data as Clinic | null) ?? null
+  return withDemoOverrides(data as Clinic | null)
 })
 
 // The single door into the clinic panel.
@@ -59,7 +69,7 @@ export const requireClinicContext = cache(async function requireClinicContext():
     return {
       user,
       clinicId: user.clinic_id,
-      clinic: user.clinic,
+      clinic: withDemoOverrides(user.clinic),
       viewingAs: false,
       readOnly: false,
     }

@@ -186,7 +186,7 @@ export function NewProspectForm({
           role="status"
           aria-live="polite"
         >
-          <p className="font-mid text-lg font-semibold text-ink">
+          <p className="text-lg font-semibold text-ink">
             {checking && hits.length === 0 ? t.novo.dupChecking : t.novo.dupTitle}
           </p>
           <ul className="mt-2 flex flex-col gap-2">

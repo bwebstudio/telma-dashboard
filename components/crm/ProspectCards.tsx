@@ -64,7 +64,7 @@ export function ProspectCards({
           >
             <div className="flex items-start justify-between gap-3">
               <Link href={`/crm/prospetos/${row.id}`} className="min-w-0 flex-1">
-                <p className="font-mid text-lg font-semibold leading-snug text-ink">
+                <p className="text-lg font-semibold leading-snug text-ink">
                   {row.name}
                 </p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-ink-soft">

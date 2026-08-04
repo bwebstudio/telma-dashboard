@@ -1,6 +1,27 @@
 import type { ReactNode } from 'react'
+import type { AppointmentStatus, CallResult } from '@/lib/types'
 
 type Tone = 'neutral' | 'pending' | 'ok' | 'warn' | 'danger' | 'info'
+
+// One tone per state, defined once. A booking that is amber on one screen and
+// grey on the next teaches the reader that the colour means nothing.
+//
+// 'cancelada' is amber, not red: nothing went wrong, but a slot just opened and
+// somebody has to notice. Red is kept for the clinic's own refusal.
+export const APPOINTMENT_TONE: Record<AppointmentStatus, Tone> = {
+  pendente: 'pending',
+  confirmada: 'ok',
+  copiada: 'ok',
+  rejeitada: 'danger',
+  cancelada: 'warn',
+}
+
+export const CALL_TONE: Record<CallResult, Tone> = {
+  marcacao: 'ok',
+  transferida: 'info',
+  informacao: 'neutral',
+  nao_resolvida: 'danger',
+}
 
 const toneClass: Record<Tone, string> = {
   neutral: 'bg-brand-wash text-ink-soft',
@@ -47,7 +68,7 @@ export function EmptyState({ children }: { children: ReactNode }) {
 export function ErrorState({ title, message }: { title: string; message: string }) {
   return (
     <div className="rounded-2xl border border-danger/30 bg-danger-soft px-6 py-8 text-center">
-      <p className="font-mid text-xl font-semibold text-danger">{title}</p>
+      <p className="text-xl font-semibold text-danger">{title}</p>
       <p className="mt-2 text-base text-ink-soft">{message}</p>
     </div>
   )
@@ -65,12 +86,12 @@ export function Stat({
   return (
     <div className="card p-5">
       <p className="label-caps">{label}</p>
-      <p className="mt-2 font-mid text-3xl font-semibold text-ink">{value}</p>
+      <p className="mt-2 text-3xl font-semibold text-ink">{value}</p>
       {hint && <p className="mt-1 text-sm text-ink-mute">{hint}</p>}
     </div>
   )
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 className="mb-4 font-mid text-xl font-semibold text-ink">{children}</h2>
+  return <h2 className="mb-4 text-xl font-semibold text-ink">{children}</h2>
 }

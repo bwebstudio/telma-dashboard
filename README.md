@@ -14,6 +14,59 @@ Um prospeto **nunca** é um cliente. São tabelas diferentes, consultas diferent
 e painéis diferentes; a única ligação entre os dois é a conversão explícita
 descrita mais abaixo.
 
+### O painel da clínica
+
+É o único que um cliente vê, e é por ele que a clínica decide se a Telma vale a
+pena. Quatro ecrãs:
+
+**Agenda** ([`/hoje`](app/(clinica)/hoje/page.tsx)) — o ecrã de entrada. Por
+ordem, de cima para baixo:
+
+1. **A precisar de si**: o que foi cancelado nas últimas 24h e o que está por
+   confirmar, uma linha cada, com **Confirmar** ali mesmo. Quando não há nada,
+   di-lo numa frase — um estado vazio que não desenha nada parece uma página
+   que não carregou, e o valor desta faixa está em o silêncio dela ser de fiar.
+2. **O dia**, hora a hora, com ontem / hoje / amanhã e um seletor de data. Uma
+   marcação cancelada **fica na lista**, riscada e marcada como *hora livre*: a
+   hora continua a ser informação, e quem está a ler é quem a pode preencher.
+3. **O que a Telma fez hoje**: chamadas, conversas de WhatsApp, marcações,
+   informações dadas e cancelamentos.
+
+**Conversas** ([`/conversas`](app/(clinica)/conversas/page.tsx)) — chamadas e
+WhatsApp na mesma linha do tempo, filtráveis por canal, resultado e data. Cada
+uma abre para o resumo e a **transcrição completa**, palavra a palavra. Feito
+com `<details>` nativo: funciona antes do JavaScript chegar e não se fecha
+sozinho quando o painel se atualiza por baixo.
+
+**Marcações** e **Horários** — a lista completa (com separador de canceladas) e
+a grelha de disponibilidade.
+
+#### Estar sempre certo
+
+A promessa do produto é que ninguém descobre um cancelamento no dia seguinte,
+por isso a atualização tem três caminhos e não um:
+
+- a subscrição realtime do Supabase (`appointments` e `calls` da própria clínica);
+- um *poll* de minuto a minuto enquanto o separador está visível;
+- um refresh no instante em que alguém volta ao separador.
+
+E quando a ligação cai, a barra **di-lo** em vez de mostrar um ponto verde que
+não quer dizer nada. Ver [`components/clinic/LiveBar.tsx`](components/clinic/LiveBar.tsx).
+
+#### A cara da clínica
+
+Em **A minha clínica**: logótipo (até 1 MB, guardado em Supabase Storage numa
+pasta com o id da clínica) e **uma** cor de destaque entre cinco. A cor troca a
+rampa da marca inteira via `[data-accent]`, por isso tudo o que dependia dela
+move-se junto; as cores de estado (*cancelada*, *por confirmar*) **não** trocam,
+ou deixariam de ser informação para passarem a ser decoração. As cinco foram
+medidas: o sólido carrega branco a 9,27:1 no pior caso, e o acento lido como
+texto passa 4,77:1 no pior caso. Tudo AA.
+
+Deliberadamente pequeno: cada controlo a mais aqui é uma forma de a clínica
+tornar o próprio painel menos legível, e quem paga isso é a rececionista a
+procurar um cancelamento às oito da manhã.
+
 ### Quem chega a quê
 
 Há três papéis em `users.role`, e é essa coluna — mais nada — que decide o
@@ -163,7 +216,10 @@ Ou manualmente, no SQL Editor do Supabase, **por esta ordem**:
 `0001_init.sql`, `0002_rls.sql`, `0003_functions.sql`, `0004_crm_role.sql`,
 `0005_crm.sql`, `0006_crm_rls.sql`, `0007_crm_stage_no_regress.sql`,
 `0007_crm_veterinary.sql`, `0008_crm_geo.sql`, `0009_minute_limits.sql`,
-`0010_one_admin.sql`.
+`0010_one_admin.sql`, `0011_cancel_status.sql`, `0012_clinic_panel.sql`.
+
+> O `0011` está sozinho pela mesma razão que o `0004`: acrescenta um valor ao
+> enum `appointment_status` e o Postgres recusa usá-lo na transação que o criou.
 
 > O `0004` está sozinho de propósito: o Postgres recusa usar um valor de enum
 > recém-adicionado na mesma transação em que foi criado. Se colar tudo de uma
@@ -444,9 +500,15 @@ Resposta `200`:
 
 ## Desenho
 
-Mesma paleta e tipografia da landing: base creme, tinta escura, acento terracota
-`#A94A27` e verde pino para as superfícies destacadas. Títulos em Clash Display,
-corpo em General Sans (self hosted).
+Mesma paleta da landing: base creme, tinta escura, acento terracota `#A94A27` e
+verde pino para as superfícies destacadas.
+
+Tipografia: **Suisse Int'l**, quatro pesos estáticos, self hosted e subsetados
+para latim + latim estendido (146 KB no total). Sem eixo variável, portanto não
+há 550: `.h-display` é 600 e o `font-mid` do Tailwind é 500. Os ficheiros em
+[`public/fonts`](public/fonts) são a **versão de teste** da família — antes de
+isto estar à frente de uma clínica que paga, têm de ser substituídos pelos web
+fonts licenciados. Ver [`public/fonts/README.txt`](public/fonts/README.txt).
 
 Os três painéis são mobile first e partilham a mesma armação
 ([`components/Shell.tsx`](components/Shell.tsx)):

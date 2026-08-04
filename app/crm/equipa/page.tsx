@@ -64,7 +64,7 @@ export default async function EquipaPage() {
               <li key={rep.id} className="card p-4 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-mid text-lg font-semibold text-ink">{rep.full_name}</p>
+                    <p className="text-lg font-semibold text-ink">{rep.full_name}</p>
                     <p className="text-base text-ink-soft">
                       {dict.crm.country[rep.country]}
                       {rep.territory ? ` · ${rep.territory}` : ''}
@@ -105,7 +105,7 @@ export default async function EquipaPage() {
 
       <section className="card mb-6 p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="font-mid text-lg font-semibold text-ink">{t.unassignedPool}</p>
+          <p className="text-lg font-semibold text-ink">{t.unassignedPool}</p>
           <Link href="/crm/prospetos?rep=none" className="btn-secondary min-h-[2.75rem]">
             {unassigned.active}
           </Link>
@@ -130,7 +130,7 @@ function Metric({
   return (
     <div className="rounded-xl bg-surface-sunken px-3 py-2">
       <dt className="text-sm text-ink-mute">{label}</dt>
-      <dd className={`font-mid text-2xl font-semibold ${color}`}>{value}</dd>
+      <dd className={`text-2xl font-semibold ${color}`}>{value}</dd>
     </div>
   )
 }

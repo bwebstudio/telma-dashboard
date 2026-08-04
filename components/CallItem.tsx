@@ -1,14 +1,8 @@
 import type { Dictionary, Locale } from '@/content'
-import type { Call, CallResult } from '@/lib/types'
+import type { Call } from '@/lib/types'
 import { formatTime, formatDate, formatDuration } from '@/lib/format'
-import { Badge } from './ui'
-
-const callTone: Record<CallResult, 'ok' | 'info' | 'neutral' | 'danger'> = {
-  marcacao: 'ok',
-  transferida: 'info',
-  informacao: 'neutral',
-  nao_resolvida: 'danger',
-}
+import { Badge, CALL_TONE } from './ui'
+import { IconPhone, IconWhatsApp } from './icons'
 
 export function CallItem({
   call,
@@ -27,8 +21,18 @@ export function CallItem({
         <span className="w-16 shrink-0 font-mid text-lg text-ink">
           {formatTime(call.created_at, locale)}
         </span>
+        <span
+          className={call.channel === 'whatsapp' ? 'shrink-0 text-ok' : 'shrink-0 text-ink-mute'}
+          aria-label={dict.status.channel[call.channel]}
+        >
+          {call.channel === 'whatsapp' ? (
+            <IconWhatsApp className="h-4 w-4" />
+          ) : (
+            <IconPhone className="h-4 w-4" />
+          )}
+        </span>
         <span className="min-w-0 flex-1 truncate text-base text-ink-soft">
-          {call.from_phone || dict.common.none}
+          {call.patient_name || call.from_phone || dict.common.none}
           {withDate && (
             <span className="ml-2 text-sm text-ink-mute">
               {formatDate(call.created_at, locale)}
@@ -39,7 +43,7 @@ export function CallItem({
           {formatDuration(call.duration_seconds, locale)}
         </span>
         {call.result && (
-          <Badge tone={callTone[call.result]}>{dict.status.call[call.result]}</Badge>
+          <Badge tone={CALL_TONE[call.result]}>{dict.status.call[call.result]}</Badge>
         )}
       </summary>
       <div className="pb-4 pl-16 pr-2">

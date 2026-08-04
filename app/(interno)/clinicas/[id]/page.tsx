@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getDict } from '@/lib/i18n'
-import { PageHeader, SectionTitle, Badge } from '@/components/ui'
+import { PageHeader, SectionTitle, Badge, APPOINTMENT_TONE } from '@/components/ui'
 import { CallItem } from '@/components/CallItem'
 import { openClinicPanel } from '@/lib/actions/view-clinic'
 import { formatDate, formatTime, currentMonthKey } from '@/lib/format'
@@ -13,7 +13,6 @@ import type {
   Appointment,
   Usage,
   ClinicStatus,
-  AppointmentStatus,
 } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -22,12 +21,6 @@ const clinicTone: Record<ClinicStatus, 'ok' | 'warn' | 'danger'> = {
   ativa: 'ok',
   pausada: 'warn',
   cancelada: 'danger',
-}
-const apptTone: Record<AppointmentStatus, 'pending' | 'ok' | 'danger'> = {
-  pendente: 'pending',
-  confirmada: 'ok',
-  copiada: 'ok',
-  rejeitada: 'danger',
 }
 
 export default async function FichaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -138,7 +131,7 @@ export default async function FichaPage({ params }: { params: Promise<{ id: stri
                       {formatDate(a.scheduled_at, locale)}, {formatTime(a.scheduled_at, locale)}
                     </span>
                   </span>
-                  <Badge tone={apptTone[a.status]}>{dict.status.appointment[a.status]}</Badge>
+                  <Badge tone={APPOINTMENT_TONE[a.status]}>{dict.status.appointment[a.status]}</Badge>
                 </li>
               ))}
             </ul>

@@ -51,10 +51,14 @@ export interface Dictionary {
     optional: string
   }
   status: {
-    appointment: Record<'pendente' | 'confirmada' | 'rejeitada' | 'copiada', string>
+    appointment: Record<
+      'pendente' | 'confirmada' | 'rejeitada' | 'copiada' | 'cancelada',
+      string
+    >
     clinic: Record<'ativa' | 'pausada' | 'cancelada', string>
     call: Record<'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida', string>
     origin: Record<'telefone' | 'whatsapp', string>
+    channel: Record<'telefone' | 'whatsapp', string>
   }
   plans: Record<'essencial' | 'clinica' | 'rede' | 'personalizado', string>
   weekdays: string[] // 7 entries, index 0 = Sunday .. 6 = Saturday
@@ -84,6 +88,51 @@ export interface Dictionary {
     horarios: string
     chamadas: string
     conta: string
+  }
+  // The clinic's home screen: the day, and what needs an answer before it.
+  agenda: {
+    title: string
+    greeting: string
+    live: string
+    liveLost: string
+    liveRetry: string
+    updated: string
+    attention: string
+    attentionNone: string
+    needsAnswer: string
+    justCancelled: string
+    cancelledBy: string
+    slotFreed: string
+    dayBefore: string
+    dayToday: string
+    dayAfter: string
+    pickDay: string
+    now: string
+    emptyDay: string
+    closedDay: string
+    doneTitle: string
+    doneCalls: string
+    doneWhatsapp: string
+    doneBookings: string
+    doneCancelled: string
+    doneInfo: string
+    seeConversations: string
+    openConversation: string
+  }
+  // Calls and WhatsApp threads, in one timeline.
+  conversas: {
+    title: string
+    subtitle: string
+    subtitleNoWhatsapp: string
+    filterChannel: string
+    empty: string
+    transcript: string
+    showTranscript: string
+    hideTranscript: string
+    noTranscript: string
+    speakerTelma: string
+    speakerPatient: string
+    booked: string
   }
   internoNav: {
     clinicas: string
@@ -156,6 +205,19 @@ export interface Dictionary {
     minutesUsed: string
     limit: string
     contactSupport: string
+    // The little the clinic may change about how its panel looks.
+    brandingTitle: string
+    brandingHelp: string
+    logo: string
+    logoHelp: string
+    logoChoose: string
+    logoRemove: string
+    logoSaving: string
+    logoTooBig: string
+    logoBadType: string
+    accentTitle: string
+    accentHelp: string
+    accents: Record<'brand' | 'ocean' | 'plum' | 'clay' | 'slate', string>
   }
   interno: {
     clinicsTitle: string

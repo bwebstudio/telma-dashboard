@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment } from '@/lib/types'
 import { formatWeekdayDate, formatTime } from '@/lib/format'
-import { Badge } from './ui'
+import { Badge, APPOINTMENT_TONE } from './ui'
 import { IconCopy, IconCheck, IconClose } from './icons'
 import {
   confirmAppointment,
@@ -12,13 +12,6 @@ import {
   alterAppointment,
   rejectAppointment,
 } from '@/lib/actions/appointments'
-
-const statusTone = {
-  pendente: 'pending',
-  confirmada: 'ok',
-  copiada: 'ok',
-  rejeitada: 'danger',
-} as const
 
 export function AppointmentCard({
   appt,
@@ -78,7 +71,7 @@ export function AppointmentCard({
     <article className="card p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-mid text-xl font-semibold text-ink">
+          <h3 className="text-xl font-semibold text-ink">
             {appt.patient_name}
           </h3>
           <a
@@ -88,7 +81,9 @@ export function AppointmentCard({
             {appt.patient_phone}
           </a>
         </div>
-        <Badge tone={statusTone[appt.status]}>{dict.status.appointment[appt.status]}</Badge>
+        <Badge tone={APPOINTMENT_TONE[appt.status]}>
+          {dict.status.appointment[appt.status]}
+        </Badge>
       </div>
 
       <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
@@ -103,6 +98,22 @@ export function AppointmentCard({
           <span className="label-caps mb-1 block">{dict.common.summary}</span>
           {appt.summary}
         </p>
+      )}
+
+      {/* A cancellation is the one thing on this card that changes what the
+          clinic has to do next, so it is stated in words and not left to a
+          badge in the corner. */}
+      {appt.status === 'cancelada' && (
+        <div className="mt-4 rounded-xl bg-warn-soft px-4 py-3">
+          <p className="text-base font-medium text-warn">
+            {appt.cancelled_by === 'paciente'
+              ? dict.agenda.cancelledBy
+              : dict.status.appointment.cancelada}
+          </p>
+          {appt.cancel_reason && (
+            <p className="mt-1 text-base text-ink-soft">{appt.cancel_reason}</p>
+          )}
+        </div>
       )}
 
       {/* Copied to system: unmistakable state */}

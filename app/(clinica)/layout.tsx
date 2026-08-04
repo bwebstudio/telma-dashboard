@@ -3,6 +3,7 @@ import { requireClinicContext } from '@/lib/clinic-context'
 import { panelLinks } from '@/lib/panels'
 import { Shell, type NavItem } from '@/components/Shell'
 import { ViewingAsBar } from '@/components/ViewingAsBar'
+import { ClinicMark } from '@/components/clinic/ClinicMark'
 import { IconToday, IconBookings, IconHours, IconCalls } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { isDemo } from '@/lib/demo/config'
@@ -24,7 +25,7 @@ export default async function ClinicaLayout({
     { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday /> },
     { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings /> },
     { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours /> },
-    { href: '/chamadas', label: dict.clinicNav.chamadas, icon: <IconCalls /> },
+    { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls /> },
   ]
 
   const clinicName = clinic?.name ?? dict.clinicNav.conta
@@ -41,6 +42,8 @@ export default async function ClinicaLayout({
       langLabel={dict.common.language}
       signOutLabel={dict.common.signOut}
       accountHref="/conta"
+      accent={clinic?.accent}
+      brandMark={<ClinicMark logoUrl={clinic?.logo_url} clinicName={clinicName} />}
       banner={
         viewingAs ? (
           <ViewingAsBar

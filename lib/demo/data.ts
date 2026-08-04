@@ -9,6 +9,7 @@ import type {
   ActivityEvent,
   UserRole,
 } from '@/lib/types'
+import { demoAppointments, demoConversations } from './clinic'
 import type {
   CrmActivity,
   CrmContact,
@@ -35,6 +36,10 @@ const inDays = (days: number, h: number) => {
   d.setHours(h, 0, 0, 0)
   return d.toISOString()
 }
+// Demo only. The mock day below is written in whole local hours, so the panel
+// formats it in the machine's own zone and 11:00 stays 11:00. A real clinic
+// carries its own zone in the database.
+const demoTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Lisbon'
 const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -116,6 +121,9 @@ export const store: DemoStore = {
       assigned_phone: '+351 300 500 900',
       voice_agent_id: 'agent_sorriso_01',
       voice_name: 'Telma PT',
+      timezone: demoTimezone,
+      logo_url: null,
+      accent: 'brand',
       created_at: iso(-60 * 24 * 40),
       updated_at: iso(-60),
     },
@@ -132,6 +140,9 @@ export const store: DemoStore = {
       assigned_phone: '+351 300 700 100',
       voice_agent_id: 'agent_luz_01',
       voice_name: 'Telma PT',
+      timezone: demoTimezone,
+      logo_url: null,
+      accent: 'brand',
       created_at: iso(-60 * 24 * 20),
       updated_at: iso(-120),
     },
@@ -170,51 +181,11 @@ export const store: DemoStore = {
     { id: 'block-1', clinic_id: DEMO_CLINIC_ID, day: inDays(9, 0).slice(0, 10), reason: 'Feriado' },
   ],
   appointments: [
-    {
-      id: 'appt-1',
-      clinic_id: DEMO_CLINIC_ID,
-      call_id: 'call-1',
-      patient_name: 'Ana Martins',
-      patient_phone: '+351 912 345 678',
-      reason: 'Limpeza',
-      scheduled_at: inDays(2, 10),
-      status: 'pendente',
-      origin: 'telefone',
-      summary: 'A Telma marcou uma limpeza. A paciente prefere de manhã.',
-      reject_reason: null,
-      decided_at: null,
-      created_at: iso(-35),
-    },
-    {
-      id: 'appt-2',
-      clinic_id: DEMO_CLINIC_ID,
-      call_id: 'call-2',
-      patient_name: 'João Pereira',
-      patient_phone: '+351 933 222 111',
-      reason: 'Dor de dente',
-      scheduled_at: inDays(1, 15),
-      status: 'pendente',
-      origin: 'whatsapp',
-      summary: 'Dor num molar. A Telma marcou para amanhã à tarde.',
-      reject_reason: null,
-      decided_at: null,
-      created_at: iso(-90),
-    },
-    {
-      id: 'appt-3',
-      clinic_id: DEMO_CLINIC_ID,
-      call_id: null,
-      patient_name: 'Rita Sousa',
-      patient_phone: '+351 966 000 111',
-      reason: 'Consulta de rotina',
-      scheduled_at: inDays(3, 11),
-      status: 'copiada',
-      origin: 'telefone',
-      summary: 'Rotina anual.',
-      reject_reason: null,
-      decided_at: iso(-60 * 5),
-      created_at: iso(-60 * 6),
-    },
+    // The demo clinic's own day lives in lib/demo/clinic.ts: it is the data
+    // the clinic panel is designed around, and it is long enough to deserve
+    // its own file. The second clinic keeps one row so the internal panel
+    // shows more than one name.
+    ...demoAppointments(DEMO_CLINIC_ID),
     {
       id: 'appt-4',
       clinic_id: CLINIC_2,
@@ -228,57 +199,24 @@ export const store: DemoStore = {
       summary: 'Primeira sessão.',
       reject_reason: null,
       decided_at: null,
+      cancelled_at: null,
+      cancelled_by: null,
+      cancel_reason: null,
       created_at: iso(-200),
     },
   ],
   calls: [
-    {
-      id: 'call-1',
-      clinic_id: DEMO_CLINIC_ID,
-      from_phone: '+351 912 345 678',
-      duration_seconds: 95,
-      result: 'marcacao',
-      summary: 'A Telma marcou uma limpeza para a paciente Ana.',
-      recording_url: null,
-      created_at: atToday(9, 12),
-    },
-    {
-      id: 'call-2',
-      clinic_id: DEMO_CLINIC_ID,
-      from_phone: '+351 933 222 111',
-      duration_seconds: 140,
-      result: 'marcacao',
-      summary: 'Dor de dente, a Telma marcou para amanhã.',
-      recording_url: null,
-      created_at: atToday(10, 3),
-    },
-    {
-      id: 'call-3',
-      clinic_id: DEMO_CLINIC_ID,
-      from_phone: '+351 933 111 222',
-      duration_seconds: 40,
-      result: 'informacao',
-      summary: 'A Telma respondeu sobre o horário e a morada da clínica.',
-      recording_url: null,
-      created_at: atToday(11, 20),
-    },
-    {
-      id: 'call-4',
-      clinic_id: DEMO_CLINIC_ID,
-      from_phone: '+351 966 777 888',
-      duration_seconds: 130,
-      result: 'transferida',
-      summary: 'Urgência, a Telma passou a chamada para a receção.',
-      recording_url: null,
-      created_at: iso(-60 * 26),
-    },
+    ...demoConversations(DEMO_CLINIC_ID),
     {
       id: 'call-5',
       clinic_id: CLINIC_2,
+      channel: 'telefone',
       from_phone: '+351 915 555 444',
+      patient_name: null,
       duration_seconds: 60,
       result: 'nao_resolvida',
       summary: 'A paciente desligou antes de terminar.',
+      transcript: null,
       recording_url: null,
       created_at: iso(-60 * 3),
     },

@@ -139,7 +139,7 @@ export function LogSheet({
     >
       <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2">
         <div className="min-w-0">
-          <p className="truncate font-mid text-lg font-semibold leading-tight text-ink">
+          <p className="truncate text-lg font-semibold leading-tight text-ink">
             {prospectName}
           </p>
           <p className="text-sm text-ink-mute">{t.log.title}</p>

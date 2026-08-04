@@ -53,7 +53,7 @@ export default async function ConsumoPage() {
       <ul className="flex flex-col gap-3 md:hidden">
         {rows.map(({ clinic, u }) => (
           <li key={clinic.id} className="card p-4">
-            <p className="font-mid text-lg font-semibold text-ink">{clinic.name}</p>
+            <p className="text-lg font-semibold text-ink">{clinic.name}</p>
             <dl className="mt-2 grid grid-cols-3 gap-3">
               <Cell label={t.totalCalls} value={String(u?.calls_count ?? 0)} />
               <Cell

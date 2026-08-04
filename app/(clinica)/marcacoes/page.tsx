@@ -15,6 +15,7 @@ export default async function MarcacoesPage({
 }) {
   const { f } = await searchParams
   const onlyPending = f === 'pending'
+  const onlyCancelled = f === 'cancelled'
   const { locale, dict } = await getDict()
   const { clinicId, readOnly } = await requireClinicContext()
   const supabase = await createClient()
@@ -26,6 +27,7 @@ export default async function MarcacoesPage({
     .order('status', { ascending: true })
     .order('scheduled_at', { ascending: true })
   if (onlyPending) query = query.eq('status', 'pendente')
+  if (onlyCancelled) query = query.eq('status', 'cancelada')
 
   const { data, error } = await query
   const appts = (data ?? []) as Appointment[]
@@ -38,11 +40,12 @@ export default async function MarcacoesPage({
       : +new Date(b.created_at) - +new Date(a.created_at)
   })
 
-  const tab = (key: 'all' | 'pending', label: string) => {
-    const active = key === 'pending' ? onlyPending : !onlyPending
+  const tab = (key: 'all' | 'pending' | 'cancelled', label: string) => {
+    const active =
+      key === 'pending' ? onlyPending : key === 'cancelled' ? onlyCancelled : !onlyPending && !onlyCancelled
     return (
       <Link
-        href={key === 'pending' ? '/marcacoes?f=pending' : '/marcacoes'}
+        href={key === 'all' ? '/marcacoes' : `/marcacoes?f=${key}`}
         className={`rounded-full px-4 py-2 text-base font-medium ${
           active ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
         }`}
@@ -59,6 +62,7 @@ export default async function MarcacoesPage({
       <div className="mb-6 inline-flex rounded-full border border-line-strong bg-surface p-1">
         {tab('all', dict.marcacoes.filterAll)}
         {tab('pending', dict.marcacoes.filterPending)}
+        {tab('cancelled', dict.status.appointment.cancelada)}
       </div>
 
       {error ? (

@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import { locales, type Locale } from '@/content'
 import { setLocale, signOut } from '@/lib/actions/session'
 import type { Panel } from '@/lib/access'
+import type { ClinicAccent } from '@/lib/types'
 import { IconSignOut, IconAccount } from './icons'
 import { Logo } from './Logo'
 
@@ -50,6 +51,8 @@ export function Shell({
   langLabel,
   signOutLabel,
   accountHref,
+  accent,
+  brandMark,
   banner,
   aside,
   children,
@@ -65,6 +68,14 @@ export function Shell({
   langLabel: string
   signOutLabel: string
   accountHref?: string
+  /**
+   * The clinic's chosen accent. It swaps the whole brand ramp underneath this
+   * subtree (see [data-accent] in globals.css), so a clinic's panel is its own
+   * colour without any component having to know about it.
+   */
+  accent?: ClinicAccent
+  /** The clinic's logo, standing in for the Telma wordmark in its own panel. */
+  brandMark?: ReactNode
   banner?: ReactNode
   aside?: ReactNode
   children: ReactNode
@@ -107,13 +118,19 @@ export function Shell({
     </nav>
   )
 
+  const mark = brandMark ?? <Logo height={34} />
+  const markSmall = brandMark ?? <Logo height={30} />
+
   return (
-    <div className="min-h-screen lg:flex">
+    <div
+      className="min-h-screen lg:flex"
+      data-accent={accent && accent !== 'brand' ? accent : undefined}
+    >
       {/* Sidebar. Desktop only: on a tablet in portrait a 16rem rail eats a
           third of the width for four links that fit in the bottom bar. */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface-sunken lg:flex">
         <div className="flex h-16 items-center gap-2 px-6">
-          <Logo height={34} />
+          {mark}
           <PanelName panel={panel} label={panelLabel} />
         </div>
         {showSwitcher && <div className="px-3 pb-3">{switcher()}</div>}
@@ -179,7 +196,7 @@ export function Shell({
         <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur lg:hidden">
           <div className="flex h-14 items-center justify-between gap-2 px-4 sm:px-6">
             <div className="flex min-w-0 items-center gap-2">
-              <Logo height={30} />
+              {markSmall}
               {/* With a switcher right underneath, repeating the panel name up
                   here only costs the space it truncates in. */}
               {!showSwitcher && <PanelName panel={panel} label={panelLabel} />}

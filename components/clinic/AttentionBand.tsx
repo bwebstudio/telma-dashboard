@@ -12,11 +12,15 @@ import { IconPhone, IconWhatsApp } from '@/components/icons'
  * bookings a patient called off in the last day. Both change what a person has
  * to do in the next ten minutes; everything else on the screen is context.
  *
- * One line each, not a card each. The agenda is what the clinic opens the panel
- * for, and three full cards pushed it below the fold — an alert band that
- * buries the thing it sits above has cost more than it gained. A line is enough
- * to decide on, Confirmar is right there for the answer that is given nine
- * times out of ten, and the full record is one tap away for the tenth.
+ * It sits at the foot of the agenda, not the head. Opening the panel onto a
+ * stack of unanswered things reads as a list of problems and people bounce off
+ * it — the counters at the top carry the same numbers without the weight, and
+ * this is where somebody comes to act once they have their bearings.
+ *
+ * One line each, not a card each. Full cards pushed the day itself off the
+ * screen. A line is enough to decide on, Confirmar is right there for the
+ * answer given nine times out of ten, and the full record is one tap away for
+ * the tenth.
  *
  * When it is empty it says so, in a sentence. An empty state that renders as
  * nothing looks like a page that failed to load — and the whole point of this

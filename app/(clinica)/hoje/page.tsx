@@ -117,19 +117,43 @@ export default async function AgendaPage({
         />
       </div>
 
-      {/* Before the day itself: the things that need a person. Above the fold
-          on every screen size, because this is the promise the product makes —
-          nobody finds out about a cancellation tomorrow. */}
-      <AttentionBand
-        pending={pending}
-        cancelled={cancelled}
-        dict={dict}
-        locale={locale}
-        tz={tz}
-        readOnly={readOnly}
-      />
+      {/* The order here is deliberate and it is not "most urgent first".
+          Opening onto a stack of things that need answering reads as a list of
+          problems, and a receptionist arriving at eight in the morning bounces
+          off it. So: what Telma already handled, then the day, then what is
+          waiting. Reassurance, context, then work. */}
+      <section className="mb-10">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold text-ink">{t.doneTitle}</h2>
+          <Link href="/conversas" className="text-base text-brand-accent hover:text-brand-hover">
+            {t.seeConversations}
+          </Link>
+        </div>
+        <dl className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
+          <Tally icon={<IconPhone className="h-5 w-5" />} label={t.doneCalls} value={counts.calls} />
+          {clinic?.addon_whatsapp && (
+            <Tally
+              icon={<IconWhatsApp className="h-5 w-5" />}
+              label={t.doneWhatsapp}
+              value={counts.whatsapp}
+            />
+          )}
+          <Tally
+            icon={<IconBookings className="h-5 w-5" />}
+            label={t.doneBookings}
+            value={counts.bookings}
+          />
+          <Tally icon={<IconCheck className="h-5 w-5" />} label={t.doneInfo} value={counts.info} />
+          <Tally
+            icon={<IconClose className="h-5 w-5" />}
+            label={t.doneCancelled}
+            value={counts.cancelled}
+            tone={counts.cancelled > 0 ? 'warn' : undefined}
+          />
+        </dl>
+      </section>
 
-      <div className="mb-4 mt-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h2 className="text-xl font-semibold text-ink">
           {weekdayDateIn(day.toISOString(), locale, tz)}
         </h2>
@@ -155,40 +179,16 @@ export default async function AgendaPage({
         isToday={isToday}
       />
 
-      <section className="mt-10">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-ink">{t.doneTitle}</h2>
-          <Link href="/conversas" className="text-base text-brand-accent hover:text-brand-hover">
-            {t.seeConversations}
-          </Link>
-        </div>
-        <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-          <Tally icon={<IconPhone className="h-5 w-5" />} label={t.doneCalls} value={counts.calls} />
-          {clinic?.addon_whatsapp && (
-            <Tally
-              icon={<IconWhatsApp className="h-5 w-5" />}
-              label={t.doneWhatsapp}
-              value={counts.whatsapp}
-            />
-          )}
-          <Tally
-            icon={<IconBookings className="h-5 w-5" />}
-            label={t.doneBookings}
-            value={counts.bookings}
-          />
-          <Tally
-            icon={<IconCheck className="h-5 w-5" />}
-            label={t.doneInfo}
-            value={counts.info}
-          />
-          <Tally
-            icon={<IconClose className="h-5 w-5" />}
-            label={t.doneCancelled}
-            value={counts.cancelled}
-            tone={counts.cancelled > 0 ? 'warn' : undefined}
-          />
-        </dl>
-      </section>
+      <div className="mt-10">
+        <AttentionBand
+          pending={pending}
+          cancelled={cancelled}
+          dict={dict}
+          locale={locale}
+          tz={tz}
+          readOnly={readOnly}
+        />
+      </div>
     </>
   )
 }
@@ -205,13 +205,16 @@ function Tally({
   tone?: 'warn'
 }) {
   return (
-    <div className="card p-4">
+    // On a phone the label and the figure sit on one line. Stacked, five of
+    // these filled three rows and pushed the day off the screen — which is the
+    // opposite of what a summary is for.
+    <div className="card flex items-center justify-between gap-3 p-3 sm:block sm:p-4">
       <div className={`flex items-center gap-2 ${tone === 'warn' ? 'text-warn' : 'text-ink-mute'}`}>
         {icon}
         <dt className="label-caps text-inherit">{label}</dt>
       </div>
       <dd
-        className={`mt-1 text-3xl font-semibold tabular-nums ${
+        className={`shrink-0 text-2xl font-semibold tabular-nums sm:mt-1 sm:text-3xl ${
           tone === 'warn' ? 'text-warn' : 'text-ink'
         }`}
       >

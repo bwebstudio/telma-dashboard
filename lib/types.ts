@@ -18,7 +18,8 @@ export interface Clinic {
   plan: PlanType
   addon_whatsapp: boolean
   status: ClinicStatus
-  call_limit: number
+  /** Monthly allowance in minutes of conversation. Plans are metered in minutes. */
+  minute_limit: number
   assigned_phone: string | null
   voice_agent_id: string | null
   voice_name: string | null

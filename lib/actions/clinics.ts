@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { getAppUser } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { PLAN_LIMITS } from '@/lib/plans'
+import { PLAN_MINUTES } from '@/lib/plans'
 import type { PlanType } from '@/lib/types'
 
 export type CreateState = { error?: string }
@@ -38,7 +38,7 @@ export async function createClinic(_prev: CreateState, formData: FormData): Prom
         contact_email: String(formData.get('contact_email') || '') || null,
         plan,
         addon_whatsapp: formData.get('addon') === 'on',
-        call_limit: PLAN_LIMITS[plan] ?? 250,
+        minute_limit: PLAN_MINUTES[plan] ?? 250,
       })
       .select('id')
       .single()

@@ -141,7 +141,7 @@ export interface Dictionary {
     addonOn: string
     addonOff: string
     usageTitle: string
-    callsUsed: string
+    minutesUsed: string
     limit: string
     contactSupport: string
   }

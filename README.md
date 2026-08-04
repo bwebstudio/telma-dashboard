@@ -52,7 +52,7 @@ Esquema em [`supabase/migrations`](supabase/migrations).
 ### Operação (clientes)
 
 - **clinics**: nome, morada, telefone, email, plano, addon de WhatsApp, estado,
-  limite de chamadas e configuração técnica (número atribuído, agente, voz).
+  `minute_limit` e configuração técnica (número atribuído, agente, voz).
   **São os clientes reais.** Nada do CRM escreve aqui sem confirmação humana.
 - **users**: ligados ao Supabase Auth, com `role` (interno | clinica | comercial),
   `clinic_id` (só para `clinica`) e `locale` (idioma da interface do utilizador).
@@ -64,7 +64,9 @@ Esquema em [`supabase/migrations`](supabase/migrations).
 - **calls**: registo de cada chamada (resultado, resumo, gravação).
 - **slot_locks**: bloqueio temporário de uma hora durante uma chamada, expira aos
   3 minutos. Evita marcações duplicadas em chamadas simultâneas.
-- **usage**: consumo mensal por clínica (chamadas e minutos).
+- **usage**: consumo mensal por clínica (chamadas e minutos). Os planos são
+  medidos em **minutos de conversa**, que é como a Telma custa e como a landing
+  os vende; o número de chamadas fica como leitura humana, não como limite.
 - **blocked_days**, **activity_log**: dias bloqueados e registo de eventos.
 
 ### CRM comercial (funil de vendas)

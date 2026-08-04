@@ -3,14 +3,14 @@
 -- so the internal panel is not empty on first boot. It does NOT create users
 -- (those come from Supabase Auth, see the README).
 
-insert into clinics (id, name, address, phone, contact_email, plan, addon_whatsapp, status, call_limit, assigned_phone, voice_agent_id, voice_name)
+insert into clinics (id, name, address, phone, contact_email, plan, addon_whatsapp, status, minute_limit, assigned_phone, voice_agent_id, voice_name)
 values (
   '11111111-1111-1111-1111-111111111111',
   'Clínica Dentária Sorriso',
   'Rua das Flores 12, Porto',
   '+351 220 000 000',
   'geral@sorriso.pt',
-  'clinica', true, 'ativa', 600,
+  'clinica', true, 'ativa', 750,
   '+351 300 500 900', 'agent_sorriso_01', 'Telma PT'
 ) on conflict (id) do nothing;
 

@@ -20,8 +20,8 @@ export default async function ContaPage() {
     .maybeSingle()
   const usage = usageRow as Usage | null
 
-  const used = usage?.calls_count ?? 0
-  const limit = clinic?.call_limit ?? 0
+  const used = Math.round(Number(usage?.minutes ?? 0))
+  const limit = clinic?.minute_limit ?? 0
   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
 
   return (
@@ -57,7 +57,7 @@ export default async function ContaPage() {
             </span>
           </div>
           <p className="mt-1 text-base text-ink-soft">
-            {dict.conta.callsUsed} {dict.common.thisMonth}
+            {dict.conta.minutesUsed} {dict.common.thisMonth}
           </p>
           <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-brand-wash">
             <div

@@ -85,8 +85,8 @@ export default async function ClinicasPage({
           </thead>
           <tbody>
             {clinics.map((c) => {
-              const used = usageByClinic.get(c.id)?.calls_count ?? 0
-              const pct = c.call_limit > 0 ? (used / c.call_limit) * 100 : 0
+              const used = Math.round(Number(usageByClinic.get(c.id)?.minutes ?? 0))
+              const pct = c.minute_limit > 0 ? (used / c.minute_limit) * 100 : 0
               const over = pct >= 100
               const near = pct >= 80 && pct < 100
               const act = lastActivity.get(c.id)
@@ -104,7 +104,7 @@ export default async function ClinicasPage({
                   <Td>
                     <span className="flex items-center gap-2">
                       <span className={over ? 'font-semibold text-danger' : near ? 'font-semibold text-warn' : 'text-ink'}>
-                        {used} / {c.call_limit}
+                        {used} / {c.minute_limit}
                       </span>
                       {over && <Badge tone="danger">{t.overLimit}</Badge>}
                       {near && <Badge tone="warn">{t.nearLimit}</Badge>}

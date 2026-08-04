@@ -112,7 +112,7 @@ export const store: DemoStore = {
       plan: 'clinica',
       addon_whatsapp: true,
       status: 'ativa',
-      call_limit: 600,
+      minute_limit: 750,
       assigned_phone: '+351 300 500 900',
       voice_agent_id: 'agent_sorriso_01',
       voice_name: 'Telma PT',
@@ -128,7 +128,7 @@ export const store: DemoStore = {
       plan: 'essencial',
       addon_whatsapp: false,
       status: 'ativa',
-      call_limit: 250,
+      minute_limit: 250,
       assigned_phone: '+351 300 700 100',
       voice_agent_id: 'agent_luz_01',
       voice_name: 'Telma PT',
@@ -284,8 +284,11 @@ export const store: DemoStore = {
     },
   ],
   usage: [
-    { id: 'usage-1', clinic_id: DEMO_CLINIC_ID, month: monthKey, calls_count: 312, minutes: 520.5 },
-    { id: 'usage-2', clinic_id: CLINIC_2, month: monthKey, calls_count: 214, minutes: 190.0 },
+    // Around two and a half minutes a call, which is what a booking really
+    // takes. The second clinic sits past 80% of its plan so the demo shows the
+    // near limit warning.
+    { id: 'usage-1', clinic_id: DEMO_CLINIC_ID, month: monthKey, calls_count: 205, minutes: 520.5 },
+    { id: 'usage-2', clinic_id: CLINIC_2, month: monthKey, calls_count: 84, minutes: 213.5 },
   ],
   activity_log: [
     { id: 'act-1', clinic_id: DEMO_CLINIC_ID, type: 'call_received', message: 'A Telma atendeu uma chamada', created_at: atToday(11, 20) },

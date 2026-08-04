@@ -74,7 +74,10 @@ export default async function FichaPage({ params }: { params: Promise<{ id: stri
           <SectionTitle>{t.fichaData}</SectionTitle>
           <dl className="flex flex-col gap-2.5">
             <Row label={dict.conta.plan} value={dict.plans[clinic.plan]} />
-            <Row label="Limite" value={`${usage?.calls_count ?? 0} / ${clinic.call_limit}`} />
+            <Row
+              label={t.colUsage}
+              value={`${Math.round(Number(usage?.minutes ?? 0))} / ${clinic.minute_limit}`}
+            />
             <Row label={dict.common.phone} value={clinic.phone} />
             <Row label="Email" value={clinic.contact_email} />
             <Row label={dict.interno.fieldAddress} value={clinic.address} />

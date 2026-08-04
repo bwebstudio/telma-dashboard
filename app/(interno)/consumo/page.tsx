@@ -24,19 +24,25 @@ export default async function ConsumoPage() {
   const totalCalls = usage.reduce((s, u) => s + u.calls_count, 0)
   const totalMinutes = usage.reduce((s, u) => s + Number(u.minutes), 0)
   const estCost = totalMinutes * VOICE_COST_PER_MINUTE
-  const contracted = clinics.reduce((s, c) => s + c.call_limit, 0)
+  const contracted = clinics.reduce((s, c) => s + c.minute_limit, 0)
 
+  // Sorted by minutes, because minutes are what the plans meter and what the
+  // voice provider bills. Calls are still shown, as the readable figure.
   const rows = clinics
     .map((c) => ({ clinic: c, u: usageByClinic.get(c.id) }))
-    .sort((a, b) => (b.u?.calls_count ?? 0) - (a.u?.calls_count ?? 0))
+    .sort((a, b) => Number(b.u?.minutes ?? 0) - Number(a.u?.minutes ?? 0))
 
   return (
     <>
       <PageHeader eyebrow={dict.internoNav.consumo} title={t.consumoTitle} subtitle={t.consumoSubtitle} />
 
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label={t.totalCalls} value={totalCalls} hint={`${contracted} ${dict.common.of} limite`} />
-        <Stat label={t.totalMinutes} value={Math.round(totalMinutes)} />
+        <Stat label={t.totalCalls} value={totalCalls} />
+        <Stat
+          label={t.totalMinutes}
+          value={Math.round(totalMinutes)}
+          hint={`${contracted} ${dict.common.of} limite`}
+        />
         <Stat label={t.estimatedCost} value={formatEuro(estCost, locale)} />
         <Stat label={dict.internoNav.clinicas} value={clinics.length} />
       </div>
@@ -56,10 +62,10 @@ export default async function ConsumoPage() {
             {rows.map(({ clinic, u }) => (
               <tr key={clinic.id} className="border-b border-line last:border-0">
                 <td className="px-4 py-3 font-medium text-ink">{clinic.name}</td>
+                <td className="px-4 py-3 text-ink-soft">{u?.calls_count ?? 0}</td>
                 <td className="px-4 py-3 text-ink-soft">
-                  {u?.calls_count ?? 0} / {clinic.call_limit}
+                  {Math.round(Number(u?.minutes ?? 0))} / {clinic.minute_limit}
                 </td>
-                <td className="px-4 py-3 text-ink-soft">{Math.round(Number(u?.minutes ?? 0))}</td>
                 <td className="px-4 py-3 text-ink-soft">
                   {formatEuro(Number(u?.minutes ?? 0) * VOICE_COST_PER_MINUTE, locale)}
                 </td>

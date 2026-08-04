@@ -11,10 +11,13 @@ export function BlockedDaysManager({
   days,
   dict,
   locale,
+  readOnly = false,
 }: {
   days: BlockedDay[]
   dict: Dictionary
   locale: Locale
+  /** The administrator looking at a client's panel reads the list, never edits it. */
+  readOnly?: boolean
 }) {
   const [day, setDay] = useState('')
   const [reason, setReason] = useState('')
@@ -48,6 +51,7 @@ export function BlockedDaysManager({
 
   return (
     <div>
+      {!readOnly && (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="sm:w-48">
           <label htmlFor="block-day" className="field-label">
@@ -78,6 +82,7 @@ export function BlockedDaysManager({
           {dict.horarios.addBlock}
         </button>
       </div>
+      )}
 
       {error && (
         <p role="alert" className="mt-3 text-base font-medium text-danger">
@@ -85,7 +90,7 @@ export function BlockedDaysManager({
         </p>
       )}
 
-      <ul className="mt-6 flex flex-col divide-y divide-line">
+      <ul className={`flex flex-col divide-y divide-line ${readOnly ? '' : 'mt-6'}`}>
         {days.length === 0 ? (
           <li className="py-3 text-base text-ink-mute">{dict.horarios.noBlocked}</li>
         ) : (
@@ -95,14 +100,16 @@ export function BlockedDaysManager({
                 {formatDate(d.day, locale)}
                 {d.reason && <span className="ml-2 text-ink-mute">{d.reason}</span>}
               </span>
-              <button
-                onClick={() => remove(d.id)}
-                disabled={pending}
-                className="inline-flex items-center gap-1 text-sm text-ink-mute hover:text-danger"
-              >
-                <IconClose className="h-4 w-4" />
-                {dict.horarios.remove}
-              </button>
+              {!readOnly && (
+                <button
+                  onClick={() => remove(d.id)}
+                  disabled={pending}
+                  className="inline-flex items-center gap-1 text-sm text-ink-mute hover:text-danger"
+                >
+                  <IconClose className="h-4 w-4" />
+                  {dict.horarios.remove}
+                </button>
+              )}
             </li>
           ))
         )}

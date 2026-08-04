@@ -67,6 +67,17 @@ export interface Dictionary {
     signingIn: string
     invalid: string
   }
+  // The three panels and the administrator's visit to a client's one.
+  panels: {
+    clinica: string
+    interno: string
+    crm: string
+    switch: string
+    openClinicPanel: string
+    viewingAs: string
+    readOnly: string
+    exitView: string
+  }
   clinicNav: {
     hoje: string
     marcacoes: string
@@ -111,6 +122,7 @@ export interface Dictionary {
     title: string
     help: string
     gridHint: string
+    gridReadOnly: string
     capacityNote: string
     blockedTitle: string
     blockedHelp: string
@@ -212,7 +224,6 @@ export interface Dictionary {
       prospetos: string
       novo: string
       equipa: string
-      backToPanel: string
     }
     today: {
       title: string

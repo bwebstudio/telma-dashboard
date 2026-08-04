@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { createClient } from './supabase/server'
+import { canOpenPanel, isAdmin } from './access'
 import { isDemo, DEMO_ROLE_COOKIE } from './demo/config'
 import { getDemoUser } from './demo/data'
 import type { AppUser, UserRole } from './types'
@@ -32,34 +33,11 @@ export const getAppUser = cache(async function getAppUser(): Promise<AppUser | n
   return { ...data, email: data.email ?? user.email ?? null } as AppUser
 })
 
-// The CRM is for the sales team only: the founding team (interno, full reach)
+// The CRM is for the sales team only: the administrator (interno, full reach)
 // and the reps (comercial, scoped to their own prospects by RLS).
 export function isCrmUser(user: AppUser | null): boolean {
-  return user?.role === 'interno' || user?.role === 'comercial'
+  return canOpenPanel(user, 'crm')
 }
 
 // CRM admin: sees every rep, every country, and reassigns prospects.
-export function isCrmAdmin(user: AppUser | null): boolean {
-  return user?.role === 'interno'
-}
-
-// Where a user lands after signing in.
-//
-// Somebody can be both admin and rep: Domingos runs the team and also spends the
-// day calling clinics. For him the useful first screen is his own list of calls,
-// not the client operation, so anyone carrying an active rep row starts in the
-// CRM. A pure internal user starts on the client panel.
-export async function resolveHomePath(user: AppUser): Promise<string> {
-  if (user.role === 'clinica') return '/hoje'
-  if (user.role === 'comercial') return '/crm/hoje'
-
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('crm_reps')
-    .select('id')
-    .eq('id', user.id)
-    .eq('active', true)
-    .maybeSingle()
-
-  return data ? '/crm/hoje' : '/clinicas'
-}
+export const isCrmAdmin = isAdmin

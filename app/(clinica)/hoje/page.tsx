@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { getAppUser } from '@/lib/auth'
+import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, EmptyState, SectionTitle } from '@/components/ui'
 import { AppointmentCard } from '@/components/AppointmentCard'
@@ -12,7 +12,11 @@ export const dynamic = 'force-dynamic'
 
 export default async function HojePage() {
   const { locale, dict } = await getDict()
-  const user = await getAppUser()
+  // Row Level Security already scopes a clinic user to its own rows, but the
+  // administrator visiting this panel is not scoped by anything: every query
+  // here filters by the clinic explicitly, so no screen can ever show two
+  // clinics mixed together.
+  const { clinicId, readOnly } = await requireClinicContext()
   const supabase = await createClient()
 
   const startOfDay = new Date()
@@ -22,11 +26,13 @@ export default async function HojePage() {
     supabase
       .from('appointments')
       .select('*')
+      .eq('clinic_id', clinicId)
       .eq('status', 'pendente')
       .order('scheduled_at', { ascending: true }),
     supabase
       .from('calls')
       .select('*')
+      .eq('clinic_id', clinicId)
       .gte('created_at', startOfDay.toISOString())
       .order('created_at', { ascending: false }),
   ])
@@ -40,7 +46,7 @@ export default async function HojePage() {
         eyebrow={dict.clinicNav.hoje}
         title={dict.hoje.title}
         subtitle={dict.hoje.greeting}
-        action={user?.clinic ? <HojeLive clinicId={user.clinic.id} label={dict.hoje.live} /> : undefined}
+        action={<HojeLive clinicId={clinicId} label={dict.hoje.live} />}
       />
 
       <section className="mb-10">
@@ -50,7 +56,13 @@ export default async function HojePage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {pending.map((appt) => (
-              <AppointmentCard key={appt.id} appt={appt} dict={dict} locale={locale} />
+              <AppointmentCard
+                key={appt.id}
+                appt={appt}
+                dict={dict}
+                locale={locale}
+                readOnly={readOnly}
+              />
             ))}
           </div>
         )}

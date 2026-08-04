@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle, Badge } from '@/components/ui'
 import { CallItem } from '@/components/CallItem'
+import { openClinicPanel } from '@/lib/actions/view-clinic'
 import { formatDate, formatTime, currentMonthKey } from '@/lib/format'
 import type {
   Clinic,
@@ -66,7 +67,20 @@ export default async function FichaPage({ params }: { params: Promise<{ id: stri
       </Link>
       <PageHeader
         title={clinic.name}
-        action={<Badge tone={clinicTone[clinic.status]}>{dict.status.clinic[clinic.status]}</Badge>}
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge tone={clinicTone[clinic.status]}>{dict.status.clinic[clinic.status]}</Badge>
+            {/* The only door into a client's panel. It is here, on the clinic
+                it opens, so the visit always starts from a named clinic
+                instead of from a menu. */}
+            <form action={openClinicPanel}>
+              <input type="hidden" name="clinic_id" value={clinic.id} />
+              <button type="submit" className="btn-secondary">
+                {dict.panels.openClinicPanel}
+              </button>
+            </form>
+          </div>
+        }
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

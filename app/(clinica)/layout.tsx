@@ -1,7 +1,8 @@
-import { redirect } from 'next/navigation'
-import { getAppUser, resolveHomePath } from '@/lib/auth'
 import { getDict } from '@/lib/i18n'
+import { requireClinicContext } from '@/lib/clinic-context'
+import { panelLinks } from '@/lib/panels'
 import { Shell, type NavItem } from '@/components/Shell'
+import { ViewingAsBar } from '@/components/ViewingAsBar'
 import { IconToday, IconBookings, IconHours, IconCalls } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { isDemo } from '@/lib/demo/config'
@@ -13,12 +14,10 @@ export default async function ClinicaLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await getAppUser()
-  if (!user) redirect('/login')
-  // This panel belongs to a client clinic. Internal roles (including the
-  // sales reps) go to their own section instead.
-  if (user.role !== 'clinica') redirect(await resolveHomePath(user))
-
+  // The guard, the clinic and the read only flag all come from one place.
+  // A sales rep never gets past this line; the administrator only does after
+  // explicitly opening a clinic from its file.
+  const { user, clinic, viewingAs } = await requireClinicContext()
   const { locale, dict } = await getDict()
 
   const nav: NavItem[] = [
@@ -28,15 +27,30 @@ export default async function ClinicaLayout({
     { href: '/chamadas', label: dict.clinicNav.chamadas, icon: <IconCalls /> },
   ]
 
+  const clinicName = clinic?.name ?? dict.clinicNav.conta
+
   return (
     <Shell
       nav={nav}
-      variant="clinica"
+      panel="clinica"
+      panelLabel={viewingAs ? clinicName : dict.panels.clinica}
+      panels={panelLinks(user, dict, viewingAs ? { clinicName } : null)}
+      switchLabel={dict.panels.switch}
       locale={locale}
-      userLabel={user.clinic?.name ?? dict.clinicNav.conta}
+      userLabel={clinicName}
       langLabel={dict.common.language}
       signOutLabel={dict.common.signOut}
       accountHref="/conta"
+      banner={
+        viewingAs ? (
+          <ViewingAsBar
+            clinicName={clinicName}
+            label={dict.panels.viewingAs}
+            readOnlyLabel={dict.panels.readOnly}
+            exitLabel={dict.panels.exitView}
+          />
+        ) : undefined
+      }
     >
       {isDemo() && <DemoBar role="clinica" />}
       {children}

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, EmptyState } from '@/components/ui'
 import { CallItem } from '@/components/CallItem'
@@ -15,9 +16,15 @@ export default async function ChamadasPage({
 }) {
   const { r, from, to } = await searchParams
   const { locale, dict } = await getDict()
+  const { clinicId } = await requireClinicContext()
   const supabase = await createClient()
 
-  let query = supabase.from('calls').select('*').order('created_at', { ascending: false }).limit(200)
+  let query = supabase
+    .from('calls')
+    .select('*')
+    .eq('clinic_id', clinicId)
+    .order('created_at', { ascending: false })
+    .limit(200)
   if (r && RESULTS.includes(r as CallResult)) query = query.eq('result', r)
   if (from) query = query.gte('created_at', new Date(from).toISOString())
   if (to) {

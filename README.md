@@ -1,24 +1,52 @@
 # Telma · Painel de gestão
 
-Aplicação de gestão da Telma (Telma Atende), com três tipos de utilizador no
-mesmo código e no mesmo login:
+Aplicação de gestão da Telma (Telma Atende), com três painéis no mesmo código e
+no mesmo login. Quem entra vê **só os painéis que lhe pertencem**, e quem tem
+mais do que um troca entre eles por um seletor sempre no mesmo sítio.
 
-- **Clínica**: o dono ou a receção de uma clínica cliente. Vê apenas os seus dados.
-- **Interno**: a equipa da Bweb Studio. Vê e gere todas as clínicas e todo o CRM.
-- **Comercial**: um comercial de rua (Domingos, Sonia, ...). Só entra na secção
-  **Comercial** e só vê as clínicas do funil que lhe estão atribuídas, mais as
-  que não têm dono no seu país.
-
-Duas secções bem separadas no painel interno:
-
-| Secção | O que é | Tabelas |
-|---|---|---|
-| **Clínicas** | Operação de clientes que já pagam e usam a Telma | `clinics`, `appointments`, `calls`, `usage`, ... |
-| **Comercial** (CRM) | Funil de vendas: clínicas que ainda não são clientes | `crm_prospects`, `crm_activities`, `crm_contacts`, `crm_reps` |
+| Painel | Para quem | O que é | Tabelas |
+|---|---|---|---|
+| **Clínica** | O dono ou a receção de uma clínica cliente | O dia da própria clínica: marcações, horários, chamadas | `appointments`, `calls`, `availability_slots`, ... |
+| **Clientes** | Só `info@bwebstudio.com` | Operação das clínicas que já pagam: planos, minutos, configuração técnica | `clinics`, `usage`, `activity_log` |
+| **Comercial** (CRM) | `info@bwebstudio.com` e os comerciais (Domingos, Sonia, ...) | Funil de vendas: clínicas que ainda não são clientes | `crm_prospects`, `crm_activities`, `crm_contacts`, `crm_reps` |
 
 Um prospeto **nunca** é um cliente. São tabelas diferentes, consultas diferentes
-e ecrãs diferentes; a única ligação entre os dois é a conversão explícita
+e painéis diferentes; a única ligação entre os dois é a conversão explícita
 descrita mais abaixo.
+
+### Quem chega a quê
+
+Há três papéis em `users.role`, e é essa coluna — mais nada — que decide o
+acesso. A tabela vive em [`lib/access.ts`](lib/access.ts):
+
+| `role` | Painéis | Quem |
+|---|---|---|
+| `interno` | Clientes, Comercial (+ visita a um painel de clínica) | `info@bwebstudio.com`, e mais ninguém |
+| `comercial` | Comercial | Domingos, Sonia |
+| `clinica` | Clínica (a sua) | Cada cliente |
+
+Um comercial nunca chega à operação de clientes: não vê minutos, nem números
+atribuídos, nem a configuração de voz de ninguém. E o RLS do CRM continua a
+mostrar-lhe só os prospetos dele mais os sem dono do seu país.
+
+Quem bate a uma porta que não é sua é reencaminhado para a sua própria, sem
+mensagem de erro: não há ecrã "sem permissão", há o painel certo.
+
+### Como o admin vê o painel de uma clínica
+
+Esta é a única forma, e começa sempre numa clínica com nome:
+**Clientes > Clínicas > (abrir a ficha) > "Ver o painel desta clínica"**.
+
+A partir daí o painel da clínica abre com uma barra âmbar no topo — *"Está a ver
+o painel de X · só leitura"* — e o seletor de painéis passa a mostrar essa
+clínica como terceiro separador, para que uma visita aberta nunca passe
+despercebida. **Sair desta vista** devolve à ficha.
+
+A visita é **só de leitura**, de propósito. Confirmar uma marcação ou mexer nos
+horários é a resposta da clínica ao paciente dela; feito por outra pessoa, é um
+paciente mandado para uma porta fechada. Os *server actions* recusam qualquer
+escrita que não venha do utilizador da própria clínica, e cada consulta do
+painel filtra por `clinic_id` explicitamente — não fica só à espera do RLS.
 
 Stack: Next.js 15 (App Router) + TypeScript + Tailwind + Supabase (auth, Postgres,
 Row Level Security e realtime) + PWA. Coerente com a landing da Telma (mesma
@@ -133,26 +161,35 @@ supabase db execute --file supabase/seed.sql   # opcional: dados de demonstraç�
 
 Ou manualmente, no SQL Editor do Supabase, **por esta ordem**:
 `0001_init.sql`, `0002_rls.sql`, `0003_functions.sql`, `0004_crm_role.sql`,
-`0005_crm.sql`, `0006_crm_rls.sql`.
+`0005_crm.sql`, `0006_crm_rls.sql`, `0007_crm_stage_no_regress.sql`,
+`0007_crm_veterinary.sql`, `0008_crm_geo.sql`, `0009_minute_limits.sql`,
+`0010_one_admin.sql`.
 
 > O `0004` está sozinho de propósito: o Postgres recusa usar um valor de enum
 > recém-adicionado na mesma transação em que foi criado. Se colar tudo de uma
 > vez num só bloco, falha.
 
-### Criar o primeiro utilizador interno (admin)
+### Criar o administrador
 
-1. No Supabase Dashboard, **Authentication > Users > Add user**, defina email e
-   palavra-passe (marque email como confirmado).
+Há um só: `info@bwebstudio.com`. É a conta que abre os dois painéis internos e a
+única que pode entrar no painel de uma clínica.
+
+1. No Supabase Dashboard, **Authentication > Users > Add user**, com o email
+   `info@bwebstudio.com` (marque email como confirmado).
 2. Copie o `id` do utilizador criado.
 3. No SQL Editor:
 
    ```sql
    insert into public.users (id, email, full_name, role, locale)
-   values ('COLE-AQUI-O-ID', 'equipa@bwebstudio.com', 'Equipa Bweb', 'interno', 'pt');
+   values ('COLE-AQUI-O-ID', 'info@bwebstudio.com', 'Bweb Studio', 'interno', 'pt');
    ```
 
-4. Entre em `/login`. Como é interno, cai no painel de clínicas e tem acesso à
-   secção **Comercial**.
+4. Entre em `/login`. Cai em **Clientes**, com **Comercial** ao lado no seletor.
+
+A migração `0010_one_admin.sql` fecha a porta pelo outro lado: garante o papel
+desta conta, despromove a `comercial` qualquer outro `interno` que também seja
+comercial, avisa no log sobre internos inesperados que restem, e recusa correr
+se ficasse a base sem nenhum administrador.
 
 ### Dar de alta um comercial novo
 
@@ -164,22 +201,20 @@ com esses dados e cai directamente no seu **Hoje**.
 Para desativar alguém que saiu, **Desativar** na mesma página: mantém o
 histórico e os prospetos, apenas fecha o acesso ao CRM.
 
-#### Alguém que é admin e comercial ao mesmo tempo
+#### Porque é que o Domingos não é admin
 
-É o caso do Domingos: dirige a equipa e também anda na rua a ligar. No perfil,
-escolha **Admin**. Isso cria `users.role = 'interno'` (vê tudo, reatribui,
-gere a equipa) **e** a linha em `crm_reps` (as clínicas podem ser-lhe atribuídas
-e as chamadas ficam assinadas com o nome dele).
+Ele dirige a equipa e também anda na rua a ligar, e durante algum tempo isso
+fez-se com `role = 'interno'`. Mas esse papel não é uma patente, é uma chave:
+abre a operação dos clientes que já pagam — minutos, números atribuídos,
+configuração de voz de cada clínica — e mostra todos os prospetos de todos os
+países. Nada disso é preciso para vender.
 
-Para não misturar as duas coisas, o **Hoje** dessa pessoa mostra por defeito
-**as chamadas dela**, com um botão para passar a **Toda a equipa**. Um interno
-que não tenha linha em `crm_reps` só tem a vista de equipa, que é a única que
-lhe faz sentido.
-
-Atenção a uma consequência: `role = 'interno'` dá também acesso à secção
-**Clínicas**, ou seja à operação dos clientes que já pagam, incluindo consumo e
-configuração técnica. Se não for isso que quer para alguém, o perfil correto é
-**Comercial**.
+Por isso o Domingos e a Sonia são `comercial`, e o **Hoje** deles é o deles. A
+gestão da equipa (**Comercial > Equipa**: criar acessos, desativar, reatribuir
+prospetos) fica em `info@bwebstudio.com`. Se um dia fizer falta um comercial que
+veja a equipa toda **sem** ver a operação de clientes, o sítio para o fazer é a
+coluna `crm_reps.role` (que já tem `admin`) e a função `crm_is_admin()` no RLS —
+e não `users.role`.
 
 O idioma da interface segue o `users.locale` do utilizador que entrou, sem
 selector obrigatório. Quem quiser mudar no momento tem o botão de idioma na
@@ -411,16 +446,26 @@ Resposta `200`:
 
 Mesma paleta e tipografia da landing: base creme, tinta escura, acento terracota
 `#A94A27` e verde pino para as superfícies destacadas. Títulos em Clash Display,
-corpo em General Sans (self hosted). Painel de clínica e secção Comercial mobile
-first, com barra de navegação inferior e áreas de toque amplas; painel interno
-pensado para desktop.
+corpo em General Sans (self hosted).
+
+Os três painéis são mobile first e partilham a mesma armação
+([`components/Shell.tsx`](components/Shell.tsx)):
+
+- Até `lg` (1024px) — telemóvel e tablet — barra superior fixa e barra de
+  separadores em baixo, com o conteúdo a ocupar a largura toda. Num iPad em
+  retrato uma barra lateral de 16rem comia um terço do ecrã para mostrar quatro
+  links que cabem em baixo.
+- A partir de `lg`, barra lateral com os mesmos links, o seletor de painéis, a
+  conta, o idioma e a saída.
+- O seletor de painéis só aparece a quem tem mais do que um. Um comercial não vê
+  seletor nenhum, porque não há para onde ir.
+- Zero tabelas largas no telemóvel: **Clínicas** e **Consumo** empilham em
+  cartões e a tabela densa só aparece a partir de `md`.
 
 Regras de toque no CRM, porque o contexto é a rua e não uma mesa:
 
 - Ações principais com no mínimo 48px de altura (as de gravar têm 56px) e
   encostadas ao fundo do ecrã, na zona do polegar.
-- Zero tabelas largas no telemóvel: em ecrã pequeno tudo empilha em cartões. A
-  tabela densa só aparece a partir de `md`, para o admin ao computador.
 - Filtros e formulários longos ficam dentro de `<details>` nativos, para não
   competirem com a lista pelo espaço.
 - Contraste AA com os tokens da marca e nada de cinzas claros: as notas leem-se

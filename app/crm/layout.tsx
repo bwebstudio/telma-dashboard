@@ -1,5 +1,6 @@
-import Link from 'next/link'
 import { requireCrmSession } from '@/lib/crm/data'
+import { getVisitingClinic } from '@/lib/clinic-context'
+import { panelLinks } from '@/lib/panels'
 import { Shell, type NavItem } from '@/components/Shell'
 import { IconToday, IconChart, IconClinic, IconPlus, IconTeam } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
@@ -7,11 +8,13 @@ import { isDemo } from '@/lib/demo/config'
 
 export const dynamic = 'force-dynamic'
 
-// Sales CRM. A separate section from "Clínicas", on purpose: that one is the
+// Sales CRM. A separate panel from "Clientes", on purpose: that one is the
 // operation of paying clients, this one is the funnel of clinics being sold to.
-// Same Supabase session, same panel, different section.
+// Same Supabase session, same app, different panel — and for a sales rep it is
+// the only panel that exists.
 export default async function CrmLayout({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, dict, locale } = await requireCrmSession()
+  const visiting = await getVisitingClinic()
   const t = dict.crm
 
   const nav: NavItem[] = [
@@ -27,36 +30,19 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
   return (
     <Shell
       nav={nav}
-      variant="crm"
-      variantLabel={t.nav.section}
+      panel="crm"
+      panelLabel={dict.panels.crm}
+      // The way back to the client operation is the switcher, for whoever has
+      // one. A rep has a single panel and sees no switcher at all.
+      panels={panelLinks(user, dict, visiting && { clinicName: visiting.name })}
+      switchLabel={dict.panels.switch}
       locale={locale}
       userLabel={user.full_name ?? user.email ?? t.nav.section}
       langLabel={dict.common.language}
       signOutLabel={dict.common.signOut}
-      aside={
-        isAdmin ? (
-          <Link
-            href="/clinicas"
-            className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base text-ink-mute hover:bg-brand-wash hover:text-ink"
-          >
-            ← {t.nav.backToPanel}
-          </Link>
-        ) : null
-      }
     >
       {isDemo() && <DemoBar role={user.role} />}
       {children}
-      {/* The sidebar carries this on a desktop. On a phone it sits after the
-          content: it is an escape hatch used once a day, and above the fold it
-          was pushing the first call down on every screen. */}
-      {isAdmin && (
-        <Link
-          href="/clinicas"
-          className="mt-8 inline-flex min-h-[2.75rem] items-center text-base text-ink-mute hover:text-brand-accent md:hidden"
-        >
-          ← {t.nav.backToPanel}
-        </Link>
-      )}
     </Shell>
   )
 }

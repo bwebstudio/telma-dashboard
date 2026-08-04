@@ -15,9 +15,12 @@ const pad = (n: number) => String(n).padStart(2, '0')
 export function AvailabilityGrid({
   slots,
   dict,
+  readOnly = false,
 }: {
   slots: AvailabilitySlot[]
   dict: Dictionary
+  /** The administrator looking at a client's panel reads the grid, never sets it. */
+  readOnly?: boolean
 }) {
   const [active, setActive] = useState<Set<string>>(
     () => new Set(slots.map((s) => key(s.weekday, parseInt(s.start_time.slice(0, 2), 10))))
@@ -26,6 +29,7 @@ export function AvailabilityGrid({
   const [error, setError] = useState(false)
 
   function toggle(wd: number, h: number) {
+    if (readOnly) return
     const k = key(wd, h)
     const next = new Set(active)
     const wasOn = next.has(k)
@@ -51,7 +55,9 @@ export function AvailabilityGrid({
 
   return (
     <div>
-      <p className="mb-3 text-base text-ink-soft">{dict.horarios.gridHint}</p>
+      <p className="mb-3 text-base text-ink-soft">
+        {readOnly ? dict.horarios.gridReadOnly : dict.horarios.gridHint}
+      </p>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[34rem] border-separate border-spacing-1">
           <thead>
@@ -77,14 +83,16 @@ export function AvailabilityGrid({
                       <button
                         type="button"
                         onClick={() => toggle(wd, h)}
-                        disabled={pending}
+                        disabled={pending || readOnly}
                         aria-pressed={on}
                         aria-label={`${dict.weekdays[wd]} ${pad(h)}:00`}
                         className={`flex h-11 w-full min-w-[2.75rem] items-center justify-center rounded-lg border transition-colors ${
                           on
                             ? 'border-brand bg-brand text-white'
-                            : 'border-line bg-surface hover:border-line-strong hover:bg-surface-sunken'
-                        }`}
+                            : `border-line bg-surface ${
+                                readOnly ? '' : 'hover:border-line-strong hover:bg-surface-sunken'
+                              }`
+                        } ${readOnly ? 'cursor-default' : ''}`}
                       >
                         {on && <IconCheck className="h-4 w-4" />}
                       </button>

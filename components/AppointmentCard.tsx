@@ -24,10 +24,17 @@ export function AppointmentCard({
   appt,
   dict,
   locale,
+  readOnly = false,
 }: {
   appt: Appointment
   dict: Dictionary
   locale: Locale
+  /**
+   * The administrator visiting a client's panel. Confirming or rejecting a
+   * booking is the clinic's answer to its own patient, so the card shows the
+   * state and hides every action.
+   */
+  readOnly?: boolean
 }) {
   const [pending, start] = useTransition()
   const [error, setError] = useState(false)
@@ -35,7 +42,6 @@ export function AppointmentCard({
   const [mode, setMode] = useState<'none' | 'reject' | 'alter'>('none')
 
   const m = dict.marcacoes
-  const decided = appt.status !== 'pendente'
 
   function run(fn: () => Promise<void>) {
     setError(false)
@@ -114,7 +120,7 @@ export function AppointmentCard({
       )}
 
       {/* Actions */}
-      {mode === 'none' && (
+      {!readOnly && mode === 'none' && (
         <div className="mt-5 flex flex-wrap gap-2">
           {appt.status === 'pendente' && (
             <button className="btn-primary" onClick={() => run(() => confirmAppointment(appt.id))} disabled={pending}>
@@ -145,12 +151,12 @@ export function AppointmentCard({
         </div>
       )}
 
-      {appt.status === 'confirmada' && mode === 'none' && (
+      {!readOnly && appt.status === 'confirmada' && mode === 'none' && (
         <p className="mt-3 text-sm text-ink-mute">{m.copiedToSystemHint}</p>
       )}
 
       {/* Alter panel */}
-      {mode === 'alter' && (
+      {!readOnly && mode === 'alter' && (
         <AlterPanel
           dict={dict}
           pending={pending}
@@ -163,7 +169,7 @@ export function AppointmentCard({
       )}
 
       {/* Reject panel */}
-      {mode === 'reject' && (
+      {!readOnly && mode === 'reject' && (
         <RejectPanel
           dict={dict}
           pending={pending}

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, EmptyState, ErrorState } from '@/components/ui'
 import { AppointmentCard } from '@/components/AppointmentCard'
@@ -15,11 +16,13 @@ export default async function MarcacoesPage({
   const { f } = await searchParams
   const onlyPending = f === 'pending'
   const { locale, dict } = await getDict()
+  const { clinicId, readOnly } = await requireClinicContext()
   const supabase = await createClient()
 
   let query = supabase
     .from('appointments')
     .select('*')
+    .eq('clinic_id', clinicId)
     .order('status', { ascending: true })
     .order('scheduled_at', { ascending: true })
   if (onlyPending) query = query.eq('status', 'pendente')
@@ -65,7 +68,13 @@ export default async function MarcacoesPage({
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {appts.map((appt) => (
-            <AppointmentCard key={appt.id} appt={appt} dict={dict} locale={locale} />
+            <AppointmentCard
+              key={appt.id}
+              appt={appt}
+              dict={dict}
+              locale={locale}
+              readOnly={readOnly}
+            />
           ))}
         </div>
       )}

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getAppUser } from '@/lib/auth'
+import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle, Badge } from '@/components/ui'
 import { currentMonthKey } from '@/lib/format'
@@ -9,13 +9,13 @@ export const dynamic = 'force-dynamic'
 
 export default async function ContaPage() {
   const { dict } = await getDict()
-  const user = await getAppUser()
-  const clinic = user?.clinic
+  const { clinicId, clinic } = await requireClinicContext()
   const supabase = await createClient()
 
   const { data: usageRow } = await supabase
     .from('usage')
     .select('*')
+    .eq('clinic_id', clinicId)
     .eq('month', currentMonthKey())
     .maybeSingle()
   const usage = usageRow as Usage | null

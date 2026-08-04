@@ -148,8 +148,8 @@ export const store: DemoStore = {
     },
     {
       id: 'demo-user-interno',
-      email: 'equipa@bwebstudio.com',
-      full_name: 'Equipa Bweb',
+      email: 'info@bwebstudio.com',
+      full_name: 'Bweb Studio',
       role: 'interno',
       clinic_id: null,
       locale: 'pt',

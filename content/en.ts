@@ -66,6 +66,16 @@ export const en: Dictionary = {
     signingIn: 'Signing in...',
     invalid: 'Wrong email or password.',
   },
+  panels: {
+    clinica: 'Clinic',
+    interno: 'Clients',
+    crm: 'Sales',
+    switch: 'Switch panel',
+    openClinicPanel: "Open this clinic's panel",
+    viewingAs: 'You are viewing the panel of',
+    readOnly: 'read only, nothing is changed',
+    exitView: 'Leave this view',
+  },
   clinicNav: {
     hoje: 'Today',
     marcacoes: 'Bookings',
@@ -110,6 +120,7 @@ export const en: Dictionary = {
     title: 'Hours',
     help: 'Telma only offers these hours. She will never book outside them.',
     gridHint: 'Tap the hours you want to offer on each day.',
+    gridReadOnly: 'The hours this clinic has available on each day.',
     capacityNote: 'Each hour takes one booking. Talk to us to change this.',
     blockedTitle: 'Blocked days',
     blockedHelp: 'Public holidays and time off. Telma books nothing on these days.',
@@ -244,7 +255,6 @@ export const en: Dictionary = {
       prospetos: 'Clinics',
       novo: 'New',
       equipa: 'Team',
-      backToPanel: 'Client panel',
     },
     today: {
       title: 'Today',

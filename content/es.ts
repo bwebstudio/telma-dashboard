@@ -66,6 +66,16 @@ export const es: Dictionary = {
     signingIn: 'Entrando...',
     invalid: 'Email o contraseña incorrectos.',
   },
+  panels: {
+    clinica: 'Clínica',
+    interno: 'Clientes',
+    crm: 'Comercial',
+    switch: 'Cambiar de panel',
+    openClinicPanel: 'Ver el panel de esta clínica',
+    viewingAs: 'Estás viendo el panel de',
+    readOnly: 'solo lectura, no se cambia nada',
+    exitView: 'Salir de esta vista',
+  },
   clinicNav: {
     hoje: 'Hoy',
     marcacoes: 'Citas',
@@ -110,6 +120,7 @@ export const es: Dictionary = {
     title: 'Horarios',
     help: 'Telma solo ofrece estos horarios. Nunca va a citar fuera de aquí.',
     gridHint: 'Toca las horas que quieres ofrecer cada día.',
+    gridReadOnly: 'Las horas que esta clínica tiene disponibles cada día.',
     capacityNote: 'Cada hora acepta una cita. Habla con nosotros para cambiarlo.',
     blockedTitle: 'Días bloqueados',
     blockedHelp: 'Festivos y vacaciones. Esos días Telma no cita nada.',
@@ -244,7 +255,6 @@ export const es: Dictionary = {
       prospetos: 'Clínicas',
       novo: 'Nueva',
       equipa: 'Equipo',
-      backToPanel: 'Panel de clientes',
     },
     today: {
       title: 'Hoy',

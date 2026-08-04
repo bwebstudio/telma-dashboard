@@ -7,9 +7,12 @@ import { getAppUser } from '@/lib/auth'
 const pad = (n: number) => String(n).padStart(2, '0')
 const hourToTime = (h: number) => `${pad(h)}:00:00`
 
+// Opening hours belong to the clinic that keeps them. The administrator reads
+// them from inside a client's panel but never sets them: a schedule changed by
+// somebody who is not there is a patient sent to a closed door.
 async function clinicId(): Promise<string> {
   const user = await getAppUser()
-  if (!user?.clinic_id) throw new Error('no clinic')
+  if (user?.role !== 'clinica' || !user.clinic_id) throw new Error('forbidden')
   return user.clinic_id
 }
 
@@ -56,7 +59,12 @@ export async function addBlockedDay(day: string, reason: string) {
 
 export async function removeBlockedDay(id: string) {
   const supabase = await createClient()
-  const { error } = await supabase.from('blocked_days').delete().eq('id', id)
+  const cid = await clinicId()
+  const { error } = await supabase
+    .from('blocked_days')
+    .delete()
+    .eq('id', id)
+    .eq('clinic_id', cid)
   if (error) throw new Error(error.message)
   revalidatePath('/horarios')
 }

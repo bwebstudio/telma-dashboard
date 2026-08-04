@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle } from '@/components/ui'
 import { AvailabilityGrid } from '@/components/AvailabilityGrid'
@@ -9,11 +10,16 @@ export const dynamic = 'force-dynamic'
 
 export default async function HorariosPage() {
   const { locale, dict } = await getDict()
+  const { clinicId, readOnly } = await requireClinicContext()
   const supabase = await createClient()
 
   const [slotsRes, blockedRes] = await Promise.all([
-    supabase.from('availability_slots').select('*'),
-    supabase.from('blocked_days').select('*').order('day', { ascending: true }),
+    supabase.from('availability_slots').select('*').eq('clinic_id', clinicId),
+    supabase
+      .from('blocked_days')
+      .select('*')
+      .eq('clinic_id', clinicId)
+      .order('day', { ascending: true }),
   ])
 
   const slots = (slotsRes.data ?? []) as AvailabilitySlot[]
@@ -28,14 +34,14 @@ export default async function HorariosPage() {
       </div>
 
       <div className="card mb-10 p-5 sm:p-6">
-        <AvailabilityGrid slots={slots} dict={dict} />
+        <AvailabilityGrid slots={slots} dict={dict} readOnly={readOnly} />
       </div>
 
       <section>
         <SectionTitle>{dict.horarios.blockedTitle}</SectionTitle>
         <p className="mb-5 text-base text-ink-soft">{dict.horarios.blockedHelp}</p>
         <div className="card p-5 sm:p-6">
-          <BlockedDaysManager days={blocked} dict={dict} locale={locale} />
+          <BlockedDaysManager days={blocked} dict={dict} locale={locale} readOnly={readOnly} />
         </div>
       </section>
     </>

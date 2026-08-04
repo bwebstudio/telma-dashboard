@@ -71,7 +71,42 @@ export default async function ClinicasPage({
         </button>
       </form>
 
-      <div className="card overflow-hidden">
+      {/* Phone: one card per clinic. A five column table at 375px is either a
+          sideways scroll or four unreadable columns, and this list is read
+          standing up as often as at a desk. */}
+      <ul className="flex flex-col gap-3 md:hidden">
+        {clinics.map((c) => {
+          const used = Math.round(Number(usageByClinic.get(c.id)?.minutes ?? 0))
+          const pct = c.minute_limit > 0 ? (used / c.minute_limit) * 100 : 0
+          const over = pct >= 100
+          const near = pct >= 80 && pct < 100
+          const act = lastActivity.get(c.id)
+          return (
+            <li key={c.id}>
+              <Link href={`/clinicas/${c.id}`} className="card block p-4 active:bg-surface-sunken">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-mid text-lg font-semibold text-ink">{c.name}</span>
+                  <Badge tone={statusTone[c.status]}>{dict.status.clinic[c.status]}</Badge>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-ink-soft">
+                  <span>{dict.plans[c.plan]}</span>
+                  <span aria-hidden>·</span>
+                  <span className={over ? 'font-semibold text-danger' : near ? 'font-semibold text-warn' : ''}>
+                    {used} / {c.minute_limit}
+                  </span>
+                  {over && <Badge tone="danger">{t.overLimit}</Badge>}
+                  {near && <Badge tone="warn">{t.nearLimit}</Badge>}
+                </div>
+                <p className="mt-1 text-sm text-ink-mute">
+                  {t.colActivity}: {act ? formatDate(act, locale) : t.never}
+                </p>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+
+      <div className="card hidden overflow-hidden md:block">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-line bg-surface-sunken">
@@ -79,7 +114,7 @@ export default async function ClinicasPage({
               <Th>{t.colPlan}</Th>
               <Th>{t.colStatus}</Th>
               <Th>{t.colUsage}</Th>
-              <Th className="hidden md:table-cell">{t.colActivity}</Th>
+              <Th>{t.colActivity}</Th>
               <th />
             </tr>
           </thead>
@@ -102,15 +137,19 @@ export default async function ClinicasPage({
                     <Badge tone={statusTone[c.status]}>{dict.status.clinic[c.status]}</Badge>
                   </Td>
                   <Td>
-                    <span className="flex items-center gap-2">
-                      <span className={over ? 'font-semibold text-danger' : near ? 'font-semibold text-warn' : 'text-ink'}>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`whitespace-nowrap ${
+                          over ? 'font-semibold text-danger' : near ? 'font-semibold text-warn' : 'text-ink'
+                        }`}
+                      >
                         {used} / {c.minute_limit}
                       </span>
                       {over && <Badge tone="danger">{t.overLimit}</Badge>}
                       {near && <Badge tone="warn">{t.nearLimit}</Badge>}
                     </span>
                   </Td>
-                  <Td className="hidden md:table-cell text-ink-mute">
+                  <Td className="text-ink-mute">
                     {act ? formatDate(act, locale) : t.never}
                   </Td>
                   <Td>

@@ -48,7 +48,28 @@ export default async function ConsumoPage() {
       </div>
 
       <SectionTitle>{t.perClinic}</SectionTitle>
-      <div className="card overflow-hidden">
+
+      {/* Phone: the same four figures per clinic, stacked. */}
+      <ul className="flex flex-col gap-3 md:hidden">
+        {rows.map(({ clinic, u }) => (
+          <li key={clinic.id} className="card p-4">
+            <p className="font-mid text-lg font-semibold text-ink">{clinic.name}</p>
+            <dl className="mt-2 grid grid-cols-3 gap-3">
+              <Cell label={t.totalCalls} value={String(u?.calls_count ?? 0)} />
+              <Cell
+                label={t.totalMinutes}
+                value={`${Math.round(Number(u?.minutes ?? 0))} / ${clinic.minute_limit}`}
+              />
+              <Cell
+                label={t.estimatedCost}
+                value={formatEuro(Number(u?.minutes ?? 0) * VOICE_COST_PER_MINUTE, locale)}
+              />
+            </dl>
+          </li>
+        ))}
+      </ul>
+
+      <div className="card hidden overflow-hidden md:block">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-line bg-surface-sunken">
@@ -75,5 +96,14 @@ export default async function ConsumoPage() {
         </table>
       </div>
     </>
+  )
+}
+
+function Cell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="label-caps">{label}</dt>
+      <dd className="mt-0.5 truncate text-base text-ink-soft">{value}</dd>
+    </div>
   )
 }

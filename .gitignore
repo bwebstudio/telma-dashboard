@@ -14,3 +14,8 @@ next-env.d.ts
 # Supabase CLI scratch
 supabase/.temp/
 supabase/.branches/
+
+# Copias de seguridad de ficheros de entorno. `.env*.local` no las cubre:
+# `.env.local.bak` no encaja en ese patrón, y lleva las claves de verdad dentro.
+.env*.bak
+*.bak

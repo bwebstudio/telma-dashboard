@@ -284,6 +284,11 @@ export async function completeOnboarding(
         fallback_number: wizard.fallback_number || null,
         briefing: wizard.briefing || null,
         emergency_number: wizard.emergency_number || null,
+        // Off unless the clinic ticked the box on step five. A clinic that never
+        // saw the question has not agreed to be rung at three in the morning.
+        after_hours_transfer: wizard.after_hours_transfer === true,
+        after_hours_number: wizard.after_hours_number || null,
+        after_hours_patients_only: wizard.after_hours_patients_only !== false,
         emergency_protocol: wizard.emergency_protocol || null,
         language: chosenLanguages.includes(clinicLanguage) ? clinicLanguage : chosenLanguages[0],
         appointment_duration_minutes: wizard.appointment_duration_minutes,

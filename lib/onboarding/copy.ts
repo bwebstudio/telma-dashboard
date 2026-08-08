@@ -103,6 +103,15 @@ export interface Copy {
   emergencyProtocolHelp: string
   emergencyProtocolPlaceholder: string
   emergencyNone: string
+  afterHours: string
+  afterHoursHelp: string
+  afterHoursOff: string
+  afterHoursOn: string
+  afterHoursNumber: string
+  afterHoursNumberHelp: string
+  afterHoursPatientsOnly: string
+  afterHoursPatientsOnlyHelp: string
+  afterHoursNumberRequired: string
   languages: string
   languagesHelp: string
   languagesCount: string
@@ -257,6 +266,15 @@ const pt: Copy = {
   emergencyProtocolHelp: 'Opcional. As suas indicações, sobretudo para fora de horas.',
   emergencyProtocolPlaceholder: 'Fora de horas, encaminhar para a urgência do Hospital X.',
   emergencyNone: 'Se deixar o número em branco, fora de horas a Telma diz que a clínica está fechada e encaminha para um serviço de urgência. Nunca inventa um número.',
+  afterHours: 'Chamadas fora do horário',
+  afterHoursHelp: 'O que a Telma faz quando alguém liga com o consultório fechado. Por omissão não incomoda ninguém.',
+  afterHoursOff: 'Fora de horas, ninguém é incomodado. A Telma dá o número de urgências acima e explica quando a clínica reabre.',
+  afterHoursOn: 'Aceito que me passem chamadas fora do horário',
+  afterHoursNumber: 'Número para fora de horas',
+  afterHoursNumberHelp: 'Para onde vai a chamada de madrugada. Em branco, usa-se o número de urgências acima.',
+  afterHoursPatientsOnly: 'Só a quem já é paciente',
+  afterHoursPatientsOnlyHelp: 'A Telma confirma que quem liga já teve consulta aqui antes de passar seja o que for. Recomendado: sem isto, qualquer pessoa pode fazer tocar este número às três da manhã.',
+  afterHoursNumberRequired: 'Indique para onde vai a chamada, ou aqui ou no número de urgências.',
   languages: 'Em que idiomas atende a Telma',
   languagesHelp: 'A Telma reconhece a língua de quem liga e responde nela. O seu plano inclui um número de idiomas; escolha quais.',
   languagesCount: '{n} de {max} escolhidos',
@@ -421,6 +439,15 @@ const es: Copy = {
   emergencyProtocolHelp: 'Opcional. Sus indicaciones, sobre todo para fuera de horario.',
   emergencyProtocolPlaceholder: 'Fuera de horario, derivar a urgencias del Hospital X.',
   emergencyNone: 'Si deja el número en blanco, fuera de horario Telma dice que la clínica está cerrada y deriva a un servicio de urgencias. Nunca se inventa un número.',
+  afterHours: 'Llamadas fuera de horario',
+  afterHoursHelp: 'Qué hace Telma cuando alguien llama con la clínica cerrada. Por defecto no molesta a nadie.',
+  afterHoursOff: 'Fuera de horario no se molesta a nadie. Telma da el número de urgencias de arriba y explica cuándo vuelve a abrir la clínica.',
+  afterHoursOn: 'Acepto que me pasen llamadas fuera del horario',
+  afterHoursNumber: 'Número para fuera de horario',
+  afterHoursNumberHelp: 'Adónde va la llamada de madrugada. En blanco, se usa el número de urgencias de arriba.',
+  afterHoursPatientsOnly: 'Solo a quien ya es paciente',
+  afterHoursPatientsOnlyHelp: 'Telma comprueba que quien llama ya ha tenido cita aquí antes de pasar nada. Recomendado: sin esto, cualquiera puede hacer sonar este número a las tres de la mañana.',
+  afterHoursNumberRequired: 'Indique adónde va la llamada, aquí o en el número de urgencias.',
   languages: 'En qué idiomas atiende Telma',
   languagesHelp: 'Telma reconoce la lengua de quien llama y responde en ella. Su plan incluye un número de idiomas; elija cuáles.',
   languagesCount: '{n} de {max} elegidos',

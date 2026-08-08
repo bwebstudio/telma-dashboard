@@ -880,6 +880,59 @@ export function TelmaStep({
           {!values.emergency_number && (
             <p className="text-sm text-ink-mute">{t.emergencyNone}</p>
           )}
+
+          {/* Consent to be rung at night, asked out loud rather than assumed.
+              Unticked is the answer a clinic gets by not reading this, and it is
+              the safe one: Telma gives the emergency number and lets everybody
+              sleep. The two fields below only appear once somebody has said yes,
+              because until then they are answers to a question nobody asked. */}
+          <div className="border-t border-danger/20 pt-4">
+            <p className="field-label">{t.afterHours}</p>
+            <p className="mb-3 text-sm text-ink-soft">{t.afterHoursHelp}</p>
+
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                name="after_hours_transfer"
+                checked={values.after_hours_transfer === true}
+                onChange={(e) => set({ after_hours_transfer: e.target.checked })}
+                className="mt-1 h-4 w-4 shrink-0 accent-ink"
+              />
+              <span className="text-base text-ink">{t.afterHoursOn}</span>
+            </label>
+
+            {values.after_hours_transfer !== true ? (
+              <p className="mt-3 text-sm text-ink-mute">{t.afterHoursOff}</p>
+            ) : (
+              <div className="mt-4 flex flex-col gap-4">
+                <Text
+                  name="after_hours_number"
+                  label={t.afterHoursNumber}
+                  hint={t.afterHoursNumberHelp}
+                  error={errors.after_hours_number}
+                  value={values.after_hours_number}
+                  onChange={(v) => set({ after_hours_number: v })}
+                  type="tel"
+                  inputMode="tel"
+                />
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    name="after_hours_patients_only"
+                    checked={values.after_hours_patients_only !== false}
+                    onChange={(e) => set({ after_hours_patients_only: e.target.checked })}
+                    className="mt-1 h-4 w-4 shrink-0 accent-ink"
+                  />
+                  <span className="text-base text-ink">
+                    {t.afterHoursPatientsOnly}
+                    <span className="mt-0.5 block text-sm text-ink-mute">
+                      {t.afterHoursPatientsOnlyHelp}
+                    </span>
+                  </span>
+                </label>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

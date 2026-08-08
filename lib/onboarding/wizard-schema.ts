@@ -61,6 +61,7 @@ interface Messages {
   fallbackNumber: string
   emergencyNumber: string
   emergencyTooLong: string
+  afterHoursNumberRequired: string
   operator: string
   areaRegion: string
   plan: string
@@ -98,6 +99,7 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     fallbackNumber: 'Indique o número para onde passar a chamada, em formato internacional.',
     emergencyNumber: 'Indique o número de urgência em formato internacional, por exemplo +351911234567.',
     emergencyTooLong: 'Máximo de 1000 caracteres.',
+    afterHoursNumberRequired: 'Indique para onde vai a chamada fora de horas, aqui ou no número de urgências.',
     operator: 'Escolha a operadora atual.',
     areaRegion: 'Escolha a região do novo número.',
     plan: 'Escolha um plano.',
@@ -133,6 +135,7 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     fallbackNumber: 'Indique el número al que pasar la llamada, en formato internacional.',
     emergencyNumber: 'Indique el número de urgencias en formato internacional, por ejemplo +34911234567.',
     emergencyTooLong: 'Máximo de 1000 caracteres.',
+    afterHoursNumberRequired: 'Indique adónde va la llamada fuera de horario, aquí o en el número de urgencias.',
     operator: 'Elija la operadora actual.',
     areaRegion: 'Elija la provincia del número nuevo.',
     plan: 'Elija un plan.',
@@ -246,6 +249,16 @@ function build(m: Messages) {
         .max(1000, { error: m.emergencyTooLong })
         .optional()
         .default(''),
+      // Consent to be rung at night, and it starts off.
+      //
+      // Not a default anybody can drift into: a clinic that never answered this
+      // question has not agreed to have somebody's phone ring at three in the
+      // morning because a caller asked to speak to the doctor. Nothing here
+      // forces a choice, because the safe answer is the one you get by saying
+      // nothing.
+      after_hours_transfer: z.coerce.boolean().optional().default(false),
+      after_hours_number: z.string().optional().default(''),
+      after_hours_patients_only: z.coerce.boolean().optional().default(true),
     })
     .refine((v) => v.selected_languages.includes(v.greeting_language), {
       error: m.greetingNotSelected,
@@ -258,6 +271,17 @@ function build(m: Messages) {
     .refine(
       (v) => !v.emergency_number || E164.test(normalisePhone(v.emergency_number)),
       { error: m.emergencyNumber, path: ['emergency_number'] }
+    )
+    .refine(
+      (v) => !v.after_hours_number || E164.test(normalisePhone(v.after_hours_number)),
+      { error: m.emergencyNumber, path: ['after_hours_number'] }
+    )
+    // Saying yes to night calls without saying where they go would leave Telma
+    // announcing a transfer she cannot make, which is the failure this whole
+    // block exists to prevent.
+    .refine(
+      (v) => !v.after_hours_transfer || !!(v.after_hours_number || v.emergency_number),
+      { error: m.afterHoursNumberRequired, path: ['after_hours_number'] }
     )
 
   // Step 6: the number, and the signature --------------------------------------

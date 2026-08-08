@@ -4,8 +4,12 @@ import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { AgendaDay } from '@/components/clinic/AgendaDay'
 import { AttentionBand } from '@/components/clinic/AttentionBand'
+import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
+import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
+import { getClinicWithPlan, getMinutePackOffer } from '@/lib/clinic-utils'
+import { percentUsed } from '@/lib/purchase-utils'
 import { IconPhone, IconWhatsApp, IconBookings, IconClose, IconCheck } from '@/components/icons'
 import {
   dayKeyIn,
@@ -107,8 +111,33 @@ export default async function AgendaPage({
 
   const dayKey = dayKeyIn(tz, day)
 
+  // The minutes, and whether they are worth interrupting the day over.
+  //
+  // Under 80% the card is a status line and sits with the rest of the summary,
+  // below what Telma already handled — the reassurance the receptionist opens
+  // this screen for. Past that it is news, and news that stops Telma booking
+  // goes above everything, because finding out from a patient is worse than
+  // finding out from a card.
+  const [billing, pack] = await Promise.all([
+    getClinicWithPlan(clinicId),
+    getMinutePackOffer(),
+  ])
+  const minutesCard = billing ? (
+    <MinutesProgressCard
+      minutes={billing.minutes}
+      pack={pack}
+      canBuy={!readOnly}
+      dict={dict}
+      locale={locale}
+    />
+  ) : null
+  const minutesUrgent = billing
+    ? billing.minutes.exhausted || percentUsed(billing.minutes.used, billing.minutes.allowance) >= 80
+    : false
+
   return (
     <>
+      <BillingLive clinicId={clinicId} />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
@@ -124,6 +153,8 @@ export default async function AgendaPage({
           updatedLabel={t.updated}
         />
       </div>
+
+      {minutesUrgent && <div className="mb-8">{minutesCard}</div>}
 
       {/* The order here is deliberate and it is not "most urgent first".
           Opening onto a stack of things that need answering reads as a list of
@@ -159,6 +190,8 @@ export default async function AgendaPage({
             tone={counts.cancelled > 0 ? 'warn' : undefined}
           />
         </dl>
+
+        {!minutesUrgent && minutesCard && <div className="mt-4">{minutesCard}</div>}
       </section>
 
       <AttentionBand
@@ -168,6 +201,7 @@ export default async function AgendaPage({
         locale={locale}
         tz={tz}
         readOnly={readOnly}
+        serverNow={now.toISOString()}
       />
 
       <div className="mb-4 mt-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">

@@ -52,7 +52,7 @@ export interface Dictionary {
   }
   status: {
     appointment: Record<
-      'pendente' | 'confirmada' | 'rejeitada' | 'copiada' | 'cancelada',
+      'pendente' | 'confirmada' | 'rejeitada' | 'copiada' | 'cancelada' | 'expirada',
       string
     >
     clinic: Record<'ativa' | 'pausada' | 'cancelada', string>
@@ -88,6 +88,8 @@ export interface Dictionary {
     horarios: string
     chamadas: string
     conta: string
+    /** Only shown where the simulator exists, which is never in production. */
+    testCall: string
   }
   // The clinic's home screen: the day, and what needs an answer before it.
   agenda: {
@@ -120,6 +122,11 @@ export interface Dictionary {
     openConversation: string
     seen: string
     seenDone: string
+    // How long is left to answer a pre-marcação before it lets its hour go.
+    holdConfirmIn: string
+    holdCritical: string
+    holdExpired: string
+    holdAria: string
   }
   // Calls and WhatsApp threads, in one timeline.
   conversas: {
@@ -236,6 +243,107 @@ export interface Dictionary {
     accentTitle: string
     accentHelp: string
     accents: Record<'brand' | 'ocean' | 'plum' | 'clay' | 'slate', string>
+    // What happens to a pre-marcação nobody has answered yet. `{minutes}` is
+    // replaced with the length of the hold.
+    holdTitle: string
+    holdHelp: string
+    holdAutoTitle: string
+    holdAutoHelp: string
+    holdManualTitle: string
+    holdManualHelp: string
+  }
+  // Minutes, extras and what they cost. Split across two screens: the meter and
+  // the way to top it up live on the day, because that is where running out
+  // hurts; the plan, the extras and the receipts live in the clinic's own
+  // screen, because that is where somebody goes to decide something.
+  billing: {
+    minutesTitle: string
+    percentUsed: string
+    minutesWord: string
+    minuteWord: string
+    remaining: string
+    includesPurchased: string
+    nearLimit: string
+    exhausted: string
+    insteadOf: string
+    /** Shown to the administrator visiting a panel, who buys nothing. */
+    readOnly: string
+    buyCta: string
+    buyTitle: string
+    minutesPerPack: string
+    minutesAdded: string
+    quantity: string
+    quantityLess: string
+    quantityMore: string
+    coupon: string
+    couponPlaceholder: string
+    couponApplied: string
+    couponUnknown: string
+    discount: string
+    toPay: string
+    confirm: string
+    working: string
+    buyHelp: string
+    planTitle: string
+    planName: string
+    price: string
+    priceOnRequest: string
+    perMonth: string
+    perYear: string
+    includedMinutes: string
+    renewsAt: string
+    locations: string
+    changePlanHelp: string
+    addonsTitle: string
+    addonActive: string
+    addonIncluded: string
+    addonActivate: string
+    addonSoon: string
+    addonNotOnPlan: string
+    addonFree: string
+    historyTitle: string
+    historyEmpty: string
+    colItem: string
+    colQuantity: string
+    colPrice: string
+    status: Record<'pending' | 'completed' | 'failed' | 'refunded', string>
+    errors: Record<
+      'demo' | 'forbidden' | 'item' | 'plan_incompatible' | 'already_active' | 'coming_soon' | 'generic',
+      string
+    >
+  }
+  // A call without a phone. Development and demo only: it writes real rows,
+  // which is the only way it proves anything.
+  testCall: {
+    title: string
+    subtitle: string
+    warning: string
+    stateClinic: string
+    statePlan: string
+    stateMinutes: string
+    stateAddons: string
+    stateNoAddons: string
+    patientName: string
+    duration: string
+    minutesWord: string
+    resultType: string
+    results: Record<'marcacao' | 'transferida' | 'informacao', { label: string; help: string }>
+    submit: string
+    working: string
+    clear: string
+    cleared: string
+    /** The requests the voice agent makes, in the order it makes them. */
+    steps: Record<'context' | 'availability' | 'appointment' | 'call', string>
+    bookedFor: string
+    meter: string
+    seeAgenda: string
+    seeAccount: string
+    /** `{name}` is replaced with the patient's name. */
+    outcomes: Record<
+      'booked' | 'no_minutes' | 'no_slots' | 'transferred' | 'informed' | 'error',
+      { title: string; description: string }
+    >
+    errors: Record<'forbidden' | 'unavailable' | 'clinic' | 'generic', string>
   }
   interno: {
     clinicsTitle: string

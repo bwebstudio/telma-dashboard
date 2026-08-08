@@ -150,8 +150,25 @@ Ver [.env.example](.env.example):
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave pública (browser) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço, só no servidor. Usada pelos webhooks |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço, só no servidor. Usada pelos webhooks e pela inscrição |
 | `TELMA_WEBHOOK_TOKEN` | Segredo partilhado que o sistema de voz envia nos webhooks |
+
+As da inscrição são **todas opcionais**. Cada uma que falta põe essa parte em
+modo de demonstração, em vez de bloquear o formulário:
+
+| Variável | Uso | Sem ela |
+|---|---|---|
+| `NEXT_PUBLIC_DASHBOARD_URL` | Links do email e URL de retorno da Stripe | Usa o host do pedido |
+| `NEXT_PUBLIC_SITE_URL` | Origem da landing: links de volta e amostras de voz | O passo 4 não desenha o leitor |
+| `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` | Comprar o número | Número fictício, assinalado em **Atividade** |
+| `TWILIO_VOICE_WEBHOOK_URL` | Para onde o número comprado envia as chamadas | Número comprado que não toca em lado nenhum |
+| `STRIPE_SECRET_KEY` | Checkout da subscrição | Não cobra nada, clínica fica ativa de imediato |
+| `STRIPE_WEBHOOK_SECRET` | Verificar a assinatura dos webhooks | Todos os webhooks são recusados |
+| `RESEND_API_KEY` | Enviar o email de boas-vindas | Impresso no log em dev, recusado em produção |
+| `ONBOARDING_EMAIL_FROM` | Remetente do email | `Telma <ola@telmaatende.com>` |
+
+Os `stripe_price_id` **não** estão aqui: vivem em `plans.stripe_price_id` e
+`addons.stripe_price_id`, que já é o sítio onde a lista de preços mora.
 
 ## Base de dados
 
@@ -176,6 +193,11 @@ Esquema em [`supabase/migrations`](supabase/migrations).
   medidos em **minutos de conversa**, que é como a Telma custa e como a landing
   os vende; o número de chamadas fica como leitura humana, não como limite.
 - **blocked_days**, **activity_log**: dias bloqueados e registo de eventos.
+- **onboarding_sessions**: inscrições a meio. Um token opaco, as respostas
+  validadas até agora em `jsonb` e o passo mais avançado. RLS ligado e só o
+  `interno` lê: são dados de contacto de alguém que ainda não tem conta. As
+  concluídas guardam-se (apontam para a clínica que produziram); as abandonadas
+  expiram aos 30 dias e saem com `purge_expired_onboarding_sessions()`.
 
 ### CRM comercial (funil de vendas)
 
@@ -244,7 +266,28 @@ Ou manualmente, no SQL Editor do Supabase, **por esta ordem**:
 `0005_crm.sql`, `0006_crm_rls.sql`, `0007_crm_stage_no_regress.sql`,
 `0007_crm_veterinary.sql`, `0008_crm_geo.sql`, `0009_minute_limits.sql`,
 `0010_one_admin.sql`, `0011_cancel_status.sql`, `0012_clinic_panel.sql`,
-`0013_cancel_seen.sql`.
+`0013_cancel_seen.sql`, `0014_plans_addons_minute_packs.sql`,
+`0015_extend_clinics.sql`, `0016_usage_metrics_purchases.sql`,
+`0017_usage_purchase_functions.sql`, `0018_billing_realtime.sql`,
+`0019_appointment_expired_status.sql`, `0020_preappointment_hold.sql`,
+`0021_onboarding.sql`.
+
+> O `0021` é o que a inscrição precisa: cria `onboarding_sessions` e acrescenta
+> a `clinics` as colunas que o wizard pergunta (`specialty`, `region`,
+> `services`, durações, origem do número). Sem ele, `/inscricao` valida tudo e
+> falha a gravar.
+
+> O `0022` não acrescenta nada: **repõe**. Numa altura o projeto tinha tabelas
+> com estes nomes e outro desenho, criadas fora desta pasta, e as migrações
+> `create table if not exists` passavam por cima delas em silêncio. Larga as
+> divergentes para que a `0014` e a `0016` as voltem a criar como deve ser.
+> Leia-a antes de correr: larga cinco tabelas, e traz uma guarda que a impede
+> de correr se `purchases` ou `usage_metrics` já tiverem linhas.
+>
+> Se a base já divergiu, o caminho mais curto é
+> [`supabase/reconcile-2026-08-07.sql`](supabase/reconcile-2026-08-07.sql): é a
+> concatenação de `0022, 0014, 0015, 0016, 0017, 0021` pela ordem certa, dentro
+> de uma transação, para colar de uma só vez.
 
 > O `0011` está sozinho pela mesma razão que o `0004`: acrescenta um valor ao
 > enum `appointment_status` e o Postgres recusa usá-lo na transação que o criou.
@@ -306,10 +349,159 @@ barra lateral, que grava um cookie e passa a mandar naquele browser.
 
 ### Dar de alta uma clínica cliente
 
+Há dois caminhos, e produzem a mesma clínica.
+
 No painel interno, **Clínicas > Nova clínica**. O formulário cria, num só passo:
 a clínica, o primeiro utilizador da clínica (com palavra-passe provisória) e os
 horários por defeito (segunda a sexta, 9h às 13h e 14h às 18h). O utilizador da
 clínica entra depois em `/login` e cai no painel da sua clínica.
+
+Ou a clínica inscreve-se sozinha, em [`/inscricao`](app/inscricao/page.tsx).
+
+### A inscrição, em seis passos
+
+A rota `/inscricao` é **pública** — é a única do painel que é, porque exigir
+sessão para criar uma conta seria exigir uma conta para criar uma conta. Está
+fora do gate em [`lib/supabase/middleware.ts`](lib/supabase/middleware.ts), e é
+por isso que **cada payload é revalidado no servidor**, em
+[`lib/onboarding/wizard-schema.ts`](lib/onboarding/wizard-schema.ts). O que o
+browser diz não decide nada.
+
+| Passo | O que pergunta | Onde acaba |
+|---|---|---|
+| 1 | Nome, email, telefone, área, região | `clinics.name`, `contact_email`, `phone`, `specialty`, `region` |
+| 2 | Horário (seg-sex, sábado, domingo), pausa de almoço, duração e intervalo | `availability_slots` (uma linha por hora marcável) + `appointment_duration_minutes`, `min_interval_minutes` |
+| 3 | Serviços que a Telma pode marcar | `clinics.services` |
+| 4 | A voz que atende, com amostra | `voice_agent_id`, `voice_name` |
+| 5 | Manter o número ou receber um novo | `assigned_phone`, `phone_source`, `phone_provider_ref`, `porting_details` |
+| 6 | Plano, ciclo, add-on de WhatsApp, termos | `plan`, `billing_cycle`, `active_addons`, `minute_limit` |
+
+Três decisões que valem a pena saber antes de mexer:
+
+- **O horário vira agenda.** [`lib/onboarding/schedule.ts`](lib/onboarding/schedule.ts)
+  converte "abre às 9, fecha às 19, almoça das 13 às 14" nas linhas de
+  `availability_slots` que o agente de voz lê. Duração e intervalo são perguntas
+  diferentes: a duração dá a hora de fim de cada linha, o intervalo dá o passo
+  entre inícios, para uma clínica com duas cadeiras poder começar uma consulta
+  de 45 minutos de meia em meia hora.
+- **Rascunhos.** Cada passo é guardado em `onboarding_sessions`, com um token
+  opaco que o browser mantém em `localStorage`. Duas cópias de propósito: o
+  `localStorage` sobrevive a um refresh sem ida ao servidor, a tabela sobrevive
+  a mudar de telemóvel e deixa a equipa comercial ver quem parou no passo 4.
+- **O cartão é da Stripe, não nosso.** O passo 6 cria a clínica e redireciona
+  para o Checkout alojado. A clínica nasce `pausada` e só o webhook em
+  [`/api/webhook/stripe`](app/api/webhook/stripe/route.ts) a põe `ativa`: um URL
+  de sucesso é só um redirecionamento, e qualquer pessoa o pode abrir.
+
+#### Dois idiomas, dois países
+
+A inscrição fala **português e espanhol**, e serve clínicas em **Portugal e em
+Espanha**. As duas coisas são independentes: uma clínica no Porto pode preencher
+o formulário em espanhol.
+
+O idioma sai, por esta ordem, de `?lang=`, do cookie `telma_locale` e do
+`Accept-Language` do browser ([`lib/onboarding/locale-server.ts`](lib/onboarding/locale-server.ts)).
+Vive fora de `content/{pt,es,en}.ts` porque esse dicionário é escolhido por
+`getLocale()`, que lê o utilizador com sessão iniciada, e aqui ainda não há
+nenhum. As mensagens de validação são construídas por idioma em
+[`wizard-schema.ts`](lib/onboarding/wizard-schema.ts), e a amostra de voz do
+passo 4 muda de gravação: pôr uma chamada em português a uma clínica espanhola
+mina exactamente a pergunta que esse passo existe para responder.
+
+O idioma escolhido fica em `users.locale`, portanto o painel abre no mesmo
+idioma em que a clínica se inscreveu, e o email de boas-vindas segue nele.
+
+**O idioma em que a Telma atende é outra coisa**, escolhida no passo 4 e
+guardada em `clinics.language`. Uma clínica de Barcelona pode fazer o papel em
+castelhano e querer que os seus pacientes sejam atendidos em catalão. O primeiro
+idioma está incluído no plano; **cada idioma adicional é um add-on pago**, com a
+linha correspondente em `active_addons` (`language_ca`, `language_en`, ...) e o
+preço lido de `addons`, tal como o WhatsApp. Ver
+[`0025_language_addons.sql`](supabase/migrations/0025_language_addons.sql).
+
+**O país nunca é guardado à parte: é implicado pela região.** Os ids são únicos
+entre os dois países (`lisboa`, `es-madrid`), por isso `countryOfRegion()` é a
+única consulta e não há duas colunas que possam discordar. Dele saem três
+coisas: o indicativo que a Twilio procura (`AvailablePhoneNumbers/PT` ou `/ES`),
+o prefixo do número (+351 ou +34) e o **fuso horário** gravado em
+`clinics.timezone`. Este último não é detalhe: Madrid está uma hora à frente de
+Lisboa e é essa coluna que decide onde começa o dia na agenda, por isso uma
+clínica espanhola deixada no `Europe/Lisbon` por defeito veria as marcações do
+fim do dia a cair no dia errado.
+
+#### A voz e o agente
+
+São duas coisas e vivem em duas colunas, desde a `0023`:
+
+- **`clinics.voice_agent_id`** é o agente da ElevenLabs. **Um só**, o mesmo para
+  toda a gente, vindo de `ELEVENLABS_AGENT_ID`.
+
+  Não um por especialidade nem um por idioma: ambos foram tentados e ambos
+  saíram. O primeiro parte no primeiro cliente que não é uma das especialidades
+  em que alguém pensou (uma empresa de construção não precisa de agente próprio,
+  precisa do mesmo agente informado do que vende); o segundo parte na clínica
+  que compra um segundo idioma. O que distingue uma da outra é o que
+  [`/api/clinic-context`](app/api/clinic-context/route.ts) devolve — especialidade,
+  serviços, texto livre, idioma, horário — e esse endpoint existe desde a `0001`.
+
+- **`clinics.voice_id`** é a voz, **uma por idioma e fixa por clínica**. Não é
+  uma escolha da clínica: sai do idioma em que ela atende, para que o sotaque
+  seja local (`ELEVENLABS_VOICE_ID_PT`, `_ES`, `_EN`, `_CA`).
+
+  Das 32 vozes da conta, exatamente **uma** é português europeu e todas as
+  outras portuguesas são brasileiras; cinco são espanhol peninsular e nenhuma é
+  as duas coisas. Uma voz única para toda a gente foi tentada e soava brasileira
+  em Lisboa e latino-americana em Barcelona. Fixa por clínica, e não por
+  chamada, porque uma rececionista que muda de voz quando o paciente muda de
+  língua deixa de ser uma pessoa. `voice_name` é a etiqueta legível, para o painel não ter de
+  resolver um id contra uma API só para desenhar uma linha.
+
+Antes da `0023` as duas partilhavam `voice_agent_id`, e o que lá estava
+dependia de quem tinha escrito a linha. A migração separa-as e move os valores
+que estavam no sítio errado.
+
+Com `ELEVENLABS_API_KEY` definida, o passo 4 lista as **vozes reais da conta**,
+ordenadas pelas verificadas no idioma do formulário. Sem ela, mostra os quatro
+nomes de marcador e a inscrição continua a funcionar. As amostras são as que a
+ElevenLabs já aloja (`preview_url`), portanto ouvir uma **não gasta créditos**;
+em troca, costumam estar gravadas em inglês mesmo para uma voz que fala bem
+espanhol.
+
+Para descobrir os ids dos agentes e ver as vozes que a conta tem:
+
+```bash
+node scripts/elevenlabs-setup.mjs
+```
+
+#### Sem Twilio, sem Stripe, sem email
+
+Nenhuma das três é obrigatória, e cada uma que falta desliga-se sozinha: número
+fictício, sem cobrança, email impresso no log do servidor. É o que torna a
+inscrição demonstrável a um cliente antes de haver conta Twilio com saldo ou
+produto criado na Stripe. Tudo o que fica por fazer a sério é escrito em
+`activity_log` com `type = 'needs_attention'`, para que uma clínica que parece
+pronta e não está apareça em **Atividade** e não só num comentário no código.
+
+O email de boas-vindas leva a palavra-passe provisória. Sem `RESEND_API_KEY`
+imprime-a no terminal em desenvolvimento e **recusa-se a enviar** em produção,
+em vez de deixar uma credencial num log que ninguém trata como cofre.
+
+#### Testar de ponta a ponta
+
+[`/test-onboarding`](app/test-onboarding/page.tsx) (fora de produção, com sessão)
+corre os seis passos contra as mesmas server actions que o formulário usa,
+conclui a inscrição e depois **lê a base de dados** para confirmar o que ficou
+lá: a clínica, o login, os slots gerados, o registo de atividade. Tem também as
+validações inválidas, uma por regra, e um botão para apagar a clínica de teste.
+
+#### Ligar a landing
+
+A landing aponta para aqui quando `NEXT_PUBLIC_ONBOARDING_URL` estiver definida
+no projeto `web`. Enquanto estiver vazia, os botões dos planos continuam a dizer
+"Falar connosco" e a levar ao formulário de contacto — um botão que diz
+"Começar" e abre um formulário de contacto é uma promessa quebrada. Com a
+variável definida, cada cartão de preço leva a `/inscricao?plano=<id>` e o
+último passo abre já no plano escolhido.
 
 ### Converter um prospeto em cliente
 

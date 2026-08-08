@@ -10,8 +10,25 @@
 // Writes do not depend on this file. Logged interactions are queued in
 // localStorage by the app itself and retried when the connection returns.
 
-const VERSION = 'telma-v2'
+// Bumped from v2 to drop caches poisoned by the development bug described in
+// isCacheableAsset(). The activate handler deletes every cache that does not
+// start with VERSION, so an already installed worker heals itself on next load
+// instead of needing somebody to clear site data by hand.
+const VERSION = 'telma-v3'
 const STATIC_CACHE = `${VERSION}-static`
+
+// Next serves development chunks under the same /_next/static/ prefix as the
+// production ones, but rebuilds them in place under stable names. Serving those
+// cache first hands the browser a client bundle from an earlier compile, and a
+// client bundle from an earlier compile carries server action ids the running
+// server has never heard of: every button then fails with "Failed to find
+// Server Action", and a reload does not help because the worker answers before
+// the network does.
+//
+// Production assets are content hashed and genuinely immutable, so the rule is
+// not "never cache build output". It is "not while developing".
+const IS_DEV =
+  self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
 
 const PRECACHE = [
   '/icons/icon-192.png',
@@ -60,8 +77,8 @@ self.addEventListener('activate', (event) => {
 })
 
 function isCacheableAsset(url) {
+  if (url.pathname.startsWith('/_next/static/')) return !IS_DEV
   return (
-    url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/fonts/') ||
     url.pathname.endsWith('.woff2')

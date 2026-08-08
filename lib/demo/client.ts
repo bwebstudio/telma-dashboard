@@ -1,5 +1,6 @@
 import { store, type DemoStore } from './data'
 import { nextStage, stageFromResult, type CrmActivity } from '@/lib/crm/types'
+import type { Appointment, Call } from '@/lib/types'
 
 type Filter = ['eq' | 'gte' | 'lte' | 'ilike' | 'is', string, any]
 type Order = [string, boolean]
@@ -26,6 +27,135 @@ function applyDemoActivity(activity: CrmActivity): void {
   }
   p.last_activity_at = activity.created_at
   p.updated_at = new Date().toISOString()
+}
+
+const HOLDS: Appointment['status'][] = ['pendente', 'confirmada', 'copiada']
+
+// Stands in for available_slots(). Same rule as the SQL: the clinic's active
+// slots for that weekday, minus the bookings already standing on them, minus
+// the days the clinic is closed. Times are built in the machine's own zone,
+// which is how the rest of the demo day is written.
+function demoAvailableSlots(args: Record<string, any>) {
+  const clinicId = String(args.p_clinic_id ?? '')
+  const date = String(args.p_date ?? '')
+  const [y, m, d] = date.split('-').map(Number)
+  if (!y || !m || !d) return []
+  if (store.blocked_days.some((b) => b.clinic_id === clinicId && b.day === date)) return []
+
+  const weekday = new Date(y, m - 1, d).getDay()
+
+  return store.availability_slots
+    .filter((s) => s.clinic_id === clinicId && s.active && s.weekday === weekday)
+    .map((s) => {
+      const [hh, mm] = s.start_time.split(':').map(Number)
+      const start = new Date(y, m - 1, d, hh, mm ?? 0, 0, 0)
+      const taken = store.appointments.filter(
+        (a) =>
+          a.clinic_id === clinicId &&
+          HOLDS.includes(a.status) &&
+          // A pre-marcação past its deadline has let the hour go, whether or
+          // not anything has swept it yet. Same clause as the SQL.
+          !(a.status === 'pendente' && a.expires_at && new Date(a.expires_at) <= new Date()) &&
+          new Date(a.scheduled_at).getTime() === start.getTime()
+      ).length
+      return {
+        slot_start: start.toISOString(),
+        slot_end: s.end_time,
+        remaining: s.capacity - taken,
+      }
+    })
+    .filter((s) => s.remaining > 0)
+    .sort((a, b) => +new Date(a.slot_start) - +new Date(b.slot_start))
+}
+
+// Stands in for record_call(): the call, the booking it produced, the month's
+// meter and the two activity lines, in one step like the function it mirrors.
+function demoRecordCall(args: Record<string, any>) {
+  const clinicId = String(args.p_clinic_id ?? '')
+  const duration = Number(args.p_duration ?? 0) || 0
+  const at = new Date().toISOString()
+  const callId = `demo-call-${store.calls.length + 1}`
+
+  store.calls.push({
+    id: callId,
+    clinic_id: clinicId,
+    channel: 'telefone',
+    from_phone: (args.p_from_phone as string) ?? null,
+    patient_name: (args.p_appointment?.patient_name as string) ?? null,
+    duration_seconds: duration,
+    result: (args.p_result as Call['result']) ?? null,
+    summary: (args.p_summary as string) ?? null,
+    transcript: null,
+    recording_url: null,
+    created_at: at,
+    // Not on the Call type, which the panel never reads. Kept so a simulated
+    // call can be found again and removed.
+    external_ref: (args.p_external_ref as string) ?? null,
+  } as Call)
+
+  let appointmentId: string | null = null
+  if (args.p_appointment) {
+    appointmentId = `demo-appt-${store.appointments.length + 1}`
+    store.appointments.push({
+      id: appointmentId,
+      clinic_id: clinicId,
+      call_id: callId,
+      patient_name: String(args.p_appointment.patient_name ?? ''),
+      patient_phone: String(args.p_appointment.patient_phone ?? ''),
+      reason: (args.p_appointment.reason as string) ?? null,
+      scheduled_at: String(args.p_appointment.scheduled_at ?? at),
+      status: 'pendente',
+      // Stands in for trg_appts_expiry, including the part that reads the
+      // clinic's own setting: thirty minutes when the clinic wants the hour
+      // back, no deadline when it waits for a person.
+      expires_at:
+        store.clinics.find((c) => c.id === clinicId)?.pre_appointment_auto_expires === false
+          ? null
+          : new Date(Date.now() + 30 * 60_000).toISOString(),
+      origin: (args.p_appointment.origin as Appointment['origin']) ?? 'telefone',
+      summary: (args.p_summary as string) ?? null,
+      reject_reason: null,
+      decided_at: null,
+      cancelled_at: null,
+      cancelled_by: null,
+      cancel_reason: null,
+      cancel_seen_at: null,
+      created_at: at,
+    })
+    store.activity_log.unshift({
+      id: `act-${store.activity_log.length + 1}`,
+      clinic_id: clinicId,
+      type: 'appointment_created',
+      message: `A Telma deixou uma pré-marcação para ${args.p_appointment.patient_name}`,
+      created_at: at,
+    })
+  }
+
+  const month = `${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, '0')}-01`
+  const minutes = Math.round((duration / 60) * 100) / 100
+  const row = store.usage.find((u) => u.clinic_id === clinicId && u.month === month)
+  if (row) {
+    row.calls_count += 1
+    row.minutes = Math.round((row.minutes + minutes) * 100) / 100
+  } else {
+    store.usage.push({
+      id: `usage-${store.usage.length + 1}`,
+      clinic_id: clinicId,
+      month,
+      calls_count: 1,
+      minutes,
+    })
+  }
+
+  store.activity_log.unshift({
+    id: `act-${store.activity_log.length + 2}`,
+    clinic_id: clinicId,
+    type: 'call_received',
+    message: 'A Telma atendeu uma chamada',
+    created_at: at,
+  })
+
+  return { call_id: callId, appointment_id: appointmentId }
 }
 
 // A tiny chainable stand in for the Supabase query builder, backed by the
@@ -244,6 +374,16 @@ export function createDemoClient(scope?: string, repScope?: string): any {
         ]
         return Promise.resolve({ data, error: null })
       }
+      // The two the simulated call needs. Without them the demo could show the
+      // form and nothing else: no agenda would move, no minute would be spent,
+      // and the one thing the demo exists to show is the loop closing.
+      if (name === 'available_slots') {
+        return Promise.resolve({ data: demoAvailableSlots(args ?? {}), error: null })
+      }
+      if (name === 'record_call') {
+        return Promise.resolve({ data: demoRecordCall(args ?? {}), error: null })
+      }
+
       return Promise.resolve({ data: {}, error: null })
     },
     auth: {

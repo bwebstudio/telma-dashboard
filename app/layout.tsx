@@ -37,7 +37,13 @@ export default async function RootLayout({
 }) {
   const locale = await getLocale()
   return (
-    <html lang={locale} className={sans.variable}>
+    // Same decision the landing already took, for the same reason. Browser
+    // extensions write their own attributes onto <html> before React hydrates
+    // (data-thieve-chrome-ext, the various wallet and dark mode injectors), so
+    // the server HTML and the live DOM legitimately differ on this one node.
+    // It suppresses the warning for this node's attributes only: children still
+    // hydrate normally, so a real mismatch anywhere in the app still reports.
+    <html lang={locale} className={sans.variable} suppressHydrationWarning>
       <body>
         {children}
         <PwaSetup />

@@ -5,7 +5,11 @@ import { supabaseUrl, supabaseAnonKey, supabaseConfigError } from './env'
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
-const PUBLIC_PATHS = ['/login', '/auth']
+// Reachable without a session. `/inscricao` is where a clinic signs itself up,
+// so requiring a session there would require an account to create an account.
+// `/api/onboarding` is the same flow's HTTP surface, and it authenticates
+// nothing: it validates every payload instead, in lib/onboarding/wizard-schema.
+const PUBLIC_PATHS = ['/login', '/auth', '/inscricao', '/api/onboarding']
 
 // A misconfigured environment used to throw from inside createServerClient,
 // which the platform reports as MIDDLEWARE_INVOCATION_FAILED: every route 500s

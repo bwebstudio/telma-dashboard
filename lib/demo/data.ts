@@ -106,7 +106,7 @@ function prospect(p: Partial<CrmProspect> & { id: string; name: string }): CrmPr
   }
 }
 
-export const store: DemoStore = {
+const seed: DemoStore = {
   clinics: [
     {
       id: DEMO_CLINIC_ID,
@@ -124,6 +124,7 @@ export const store: DemoStore = {
       timezone: demoTimezone,
       logo_url: null,
       accent: 'brand',
+      pre_appointment_auto_expires: true,
       created_at: iso(-60 * 24 * 40),
       updated_at: iso(-60),
     },
@@ -143,6 +144,7 @@ export const store: DemoStore = {
       timezone: demoTimezone,
       logo_url: null,
       accent: 'brand',
+      pre_appointment_auto_expires: true,
       created_at: iso(-60 * 24 * 20),
       updated_at: iso(-120),
     },
@@ -438,6 +440,24 @@ export const store: DemoStore = {
     },
   ],
 }
+
+/**
+ * One store per process, not one per module graph.
+ *
+ * Same reason lib/demo/overrides exists: Next compiles pages and server actions
+ * into separate module graphs, so a plain exported const hands the action one
+ * copy of the seed and the page another. A simulated call would write a booking
+ * into a store nobody could then read from the agenda, and the demo's whole
+ * claim — press this, watch that change — would quietly stop being true.
+ *
+ * globalThis is shared by both graphs, because both run in the same Node
+ * process. Whichever graph loads first wins; the other's seed is discarded.
+ * Nothing survives a restart, which is exactly what demo mode promises.
+ */
+const STORE_KEY = Symbol.for('telma.demo.store')
+const globalStore = globalThis as unknown as Record<symbol, DemoStore | undefined>
+
+export const store: DemoStore = (globalStore[STORE_KEY] ??= seed)
 
 export function getDemoUser(role: UserRole): AppUser {
   if (role === 'interno' || role === 'comercial') {

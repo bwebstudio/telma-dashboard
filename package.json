@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:prompt": "node --experimental-strip-types --test scripts/test-prompt.mjs",
+    "test": "npm run test:prompt",
+    "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
@@ -18,7 +21,8 @@
     "leaflet.markercluster": "^1.5.3",
     "next": "15.5.22",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

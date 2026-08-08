@@ -4,9 +4,10 @@ import { panelLinks } from '@/lib/panels'
 import { Shell, type NavItem } from '@/components/Shell'
 import { ViewingAsBar } from '@/components/ViewingAsBar'
 import { ClinicMark } from '@/components/clinic/ClinicMark'
-import { IconToday, IconBookings, IconHours, IconCalls } from '@/components/icons'
+import { IconToday, IconBookings, IconHours, IconCalls, IconPhone } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { isDemo } from '@/lib/demo/config'
+import { mockCallsEnabled } from '@/lib/mock-call'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,12 @@ export default async function ClinicaLayout({
     { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours /> },
     { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls /> },
   ]
+
+  // Only where the page exists. A nav entry that leads to a 404 in production
+  // is worse than no entry at all.
+  if (mockCallsEnabled()) {
+    nav.push({ href: '/test-call', label: dict.clinicNav.testCall, icon: <IconPhone /> })
+  }
 
   const clinicName = clinic?.name ?? dict.clinicNav.conta
 

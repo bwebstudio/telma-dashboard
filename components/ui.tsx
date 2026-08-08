@@ -14,6 +14,9 @@ export const APPOINTMENT_TONE: Record<AppointmentStatus, Tone> = {
   copiada: 'ok',
   rejeitada: 'danger',
   cancelada: 'warn',
+  // Grey, not amber: nothing went wrong and nobody has to act. The window
+  // closed and the hour is back on sale, which is the system working.
+  expirada: 'neutral',
 }
 
 export const CALL_TONE: Record<CallResult, Tone> = {

@@ -3,6 +3,7 @@ import type { Dictionary, Locale } from '@/content'
 import type { Appointment } from '@/lib/types'
 import { ConfirmButton } from './ConfirmButton'
 import { SeenButton } from './SeenButton'
+import { PreAppointmentCountdown } from './PreAppointmentCountdown'
 import { smartStamp } from '@/lib/time'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
 
@@ -38,6 +39,7 @@ export function AttentionBand({
   locale,
   tz,
   readOnly,
+  serverNow,
 }: {
   pending: Appointment[]
   cancelled: Appointment[]
@@ -45,6 +47,8 @@ export function AttentionBand({
   locale: Locale
   tz: string
   readOnly: boolean
+  /** When the server drew this. The zero the countdowns count from. */
+  serverNow: string
 }) {
   const t = dict.agenda
   const total = pending.length + cancelled.length
@@ -97,20 +101,37 @@ export function AttentionBand({
         {pending.map((appt) => (
           <li
             key={appt.id}
-            className="px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-5"
+            className="px-4 py-3 sm:flex sm:items-start sm:justify-between sm:gap-4 sm:px-5"
           >
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base">
-              <span className="badge shrink-0 bg-warn-soft text-warn">{t.needsAnswer}</span>
-              <span className="font-medium text-ink">{appt.patient_name}</span>
-              <span className="text-ink-mute" aria-label={dict.status.channel[appt.origin]}>
-                {appt.origin === 'whatsapp' ? (
-                  <IconWhatsApp className="h-4 w-4" />
-                ) : (
-                  <IconPhone className="h-4 w-4" />
-                )}
-              </span>
-              <span className="text-ink-soft">{smartStamp(appt.scheduled_at, locale, tz)}</span>
-              {appt.reason && <span className="text-ink-soft">· {appt.reason}</span>}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base">
+                <span className="badge shrink-0 bg-warn-soft text-warn">{t.needsAnswer}</span>
+                <span className="font-medium text-ink">{appt.patient_name}</span>
+                <span className="text-ink-mute" aria-label={dict.status.channel[appt.origin]}>
+                  {appt.origin === 'whatsapp' ? (
+                    <IconWhatsApp className="h-4 w-4" />
+                  ) : (
+                    <IconPhone className="h-4 w-4" />
+                  )}
+                </span>
+                <span className="text-ink-soft">{smartStamp(appt.scheduled_at, locale, tz)}</span>
+                {appt.reason && <span className="text-ink-soft">· {appt.reason}</span>}
+              </div>
+
+              {/* How long is left of the hold. Under the booking rather than
+                  beside it: the deadline is a fact about this line, and on a
+                  phone a fourth thing on the same row pushes the name into a
+                  wrap nobody can read. */}
+              <PreAppointmentCountdown
+                appointment={appt}
+                serverNow={serverNow}
+                labels={{
+                  confirmIn: t.holdConfirmIn,
+                  critical: t.holdCritical,
+                  expired: t.holdExpired,
+                  aria: t.holdAria,
+                }}
+              />
             </div>
 
             <div className="mt-3 flex shrink-0 items-center gap-3 sm:mt-0">

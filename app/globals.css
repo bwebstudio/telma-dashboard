@@ -254,4 +254,25 @@
   .label-caps {
     @apply text-xs font-medium uppercase tracking-label text-ink-mute;
   }
+
+  /* The only motion in the panel: a dialog arriving. Short enough to read as
+     the page responding rather than as an animation, and skipped entirely for
+     anyone who has asked for less movement. */
+  .modal-backdrop {
+    animation: modal-fade 160ms var(--ease) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .modal-backdrop {
+      animation: none;
+    }
+  }
+}
+
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

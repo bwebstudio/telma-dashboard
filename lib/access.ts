@@ -71,6 +71,8 @@ export function panelOfPath(pathname: string): Panel | null {
     pathname.startsWith('/marcacoes') ||
     pathname.startsWith('/horarios') ||
     pathname.startsWith('/chamadas') ||
+    pathname.startsWith('/conversas') ||
+    pathname.startsWith('/test-call') ||
     pathname.startsWith('/conta')
   ) {
     return 'clinica'

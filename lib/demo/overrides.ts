@@ -16,6 +16,7 @@ import type { ClinicAccent } from '@/lib/types'
 export interface ClinicOverride {
   accent?: ClinicAccent
   logo_url?: string | null
+  pre_appointment_auto_expires?: boolean
 }
 
 const KEY = Symbol.for('telma.demo.clinicOverrides')

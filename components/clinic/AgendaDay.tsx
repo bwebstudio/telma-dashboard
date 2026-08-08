@@ -22,6 +22,7 @@ const SHOWN_AS: Record<AppointmentStatus, 'confirmada' | 'pendente' | 'cancelada
   pendente: 'pendente',
   cancelada: 'cancelada',
   rejeitada: 'cancelada',
+  expirada: 'cancelada',
 }
 
 /**

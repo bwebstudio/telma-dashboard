@@ -24,6 +24,11 @@ const at = (dayOffset: number, h: number, m = 0) => {
 // 14:00, whatever time of day somebody opens the demo — an offset from now
 // puts the call after the appointment it made every afternoon.
 
+// The deadline on a pre-marcação is the one value here written as an offset
+// from now rather than at a fixed clock time. It has to be counting down
+// whenever somebody opens the demo, which is the whole point of it.
+const inMinutes = (m: number) => new Date(now.getTime() + m * 60_000).toISOString()
+
 // Turns are written the way the transcription lands them: short, spoken, with
 // the hesitations left in. A cleaned-up transcript reads like marketing copy
 // and stops being evidence of what was actually said.
@@ -178,6 +183,7 @@ export function demoAppointments(clinicId: string): Appointment[] {
       call_id: 'd-conv-4',
       summary:
         'Quer avaliação para aparelho. A Telma explicou que a primeira consulta é de diagnóstico.',
+      expires_at: inMinutes(21),
       created_at: at(0, 11, 54),
     }),
     appt(clinicId, {
@@ -190,6 +196,9 @@ export function demoAppointments(clinicId: string): Appointment[] {
       origin: 'whatsapp',
       call_id: 'd-conv-5',
       summary: 'Pergunta se dá para fazer antes do casamento da irmã, dia 22.',
+      // Under five minutes, so the demo shows the countdown asking to be
+      // noticed rather than only its calm state.
+      expires_at: inMinutes(4),
       created_at: at(0, 12, 22),
     }),
 
@@ -239,6 +248,7 @@ export function demoAppointments(clinicId: string): Appointment[] {
       status: 'pendente',
       origin: 'whatsapp',
       summary: 'Pediu a primeira hora livre da manhã.',
+      expires_at: inMinutes(12),
       created_at: at(0, 16, 42),
     }),
     appt(clinicId, {

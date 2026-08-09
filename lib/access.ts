@@ -1,3 +1,4 @@
+import { showcaseMode } from './demo/config'
 import type { AppUser, UserRole } from './types'
 
 // Who sees what. One file, one table, no other place in the app decides this.
@@ -36,6 +37,17 @@ const PANELS_BY_ROLE: Record<UserRole, Panel[]> = {
 
 export function panelsFor(user: AppUser | null): Panel[] {
   if (!user) return []
+  // On a showcase deployment there is one panel and it is the clinic's.
+  //
+  // The internal panel and the CRM are where Sonia and Domingos do real work:
+  // ringing practices, setting reminders, moving prospects along. A demo that
+  // can draw those screens is a demo somebody will one day act on, and the
+  // safest way to stop that is for them not to exist there at all.
+  //
+  // Enforced here rather than by leaving those accounts out of the demo
+  // database, because the database is the thing most likely to be copied,
+  // restored or reseeded by somebody in a hurry.
+  if (showcaseMode()) return user.role === 'clinica' ? ['clinica'] : []
   return PANELS_BY_ROLE[user.role] ?? []
 }
 

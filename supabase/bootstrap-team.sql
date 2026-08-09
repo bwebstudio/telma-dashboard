@@ -1,4 +1,4 @@
--- As contas da equipa, num ambiente acabado de montar.
+-- As contas da equipa, num ambiente novo que NÃO seja de demonstração.
 --
 -- ── PORQUE É QUE ISTO É PRECISO ─────────────────────────────────────────────
 -- As contas não vivem no código nem nas migrações: vivem na base de dados, uma
@@ -16,8 +16,15 @@
 -- Escreva a palavra-passe na linha v_password e corra. É idempotente: quem já
 -- existir fica como está, com a palavra-passe que já tinha.
 --
+-- ── NÃO CORRER NUMA DEMONSTRAÇÃO ────────────────────────────────────────────
+-- Uma demonstração tem um papel só, o da clínica. O painel interno e o CRM são
+-- onde a Sónia e o Domingos trabalham a sério, a ligar a consultórios e a marcar
+-- lembretes, e nada que se dê a estranhos tem que os desenhar. Numa demonstração
+-- `showcaseMode()` fecha esses painéis de qualquer maneira, e as contas não
+-- devem lá estar sequer.
+--
 -- Para produção não use isto com uma palavra-passe partilhada. Crie cada conta
--- pelo painel, com a sua, e deixe este ficheiro para ambientes de demonstração.
+-- pelo painel, com a sua.
 
 do $$
 declare

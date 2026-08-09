@@ -290,26 +290,38 @@ export function WizardForm({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* The language switcher lives on the form and not only in the header,
-          because the moment somebody realises they are reading the wrong
-          language is the moment they are looking at a field they cannot fill.
-          It carries the step across, so switching does not restart the form. */}
-      <div className="flex items-center justify-end gap-2 text-sm">
-        <span className="text-ink-mute">{t.languageLabel}</span>
-        {ONBOARDING_LOCALES.map((l) => (
-          <a
-            key={l}
-            href={`?lang=${l}`}
-            aria-current={l === locale ? 'true' : undefined}
-            className={
-              l === locale
-                ? 'font-medium text-ink underline underline-offset-4'
-                : 'text-ink-soft hover:text-brand-accent'
-            }
-          >
-            {LOCALE_NAME[l]}
-          </a>
-        ))}
+      {/* The language switcher, as a control rather than as two small links.
+          It was a pair of 14px words aligned right, which is findable if you
+          already know it is there. Somebody who opened this in the wrong
+          language is, by definition, somebody who cannot read the label next to
+          it, so it has to be recognisable as a switch by its shape alone.
+
+          It carries the step across, so changing language does not restart the
+          form, and it is a link rather than a button because it is a navigation
+          and should survive being opened in a new tab. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-mute">{t.languageLabel}</p>
+        <div
+          className="inline-flex rounded-pill border border-line bg-surface-sunken p-1"
+          role="group"
+          aria-label={t.languageLabel}
+        >
+          {ONBOARDING_LOCALES.map((l) => (
+            <a
+              key={l}
+              href={`?lang=${l}`}
+              aria-current={l === locale ? 'true' : undefined}
+              className={[
+                'rounded-pill px-4 py-1.5 text-sm transition-colors duration-fast ease-calm',
+                l === locale
+                  ? 'bg-surface font-medium text-ink shadow-sm'
+                  : 'text-ink-mute hover:text-ink',
+              ].join(' ')}
+            >
+              {LOCALE_NAME[l]}
+            </a>
+          ))}
+        </div>
       </div>
 
       <StepIndicator current={step} locale={locale} />

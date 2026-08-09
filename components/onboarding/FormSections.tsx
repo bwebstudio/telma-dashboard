@@ -838,6 +838,7 @@ export function TelmaStep({
             error={errors.fallback_number}
             value={values.fallback_number}
             onChange={(v) => set({ fallback_number: v })}
+            placeholder={PHONE_EXAMPLE[countryOf(values, locale)]}
             type="tel"
             inputMode="tel"
           />
@@ -858,6 +859,7 @@ export function TelmaStep({
             error={errors.emergency_number}
             value={values.emergency_number}
             onChange={(v) => set({ emergency_number: v })}
+            placeholder={PHONE_EXAMPLE[countryOf(values, locale)]}
             type="tel"
             inputMode="tel"
           />
@@ -912,6 +914,7 @@ export function TelmaStep({
                   error={errors.after_hours_number}
                   value={values.after_hours_number}
                   onChange={(v) => set({ after_hours_number: v })}
+                  placeholder={PHONE_EXAMPLE[countryOf(values, locale)]}
                   type="tel"
                   inputMode="tel"
                 />

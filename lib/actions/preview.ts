@@ -30,6 +30,29 @@ import { buildSlots } from '@/lib/onboarding/schedule'
  * drift in the direction of looking better than the truth.
  */
 
+/**
+ * What the clinic is shown, which is not what the agent is given.
+ *
+ * These used to be the same thing: the panel rendered the built prompt in a
+ * monospace box with a button to copy it. That was convenient for us and wrong
+ * for everybody else. It hands a competitor the whole briefing for the price of
+ * a sign-up, and it shows a clinic owner a wall of instructions written for a
+ * machine, headings and all, at the exact moment they are deciding whether this
+ * is too complicated for them.
+ *
+ * So this returns what they actually asked for: their own answers, read back in
+ * their own language, as sentences about their clinic. Nothing here names a
+ * section, a version, a tool or a rule.
+ */
+export interface PromptSummary {
+  /** The line their patients hear first. Worth checking even by somebody who
+   *  reads nothing else on the page. */
+  greeting: string
+  greetingLanguage: string
+  /** Plain sentences, each a thing Telma will know or do. */
+  groups: Array<{ title: string; lines: string[] }>
+}
+
 export interface PromptPreview {
   text: string
   version: string
@@ -60,7 +83,14 @@ const str = (v: unknown): string | null => {
  * sign-up would apply, so the preview shows what would be created if they
  * stopped now, rather than an error.
  */
-export async function previewPrompt(
+// Deliberately not exported.
+//
+// Every export of a 'use server' module is a callable endpoint: the browser gets
+// an id for it and can invoke it, whether or not any component does. This one
+// returns the finished briefing, so leaving it exported would mean the panel had
+// stopped showing the prompt while still handing it to anybody who asked. It is
+// module-local now, and the only thing that calls it wants the greeting.
+async function previewPrompt(
   values: Values,
   locale: OnboardingLocale = DEFAULT_ONBOARDING_LOCALE
 ): Promise<PromptPreview> {
@@ -239,3 +269,160 @@ async function languageNamesFor(
   const byCode = new Map(rows.map((r) => [r.code, locale === 'es' ? r.name_es : r.name_pt]))
   return ordered.map((c) => byCode.get(c) ?? c)
 }
+
+/**
+ * The same answers, read back as sentences.
+ *
+ * Built from the wizard's own values rather than from the finished prompt:
+ * summarising the prompt would mean paraphrasing a machine's instructions into
+ * something human, which is a translation that goes wrong quietly. These are the
+ * clinic's answers, and the worst case is that one is missing rather than that
+ * one is invented.
+ */
+export async function previewSummary(
+  values: Values,
+  locale: OnboardingLocale = DEFAULT_ONBOARDING_LOCALE
+): Promise<PromptSummary> {
+  const t = SUMMARY[locale] ?? SUMMARY.pt
+  const specialty = str(values.specialty) as Specialty | null
+  const region = str(values.region) ?? ''
+  const clinicName = str(values.clinic_name) ?? t.yourClinic
+
+  const languageCodes = Array.isArray(values.selected_languages)
+    ? (values.selected_languages as string[])
+    : [locale]
+  const greetingCode = str(values.greeting_language) ?? languageCodes[0] ?? locale
+  const languageNames = await languageNamesFor(languageCodes, greetingCode, locale)
+
+  const formality = values.formality === 'informal' ? 'informal' : 'formal'
+  const recording = values.calls_recorded !== false
+  const hours = openingHoursFrom(values, locale)
+
+  const services = Array.isArray(values.services)
+    ? (values.services as string[]).map((id) => serviceLabel(id, locale))
+    : []
+  const custom = str(values.custom_services)
+  const price = str(values.price_info)
+  const emergency = str(values.emergency_number)
+  const protocol = str(values.emergency_protocol)
+  const briefing = str(values.briefing)
+  const fallbackNumber = str(values.fallback_number)
+
+  const groups: PromptSummary['groups'] = []
+
+  const clinic = [t.answersAs(clinicName)]
+  if (specialty) clinic.push(t.specialty(specialtyLabel(specialty, locale)))
+  if (str(values.address)) clinic.push(t.address(str(values.address) as string))
+  clinic.push(formality === 'formal' ? t.formal : t.informal)
+  if (recording) clinic.push(t.recorded)
+  groups.push({ title: t.aboutYou, lines: clinic })
+
+  if (hours.lines.length) {
+    groups.push({ title: t.whenOpen, lines: [t.hoursLead, ...hours.lines.map((h) => `  ${h}`)] })
+  }
+
+  const what: string[] = []
+  if (services.length) what.push(t.services(services.join(', ')))
+  if (custom) what.push(t.alsoDoes(custom))
+  what.push(price ? t.prices(price) : t.noPrices)
+  if (what.length) groups.push({ title: t.whatSheOffers, lines: what })
+
+  groups.push({
+    title: t.howSheSpeaks,
+    lines: [t.languages(languageNames.join(', ')), t.greetsIn(languageNames[0] ?? '')],
+  })
+
+  const care: string[] = []
+  care.push(emergency ? t.emergency(emergency) : t.emergencyNone)
+  if (protocol) care.push(t.emergencyExtra(protocol))
+  care.push(
+    values.fallback_policy === 'transfer' && fallbackNumber
+      ? t.fallbackTransfer(fallbackNumber)
+      : values.fallback_policy === 'callback'
+        ? t.fallbackCallback
+        : t.fallbackMessage
+  )
+  care.push(
+    values.after_hours_transfer === true ? t.afterHoursOn : t.afterHoursOff
+  )
+  groups.push({ title: t.whenItMatters, lines: care })
+
+  if (briefing) groups.push({ title: t.alsoTold, lines: [briefing] })
+
+  return {
+    greeting: greetingLine(clinicName, greetingCode, formality, recording),
+    greetingLanguage: greetingCode,
+    groups,
+  }
+}
+
+/**
+ * Written for somebody who has never configured anything.
+ *
+ * Every line is about their clinic and says what a caller will experience. None
+ * of them mentions a prompt, a version, a rule or a tool, because a clinic owner
+ * reading "sección de urgencias, versión 2026-08-09.2" learns nothing and worries
+ * about the parts they cannot see.
+ */
+const SUMMARY = {
+  pt: {
+    yourClinic: 'a sua clínica',
+    aboutYou: 'A sua clínica',
+    answersAs: (n: string) => `Atende ao telefone como ${n}.`,
+    specialty: (s: string) => `Apresenta-se como ${s}.`,
+    address: (a: string) => `Sabe a morada: ${a}.`,
+    formal: 'Trata as pessoas por "o senhor" e "a senhora".',
+    informal: 'Trata as pessoas por tu.',
+    recorded: 'Avisa logo no início que a chamada fica gravada.',
+    whenOpen: 'Quando está aberto',
+    hoursLead: 'Só oferece horas dentro deste horário:',
+    whatSheOffers: 'O que pode marcar',
+    services: (s: string) => `Marca consultas de: ${s}.`,
+    alsoDoes: (s: string) => `Também sabe que faz: ${s}.`,
+    prices: (p: string) => `Sobre preços, diz: ${p}`,
+    noPrices: 'Não fala de preços. Se perguntarem, diz que a clínica informa e fica com o contacto.',
+    howSheSpeaks: 'Em que línguas atende',
+    languages: (l: string) => `Responde em ${l}.`,
+    greetsIn: (l: string) => `Atende a chamada em ${l}.`,
+    whenItMatters: 'Quando é urgente ou não sabe responder',
+    emergency: (n: string) => `Numa urgência, passa a chamada para ${n}.`,
+    emergencyNone: 'Numa urgência, como não indicou número, encaminha para um serviço de urgência. Nunca inventa um número.',
+    emergencyExtra: (p: string) => `Além disso: ${p}`,
+    fallbackTransfer: (n: string) => `Se não souber responder, passa a chamada para ${n}.`,
+    fallbackCallback: 'Se não souber responder, fica com o contacto e diz que a clínica liga de volta.',
+    fallbackMessage: 'Se não souber responder, toma o recado e deixa-o no seu painel.',
+    afterHoursOn: 'Fora do horário, pode passar-lhe uma urgência.',
+    afterHoursOff: 'Fora do horário, não incomoda ninguém.',
+    alsoTold: 'O que nos contou',
+  },
+  es: {
+    yourClinic: 'su clínica',
+    aboutYou: 'Su clínica',
+    answersAs: (n: string) => `Contesta al teléfono como ${n}.`,
+    specialty: (s: string) => `Se presenta como ${s}.`,
+    address: (a: string) => `Sabe la dirección: ${a}.`,
+    formal: 'Trata a las personas de usted.',
+    informal: 'Trata a las personas de tú.',
+    recorded: 'Avisa nada más descolgar de que la llamada se graba.',
+    whenOpen: 'Cuándo está abierto',
+    hoursLead: 'Solo ofrece horas dentro de este horario:',
+    whatSheOffers: 'Qué puede citar',
+    services: (s: string) => `Da cita para: ${s}.`,
+    alsoDoes: (s: string) => `También sabe que hacen: ${s}.`,
+    prices: (p: string) => `Sobre precios, dice: ${p}`,
+    noPrices: 'No habla de precios. Si preguntan, dice que la clínica informa y se queda con el contacto.',
+    howSheSpeaks: 'En qué idiomas atiende',
+    languages: (l: string) => `Responde en ${l}.`,
+    greetsIn: (l: string) => `Contesta la llamada en ${l}.`,
+    whenItMatters: 'Cuando es urgente o no sabe qué responder',
+    emergency: (n: string) => `En una urgencia, pasa la llamada al ${n}.`,
+    emergencyNone: 'En una urgencia, como no ha indicado número, deriva a un servicio de urgencias. Nunca se inventa un número.',
+    emergencyExtra: (p: string) => `Además: ${p}`,
+    fallbackTransfer: (n: string) => `Si no sabe qué responder, pasa la llamada al ${n}.`,
+    fallbackCallback: 'Si no sabe qué responder, se queda con el contacto y dice que la clínica le devuelve la llamada.',
+    fallbackMessage: 'Si no sabe qué responder, toma el recado y lo deja en su panel.',
+    afterHoursOn: 'Fuera del horario, puede pasarle una urgencia.',
+    afterHoursOff: 'Fuera del horario, no molesta a nadie.',
+    alsoTold: 'Lo que nos ha contado',
+  },
+} as const

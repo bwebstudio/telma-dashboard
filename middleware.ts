@@ -18,6 +18,6 @@ export const config = {
   // /api/crm is deliberately included: the offline queue on the phone posts
   // there and needs a refreshed session.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/availability|api/clinic-context|api/voice|dev/voz|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|webmanifest|woff2)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/availability|api/appointments|api/clinic-context|api/voice|dev/voz|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|webmanifest|woff2)$).*)',
   ],
 }

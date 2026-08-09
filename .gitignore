@@ -19,3 +19,9 @@ supabase/.branches/
 # `.env.local.bak` no encaja en ese patrón, y lleva las claves de verdad dentro.
 .env*.bak
 *.bak
+
+# Copias que el Finder deja al duplicar ("archivo 2.ts"). Aparecieron 56 de una
+# vez y eran byte a byte iguales a su original: ruido que se puede editar por
+# error creyendo que es el fichero bueno.
+* 2.*
+* copy.*

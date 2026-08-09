@@ -52,7 +52,10 @@ export default async function InscricaoPage({
       {/* Above the title, because somebody reading a heading in a language they
           do not speak has already decided about this page by the time a switch
           further down would have reached them. */}
-      <LocaleToggle locale={locale} />
+      <LocaleToggle
+        locale={locale}
+        next={initialPlan ? `/inscricao?plano=${initialPlan}` : '/inscricao'}
+      />
 
       <div>
         <p className="eyebrow eyebrow-mark mb-3">{t.pageTitle}</p>

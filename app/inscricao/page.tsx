@@ -5,6 +5,7 @@ import { copyFor } from '@/lib/onboarding/copy'
 import { resolveOnboardingLocale } from '@/lib/onboarding/locale-server'
 import { stripeConfigured } from '@/lib/onboarding/stripe-client'
 
+import { LocaleToggle } from '@/components/onboarding/LocaleToggle'
 import { WizardForm } from '@/components/onboarding/WizardForm'
 
 /**
@@ -48,6 +49,11 @@ export default async function InscricaoPage({
 
   return (
     <div className="flex flex-col gap-10">
+      {/* Above the title, because somebody reading a heading in a language they
+          do not speak has already decided about this page by the time a switch
+          further down would have reached them. */}
+      <LocaleToggle locale={locale} />
+
       <div>
         <p className="eyebrow eyebrow-mark mb-3">{t.pageTitle}</p>
         <h1 className="h-display text-3xl sm:text-4xl">{t.intro}</h1>

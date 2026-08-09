@@ -65,7 +65,12 @@ export function isAdmin(user: AppUser | null): boolean {
 // knocked on a door that is not theirs.
 export function homePathFor(user: AppUser | null): string {
   const [first] = panelsFor(user)
-  return first ? PANEL_HOME[first] : '/login'
+  if (first) return PANEL_HOME[first]
+  // Signed in with no panel goes to a page that says so, not back to the sign-in
+  // screen. Sending them to /login built a loop — the middleware sees a valid
+  // session there and returns them to /, which sends them back — and the loop
+  // ends on the sign-in form, which everybody reads as a wrong password.
+  return user ? '/sem-acesso' : '/login'
 }
 
 // Which panel a path belongs to. Used by the switcher to mark the current one.

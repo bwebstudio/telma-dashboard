@@ -3,7 +3,19 @@
 -- so the internal panel is not empty on first boot. It does NOT create users
 -- (those come from Supabase Auth, see the README).
 
-insert into clinics (id, name, address, phone, contact_email, plan, addon_whatsapp, status, minute_limit, assigned_phone, voice_agent_id, voice_name)
+-- `language` e `selected_languages` entram desde a 0026, que passou a exigir que
+-- uma clínica fale pelo menos uma língua. Sem elas esta semente deixou de correr
+-- numa base nova, e ninguém deu por isso porque ninguém montava uma base nova.
+--
+-- Os campos da rececionista vão preenchidos de propósito: quem abre a demo sem
+-- contexto tem de ver um painel que já sabe alguma coisa, e não um formulário
+-- por acabar.
+insert into clinics (
+  id, name, address, phone, contact_email, plan, addon_whatsapp, status,
+  minute_limit, assigned_phone, voice_agent_id, voice_name,
+  language, selected_languages, formality, services, price_info,
+  appointment_duration_minutes, briefing, emergency_number, calls_recorded
+)
 values (
   '11111111-1111-1111-1111-111111111111',
   'Clínica Dentária Sorriso',
@@ -11,7 +23,14 @@ values (
   '+351 220 000 000',
   'geral@sorriso.pt',
   'clinica', true, 'ativa', 750,
-  '+351 300 500 900', 'agent_sorriso_01', 'Telma PT'
+  '+351 300 500 900', null, 'Telma PT',
+  'pt', array['pt', 'en'], 'formal',
+  array['primeira_consulta', 'limpeza', 'urgencia'],
+  'A primeira consulta é gratuita. Os restantes tratamentos são orçamentados na consulta.',
+  30,
+  'O estacionamento é na rua de trás. Às quintas-feiras o Dr. Nuno não atende.',
+  '+351 220 000 001',
+  true
 ) on conflict (id) do nothing;
 
 -- Monday to Friday, 09:00 to 12:00 and 14:00 to 17:00.

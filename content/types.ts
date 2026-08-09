@@ -70,6 +70,26 @@ export interface Dictionary {
     signIn: string
     signingIn: string
     invalid: string
+    forgot: string
+    /** The screen that asks for an email. */
+    resetTitle: string
+    resetLead: string
+    resetSend: string
+    resetSending: string
+    /** Said whether or not the address exists: telling a stranger which emails
+     *  are registered is telling them which clinics are clients. */
+    resetSent: string
+    resetBack: string
+    /** The screen the link lands on. */
+    newTitle: string
+    newLead: string
+    newPassword: string
+    newRepeat: string
+    newSave: string
+    newSaving: string
+    newTooShort: string
+    newMismatch: string
+    newExpired: string
   }
   // The three panels and the administrator's visit to a client's one.
   panels: {

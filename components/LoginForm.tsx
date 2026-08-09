@@ -55,6 +55,13 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
       )}
 
       <SubmitButton dict={dict} />
+      {/* Under the button, not beside the field: it is read by somebody who has
+          already tried and failed, and that is where their eye ends up. */}
+      <p className="text-center text-sm">
+        <a href="/recuperar" className="text-ink-soft hover:text-brand-accent">
+          {dict.auth.forgot}
+        </a>
+      </p>
     </form>
   )
 }

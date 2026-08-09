@@ -9,7 +9,7 @@ type CookieToSet = { name: string; value: string; options?: CookieOptions }
 // so requiring a session there would require an account to create an account.
 // `/api/onboarding` is the same flow's HTTP surface, and it authenticates
 // nothing: it validates every payload instead, in lib/onboarding/wizard-schema.
-const PUBLIC_PATHS = ['/login', '/auth', '/inscricao', '/api/onboarding']
+const PUBLIC_PATHS = ['/login', '/auth', '/recuperar', '/inscricao', '/api/onboarding']
 
 // A misconfigured environment used to throw from inside createServerClient,
 // which the platform reports as MIDDLEWARE_INVOCATION_FAILED: every route 500s

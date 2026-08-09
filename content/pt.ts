@@ -85,7 +85,12 @@ export const pt: Dictionary = {
     horarios: 'Horários',
     chamadas: 'Conversas',
     conta: 'A minha clínica',
+    telma: 'Telma',
     testCall: 'Simulador',
+  },
+  telmaSettings: {
+    title: 'O que a Telma sabe da sua clínica',
+    lead: 'Tudo o que nos contou na inscrição. Mude quando quiser: a chamada seguinte já sabe.',
   },
   agenda: {
     title: 'Agenda',

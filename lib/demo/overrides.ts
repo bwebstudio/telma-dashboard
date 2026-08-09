@@ -17,6 +17,10 @@ export interface ClinicOverride {
   accent?: ClinicAccent
   logo_url?: string | null
   pre_appointment_auto_expires?: boolean
+  /** Everything the clinic can change about what Telma says. Loose on purpose:
+   *  the demo has no database to validate against, and the shape it mirrors is
+   *  already checked by the sign-up's own schemas before it gets here. */
+  [field: string]: unknown
 }
 
 const KEY = Symbol.for('telma.demo.clinicOverrides')

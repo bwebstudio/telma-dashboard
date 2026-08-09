@@ -6,6 +6,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { isDemo } from '@/lib/demo/config'
 import { writeClinicOverride } from '@/lib/demo/overrides'
 import { store } from '@/lib/demo/data'
+import { normalisePhone, wizardSchemas } from '@/lib/onboarding/wizard-schema'
+import { DEFAULT_ONBOARDING_LOCALE, type OnboardingLocale } from '@/lib/onboarding/locale'
 
 /**
  * How this clinic wants pre-marcações handled.
@@ -207,4 +209,124 @@ export async function clinicLanguageSettings(clinicId: string): Promise<{
     base,
     max: (plan?.max_languages_included ?? null) as number | null,
   }
+}
+
+/**
+ * Everything the clinic told us, changed by the clinic.
+ *
+ * Until this existed the sign-up was a one-way door. A clinic that changed its
+ * emergency number, added a treatment, moved premises or decided to stop being
+ * formal had no way to say so: three writes existed against `clinics`, and they
+ * were the brand colour, the logo, and the status Stripe sets when a card fails.
+ * Everything Telma actually says was fixed at sign-up and could never be
+ * corrected, which for an emergency number is not an inconvenience.
+ *
+ * The split is deliberate and it is the whole design. What the clinic supplied
+ * is the clinic's, and it is all here. What makes Telma herself — how she
+ * greets, that she confirms a name and a number, that she never gives clinical
+ * advice, that an emergency outranks everything — is ours, versioned with the
+ * application, and is not on this page or any other.
+ *
+ * Three things are edited elsewhere on purpose: the hours, because a timetable
+ * needs a timetable's own screen; the languages, because the plan's ceiling and
+ * what changing it costs belong beside the bill; and the number itself, which is
+ * provisioned rather than typed.
+ */
+export async function updateClinicProfile(
+  values: Record<string, unknown>,
+  locale: OnboardingLocale = DEFAULT_ONBOARDING_LOCALE
+): Promise<{ ok: true } | { ok: false; errors: Record<string, string> }> {
+  const clinicId = await ownClinicId()
+  const admin = createAdminClient()
+
+  const { data: current } = await admin
+    .from('clinics')
+    .select('*')
+    .eq('id', clinicId)
+    .maybeSingle()
+  if (!current) return { ok: false, errors: { _form: 'clinic' } }
+
+  // The sign-up's own schemas, not a second set written for this page. A rule
+  // that exists in two places is a rule that will disagree with itself, and the
+  // one that disagrees quietly is always the one nobody is looking at.
+  const schemas = wizardSchemas(locale)
+  const errors: Record<string, string> = {}
+  const clean: Record<string, unknown> = {}
+
+  for (const step of [2, 4, 5] as const) {
+    const shape = schemas[step]
+    // Languages stay as they are: they are edited on the account page, and
+    // sending the current ones back through keeps step 5 satisfiable here.
+    const input =
+      step === 5
+        ? {
+            ...values,
+            selected_languages: current.selected_languages ?? [current.language],
+            greeting_language:
+              values.greeting_language ?? current.language ?? 'pt',
+          }
+        : values
+    const parsed = shape.safeParse(input)
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? '_form')
+        if (!errors[key]) errors[key] = issue.message
+      }
+      continue
+    }
+    Object.assign(clean, parsed.data)
+  }
+  if (Object.keys(errors).length) return { ok: false, errors }
+
+  const next = {
+    name: clean.clinic_name,
+    address: clean.address || null,
+    phone: normalisePhone(String(clean.phone ?? '')) || null,
+    specialty: clean.specialty,
+    services: clean.services ?? [],
+    custom_services: clean.custom_services || null,
+    price_info: clean.price_info || null,
+    appointment_duration_minutes: clean.appointment_duration_minutes,
+    formality: clean.formality,
+    fallback_policy: clean.fallback_policy,
+    fallback_number: normalisePhone(String(clean.fallback_number ?? '')) || null,
+    briefing: clean.briefing || null,
+    emergency_number: normalisePhone(String(clean.emergency_number ?? '')) || null,
+    emergency_protocol: clean.emergency_protocol || null,
+    after_hours_transfer: clean.after_hours_transfer === true,
+    after_hours_number: normalisePhone(String(clean.after_hours_number ?? '')) || null,
+    after_hours_patients_only: clean.after_hours_patients_only !== false,
+  }
+
+  if (isDemo()) {
+    writeClinicOverride(clinicId, next)
+    const demoClinic = store.clinics.find((c) => c.id === clinicId)
+    if (demoClinic) Object.assign(demoClinic, next)
+    revalidatePath('/telma')
+    return { ok: true }
+  }
+
+  const { error } = await admin.from('clinics').update(next).eq('id', clinicId)
+  if (error) return { ok: false, errors: { _form: error.message } }
+
+  // What changed, named. Turning off the patients-only filter on out-of-hours
+  // calls, or moving the emergency number, are the kind of change somebody will
+  // one day need to account for, and "the settings were saved" accounts for
+  // nothing.
+  const changed = Object.entries(next)
+    .filter(([k, v]) => JSON.stringify(v) !== JSON.stringify((current as Record<string, unknown>)[k]))
+    .map(([k]) => k)
+
+  if (changed.length) {
+    await admin.from('activity_log').insert({
+      clinic_id: clinicId,
+      type: 'clinic_updated',
+      message: changed.join(', '),
+      metadata: { fields: changed },
+    })
+  }
+
+  revalidatePath('/telma')
+  revalidatePath('/hoje')
+  return { ok: true }
 }

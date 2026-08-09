@@ -27,6 +27,7 @@ export default async function ClinicaLayout({
     { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings /> },
     { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours /> },
     { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls /> },
+    { href: '/telma', label: dict.clinicNav.telma, icon: <IconPhone /> },
   ]
 
   // Only where the page exists. A nav entry that leads to a 404 in production

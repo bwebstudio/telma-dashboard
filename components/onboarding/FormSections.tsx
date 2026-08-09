@@ -74,7 +74,7 @@ function countryOf(values: Values, locale: OnboardingLocale): Country {
 
 // Shared field primitives ----------------------------------------------------
 
-function Field({
+export function Field({
   label,
   htmlFor,
   hint,
@@ -110,7 +110,7 @@ function inputClass(error?: string): string {
   return error ? 'field-input border-danger/60' : 'field-input'
 }
 
-function Text({
+export function Text({
   name,
   label,
   hint,
@@ -151,7 +151,7 @@ function Text({
   )
 }
 
-function Select({
+export function Select({
   name,
   label,
   hint,
@@ -667,7 +667,12 @@ export function TelmaStep({
   locale,
   languages,
   maxLanguages,
+  showLanguages = true,
 }: StepProps & {
+  /** False in the panel: the languages are edited on the account page, where
+   *  the plan's ceiling and what changing it costs are both on screen. Two
+   *  places to edit one field is two places for them to disagree. */
+  showLanguages?: boolean
   languages: LanguageOption[]
   /** The ceiling of the most generous plan on sale. The plan itself is chosen
    *  two steps later, so this caps the picker and step 6 marks what fits. */
@@ -694,6 +699,7 @@ export function TelmaStep({
 
   return (
     <div className="flex flex-col gap-8">
+      {showLanguages && (
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="field-label">{t.languages}</p>
@@ -753,10 +759,11 @@ export function TelmaStep({
           </p>
         )}
       </div>
+      )}
 
       {/* Which of them Telma opens in. Only meaningful once more than one is
           chosen, so it stays out of the way until then. */}
-      {chosen.length > 1 && (
+      {showLanguages && chosen.length > 1 && (
         <Select
           name="greeting_language"
           label={t.greetingLanguage}

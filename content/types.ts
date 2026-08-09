@@ -88,8 +88,14 @@ export interface Dictionary {
     horarios: string
     chamadas: string
     conta: string
+    /** What Telma says, which is the clinic's to change and not ours. */
+    telma: string
     /** Only shown where the simulator exists, which is never in production. */
     testCall: string
+  }
+  telmaSettings: {
+    title: string
+    lead: string
   }
   // The clinic's home screen: the day, and what needs an answer before it.
   agenda: {

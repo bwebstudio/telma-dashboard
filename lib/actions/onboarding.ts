@@ -15,6 +15,8 @@ import {
 import { copyFor } from '@/lib/onboarding/copy'
 import { planFits, type LanguageOption } from '@/lib/onboarding/languages'
 import { sendWelcomeEmail } from '@/lib/onboarding/email-sender'
+import { showcaseMode } from '@/lib/demo/config'
+import { seedShowcaseClinic } from '@/lib/onboarding/showcase-seed'
 import { buildSlots } from '@/lib/onboarding/schedule'
 import {
   DEFAULT_ONBOARDING_LOCALE,
@@ -361,6 +363,21 @@ export async function completeOnboarding(
     if (slots.length) {
       const { error: slotErr } = await admin.from('availability_slots').insert(slots)
       if (slotErr) throw new Error(slotErr.message)
+    }
+
+    // On a showcase deployment the panel opens with a morning already in it.
+    // Without this a salesperson finishes the sign-up, opens the agenda and
+    // finds nothing, and the person being shown has to imagine the product.
+    // After the timetable, because the sample bookings take real free hours
+    // from it.
+    if (showcaseMode()) {
+      try {
+        await seedShowcaseClinic(cid, locale)
+      } catch (e) {
+        // Never fails the sign-up. A demo without examples is worth more than a
+        // sign-up that broke on the last step in front of a client.
+        console.error('[showcase] seed failed', e)
+      }
     }
 
     await admin.from('activity_log').insert([

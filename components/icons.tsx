@@ -186,3 +186,37 @@ export function IconChevron({ className }: P) {
     </svg>
   )
 }
+
+/**
+ * The Telma mark, redrawn rather than served.
+ *
+ * public/icons/telma-fav.png exists, and a PNG in the sidebar would have been
+ * one line. But a nav icon has to invert: the active item is dark, and a flat
+ * green bitmap on it reads as a sticker. Traced into paths it takes
+ * `currentColor` like every other icon here and disappears into the row it
+ * belongs to.
+ */
+export function IconTelma({ className }: P) {
+  return (
+    <svg
+      {...base}
+      className={className}
+      fill="currentColor"
+      stroke="none"
+      strokeWidth={0}
+    >
+      <path d="M11.2 3.6H8.3A2.9 2.9 0 0 0 5.4 6.5v7.1a2.9 2.9 0 0 0 2.9 2.9h2.9z" />
+      <path d="M12.8 20.4h2.9a2.9 2.9 0 0 0 2.9-2.9v-7.1a2.9 2.9 0 0 0-2.9-2.9h-2.9z" />
+    </svg>
+  )
+}
+
+/** A rehearsal, not a real call: the play sits inside the handset's circle. */
+export function IconSimulate({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M10.3 9.2l4.6 2.8-4.6 2.8z" />
+    </svg>
+  )
+}

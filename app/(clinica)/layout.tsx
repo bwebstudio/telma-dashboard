@@ -4,7 +4,7 @@ import { panelLinks } from '@/lib/panels'
 import { Shell, type NavItem } from '@/components/Shell'
 import { ViewingAsBar } from '@/components/ViewingAsBar'
 import { ClinicMark } from '@/components/clinic/ClinicMark'
-import { IconToday, IconBookings, IconHours, IconCalls, IconPhone } from '@/components/icons'
+import { IconBookings, IconCalls, IconHours, IconSimulate, IconTelma, IconToday } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { isDemo } from '@/lib/demo/config'
 import { mockCallsEnabled } from '@/lib/mock-call'
@@ -27,13 +27,13 @@ export default async function ClinicaLayout({
     { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings /> },
     { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours /> },
     { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls /> },
-    { href: '/telma', label: dict.clinicNav.telma, icon: <IconPhone /> },
+    { href: '/telma', label: dict.clinicNav.telma, icon: <IconTelma /> },
   ]
 
   // Only where the page exists. A nav entry that leads to a 404 in production
   // is worse than no entry at all.
   if (mockCallsEnabled()) {
-    nav.push({ href: '/test-call', label: dict.clinicNav.testCall, icon: <IconPhone /> })
+    nav.push({ href: '/test-call', label: dict.clinicNav.testCall, icon: <IconSimulate /> })
   }
 
   const clinicName = clinic?.name ?? dict.clinicNav.conta

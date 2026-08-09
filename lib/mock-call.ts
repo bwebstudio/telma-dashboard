@@ -61,7 +61,25 @@ export interface MockCallReport {
  * showing the whole loop is the only thing the demo is for.
  */
 export function mockCallsEnabled(): boolean {
-  return isDemo() || process.env.NODE_ENV !== 'production'
+  return isDemo() || showcaseMode() || process.env.NODE_ENV !== 'production'
+}
+
+/**
+ * A deployment meant to be handed round, not a deployment serving patients.
+ *
+ * Distinct from `isDemo()`, and the difference is the point. Demo mode has no
+ * database: nothing a visitor does survives them closing the tab, so nobody can
+ * sign up their own clinic and come back to it. A showcase has the real thing
+ * behind it — real sign-up, real login, real agenda — with the card turned off
+ * and the simulator left switched on, so somebody can be walked from the price
+ * list to a booking in their own diary without a telephone existing.
+ *
+ * Explicit rather than inferred. The simulator writes real rows and spends real
+ * minutes, and the wrong kind of clever default is one that leaves it reachable
+ * on the day this serves an actual clinic.
+ */
+export function showcaseMode(): boolean {
+  return process.env.NEXT_PUBLIC_SHOWCASE === '1'
 }
 
 /** Marks every row a simulation wrote, so they can be told apart and removed. */

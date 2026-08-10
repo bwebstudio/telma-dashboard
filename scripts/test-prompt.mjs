@@ -470,11 +470,31 @@ test('the two times are offered as an open question', () => {
 // feel like a person.
 test('she picks up what was said before moving on, in both languages', () => {
   for (const [lang, phrase, example] of [
-    ['pt', '**Antes de avançares, recolhes o que a pessoa acabou de dizer.**', 'uma avaliação para lifting'],
-    ['es', '**Antes de avanzar, recoges lo que la persona acaba de decir.**', 'una valoración para lifting'],
+    ['pt', '**Antes de avançares, recolhes o que a pessoa acabou de dizer.**', 'Reconheces sem nomear.'],
+    ['es', '**Antes de avanzar, recoges lo que la persona acaba de decir.**', 'Reconoces sin nombrar.'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(phrase), `${lang}: no bridging rule`)
     assert.ok(text.includes(example), `${lang}: the rule has no worked example`)
+  }
+})
+
+// The personality, written as what she sounds like rather than as a list of
+// things not to do. The version before this was almost all prohibitions, and it
+// produced exactly what prohibitions produce: nothing wrong, and nobody warm.
+//
+// Discretion is here because an aesthetic clinic is not a dentist. Saying "an
+// assessment for a lifting" out loud is fine in a surgery and not fine in a
+// living room with somebody else in it, and the caller does not get to choose
+// which one they are standing in.
+test('she has a manner, and it is discreet', () => {
+  for (const [lang, energy, discreet, pauses] of [
+    ['pt', 'energia serena mas viva', '**És discreta por natureza.**', 'Usa vírgulas e reticências para as pausas'],
+    ['es', 'energía serena pero viva', '**Eres discreta por naturaleza.**', 'Usa comas y puntos suspensivos para las pausas'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(energy), `${lang}: no energy in the character`)
+    assert.ok(text.includes(discreet), `${lang}: discretion is not required`)
+    assert.ok(text.includes(pauses), `${lang}: no mechanism for natural pauses`)
   }
 })

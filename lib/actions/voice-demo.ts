@@ -64,7 +64,7 @@ export async function demoVoiceConfig(): Promise<VoiceConfig | { error: string }
   const init = (await res.json()) as {
     conversation_config_override: {
       agent: { prompt: { prompt: string }; first_message: string; language: string }
-      tts: { voice_id: string }
+      tts?: { voice_id?: string }
     }
     dynamic_variables: Record<string, string>
   }
@@ -87,7 +87,10 @@ export async function demoVoiceConfig(): Promise<VoiceConfig | { error: string }
     clinicName: clinic.name,
     greeting: o.agent.first_message,
     language: o.agent.language,
-    voiceId: o.tts.voice_id,
+    // Optional now: the initiation payload stopped sending a voice so that the
+    // agent's per-language voices can win. Kept in the shape for the panel to
+    // display when there is one.
+    voiceId: o.tts?.voice_id ?? '',
     knows,
     dynamicVariables: init.dynamic_variables,
     promptText: text,

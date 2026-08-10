@@ -91,7 +91,7 @@ export default async function Page({
             <Row k="número" v={clinic!.assigned_phone ?? 'sin asignar'} />
             <Row k="clinic_id" v={init.dynamic_variables.clinic_id} />
             <Row k="idioma" v={init.conversation_config_override.agent.language} />
-            <Row k="voz" v={init.conversation_config_override.tts.voice_id} />
+            <Row k="voz" v={init.conversation_config_override.tts?.voice_id ?? 'la del idioma'} />
             <Row k="prompt" v={`${init.conversation_config_override.agent.prompt.prompt.length} caracteres, versión ${init.dynamic_variables.prompt_version}`} />
           </dl>
 
@@ -111,7 +111,6 @@ export default async function Page({
               override-prompt={init.conversation_config_override.agent.prompt.prompt}
               override-first-message={init.conversation_config_override.agent.first_message}
               override-language={init.conversation_config_override.agent.language}
-              override-voice-id={init.conversation_config_override.tts.voice_id}
             />
           </div>
           <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript" />
@@ -141,7 +140,7 @@ function Problem({ children }: { children: React.ReactNode }) {
 interface Init {
   conversation_config_override: {
     agent: { prompt: { prompt: string }; first_message: string; language: string }
-    tts: { voice_id: string }
+    tts?: { voice_id?: string }
   }
   dynamic_variables: Record<string, string>
 }

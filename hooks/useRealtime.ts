@@ -48,8 +48,22 @@ export function useRealtime(
     // the demo anyway.
     if (process.env.NEXT_PUBLIC_DEMO === '1' || !process.env.NEXT_PUBLIC_SUPABASE_URL) return
 
-    const supabase = createClient()
-    const channel = supabase.channel(channelName)
+    // Everything below is a convenience: the page already drew correct data on
+    // the server, and this only keeps it current. So nothing in here is allowed
+    // to take the panel down with it. A websocket that will not open, a project
+    // with realtime switched off, a key format the client does not recognise —
+    // all of them end with a page that does not refresh itself, which is what it
+    // did before this existed, rather than with a blank screen and "a
+    // client-side exception has occurred".
+    let supabase: ReturnType<typeof createClient>
+    let channel: ReturnType<ReturnType<typeof createClient>['channel']>
+    try {
+      supabase = createClient()
+      channel = supabase.channel(channelName)
+    } catch (e) {
+      console.error('[realtime] could not open a channel', e)
+      return
+    }
     const list = JSON.parse(key) as RealtimeWatch[]
 
     for (const watch of list) {
@@ -70,9 +84,17 @@ export function useRealtime(
       )
     }
 
-    channel.subscribe()
+    try {
+      channel.subscribe()
+    } catch (e) {
+      console.error('[realtime] could not subscribe', e)
+    }
     return () => {
-      supabase.removeChannel(channel)
+      try {
+        supabase.removeChannel(channel)
+      } catch {
+        /* already gone */
+      }
     }
   }, [channelName, key, router])
 }

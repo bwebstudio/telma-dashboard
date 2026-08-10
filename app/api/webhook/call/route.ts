@@ -103,6 +103,76 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
 
+  // One conversation, one call row, however many times this is asked for.
+  //
+  // Telma is told to register once at the end and she registered twice: after
+  // the first booking and again after the second. Two call rows came out of one
+  // conversation, the minutes were billed twice — 82 seconds plus 164 for a call
+  // that lasted 164 — and the first appointment was written twice, so a clinic
+  // saw three bookings where a patient had made two.
+  //
+  // `system__conversation_id` is the same on both attempts, which makes this
+  // fixable here rather than by asking the model to be more careful. Retries and
+  // dropped responses get the same protection for free.
+  const externalRef =
+    (body.call_ref as string | undefined) ?? (body.external_ref as string | undefined) ?? null
+
+  if (externalRef) {
+    const { data: seen } = await admin
+      .from('calls')
+      .select('id')
+      .eq('clinic_id', clinicId)
+      .eq('external_ref', externalRef)
+      .maybeSingle()
+
+    const existing = seen as { id: string } | null
+    if (existing) {
+      // The later attempt knows more than the earlier one: it has the whole
+      // conversation behind it, so its summary and duration replace what the
+      // first one guessed at.
+      await admin
+        .from('calls')
+        .update({
+          duration_seconds: Number(body.duration_seconds) || 0,
+          result: rejected ? 'nao_resolvida' : (result ?? null),
+          summary: (body.summary as string) ?? null,
+        })
+        .eq('id', existing.id)
+
+      const { data: already } = await admin
+        .from('appointments')
+        .select('scheduled_at, patient_phone')
+        .eq('call_id', existing.id)
+      const seenKeys = new Set(
+        ((already ?? []) as Array<{ scheduled_at: string; patient_phone: string | null }>).map(
+          (a) => `${new Date(a.scheduled_at).toISOString()}|${(a.patient_phone ?? '').replace(/\D/g, '')}`
+        )
+      )
+
+      const fresh = many
+        .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
+        .filter((a) => plausiblePhone(a.patient_phone))
+        .filter(
+          (a) =>
+            !seenKeys.has(
+              `${new Date(a.scheduled_at as string).toISOString()}|${String(a.patient_phone ?? '').replace(/\D/g, '')}`
+            )
+        )
+        .map((a) => ({
+          clinic_id: clinicId,
+          call_id: existing.id,
+          patient_name: a.patient_name ?? null,
+          patient_phone: a.patient_phone ?? null,
+          reason: a.reason ?? null,
+          scheduled_at: a.scheduled_at,
+          origin: 'telefone',
+        }))
+
+      if (fresh.length) await admin.from('appointments').insert(fresh)
+      return NextResponse.json({ ok: true, call_id: existing.id, added: fresh.length })
+    }
+  }
+
   const { data, error } = await admin.rpc('record_call', {
     p_clinic_id: clinicId,
     p_from_phone: (body.from_phone as string) ?? null,
@@ -110,7 +180,7 @@ export async function POST(request: Request) {
     p_result: rejected ? 'nao_resolvida' : (result ?? null),
     p_summary: (body.summary as string) ?? null,
     p_recording_url: (body.recording_url as string) ?? null,
-    p_external_ref: (body.external_ref as string) ?? null,
+    p_external_ref: externalRef,
     p_appointment: usable,
   })
 

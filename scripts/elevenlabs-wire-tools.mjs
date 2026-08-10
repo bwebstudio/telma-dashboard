@@ -187,7 +187,7 @@ const TOOLS = [
   {
     name: 'telma_registar_chamada',
     description:
-      'Regista a chamada no painel da clínica. Chama isto UMA vez, no fim de todas as chamadas, mesmo que não tenha havido marcação. Inclui o objecto appointment apenas quando ficou uma marcação.',
+      'Regista a chamada no painel da clínica. Chama isto UMA ÚNICA VEZ, mesmo no fim, depois de te despedires, e nunca a meio nem depois de cada marcação: uma chamada regista-se uma vez e leva TODAS as marcações que ficaram. Chamar isto duas vezes na mesma conversa duplica a chamada e os minutos. Regista sempre, mesmo que não tenha havido marcação nenhuma.',
     api_schema: {
       url: `${BASE}/api/webhook/call`,
       method: 'POST',

@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-08-10.7'
+export const PROMPT_VERSION = '2026-08-11.1'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -255,7 +255,7 @@ Duas frases de cada vez, no máximo.
     '',
     '**telma_reservar_hora** segura a hora que a pessoa escolheu enquanto lhe pedes o nome e o telefone. Chamas isto **assim que ela escolhe**, antes de pedires os dados: outra chamada ao mesmo tempo pode estar a olhar para a mesma hora.',
     '',
-    '**telma_registar_chamada** chamas uma única vez, no fim de todas as chamadas, tenha havido marcação ou não. É o que a clínica lê depois.',
+    '**telma_registar_chamada** chamas uma única vez, mesmo no fim, depois de te despedires, com TODAS as marcações da chamada de uma vez. Nunca a chamas a seguir a cada marcação: a chamada é uma só, e registá-la duas vezes duplica-a e aos minutos.',
     '',
     'Cada hora que a agenda te dá vem com um campo **say**, já escrito na hora da clínica e por extenso. **É a única coisa que dizes em voz alta.**',
     '',
@@ -493,7 +493,7 @@ Dos frases cada vez, como mucho.
     '',
     '**telma_reservar_hora** retiene la hora que la persona ha elegido mientras le pides el nombre y el teléfono. La llamas **en cuanto elige**, antes de pedirle los datos: otra llamada a la vez puede estar mirando esa misma hora.',
     '',
-    '**telma_registar_chamada** la llamas una sola vez, al final de todas las llamadas, haya habido cita o no. Es lo que la clínica lee después.',
+    '**telma_registar_chamada** la llamas una sola vez, al final del todo, después de despedirte, con TODAS las citas de la llamada juntas. Nunca la llamas después de cada cita: la llamada es una sola, y registrarla dos veces la duplica a ella y a los minutos.',
     '',
     'Cada hora que la agenda te da viene con un campo **say**, ya escrito en la hora de la clínica y con todas las letras. **Es lo único que dices en voz alta.**',
     '',

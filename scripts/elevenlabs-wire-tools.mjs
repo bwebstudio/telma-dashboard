@@ -77,6 +77,12 @@ const auth = { Authorization: `Bearer ${TOKEN}` }
 const TOOLS = [
   {
     name: 'telma_horas_livres',
+    // Diz alguma coisa antes de consultar, em vez de deixar a linha em silêncio.
+    //
+    // Pedi isto no prompt em tempos e saiu mal: o modelo passou a falar duas
+    // vezes por cada consulta, e ouvia-se a costura. Isto é o mecanismo da
+    // própria plataforma para o mesmo fim, e não gera um turno a mais.
+    force_pre_tool_speech: true,
     description:
       'Consulta as horas realmente livres da clínica. Usa isto SEMPRE antes de oferecer qualquer hora: nunca inventes disponibilidade. Cada slot traz say (a hora já na hora da clínica, para dizeres em voz alta) e slot_start (identificador em UTC, para devolveres às outras ferramentas, nunca para ler).',
     api_schema: {
@@ -126,6 +132,7 @@ const TOOLS = [
   },
   {
     name: 'telma_ver_marcacoes',
+    force_pre_tool_speech: true,
     description:
       'Vê o que este número tem marcado nesta clínica, e se quem liga já é paciente. Usa isto quando alguém quer cancelar ou mudar uma marcação, e também fora do horário antes de decidir se passas uma urgência. NÃO devolve o nome de propósito: o nome tem de ser a pessoa a dizê-lo.',
     api_schema: {
@@ -200,7 +207,7 @@ const TOOLS = [
           summary: {
             type: 'string',
             description:
-              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel.',
+              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça — que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém — porque isso é trabalho para alguém e perde-se se não ficar escrito.',
           },
           appointment: {
             type: 'object',
@@ -209,7 +216,11 @@ const TOOLS = [
             properties: {
               patient_name: { type: 'string', description: 'Nome completo, como o confirmaste.' },
               patient_phone: { type: 'string', description: 'Telefone que confirmaste, em formato internacional.' },
-              reason: { type: 'string', description: 'O serviço ou motivo da consulta.' },
+              reason: {
+                type: 'string',
+                description:
+                  'O tratamento ou motivo, nas palavras da própria pessoa: "lifting", "limpeza", "dor num dente". Não escrevas rótulos genéricos como "consulta de avaliação" quando ela disse outra coisa: quem lê isto no painel precisa de saber para que vem, e é a única forma de a clínica preparar a consulta.',
+              },
               scheduled_at: { type: 'string', description: 'O identificador slot_start da hora marcada, copiado tal e qual. Não é a hora que disseste em voz alta.' },
             },
           },

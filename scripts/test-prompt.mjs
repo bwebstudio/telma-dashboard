@@ -554,3 +554,29 @@ test('the language is settled at the greeting and does not move', () => {
     assert.ok(text.includes(phrase), `${lang}: the language may still move mid-call`)
   }
 })
+
+// A caller asked for a lifting and the panel recorded "consulta de avaliação".
+// The clinic reads that line to prepare the appointment, and a generic label
+// tells it nothing. Discretion is about what is said out loud in somebody's
+// living room; it was never about what the clinic gets to know.
+test('what is not said aloud is still written down', () => {
+  for (const [lang, rule] of [
+    ['pt', '**No painel escreves o motivo tal como a pessoa o disse**'],
+    ['es', '**En el panel apuntas el motivo tal como lo dijo la persona**'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(rule), `${lang}: may file a generic label`)
+  }
+})
+
+// He asked to be called back about the price. Nobody was told, because nothing
+// wrote it down. Work that is not written down does not happen.
+test('what the caller asks the clinic to do is recorded', () => {
+  for (const [lang, rule] of [
+    ['pt', 'o que não fica escrito não acontece'],
+    ['es', 'lo que no queda escrito no ocurre'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(rule), `${lang}: a request can be lost`)
+  }
+})

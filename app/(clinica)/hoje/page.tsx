@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { AgendaDay } from '@/components/clinic/AgendaDay'
+import { AgendaLive } from '@/components/clinic/AgendaLive'
 import { AttentionBand } from '@/components/clinic/AttentionBand'
 import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
@@ -137,6 +138,7 @@ export default async function AgendaPage({
 
   return (
     <>
+      <AgendaLive clinicId={clinicId} />
       <BillingLive clinicId={clinicId} />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>

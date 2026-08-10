@@ -3,6 +3,7 @@ import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, EmptyState } from '@/components/ui'
 import { ConversationItem } from '@/components/clinic/ConversationItem'
+import { AgendaLive } from '@/components/clinic/AgendaLive'
 import type { Call, CallResult, ConversationChannel } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -44,6 +45,7 @@ export default async function ConversasPage({
 
   return (
     <>
+      <AgendaLive clinicId={clinicId} />
       <PageHeader
         eyebrow={dict.clinicNav.chamadas}
         title={dict.conversas.title}

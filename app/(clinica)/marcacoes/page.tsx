@@ -4,6 +4,7 @@ import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, EmptyState, ErrorState } from '@/components/ui'
 import { AppointmentCard } from '@/components/AppointmentCard'
+import { AgendaLive } from '@/components/clinic/AgendaLive'
 import type { Appointment } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -57,6 +58,7 @@ export default async function MarcacoesPage({
 
   return (
     <>
+      <AgendaLive clinicId={clinicId} />
       <PageHeader eyebrow={dict.clinicNav.marcacoes} title={dict.marcacoes.title} subtitle={dict.marcacoes.help} />
 
       <div className="mb-6 inline-flex rounded-full border border-line-strong bg-surface p-1">

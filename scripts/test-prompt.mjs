@@ -512,3 +512,17 @@ test('a second booking in one call does not start from zero', () => {
     assert.ok(text.includes(phrase), `${lang}: may ask for the same details twice`)
   }
 })
+
+// Two failures from one call, and they share a cause: she was being cut off.
+// The chosen hour was re-searched instead of held, and a misheard "por favor"
+// flipped the whole conversation into English, where she answered "got it".
+test('a chosen hour is the hour, and one word does not change the language', () => {
+  for (const [lang, chosen, stays] of [
+    ['pt', '**essa é a hora**', 'Mantém-te na língua em que a conversa começou.'],
+    ['es', '**esa es la hora**', 'Te mantienes en el idioma en que empezó la conversación.'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(chosen), `${lang}: may keep searching after a choice`)
+    assert.ok(text.includes(stays), `${lang}: may switch language on one word`)
+  }
+})

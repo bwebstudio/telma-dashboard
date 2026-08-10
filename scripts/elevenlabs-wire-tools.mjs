@@ -30,6 +30,11 @@ const DRY = args.includes('--dry')
 const CREATE = args.includes('--create')
 const PRUNE = args.includes('--prune')
 const BASE = (flag('base') ?? '').replace(/\/$/, '')
+// Um sufixo dá a este conjunto de ferramentas um nome só seu, para que criar as
+// da demonstração não vá alterar as que já apontam para outro sítio: elas são
+// procuradas pelo nome, e sem isto "criar" quer dizer "reescrever".
+const SUFFIX = flag('suffix') ?? ''
+const AGENT_NAME = flag('name') ?? 'Telma'
 let AGENT = flag('agent')
 
 function env(name) {
@@ -46,7 +51,10 @@ function env(name) {
 }
 
 const KEY = env('ELEVENLABS_API_KEY')
-const TOKEN = env('TELMA_WEBHOOK_TOKEN')
+// O token é o da instalação a que as ferramentas vão bater, e não há um só: a
+// demonstração tem o seu, e usar o de casa deixaria as chamadas a receber 401
+// sem nada no ecrã que o explicasse.
+const TOKEN = flag('token') ?? env('TELMA_WEBHOOK_TOKEN')
 
 if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
 if (!TOKEN) fail('TELMA_WEBHOOK_TOKEN não encontrado.')
@@ -226,7 +234,7 @@ const TOOLS = [
 // honest about not knowing anything, takes a message, and books nothing.
 
 const AGENT_SPEC = {
-  name: 'Telma',
+  name: AGENT_NAME,
   conversation_config: {
     agent: {
       // Read only when /api/voice/init did not answer. Every line of it exists
@@ -307,11 +315,14 @@ const byName = new Map((existing.tools ?? []).map((t) => [t.tool_config?.name ??
 
 const ids = []
 for (const tool of TOOLS) {
-  const payload = { tool_config: { type: 'webhook', ...tool, response_timeout_secs: 20 } }
-  const found = byName.get(tool.name)
+  const name = `${tool.name}${SUFFIX}`
+  const payload = {
+    tool_config: { type: 'webhook', ...tool, name, response_timeout_secs: 20 },
+  }
+  const found = byName.get(name)
 
   if (DRY) {
-    console.log(`  ${found ? 'actualizaria' : 'criaria  '}  ${tool.name}`)
+    console.log(`  ${found ? 'actualizaria' : 'criaria  '}  ${name}`)
     continue
   }
 
@@ -320,12 +331,12 @@ for (const tool of TOOLS) {
       const id = found.id ?? found.tool_id
       await api(`/convai/tools/${id}`, 'PATCH', payload)
       ids.push(id)
-      console.log(`  actualizada  ${tool.name}  ${id}`)
+      console.log(`  actualizada  ${name}  ${id}`)
     } else {
       const created = await api('/convai/tools', 'POST', payload)
       const id = created.id ?? created.tool_id
       ids.push(id)
-      console.log(`  criada       ${tool.name}  ${id}`)
+      console.log(`  criada       ${name}  ${id}`)
     }
   } catch (e) {
     if (e.status === 401) {
@@ -333,7 +344,7 @@ for (const tool of TOOLS) {
         `A chave não pode escrever (${e.message}).\n  Active o scope "ElevenAgents: Write" em Developers > API Keys.`
       )
     }
-    fail(`${tool.name}: ${e.message}`)
+    fail(`${name}: ${e.message}`)
   }
 }
 

@@ -5,6 +5,9 @@ import { PageHeader } from '@/components/ui'
 import { MockCallForm } from '@/components/clinic/MockCallForm'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
 import { mockCallsEnabled } from '@/lib/mock-call'
+import { showcaseMode } from '@/lib/demo/config'
+import { demoVoiceConfig } from '@/lib/actions/voice-demo'
+import { VoiceSimulator } from '@/components/clinic/VoiceSimulator'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +30,25 @@ export default async function TestCallPage() {
   const { clinicId, clinic } = await requireClinicContext()
   const billing = await getClinicWithPlan(clinicId)
   const t = dict.testCall
+
+  // On a showcase the simulator is a conversation, not a form. The form fills
+  // rows in without anybody hearing anything, which is right for testing the
+  // panel and proves nothing to somebody being shown the product: the whole
+  // question they have is whether she really knows their clinic.
+  //
+  // It falls back to the form when the voice is not configured, because a demo
+  // with a working form beats a demo with a broken microphone.
+  if (showcaseMode()) {
+    const config = await demoVoiceConfig()
+    if (!('error' in config)) {
+      return (
+        <div className="max-w-2xl">
+          <PageHeader eyebrow={dict.clinicNav.testCall} title={t.title} subtitle={t.subtitle} />
+          <VoiceSimulator config={config} locale={locale === 'es' ? 'es' : 'pt'} />
+        </div>
+      )
+    }
+  }
 
   return (
     <div className="max-w-2xl">

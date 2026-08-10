@@ -225,6 +225,11 @@ const TOOLS = [
                   'O tratamento ou motivo, nas palavras da própria pessoa: "lifting", "limpeza", "dor num dente". Não escrevas rótulos genéricos como "consulta de avaliação" quando ela disse outra coisa: quem lê isto no painel precisa de saber para que vem, e é a única forma de a clínica preparar a consulta.',
               },
               scheduled_at: { type: 'string', description: 'O identificador slot_start da hora marcada, copiado tal e qual. Não é a hora que disseste em voz alta.' },
+              note: {
+                type: 'string',
+                description:
+                  'O que a clínica precisa de saber sobre ESTA marcação e mais nenhuma. Uma ou duas frases: o que a pessoa pediu para esta consulta e o que alguém tem de fazer antes dela — por exemplo que pediu que lhe liguem por causa do preço. Não descrevas aqui as outras marcações da chamada: cada uma leva a sua, e quem lê esta no dia só quer saber desta.',
+              },
               },
             },
           },

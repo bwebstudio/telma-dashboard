@@ -503,13 +503,41 @@ test('she has a manner, and it is discreet', () => {
 // and her number twice. Asking the same person for the same details a second
 // time, minutes apart, is the moment somebody realises they are talking to a
 // machine: no receptionist alive forgets a name between two sentences.
+// Written in prose first, and that was not enough: it said exactly this and the
+// model asked anyway. The ask has to come before anything else, so it is a
+// numbered step now and the test checks both halves of it.
 test('a second booking in one call does not start from zero', () => {
-  for (const [lang, phrase] of [
-    ['pt', 'perguntas apenas **para quem é**'],
-    ['es', 'preguntas solo **para quién es**'],
+  for (const [lang, first, again] of [
+    ['pt', '**Antes de tudo o resto**, perguntas para quem é', '**Não voltas a pedi-los nem para confirmar.**'],
+    ['es', '**Antes que nada**, preguntas para quién es', '**No los vuelves a pedir ni para confirmarlos.**'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
-    assert.ok(text.includes(phrase), `${lang}: may ask for the same details twice`)
+    assert.ok(text.includes(first), `${lang}: does not ask who it is for up front`)
+    assert.ok(text.includes(again), `${lang}: may ask for the same details twice`)
+  }
+})
+
+// She booked, said nothing that sounded like a booking, and moved on. A caller
+// with no closing sentence does not know whether it happened.
+test('a booking is closed out loud', () => {
+  for (const [lang, said] of [
+    ['pt', 'fica marcada para'],
+    ['es', 'queda agendada para'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(said), `${lang}: a booking can end in silence`)
+  }
+})
+
+// Two bookings in one call reached the panel as one card describing both and
+// one card describing nothing. The clinic reads them one at a time, on the day.
+test('each booking carries its own note', () => {
+  for (const [lang, own] of [
+    ['pt', '**Cada marcação leva a sua própria nota**'],
+    ['es', '**Cada cita lleva su propia nota**'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(own), `${lang}: notes may describe the wrong appointment`)
   }
 })
 

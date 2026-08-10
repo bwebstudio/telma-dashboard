@@ -97,6 +97,7 @@ export async function POST(request: Request) {
         reason: appointment.reason ?? null,
         scheduled_at: at,
         origin: 'telefone',
+        note: appointment.note ?? null,
       }
     }
   }
@@ -166,6 +167,7 @@ export async function POST(request: Request) {
           reason: a.reason ?? null,
           scheduled_at: a.scheduled_at,
           origin: 'telefone',
+          summary: (a.note as string) ?? null,
         }))
 
       if (fresh.length) await admin.from('appointments').insert(fresh)
@@ -204,6 +206,10 @@ export async function POST(request: Request) {
         reason: a.reason ?? null,
         scheduled_at: a.scheduled_at,
         origin: 'telefone',
+        // Its own note, not the call's. Until now these carried nothing at all,
+        // so the second booking of a conversation reached the clinic as a bare
+        // time with no word about what the patient had asked for.
+        summary: (a.note as string) ?? null,
       }))
     if (rows.length) {
       const { error: extraErr } = await admin.from('appointments').insert(rows)

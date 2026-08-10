@@ -269,11 +269,20 @@ const AGENT_SPEC = {
             description:
               'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
           },
+          // Sem isto o prompt promete uma coisa que a plataforma não faz. Ele diz
+          // "respondes na língua em que te falarem", e a conversa fica presa na
+          // que abriu: o modelo escreve português e o reconhecimento continua à
+          // espera de espanhol.
+          language_detection: {
+            name: 'language_detection',
+            description:
+              'Muda a língua da conversa quando a pessoa passa a falar outra das que esta clínica atende, ou quando pede para falares noutra.',
+          },
         },
       },
       first_message:
         'Hola, le habla Telma. Disculpe, en este momento tengo un problema técnico y no puedo consultar la agenda. ¿Me deja su nombre y un teléfono y le devolvemos la llamada?',
-      language: 'es',
+      language: 'pt',
       // Sem isto a ElevenLabs recusa começar a conversa: valida que cada
       // ferramenta tem as suas variáveis ANTES de chamar o webhook de arranque,
       // e nessa altura `clinic_id` ainda não existe.
@@ -296,7 +305,10 @@ const AGENT_SPEC = {
       // Un agente que no sea inglés exige turbo o flash v2_5: es requisito de la
       // plataforma, no una preferencia nuestra.
       model_id: 'eleven_turbo_v2_5',
-      voice_id: env('ELEVENLABS_VOICE_ID_ES') ?? undefined,
+      // A voz da língua base do agente. As outras vêm nos presets abaixo, porque
+      // mudar de língua a meio e continuar com a mesma voz dá uma espanhola a
+      // falar português, que se nota mais do que o sotaque que se queria evitar.
+      voice_id: env('ELEVENLABS_VOICE_ID_PT') ?? undefined,
       // 0 y no 3: el troceado agresivo arranca una entonación nueva por trozo, y
       // eso es lo que se oye como voz de máquina.
       optimize_streaming_latency: 0,
@@ -332,7 +344,10 @@ const AGENT_SPEC = {
     vad: { background_voice_detection: true },
     // El catalán no está en la lista que acepta ElevenLabs, aunque lo ofrezcamos
     // en el alta. Ver a memória do projecto.
-    language_presets: { pt: { overrides: {} }, en: { overrides: {} } },
+    language_presets: {
+      es: { overrides: { tts: { voice_id: env('ELEVENLABS_VOICE_ID_ES') ?? undefined } } },
+      en: { overrides: { tts: { voice_id: env('ELEVENLABS_VOICE_ID_EN') ?? undefined } } },
+    },
   },
 }
 

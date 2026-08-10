@@ -668,7 +668,11 @@ export function TelmaStep({
   languages,
   maxLanguages,
   showLanguages = true,
+  showGreetingLanguage,
 }: StepProps & {
+  /** In the panel the languages themselves are billing, and live on the account
+   *  page. Which of them she answers in is not, and belongs here. */
+  showGreetingLanguage?: boolean
   /** False in the panel: the languages are edited on the account page, where
    *  the plan's ceiling and what changing it costs are both on screen. Two
    *  places to edit one field is two places for them to disagree. */
@@ -693,7 +697,17 @@ export function TelmaStep({
     // said it does not speak, so it moves to whatever is left.
     set({
       selected_languages: next,
-      greeting_language: next.includes(greeting) ? greeting : (next[0] ?? ''),
+      // O idioma em que atende segue o primeiro que a clínica escolheu, a não ser
+      // que o tenha mudado de propósito.
+      //
+      // Antes seguia a língua em que o formulário estava a ser lido, e isso é
+      // outra coisa: uma clínica em Guadalajara, com o espanhol escolhido em
+      // primeiro lugar, ficou a atender em português só porque quem preencheu o
+      // formulário o estava a ler em português. Ninguém viu, porque o campo que
+      // o diz está mais abaixo e já vinha respondido.
+      greeting_language: values.greeting_touched
+        ? (next.includes(greeting) ? greeting : (next[0] ?? ''))
+        : (next[0] ?? ''),
     })
   }
 
@@ -763,14 +777,14 @@ export function TelmaStep({
 
       {/* Which of them Telma opens in. Only meaningful once more than one is
           chosen, so it stays out of the way until then. */}
-      {showLanguages && chosen.length > 1 && (
+      {(showLanguages || showGreetingLanguage) && (
         <Select
           name="greeting_language"
           label={t.greetingLanguage}
           hint={t.greetingLanguageHelp}
           error={errors.greeting_language}
           value={greeting}
-          onChange={(v) => set({ greeting_language: v })}
+          onChange={(v) => set({ greeting_language: v, greeting_touched: true })}
         >
           {languages
             .filter((l) => chosen.includes(l.code))

@@ -108,7 +108,18 @@ export function TelmaSettingsForm({
       </Section>
 
       <Section title={t.telma}>
-        <TelmaStep {...stepProps} languages={languages} maxLanguages={null} showLanguages={false} />
+        <TelmaStep
+          {...stepProps}
+          languages={languages.filter((l) =>
+            ((initial.selected_languages as string[]) ?? []).includes(l.code)
+          )}
+          maxLanguages={null}
+          // O selector de línguas não: essas dependem do plano e mudam-se na
+          // conta. O de "em que língua atende" sim, e é por isso que a lista
+          // acima vem filtrada pelas que esta clínica já paga.
+          showLanguages={false}
+          showGreetingLanguage
+        />
       </Section>
 
       {errors._form && (

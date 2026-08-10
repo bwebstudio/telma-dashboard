@@ -278,7 +278,18 @@ export async function updateClinicProfile(
   }
   if (Object.keys(errors).length) return { ok: false, errors }
 
+  // A língua em que atende é a única das línguas que não é uma questão de
+  // faturação: quantas fala depende do plano e vive na página da conta, mas
+  // qual delas usa para atender é só uma decisão. Ficava impossível de mudar,
+  // e uma clínica em Espanha que preencheu o formulário em português ficava a
+  // atender em português para sempre.
+  const greeting = typeof values.greeting_language === 'string' ? values.greeting_language : null
+  const spoken: string[] = (current.selected_languages as string[] | null) ?? [
+    current.language as string,
+  ]
+
   const next = {
+    ...(greeting && spoken.includes(greeting) ? { language: greeting } : {}),
     name: clean.clinic_name,
     address: clean.address || null,
     phone: normalisePhone(String(clean.phone ?? '')) || null,

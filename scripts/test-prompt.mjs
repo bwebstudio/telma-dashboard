@@ -498,3 +498,17 @@ test('she has a manner, and it is discreet', () => {
     assert.ok(text.includes(pauses), `${lang}: no mechanism for natural pauses`)
   }
 })
+
+// One caller booked two different things in one call and was asked for her name
+// and her number twice. Asking the same person for the same details a second
+// time, minutes apart, is the moment somebody realises they are talking to a
+// machine: no receptionist alive forgets a name between two sentences.
+test('a second booking in one call does not start from zero', () => {
+  for (const [lang, phrase] of [
+    ['pt', '**Se for a segunda marcação da mesma chamada, não recomeças do zero.**'],
+    ['es', '**Si es la segunda cita de la misma llamada, no empiezas de cero.**'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(phrase), `${lang}: may ask for the same details twice`)
+  }
+})

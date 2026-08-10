@@ -106,7 +106,6 @@ export function VoiceSimulator({
           override-prompt={config.promptText}
           override-first-message={config.greeting}
           override-language={config.language}
-          override-voice-id={config.voiceId}
         />
       </div>
 

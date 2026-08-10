@@ -154,11 +154,18 @@ export async function POST(request: Request) {
         ),
         language: promptLocale,
       },
-      tts: {
-        // The voice follows the clinic's language, so the accent is local. See
-        // `voiceId()` in lib/onboarding/elevenlabs.
-        voice_id: voiceId(promptLocale) ?? undefined,
-      },
+      // No voice override, deliberately.
+      //
+      // Pinning one here fixes it for the whole conversation, which quietly
+      // undoes language switching: a Spanish clinic opened with the Spanish
+      // voice, somebody asked for Portuguese, the language changed and the voice
+      // did not. What came out was a Spanish woman speaking Portuguese, which is
+      // more noticeable than the accent this was all meant to avoid.
+      //
+      // The agent carries a voice per language instead, so opening in Spanish
+      // picks the Spanish one and moving to Portuguese moves the voice with it.
+      // `voiceId()` is still what the sign-up preview speaks with, where there is
+      // no conversation and nothing to switch.
     },
     // What the tools need. `clinic_id` is the important one: every other
     // endpoint takes it, and this is the only place it can come from.

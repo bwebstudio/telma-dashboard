@@ -145,9 +145,9 @@ const RULES = {
     emergencyExempt: 'Isto não se aplica a urgências',
     toneInWords: 'O tom faz-se com as palavras',
     closing: '# Como te despedes',
-    closingAsks: 'perguntas se há mais alguma coisa',
-    closingWaits: 'esperas que a pessoa responda',
-    closingNoHangup: 'nunca desligas enquanto a outra pessoa ainda está a falar',
+    closingAsks: '1. Perguntas se há mais alguma coisa em que possas ajudar.',
+    closingWaits: '**Esperas que a pessoa responda à despedida**',
+    closingNoHangup: 'nem enquanto a outra pessoa ainda fala',
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
     noHoursRecital: 'recitas o horário de abertura',
@@ -175,9 +175,9 @@ const RULES = {
     emergencyExempt: 'Esto no se aplica a las urgencias',
     toneInWords: 'El tono se hace con las palabras',
     closing: '# Cómo te despides',
-    closingAsks: 'preguntas si hay algo más',
-    closingWaits: 'esperas a que la persona conteste',
-    closingNoHangup: 'nunca cuelgas mientras la otra persona sigue hablando',
+    closingAsks: '1. Preguntas si hay algo más en lo que puedas ayudar.',
+    closingWaits: '**Esperas a que conteste a la despedida**',
+    closingNoHangup: 'ni mientras la otra persona sigue hablando',
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
     noHoursRecital: 'recitas el horario de apertura',
@@ -505,8 +505,8 @@ test('she has a manner, and it is discreet', () => {
 // machine: no receptionist alive forgets a name between two sentences.
 test('a second booking in one call does not start from zero', () => {
   for (const [lang, phrase] of [
-    ['pt', '**Se for a segunda marcação da mesma chamada, não recomeças do zero.**'],
-    ['es', '**Si es la segunda cita de la misma llamada, no empiezas de cero.**'],
+    ['pt', 'perguntas apenas **para quem é**'],
+    ['es', 'preguntas solo **para quién es**'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(phrase), `${lang}: may ask for the same details twice`)

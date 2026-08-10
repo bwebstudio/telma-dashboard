@@ -6,6 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 
 export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*'
 
+/** Counts mounts, so no two channels are ever asked for by the same name. */
+let mounts = 0
+
 export interface RealtimeWatch {
   table: string
   /** PostgREST filter, e.g. `clinic_id=eq.<uuid>`. Always scope by clinic. */
@@ -59,7 +62,20 @@ export function useRealtime(
     let channel: ReturnType<ReturnType<typeof createClient>['channel']>
     try {
       supabase = createClient()
-      channel = supabase.channel(channelName)
+      // A name of its own for this mount, and not the one the caller passed.
+      //
+      // `supabase.channel(name)` hands back the *existing* channel when one with
+      // that name is already open, and `removeChannel` finishes asynchronously.
+      // So navigating from one screen to another that watches the same rows got
+      // the old channel back, still subscribed, and adding listeners to it threw
+      //   cannot add `postgres_changes` callbacks ... after `subscribe()`
+      // which is uncaught and takes the whole page with it. Three screens
+      // sharing one name made it happen on an ordinary click.
+      //
+      // A fresh name every time cannot collide with a channel that is still
+      // closing. The caller's name stays in it so the socket is still
+      // recognisable in a debugger.
+      channel = supabase.channel(`${channelName}-${++mounts}`)
     } catch (e) {
       console.error('[realtime] could not open a channel', e)
       return

@@ -462,3 +462,19 @@ test('the two times are offered as an open question', () => {
     assert.ok(text.includes(closed), `${lang}: the closed question is not ruled out`)
   }
 })
+
+// "Le dijo un lifting y pasa a decirme los horarios sin ninguna palabra que
+// sirva de puente." She was right, and it is the difference between a
+// receptionist and a form: a human says "of course, an assessment for a lifting"
+// before offering anything, and that one sentence is most of what makes the call
+// feel like a person.
+test('she picks up what was said before moving on, in both languages', () => {
+  for (const [lang, phrase, example] of [
+    ['pt', '**Antes de avançares, recolhes o que a pessoa acabou de dizer.**', 'uma avaliação para lifting'],
+    ['es', '**Antes de avanzar, recoges lo que la persona acaba de decir.**', 'una valoración para lifting'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(phrase), `${lang}: no bridging rule`)
+    assert.ok(text.includes(example), `${lang}: the rule has no worked example`)
+  }
+})

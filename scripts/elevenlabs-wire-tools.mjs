@@ -309,6 +309,12 @@ const AGENT_SPEC = {
       // Cuatro segundos, no siete. Siete es una eternidad al teléfono: quien ha
       // terminado de hablar cree que la línea se ha caído.
       turn_timeout: 4.0,
+      // `eager` cierra el turno en cuanto la frase suena terminada, en vez de
+      // esperar a que el silencio lo confirme. Es la única palanca que queda
+      // contra el ruido de sala: la plataforma no expone un umbral de VAD, solo
+      // el interruptor de voces de fondo, y en una habitación con un bebé eso no
+      // basta. El riesgo es cortar a quien hace una pausa a media frase.
+      turn_eagerness: 'eager',
       // Apagado: genera antes de que el interlocutor termine y luego continúa, y
       // las dos generaciones se cosen con una costura audible.
       speculative_turn: false,

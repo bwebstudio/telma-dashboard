@@ -50,7 +50,19 @@ export async function POST(request: Request) {
   // rung at all: the worst of the three possible outcomes, and the only one that
   // is invisible. Now the call is written, the bad appointment is dropped, and
   // the agent is told plainly enough to say so out loud and fix it.
-  const appointment = body.appointment as Record<string, unknown> | null | undefined
+  // One call can leave more than one booking, and until now only the first
+  // survived. Somebody booked a lifting and a general consultation in the same
+  // conversation and the panel showed one of them: `record_call` takes a single
+  // appointment, so the second was dropped without a word. A lost booking is
+  // worse than a failed call, because nobody knows to ring back.
+  const many = Array.isArray(body.appointments)
+    ? (body.appointments as Array<Record<string, unknown>>)
+    : body.appointment
+      ? [body.appointment as Record<string, unknown>]
+      : []
+
+  const appointment = many[0] ?? null
+  const extras = many.slice(1)
   let rejected: string | null = null
   let usable: Record<string, unknown> | null = null
 
@@ -104,6 +116,31 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // The rest, hung on the same call. Written straight rather than through
+  // record_call, which would have created a second call row for a single
+  // conversation and doubled the minutes.
+  const callId = (data as { call_id?: string } | null)?.call_id
+  if (callId && extras.length) {
+    const rows = extras
+      .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
+      .filter((a) => plausiblePhone(a.patient_phone))
+      .map((a) => ({
+        clinic_id: clinicId,
+        call_id: callId,
+        patient_name: a.patient_name ?? null,
+        patient_phone: a.patient_phone ?? null,
+        reason: a.reason ?? null,
+        scheduled_at: a.scheduled_at,
+        origin: 'telefone',
+      }))
+    if (rows.length) {
+      const { error: extraErr } = await admin.from('appointments').insert(rows)
+      // Reported, never fatal: the call and the first booking are already
+      // written, and losing them too would turn a partial record into none.
+      if (extraErr) console.error('[call] extra appointments', extraErr.message)
+    }
   }
 
   if (rejected) {

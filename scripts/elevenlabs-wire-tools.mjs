@@ -109,6 +109,7 @@ const TOOLS = [
   },
   {
     name: 'telma_reservar_hora',
+    force_pre_tool_speech: true,
     description:
       'Segura uma hora concreta durante três minutos, enquanto confirmas o nome e o telefone. Usa isto depois de a pessoa escolher uma hora e antes de lhe pedir os dados, para que outra chamada em simultâneo não fique com a mesma hora.',
     api_schema: {
@@ -209,11 +210,13 @@ const TOOLS = [
             description:
               'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça — que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém — porque isso é trabalho para alguém e perde-se se não ficar escrito.',
           },
-          appointment: {
-            type: 'object',
+          appointments: {
+            type: 'array',
             description:
-              'Só quando houve marcação. Caso contrário, omite este campo por completo.',
-            properties: {
+              'Todas as marcações que ficaram nesta chamada. Se a pessoa marcou duas coisas, vão as duas: mandar só uma perde a outra sem aviso. Se não houve marcação nenhuma, omite este campo por completo.',
+            items: {
+              type: 'object',
+              properties: {
               patient_name: { type: 'string', description: 'Nome completo, como o confirmaste.' },
               patient_phone: { type: 'string', description: 'Telefone que confirmaste, em formato internacional.' },
               reason: {
@@ -222,6 +225,7 @@ const TOOLS = [
                   'O tratamento ou motivo, nas palavras da própria pessoa: "lifting", "limpeza", "dor num dente". Não escrevas rótulos genéricos como "consulta de avaliação" quando ela disse outra coisa: quem lê isto no painel precisa de saber para que vem, e é a única forma de a clínica preparar a consulta.',
               },
               scheduled_at: { type: 'string', description: 'O identificador slot_start da hora marcada, copiado tal e qual. Não é a hora que disseste em voz alta.' },
+              },
             },
           },
         },

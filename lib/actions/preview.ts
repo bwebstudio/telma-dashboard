@@ -157,7 +157,7 @@ async function previewPrompt(
   return {
     text: built.text,
     version: built.version,
-    greeting: greetingLine(clinicName, greetingCode, formality, recording),
+    greeting: greetingLine(clinicName, greetingCode, formality, recording, languageCodes),
     greetingLanguage: greetingCode,
     baseLanguage: built.base_language,
     openNow: hours.openNow,

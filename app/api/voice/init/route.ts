@@ -150,7 +150,11 @@ export async function POST(request: Request) {
           clinic.name,
           promptLocale,
           variables.formality,
-          variables.recording
+          variables.recording,
+          // Every language this clinic answers in. With more than one, the
+          // greeting offers them, each said in its own language, and the choice
+          // is made once at the start instead of guessed at mid-call.
+          clinic.selected_languages?.length ? clinic.selected_languages : [promptLocale]
         ),
         language: promptLocale,
       },

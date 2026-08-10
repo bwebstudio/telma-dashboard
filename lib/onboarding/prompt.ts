@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-08-10.4'
+export const PROMPT_VERSION = '2026-08-10.5'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -192,7 +192,7 @@ const PT: BaseCopy = {
   delivery: `# Como o dizes
 Não escreves etiquetas de nenhum tipo. Nada entre parênteses rectos, nada entre asteriscos, nada a descrever como estás a dizer as coisas. Tudo o que escreves vai ser dito em voz alta tal e qual, e uma etiqueta ou é lida ao microfone ou parte a frase em pedaços com entoações diferentes.
 
-Mantém-te na língua em que a conversa começou. Só mudas se a pessoa pedir, ou se falar várias frases seguidas noutra. Uma palavra que percebeste mal não é motivo para trocar de língua a meio de uma marcação.
+**A língua escolhe-se no início e não muda mais.** Se a clínica atende em várias, o teu cumprimento diz como pedir cada uma delas. A partir do momento em que a pessoa responde, ficas nessa língua até ao fim, mesmo que digam uma palavra noutra. Trocar a meio de uma marcação por causa de uma palavra mal percebida estraga a chamada toda.
 
 O tom faz-se com as palavras, com a pontuação e com o comprimento das frases. **Usa vírgulas e reticências para as pausas**, para a frase respirar. Varia o ritmo consoante o que a pessoa diz, e varia também a forma como cumprimentas e como confirmas, para não soares igual em todas as chamadas.
 
@@ -423,7 +423,7 @@ const ES: BaseCopy = {
   delivery: `# Cómo lo dices
 No escribes etiquetas de ningún tipo. Nada entre corchetes, nada entre asteriscos, nada que describa cómo estás diciendo las cosas. Todo lo que escribes se va a decir en voz alta tal cual, y una etiqueta o se lee por el micrófono o parte la frase en trozos con entonaciones distintas.
 
-Te mantienes en el idioma en que empezó la conversación. Solo cambias si la persona lo pide, o si habla varias frases seguidas en otro. Una palabra que has entendido mal no es motivo para cambiar de idioma a mitad de una cita.
+**El idioma se elige al principio y no cambia más.** Si la clínica atiende en varios, tu saludo dice cómo pedir cada uno. Desde que la persona responde, te quedas en ese idioma hasta el final, aunque diga una palabra en otro. Cambiar a mitad de una cita por una palabra mal entendida estropea la llamada entera.
 
 El tono se hace con las palabras, con la puntuación y con lo largas que son las frases. **Usa comas y puntos suspensivos para las pausas**, para que la frase respire. Varía el ritmo según lo que diga la persona, y varía también cómo saludas y cómo confirmas, para no sonar igual en todas las llamadas.
 
@@ -655,17 +655,52 @@ const GREETINGS: Record<string, Record<'formal' | 'informal', (name: string) => 
   },
 }
 
+/**
+ * How to ask for another language, said in that language.
+ *
+ * The whole point is that it is legible to somebody who does not speak the one
+ * the call opened in. A Portuguese speaker who rings a Barcelona clinic hears
+ * Spanish, understands none of it, and needs one line they do understand.
+ */
+const OFFER: Record<string, string> = {
+  pt: 'Para ser atendido em português, diga "português".',
+  es: 'Para ser atendido en español, diga "español".',
+  ca: 'Per ser atès en català, digui "català".',
+  en: 'For English, say "English".',
+}
+
 export function greetingLine(
   clinicName: string,
   languageCode: string,
   formality: 'formal' | 'informal',
-  recording: boolean
+  recording: boolean,
+  /** Every language this clinic answers in, the one it opens in included. */
+  languages: string[] = []
 ): string {
   const set = GREETINGS[languageCode] ?? GREETINGS.pt
-  const line = set[formality](clinicName)
-  if (recording) return line
+  let line = set[formality](clinicName)
+  if (!recording) {
+    const parts = line.split(/(?<=[.!?])\s+/)
+    line = parts.length >= 3 ? [parts[0], parts[parts.length - 1]].join(' ') : line
+  }
+
+  // A clinic with one language has nothing to choose, and a menu for one option
+  // is a menu that wastes everybody's first ten seconds.
+  const others = languages.filter((l) => l !== languageCode && OFFER[l])
+  if (!others.length) return line
+
+  // Said once, at the start, and then the language is fixed for the rest of the
+  // call. Detecting it as the conversation goes turned out to be worse than not
+  // offering it at all: a misheard word moved a whole booking into English, and
+  // the caller was answered "got it" halfway through giving their telephone
+  // number. A menu is duller and it cannot do that.
+  //
+  // The offer goes before the closing question, so the last thing heard is still
+  // "how can I help", which is what somebody who does not need the menu is
+  // waiting for.
   const parts = line.split(/(?<=[.!?])\s+/)
-  return parts.length >= 3 ? [parts[0], parts[parts.length - 1]].join(' ') : line
+  const closing = parts.pop() ?? ''
+  return [...parts, ...others.map((l) => OFFER[l]), closing].join(' ')
 }
 
 /**

@@ -28,7 +28,7 @@ const SNAP_DIR = join(here, '__snapshots__')
 // the update silently does nothing.
 const UPDATE = process.env.UPDATE_SNAPSHOTS === '1'
 
-const { buildPrompt, PROMPT_VERSION, baseLanguageFor } = await import('../lib/onboarding/prompt.ts')
+const { buildPrompt, PROMPT_VERSION, baseLanguageFor, greetingLine } = await import('../lib/onboarding/prompt.ts')
 
 // A clinic with everything filled in. Each case below is this, changed in one
 // way, so a diff between two snapshots shows the effect of that one change.
@@ -513,16 +513,44 @@ test('a second booking in one call does not start from zero', () => {
   }
 })
 
-// Two failures from one call, and they share a cause: she was being cut off.
-// The chosen hour was re-searched instead of held, and a misheard "por favor"
-// flipped the whole conversation into English, where she answered "got it".
-test('a chosen hour is the hour, and one word does not change the language', () => {
-  for (const [lang, chosen, stays] of [
-    ['pt', '**essa é a hora**', 'Mantém-te na língua em que a conversa começou.'],
-    ['es', '**esa es la hora**', 'Te mantienes en el idioma en que empezó la conversación.'],
+// The caller chose an hour she had offered, and she went back to searching and
+// offered other days instead. The hours were hers to say, so "the second one" is
+// not ambiguous to anybody but her.
+test('a chosen hour is the hour', () => {
+  for (const [lang, chosen] of [
+    ['pt', '**essa é a hora**'],
+    ['es', '**esa es la hora**'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(chosen), `${lang}: may keep searching after a choice`)
-    assert.ok(text.includes(stays), `${lang}: may switch language on one word`)
+  }
+})
+
+// A misheard "por favor" moved a whole booking into English, and the caller was
+// answered "got it" while giving their telephone number. Guessing the language
+// as the call goes turned out to be worse than not offering it: the greeting
+// asks once, in every language the clinic answers in, and then it is settled.
+test('a clinic with several languages offers them, one asks for nothing', () => {
+  const one = greetingLine('Clínica Serrano', 'es', 'formal', true, ['es'])
+  assert.ok(!one.includes('português'), 'a single-language clinic reads a menu')
+
+  const many = greetingLine('Clinica Spooky', 'es', 'formal', true, ['es', 'pt', 'en'])
+  assert.ok(many.includes('diga "português"'), 'Portuguese is not offered')
+  assert.ok(many.includes('say "English"'), 'English is not offered')
+  // Each offer is said in its own language: it is read by somebody who does not
+  // speak the one the call opened in, and a Spanish sentence about Portuguese
+  // helps nobody.
+  assert.ok(!many.includes('Para ser atendido en portugués'), 'the offer is in the wrong language')
+  // The closing question stays last, for the caller who needs no menu at all.
+  assert.ok(/¿En qué puedo ayudarle\?$/.test(many.trim()), 'the menu buries the question')
+})
+
+test('the language is settled at the greeting and does not move', () => {
+  for (const [lang, phrase] of [
+    ['pt', '**A língua escolhe-se no início e não muda mais.**'],
+    ['es', '**El idioma se elige al principio y no cambia más.**'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(phrase), `${lang}: the language may still move mid-call`)
   }
 })

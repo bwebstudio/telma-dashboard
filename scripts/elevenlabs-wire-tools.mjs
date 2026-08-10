@@ -253,28 +253,77 @@ const AGENT_SPEC = {
           '',
           'Si la persona describe algo urgente, le dices que cuelgue y llame al 112.',
         ].join('\n'),
+        // Sólo la familia GPT-5 deja apagar el razonamiento en esta plataforma,
+        // y sin control el modelo delibera antes de cada turno. `low` sigue los
+        // ocho pasos de una cita sin costar el segundo de más.
+        llm: 'gpt-5.4-mini',
+        reasoning_effort: 'low',
+        built_in_tools: {
+          end_call: {
+            name: 'end_call',
+            description:
+              'Termina a chamada. Usa depois de te despedires e de a pessoa responder, ou quando te pedirem para desligar.',
+          },
+          skip_turn: {
+            name: 'skip_turn',
+            description:
+              'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
+          },
+        },
       },
       first_message:
         'Hola, le habla Telma. Disculpe, en este momento tengo un problema técnico y no puedo consultar la agenda. ¿Me deja su nombre y un teléfono y le devolvemos la llamada?',
       language: 'es',
       // Sem isto a ElevenLabs recusa começar a conversa: valida que cada
       // ferramenta tem as suas variáveis ANTES de chamar o webhook de arranque,
-      // e nessa altura `clinic_id` ainda não existe. O erro é
-      // "Missing required dynamic variables in tools".
+      // e nessa altura `clinic_id` ainda não existe.
       //
-      // O valor é de propósito inválido. A tentação é pôr aqui uma clínica que
-      // exista, para "funcionar", e isso seria o pior desenho possível: se o
-      // arranque falhasse, a chamada corria contra a agenda de outra pessoa em
-      // silêncio. Assim as ferramentas rebentam, e o prompt de emergência já
-      // manda tomar recado e não inventar horas.
+      // O valor é de propósito inválido. Pôr aqui uma clínica que exista seria o
+      // pior desenho possível: se o arranque falhasse, a chamada corria contra a
+      // agenda de outra pessoa em silêncio.
       dynamic_variables: { dynamic_variable_placeholders: { clinic_id: 'sem-clinica' } },
+      // El saludo lleva el aviso de grabación, que es una obligación legal y no
+      // una cortesía. Que una tos lo corte significa llamadas donde nadie lo oyó.
+      disable_first_message_interruptions: true,
     },
+    // ── AJUSTES QUE COSTARON UNA TARDE, Y POR ESO VIVEN AQUÍ ────────────────
+    // Un segundo agente creado desde cero nació con los valores de fábrica y
+    // repitió, uno por uno, los fallos ya resueltos: la voz entrecortada, el
+    // modelo que se saltaba los pasos, no saber colgar, quedarse escuchando
+    // siete segundos después de que el otro terminara. La configuración hecha a
+    // mano no se hereda; ésta sí.
     tts: {
       // Un agente que no sea inglés exige turbo o flash v2_5: es requisito de la
       // plataforma, no una preferencia nuestra.
       model_id: 'eleven_turbo_v2_5',
       voice_id: env('ELEVENLABS_VOICE_ID_ES') ?? undefined,
+      // 0 y no 3: el troceado agresivo arranca una entonación nueva por trozo, y
+      // eso es lo que se oye como voz de máquina.
+      optimize_streaming_latency: 0,
+      // 0.7 está en la ventana: por debajo salta de aguda a seria entre frases,
+      // por encima de 0.8 arrastra y repite sílabas.
+      stability: 0.7,
+      similarity_boost: 0.75,
     },
+    turn: {
+      // Cuatro segundos, no siete. Siete es una eternidad al teléfono: quien ha
+      // terminado de hablar cree que la línea se ha caído.
+      turn_timeout: 4.0,
+      // Apagado: genera antes de que el interlocutor termine y luego continúa, y
+      // las dos generaciones se cosen con una costura audible.
+      speculative_turn: false,
+      // El relleno mientras espera una herramienta lo pone la plataforma. Pedirlo
+      // en el prompt le hacía hablar dos veces por cada consulta.
+      soft_timeout_config: {
+        timeout_seconds: 2.5,
+        message: 'Mmm...',
+        use_llm_generated_message: true,
+        max_soft_timeouts_per_generation: 1,
+      },
+    },
+    // Distingue la voz de quien llama de la tele, de un bebé o de alguien más
+    // en la sala.
+    vad: { background_voice_detection: true },
     // El catalán no está en la lista que acepta ElevenLabs, aunque lo ofrezcamos
     // en el alta. Ver a memória do projecto.
     language_presets: { pt: { overrides: {} }, en: { overrides: {} } },

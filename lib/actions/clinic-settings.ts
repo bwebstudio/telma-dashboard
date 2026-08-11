@@ -1,5 +1,6 @@
 'use server'
 
+import { keepChosen } from '@/lib/service-duration'
 import { revalidatePath } from 'next/cache'
 import { getAppUser } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -296,6 +297,12 @@ export async function updateClinicProfile(
     specialty: clean.specialty,
     services: clean.services ?? [],
     custom_services: clean.custom_services || null,
+    // Pruned against the list being saved, not the list already stored: a
+    // service dropped in this same edit must take its length with it.
+    service_durations: keepChosen(
+      clean.service_durations as Record<string, number> | undefined,
+      clean.services as string[] | undefined
+    ),
     price_info: clean.price_info || null,
     appointment_duration_minutes: clean.appointment_duration_minutes,
     formality: clean.formality,

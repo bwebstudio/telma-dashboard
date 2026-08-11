@@ -216,6 +216,14 @@ function build(m: Messages) {
         error: m.servicesUnknown,
       }),
     custom_services: z.string().trim().max(500, { error: m.customTooLong }).optional().default(''),
+    // { "<service id>": minutes }. Every key optional, and a service left out
+    // takes the length from the hours step. Nobody is made to fill in a table
+    // of numbers to sign up, which is the point: the clinics that need this
+    // know they need it, and the rest must never meet it.
+    service_durations: z
+      .record(z.string(), z.coerce.number().int().min(5, { error: m.durationMin }).max(480, { error: m.durationMax }))
+      .optional()
+      .default({}),
     // Empty means Telma does not discuss prices, which is a real answer and the
     // prompt says so out loud rather than staying silent about it.
     price_info: z.string().trim().max(1000, { error: m.priceTooLong }).optional().default(''),

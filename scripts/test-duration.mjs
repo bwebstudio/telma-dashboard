@@ -11,7 +11,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-const { resolveDuration } = await import('../lib/service-duration.ts')
+const { resolveDuration, keepChosen } = await import('../lib/service-duration.ts')
 
 const CLINIC = {
   service_durations: { est_laser: 45, est_limpeza: 60, dent_consulta: 20 },
@@ -55,5 +55,23 @@ test('nothing said, nothing configured, nothing clever', () => {
 test('short words never match, or everything would match', () => {
   // "de", "una", "el". Without the length floor these hit every service.
   const r = resolveDuration(CLINIC, 'de una')
+  assert.equal(r.service_id, null)
+})
+
+// The sign-up stores a length only for services the clinic actually offers.
+// A length left behind by a service unticked on the way through would sit in
+// the record invisibly and come back if that service were ever ticked again.
+test('lengths belong to the services that were chosen', () => {
+  const kept = keepChosen({ est_laser: 45, dent_implantes: 90 }, ['est_laser'])
+  assert.deepEqual(kept, { est_laser: 45 })
+  assert.deepEqual(keepChosen({ est_laser: 45 }, []), {})
+  assert.deepEqual(keepChosen(null, ['est_laser']), {})
+})
+
+test('a sign-up that never opens the durations panel is still valid', () => {
+  // The one that matters most: the clinic run by one person, who books
+  // everything in the same slot and must never meet this screen.
+  const r = resolveDuration({ service_durations: {}, appointment_duration_minutes: 30 }, 'láser')
+  assert.equal(r.minutes, 30)
   assert.equal(r.service_id, null)
 })

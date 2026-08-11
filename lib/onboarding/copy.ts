@@ -71,6 +71,12 @@ export interface Copy {
   servicesHelp: string
   customServices: string
   customServicesHelp: string
+  /** Per-service lengths. Folded away by default: most clinics never open it,
+   *  and a table of numbers on the way in is how a sign-up gets abandoned. */
+  durationsToggle: string
+  durationsHelp: string
+  durationsUnit: string
+  durationsDefault: (minutes: number) => string
 
   address: string
   addressHelp: string
@@ -234,6 +240,11 @@ const pt: Copy = {
   servicesHelp: 'Pode escolher vários.',
   customServices: 'Outros serviços',
   customServicesHelp: 'Um por linha. Opcional.',
+  durationsToggle: 'Há serviços que demoram mais do que os outros',
+  durationsHelp:
+    'Abra isto só se precisar. A Telma deixa este tempo livre na agenda para cada um, para não marcar uma sessão de uma hora num espaço de vinte minutos. Pode mudar isto quando quiser no seu painel.',
+  durationsUnit: 'min',
+  durationsDefault: (m) => `${m} min`,
 
   address: 'Morada',
   addressHelp: 'A pergunta que mais fazem ao telefone. A Telma dá-a tal como a escrever aqui.',
@@ -407,6 +418,11 @@ const es: Copy = {
   servicesHelp: 'Puede elegir varios.',
   customServices: 'Otros servicios',
   customServicesHelp: 'Uno por línea. Opcional.',
+  durationsToggle: 'Hay servicios que duran más que los demás',
+  durationsHelp:
+    'Abra esto solo si lo necesita. Telma deja este tiempo libre en la agenda para cada uno, para no meter una sesión de una hora en un hueco de veinte minutos. Puede cambiarlo cuando quiera desde su panel.',
+  durationsUnit: 'min',
+  durationsDefault: (m) => `${m} min`,
 
   address: 'Dirección',
   addressHelp: 'La pregunta que más hacen por teléfono. Telma la da tal como la escriba aquí.',

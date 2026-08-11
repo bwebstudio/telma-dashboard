@@ -116,7 +116,15 @@ export async function POST(request: Request) {
     address: clinic.address ?? null,
     phone: clinic.phone ?? null,
     timezone: clinic.timezone,
-    services: (clinic.services ?? []).map((id) => serviceLabel(id, promptLocale)),
+    // With its length, where the clinic set one. She does not need this to book
+    // (the diary already leaves the right gap) but she is asked how long things
+    // take, and the alternative was the honest but useless "the clinic will
+    // tell you" about a number the clinic has already written down.
+    services: (clinic.services ?? []).map((id) => {
+      const label = serviceLabel(id, promptLocale)
+      const minutes = clinic.service_durations?.[id]
+      return minutes ? `${label} (${minutes} min)` : label
+    }),
     custom_services: clinic.custom_services ?? null,
     opening_hours: hours.map((h) => `${weekdayName(h.weekday, promptLocale)}: ${h.opens}-${h.closes}`),
     appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,

@@ -8,6 +8,7 @@ import {
   OPERATORS_BY_COUNTRY,
   PHONE_EXAMPLE,
   regionsFor,
+  serviceLabel,
   servicesFor,
   specialtyLabel,
   SPECIALTIES,
@@ -562,6 +563,80 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
   )
 }
 
+/**
+ * How long each service takes, for the clinics where that differs.
+ *
+ * Folded away, and it stays folded unless somebody opens it. A clinic run by
+ * one person books everything in the same slot and has nothing to say here; a
+ * laser clinic has a lot to say and will find it, because the summary line
+ * names the problem it solves rather than the feature it is.
+ *
+ * Nothing is required. A service left alone takes the length set in the hours
+ * step, which is what the whole diary did before any of this existed, and the
+ * placeholder shows that length rather than leaving the box looking unanswered.
+ */
+function ServiceDurations({ values, set, locale }: StepProps) {
+  const t = copyFor(locale)
+  const [open, setOpen] = useState(false)
+  const chosen: string[] = values.services ?? []
+  const durations: Record<string, number> = values.service_durations ?? {}
+  const fallback = Number(values.appointment_duration_minutes) || 30
+
+  const setOne = (id: string, raw: string) => {
+    const next = { ...durations }
+    const minutes = Number(raw)
+    // An emptied box means "the usual", not zero. Deleting the key rather than
+    // storing 0 is what makes the clinic's default keep applying afterwards.
+    if (!raw.trim() || !Number.isFinite(minutes) || minutes <= 0) delete next[id]
+    else next[id] = Math.round(minutes)
+    set({ service_durations: next })
+  }
+
+  return (
+    <div className="rounded-card border border-line bg-surface-sunken">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 p-4 text-left"
+      >
+        <span className="text-base font-medium text-ink">{t.durationsToggle}</span>
+        <span aria-hidden className="text-ink-mute">{open ? '−' : '+'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-line p-4">
+          <p className="text-sm text-ink-mute">{t.durationsHelp}</p>
+          <div className="mt-4 flex flex-col gap-2.5">
+            {chosen.map((id) => (
+              <div key={id} className="flex items-center justify-between gap-4">
+                <label htmlFor={`dur-${id}`} className="text-base text-ink">
+                  {serviceLabel(id, locale)}
+                </label>
+                <div className="flex shrink-0 items-center gap-2">
+                  <input
+                    id={`dur-${id}`}
+                    type="number"
+                    inputMode="numeric"
+                    min={5}
+                    max={480}
+                    step={5}
+                    value={durations[id] ?? ''}
+                    placeholder={String(fallback)}
+                    onChange={(e) => setOne(id, e.target.value)}
+                    className="w-20 rounded-card border border-line bg-surface px-3 py-2 text-right text-base text-ink"
+                  />
+                  <span className="text-sm text-ink-mute">{t.durationsUnit}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Step 3: services -----------------------------------------------------------
 
 export function ServicesStep({ values, set, errors, locale }: StepProps) {
@@ -609,6 +684,8 @@ export function ServicesStep({ values, set, errors, locale }: StepProps) {
           </p>
         )}
       </div>
+
+      {chosen.length > 0 && <ServiceDurations {...{ values, set, errors, locale }} />}
 
       <Field
         label={t.customServices}

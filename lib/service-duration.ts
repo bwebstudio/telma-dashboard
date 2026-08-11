@@ -89,3 +89,18 @@ export function resolveDuration(clinic: DurationSource, said: string | null): Re
 
   return { minutes: fallback, service_id: null }
 }
+
+/**
+ * The lengths worth storing: the ones belonging to services actually offered.
+ *
+ * A clinic that ticks laser, sets it to forty-five minutes and then unticks it
+ * would otherwise leave the forty-five behind for ever, invisible in the record
+ * and waiting to reappear the day somebody ticks laser again.
+ */
+export function keepChosen(
+  durations: Record<string, number> | null | undefined,
+  services: string[] | null | undefined
+): Record<string, number> {
+  const offered = new Set(services ?? [])
+  return Object.fromEntries(Object.entries(durations ?? {}).filter(([id]) => offered.has(id)))
+}

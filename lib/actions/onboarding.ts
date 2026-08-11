@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { keepChosen } from '@/lib/service-duration'
 import { isDemo } from '@/lib/demo/config'
 import { PLAN_MINUTES, PLAN_PRICE } from '@/lib/plans'
 import type { PlanType } from '@/lib/types'
@@ -279,6 +280,11 @@ export async function completeOnboarding(
         // Free text from step 3. The only place a business outside the four
         // specialties gets to say what it does, so it goes to the agent prompt.
         custom_services: wizard.custom_services || null,
+        // Only for the services actually chosen. A length left behind by a
+        // service the clinic unticked on the way through would sit in the
+        // record for ever, invisible, and come back if that service were ever
+        // ticked again.
+        service_durations: keepChosen(wizard.service_durations, wizard.services),
         address: wizard.address || null,
         price_info: wizard.price_info || null,
         formality: wizard.formality,

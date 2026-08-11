@@ -88,6 +88,7 @@ export async function GET(request: Request) {
   // mind without this endpoint changing.
   const variables: PromptVariables = {
     clinic_name: clinic.name,
+    professionals: [],
     specialty: clinic.specialty
       ? specialtyLabel(clinic.specialty as Specialty, promptLocale)
       : null,

@@ -53,9 +53,17 @@ const BASE_CLINIC = {
   emergency_number: '+351911111111',
   emergency_protocol: null,
   recording: true,
+  professionals: [],
 }
 
 const CASES = {
+  // A clinic where more than one person sees patients. Everything the base says
+  // about choosing a person appears here and nowhere else.
+  'two-professionals': {
+    ...BASE_CLINIC,
+    professionals: ['Dra. Ruiz', 'Dr. Marques'],
+  },
+
   // The ordinary call: open, can book, everything configured.
   'open-can-book': BASE_CLINIC,
 
@@ -635,5 +643,26 @@ test('an abusive call can be ended', () => {
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(phrase), `${lang}: no way out of an abusive call`)
+  }
+})
+
+// The section that must not exist for almost every clinic.
+//
+// A Telma who offers to book "with somebody" where there is only ever one
+// somebody has invented a choice the caller does not have, and the model
+// offers whatever it is given. So the clinic with one diary is never told
+// people exist, and the clinic with three is told not to read the list aloud.
+test('who sees patients is only mentioned when there is more than one', () => {
+  for (const [lang, heading, dont] of [
+    ['pt', '# Quem atende', 'Não ofereces esta lista.'],
+    ['es', '# Quién atiende', 'No ofreces esta lista.'],
+  ]) {
+    const alone = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(!alone.text.includes(heading), `${lang}: a one-person clinic is told about people`)
+
+    const team = buildPrompt({ ...CASES['two-professionals'], can_book: true }, lang)
+    assert.ok(team.text.includes(heading), `${lang}: a team clinic is not told who is in it`)
+    assert.ok(team.text.includes('Dra. Ruiz'), `${lang}: the names are missing`)
+    assert.ok(team.text.includes(dont), `${lang}: she may recite the list of names`)
   }
 })

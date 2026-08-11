@@ -17,7 +17,7 @@ import {
   startOfDayIn,
   weekStartIn,
 } from '@/lib/time'
-import type { Appointment, AvailabilitySlot, BlockedDay } from '@/lib/types'
+import type { Appointment, AvailabilitySlot, BlockedDay, Resource } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,8 +46,15 @@ export default async function HorariosPage({
   const rangeStart = startOfDayIn(tz, from)
   const rangeEnd = endOfDayIn(tz, to)
 
-  const [slotsRes, blockedRes, apptsRes] = await Promise.all([
+  const [slotsRes, resourcesRes, blockedRes, apptsRes] = await Promise.all([
     supabase.from('availability_slots').select('*').eq('clinic_id', clinicId),
+    supabase
+      .from('resources')
+      .select('*')
+      .eq('clinic_id', clinicId)
+      .eq('active', true)
+      .order('sort')
+      .order('created_at'),
     supabase
       .from('blocked_days')
       .select('*')
@@ -62,6 +69,7 @@ export default async function HorariosPage({
   ])
 
   const slots = (slotsRes.data ?? []) as AvailabilitySlot[]
+  const resources = (resourcesRes.data ?? []) as Resource[]
   const blocked = (blockedRes.data ?? []) as BlockedDay[]
   const appointments = (apptsRes.data ?? []) as Appointment[]
 
@@ -122,6 +130,7 @@ export default async function HorariosPage({
           <OpeningHours
             slots={slots}
             step={clinic?.slot_minutes ?? 60}
+            resources={resources}
             dict={dict}
             readOnly={readOnly}
           />

@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-08-11.4'
+export const PROMPT_VERSION = '2026-08-11.5'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -53,6 +53,11 @@ export interface PromptVariables {
   /** IANA zone. Every hour Telma says is in it, and she says so: a caller from
    *  abroad hearing "quarter past four" needs to know whose quarter past four. */
   timezone: string
+  /** Who sees patients, when there is more than one of them. Empty for a clinic
+   *  with one diary, and then the base never mentions people at all: a Telma
+   *  that offers to book "with somebody" where there is only ever one somebody
+   *  invents a choice the caller does not have. */
+  professionals: string[]
   /** Names as a caller would recognise them, already localised. */
   services: string[]
   custom_services: string | null
@@ -135,6 +140,8 @@ interface BaseCopy {
   bookingTitle: string
   bookingCan: (v: PromptVariables) => string[]
   bookingCannot: string[]
+  professionalsTitle: string
+  professionals: (names: string[]) => string[]
   cancellationsTitle: string
   cancellations: string[]
   /** What happens when a transfer rings out. Nobody answering is the normal
@@ -342,6 +349,14 @@ Duas frases de cada vez, no máximo.
     'Hoje **não podes marcar**. Podes informar, tirar dúvidas e tomar nota de quem quer ser contactado, mas não ofereces horas nem dás marcações por feitas.',
     'Quando tomas nota, pedes o nome e o número, repetes o número para confirmar, e dizes que fica registado no painel da clínica para alguém ligar de volta.',
     'Isto não se aplica a urgências: essas escalam na mesma, como está acima.',
+  ],
+  professionalsTitle: '# Quem atende',
+  professionals: (names) => [
+    `Nesta clínica atendem várias pessoas: ${names.join(', ')}. Cada uma tem a sua agenda e o seu horário.`,
+    '',
+    'Não ofereces esta lista. Quem liga quer uma consulta, não um menu de nomes, e recitá-los faz a chamada parecer um atendimento automático. Marcas com quem estiver livre e dizes com quem ficou.',
+    '',
+    'Se a pessoa pedir alguém em concreto, passas esse nome à agenda e ofereces só as horas dessa pessoa. Se não houver nenhuma que lhe sirva, dizes isso com todas as letras — que essa pessoa não tem nada nesses dias — e só então perguntas se quer com outra. Trocar de profissional sem avisar é como alguém aparece à espera de ver um médico e encontra outro.',
   ],
   cancellationsTitle: '# Cancelamentos e alterações',
   cancellations: [
@@ -583,6 +598,14 @@ Dos frases cada vez, como mucho.
     'Cuando tomas nota, pides el nombre y el teléfono, repites el número para confirmarlo, y dices que queda registrado en el panel de la clínica para que alguien devuelva la llamada.',
     'Esto no se aplica a las urgencias: esas escalan igualmente, como está arriba.',
   ],
+  professionalsTitle: '# Quién atiende',
+  professionals: (names) => [
+    `En esta clínica atienden varias personas: ${names.join(', ')}. Cada una tiene su agenda y su horario.`,
+    '',
+    'No ofreces esta lista. Quien llama quiere una cita, no un menú de nombres, y recitarlos hace que la llamada parezca una centralita. Das cita con quien esté libre y dices con quién ha quedado.',
+    '',
+    'Si la persona pide a alguien en concreto, pasas ese nombre a la agenda y ofreces solo las horas de esa persona. Si no hay ninguna que le sirva, lo dices con todas las letras —que esa persona no tiene nada esos días— y solo entonces preguntas si le va bien con otra. Cambiar de profesional sin avisar es como alguien se presenta esperando a un médico y se encuentra a otro.',
+  ],
   cancellationsTitle: '# Cancelaciones y cambios',
   cancellations: [
     'Cancelar o cambiar una cita se hace en dos pasos, y hacen falta los dos:',
@@ -821,6 +844,12 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     '',
     booking.join('\n'),
     '',
+    // Omitido por completo quando há uma só agenda, que é a maioria das
+    // clínicas. Uma secção sobre escolher pessoa numa clínica de uma pessoa é
+    // uma escolha inventada, e o modelo oferece o que lhe deres.
+    ...((v.professionals?.length ?? 0) > 1
+      ? [t.professionalsTitle, ...t.professionals(v.professionals), '']
+      : []),
     t.cancellationsTitle,
     ...t.cancellations,
     '',

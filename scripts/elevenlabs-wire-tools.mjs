@@ -102,6 +102,11 @@ const TOOLS = [
             description:
               'Para que é a consulta, nas palavras da própria pessoa: "lifting", "depilação laser", "uma limpeza". Serve para reservar o tempo certo: há tratamentos que levam quinze minutos e outros que levam uma hora, e as horas que te devolvo já contam com isso. Se ela ainda não disse para que é, pergunta primeiro.',
           },
+          professional: {
+            type: 'string',
+            description:
+              'Só quando a pessoa pedir alguém em concreto ("com a doutora Ruiz"). Passa o nome tal como o ouviste. Se não pediu ninguém, deixa isto vazio: eu escolho quem está livre. Nunca leias a lista de nomes em voz alta.',
+          },
           days: {
             type: 'integer',
             description:
@@ -235,6 +240,11 @@ const TOOLS = [
                   'O tratamento ou motivo, nas palavras da própria pessoa: "lifting", "limpeza", "dor num dente". Não escrevas rótulos genéricos como "consulta de avaliação" quando ela disse outra coisa: quem lê isto no painel precisa de saber para que vem, e é a única forma de a clínica preparar a consulta.',
               },
               scheduled_at: { type: 'string', description: 'O identificador slot_start da hora marcada, copiado tal e qual. Não é a hora que disseste em voz alta.' },
+              professional: {
+                type: 'string',
+                description:
+                  'Com quem ficou a marcação, se a pessoa pediu alguém em concreto. Deixa vazio se não pediu.',
+              },
               note: {
                 type: 'string',
                 description:

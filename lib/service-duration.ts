@@ -104,3 +104,37 @@ export function keepChosen(
   const offered = new Set(services ?? [])
   return Object.fromEntries(Object.entries(durations ?? {}).filter(([id]) => offered.has(id)))
 }
+
+/**
+ * Which diary the caller meant, from the name they said.
+ *
+ * Same shape and same caution as the service matching above: an exact name, a
+ * name contained in what was said, and then a distinctive word, answering only
+ * when exactly one diary fits. A clinic with two Marías gets neither rather
+ * than the wrong one, and the caller is asked which.
+ *
+ * Null means "whoever is free", which is the right reading of a caller who
+ * never named anybody and the only safe reading of one who named two people.
+ */
+export function resolveResource(
+  resources: Array<{ id: string; name: string }>,
+  said: string | null
+): string | null {
+  if (!said || resources.length < 2) return null
+  const heard = flatten(said)
+  if (!heard) return null
+
+  const exact = resources.filter((r) => {
+    const name = flatten(r.name)
+    return name && (name === heard || heard.includes(name) || name.includes(heard))
+  })
+  if (exact.length === 1) return exact[0].id
+
+  const worded = resources.filter((r) =>
+    flatten(r.name)
+      .split(' ')
+      .filter((w) => w.length >= 4)
+      .some((w) => heard.includes(w))
+  )
+  return worded.length === 1 ? worded[0].id : null
+}

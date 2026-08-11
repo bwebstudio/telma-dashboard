@@ -267,9 +267,22 @@ export interface AppUser {
   clinic: Clinic | null
 }
 
+/** A diary: a person, a room, or a machine that can only take one thing at a
+ *  time. Every clinic has exactly one until it says otherwise. */
+export interface Resource {
+  id: string
+  clinic_id: string
+  name: string
+  kind: 'profissional' | 'sala' | 'equipamento'
+  active: boolean
+  sort: number
+}
+
 export interface AvailabilitySlot {
   id: string
   clinic_id: string
+  /** Which diary these hours belong to. */
+  resource_id?: string | null
   weekday: number
   start_time: string
   end_time: string

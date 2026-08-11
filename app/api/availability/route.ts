@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveDuration } from '@/lib/service-duration'
+import { resolveDuration, resolveResource } from '@/lib/service-duration'
 import { authorizedWebhook } from '@/lib/api-auth'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
 
@@ -67,6 +67,18 @@ export async function GET(request: Request) {
   // internal id mid-call means reading her a list of identifiers, and she would
   // guess wrong on exactly the unusual treatments whose length is not standard.
   const wanted = resolveDuration(context.clinic, searchParams.get('service'))
+
+  // "with Doctor Ruiz". Null when nobody was named, which asks every diary and
+  // is what a caller who just wants an appointment means.
+  const { data: diaries } = await createAdminClient()
+    .from('resources')
+    .select('id, name')
+    .eq('clinic_id', clinicId)
+    .eq('active', true)
+  const withWhom = resolveResource(
+    (diaries ?? []) as Array<{ id: string; name: string }>,
+    searchParams.get('professional')
+  )
   const admin = createAdminClient()
 
   const start = new Date(`${date}T12:00:00Z`)
@@ -89,6 +101,7 @@ export async function GET(request: Request) {
       // no per-service lengths, which is the same question this endpoint has
       // always asked.
       p_duration: wanted.minutes,
+      p_resource_id: withWhom,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     for (const slot of (data ?? []) as Array<Record<string, unknown>>) {
@@ -174,6 +187,10 @@ export async function GET(request: Request) {
     // for an hour of laser, and the difference is invisible otherwise.
     duration_minutes: wanted.minutes,
     service_matched: wanted.service_id,
+    // Named on every slot as `resource_name`, so an agent offering two times
+    // can say who each one is with. Null here means no particular person was
+    // asked for, not that there is nobody.
+    professional_matched: withWhom,
     blocked: null,
     minutes: context.minutes,
   })

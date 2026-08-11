@@ -213,6 +213,14 @@ export interface Dictionary {
     stepLabel: string
     stepHelp: string
     overlaps: string
+    /** Diaries. Invisible while the clinic has one, which is most of them. */
+    addProfessional: string
+    professionalName: string
+    professionalHint: string
+    everyone: string
+    renameProfessional: string
+    removeProfessional: string
+    lastProfessional: string
     help: string
     gridHint: string
     gridReadOnly: string

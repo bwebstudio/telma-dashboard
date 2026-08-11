@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveDuration, type DurationSource } from '@/lib/service-duration'
+import { resolveDuration, resolveResource, type DurationSource } from '@/lib/service-duration'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -76,6 +76,40 @@ export async function POST(request: Request) {
   const minutesFor = (a: Record<string, unknown>) =>
     resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
 
+  // Which diary this belongs to.
+  //
+  // Named, when the caller asked for somebody. Otherwise the diary that was
+  // actually free at that time, which is what the agent was offering when it
+  // said the hour out loud. Leaving it null was the tempting shortcut and is
+  // wrong the moment a clinic has two people: an appointment belonging to
+  // nobody blocks that hour for everybody.
+  const { data: diaries } = await admin
+    .from('resources')
+    .select('id, name')
+    .eq('clinic_id', clinicId)
+    .eq('active', true)
+    .order('sort')
+    .order('created_at')
+  const rooms = (diaries ?? []) as Array<{ id: string; name: string }>
+
+  const diaryFor = async (a: Record<string, unknown>): Promise<string | null> => {
+    if (rooms.length < 2) return rooms[0]?.id ?? null
+
+    const named = resolveResource(rooms, (a.professional as string) ?? null)
+    if (named) return named
+
+    const at = a.scheduled_at as string
+    const { data: free } = await admin.rpc('available_slots', {
+      p_clinic_id: clinicId,
+      p_date: at.slice(0, 10),
+      p_duration: minutesFor(a),
+    })
+    const match = ((free ?? []) as Array<{ slot_start: string; resource_id: string }>).find(
+      (s) => Date.parse(s.slot_start) === Date.parse(at)
+    )
+    return match?.resource_id ?? rooms[0].id
+  }
+
   const appointment = many[0] ?? null
   const extras = many.slice(1)
   let rejected: string | null = null
@@ -114,6 +148,7 @@ export async function POST(request: Request) {
         origin: 'telefone',
         note: appointment.note ?? null,
         duration_minutes: minutesFor(appointment),
+        resource_id: await diaryFor(appointment),
       }
     }
   }
@@ -173,7 +208,10 @@ export async function POST(request: Request) {
               `${new Date(a.scheduled_at as string).toISOString()}|${String(a.patient_phone ?? '').replace(/\D/g, '')}`
             )
         )
-        .map((a) => ({
+
+      const rows = []
+      for (const a of fresh) {
+        rows.push({
           clinic_id: clinicId,
           call_id: existing.id,
           patient_name: a.patient_name ?? null,
@@ -183,10 +221,12 @@ export async function POST(request: Request) {
           origin: 'telefone',
           summary: (a.note as string) ?? null,
           duration_minutes: minutesFor(a),
-        }))
+          resource_id: await diaryFor(a),
+        })
+      }
 
-      if (fresh.length) await admin.from('appointments').insert(fresh)
-      return NextResponse.json({ ok: true, call_id: existing.id, added: fresh.length })
+      if (rows.length) await admin.from('appointments').insert(rows)
+      return NextResponse.json({ ok: true, call_id: existing.id, added: rows.length })
     }
   }
 
@@ -210,10 +250,12 @@ export async function POST(request: Request) {
   // conversation and doubled the minutes.
   const callId = (data as { call_id?: string } | null)?.call_id
   if (callId && extras.length) {
-    const rows = extras
+    const usableExtras = extras
       .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
       .filter((a) => plausiblePhone(a.patient_phone))
-      .map((a) => ({
+    const rows = []
+    for (const a of usableExtras) {
+      rows.push({
         clinic_id: clinicId,
         call_id: callId,
         patient_name: a.patient_name ?? null,
@@ -226,7 +268,9 @@ export async function POST(request: Request) {
         // time with no word about what the patient had asked for.
         summary: (a.note as string) ?? null,
         duration_minutes: minutesFor(a),
-      }))
+        resource_id: await diaryFor(a),
+      })
+    }
     if (rows.length) {
       const { error: extraErr } = await admin.from('appointments').insert(rows)
       // Reported, never fatal: the call and the first booking are already

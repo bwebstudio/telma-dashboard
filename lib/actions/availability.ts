@@ -29,7 +29,9 @@ async function clinicId(): Promise<string> {
  */
 export async function saveDayHours(
   weekday: number,
-  windows: Array<{ open: string; close: string }>
+  windows: Array<{ open: string; close: string }>,
+  /** Whose hours. Omitted by a clinic with one diary, which is most of them. */
+  resourceId?: string
 ) {
   const supabase = await createClient()
   const cid = await clinicId()
@@ -47,21 +49,19 @@ export async function saveDayHours(
     if (clean[i].open < clean[i - 1].close) throw new Error('overlapping_windows')
   }
 
-  const { data: diary } = await supabase
-    .from('resources')
-    .select('id')
-    .eq('clinic_id', cid)
-    .eq('active', true)
-    .order('sort')
-    .order('created_at')
-    .limit(1)
-    .maybeSingle()
+  const diaries = supabase.from('resources').select('id').eq('clinic_id', cid).eq('active', true)
+  const { data: diary } = resourceId
+    ? await diaries.eq('id', resourceId).maybeSingle()
+    : await diaries.order('sort').order('created_at').limit(1).maybeSingle()
   if (!diary) throw new Error('no_resource')
 
+  // This diary's day, not the clinic's. Wiping by clinic would have one
+  // colleague's edit silently clear everybody else's Tuesday.
   const { error: wipe } = await supabase
     .from('availability_slots')
     .delete()
     .eq('clinic_id', cid)
+    .eq('resource_id', (diary as { id: string }).id)
     .eq('weekday', weekday)
   if (wipe) throw new Error(wipe.message)
 
@@ -123,6 +123,61 @@ export async function removeBlockedDay(id: string) {
     .delete()
     .eq('id', id)
     .eq('clinic_id', cid)
+  if (error) throw new Error(error.message)
+  revalidatePath('/horarios')
+}
+
+// Diaries ---------------------------------------------------------------------
+// A clinic has one until it adds another, and adding another is the only thing
+// that makes any of this appear. Nobody chooses a mode; they add a colleague.
+
+export async function addResource(name: string) {
+  const supabase = await createClient()
+  const cid = await clinicId()
+  const clean = name.trim().slice(0, 80)
+  if (!clean) throw new Error('name_required')
+
+  const { error } = await supabase
+    .from('resources')
+    .insert({ clinic_id: cid, name: clean, kind: 'profissional' })
+  if (error) throw new Error(error.message)
+  revalidatePath('/horarios')
+}
+
+export async function renameResource(id: string, name: string) {
+  const supabase = await createClient()
+  const cid = await clinicId()
+  const clean = name.trim().slice(0, 80)
+  if (!clean) throw new Error('name_required')
+
+  const { error } = await supabase
+    .from('resources')
+    .update({ name: clean })
+    .eq('id', id)
+    .eq('clinic_id', cid)
+  if (error) throw new Error(error.message)
+  revalidatePath('/horarios')
+}
+
+/**
+ * Removing a diary, but never the last one.
+ *
+ * The hours go with it, by the foreign key. Appointments do not: they are set
+ * to null rather than deleted, because a colleague leaving is not a reason for
+ * the people they were going to see to disappear from the diary, and somebody
+ * has to ring them.
+ */
+export async function removeResource(id: string) {
+  const supabase = await createClient()
+  const cid = await clinicId()
+
+  const { count } = await supabase
+    .from('resources')
+    .select('id', { count: 'exact', head: true })
+    .eq('clinic_id', cid)
+  if ((count ?? 0) <= 1) throw new Error('last_resource')
+
+  const { error } = await supabase.from('resources').delete().eq('id', id).eq('clinic_id', cid)
   if (error) throw new Error(error.message)
   revalidatePath('/horarios')
 }

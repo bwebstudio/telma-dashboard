@@ -114,6 +114,10 @@ async function previewPrompt(
 
   const variables: PromptVariables = {
     clinic_name: clinicName,
+    // Empty at sign-up, always. A clinic gets its diaries after it exists, and
+    // a preview that promised a choice of professionals would be describing a
+    // Telma nobody has yet.
+    professionals: [],
     specialty: specialty ? specialtyLabel(specialty, locale) : null,
     address: str(values.address),
     phone: str(values.phone),

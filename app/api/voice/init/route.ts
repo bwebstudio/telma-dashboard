@@ -110,8 +110,20 @@ export async function POST(request: Request) {
     clinic.region ? countryOfRegion(clinic.region) : null
   )
 
+  const { data: diaries } = await createAdminClient()
+    .from('resources')
+    .select('name')
+    .eq('clinic_id', clinicId)
+    .eq('active', true)
+    .order('sort')
+    .order('created_at')
+
   const variables: PromptVariables = {
     clinic_name: clinic.name,
+    // Only when there is more than one. A clinic with a single diary carries
+    // the clinic's own name there, and telling Telma about "the professionals"
+    // of a one-person clinic invents a choice the caller does not have.
+    professionals: ((diaries ?? []) as Array<{ name: string }>).map((r) => r.name),
     specialty: clinic.specialty ? specialtyLabel(clinic.specialty as Specialty, promptLocale) : null,
     address: clinic.address ?? null,
     phone: clinic.phone ?? null,

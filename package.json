@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test:prompt": "node --experimental-strip-types --test scripts/test-prompt.mjs",
     "test": "npm run test:prompt",
-    "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs"
+    "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs",
+    "test:agenda": "node --test scripts/test-agenda.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
@@ -25,6 +26,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@types/node": "^22.10.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",

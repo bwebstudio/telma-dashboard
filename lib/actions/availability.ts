@@ -34,8 +34,23 @@ export async function toggleSlot(weekday: number, hour: number) {
     const { error } = await supabase.from('availability_slots').delete().eq('id', existing.id)
     if (error) throw new Error(error.message)
   } else {
+    // A window with no diary behind it is invisible: `available_slots` joins
+    // resources, so a row written without one would be saved, shown as ticked,
+    // and never offered to a caller. The clinic would have no way to tell.
+    const { data: resource } = await supabase
+      .from('resources')
+      .select('id')
+      .eq('clinic_id', cid)
+      .eq('active', true)
+      .order('sort')
+      .order('created_at')
+      .limit(1)
+      .maybeSingle()
+    if (!resource) throw new Error('no_resource')
+
     const { error } = await supabase.from('availability_slots').insert({
       clinic_id: cid,
+      resource_id: (resource as { id: string }).id,
       weekday,
       start_time: start,
       end_time: hourToTime((hour + 1) % 24),

@@ -1,18 +1,21 @@
 import type { Step3 } from './wizard-schema'
 
 /**
- * Turning "we open at nine and close at seven" into bookable slots.
+ * Turning "we open at nine and close at seven" into the rows the diary reads.
  *
- * `availability_slots` holds one row per bookable start time per weekday, which
- * is what the voice agent reads when it offers an hour. The wizard asks the
- * question the way a clinic thinks about it (a timetable) and this converts it
- * into the shape the agent needs.
+ * A row is a WINDOW the clinic is open for. The bookable times are generated
+ * from it at the moment somebody asks, stepping by the clinic's `slot_minutes`
+ * and only offering a start where the whole treatment fits before closing.
  *
- * The two durations are genuinely different questions and both are used here.
- * `appointment_duration_minutes` sets each row's end time, so the diary shows
- * how long the patient is actually there. `min_interval_minutes` sets the step
- * between starts, so a clinic running two chairs can start a new 45 minute
- * appointment every 30 minutes without the generator inventing that for them.
+ * This used to explode the timetable into one row per bookable start, up to two
+ * thousand of them. Every one of those rows was exactly one appointment long,
+ * which quietly made a longer treatment impossible: a forty-five minute session
+ * has nowhere to go inside a thirty minute row, so it would have offered
+ * nothing, on every day, with the hours in the panel ticked and correct.
+ *
+ * A lunch break is a gap between two windows rather than a rule applied to a
+ * list, which is both what it means and the only way it survives being edited
+ * later in the panel.
  */
 
 export interface SlotRow {
@@ -31,15 +34,6 @@ const GROUP_WEEKDAYS: Record<'weekdays' | 'saturday' | 'sunday', number[]> = {
   sunday: [0],
 }
 
-/**
- * A hard ceiling on how many rows one sign-up may create.
- *
- * Seven days open fourteen hours at a five minute interval is 1176 rows, which
- * is legitimate. Nothing sensible goes past this, so a number that does is a
- * bad payload that got through validation, and it should hit a limit rather
- * than a statement timeout in front of a paying customer.
- */
-const MAX_SLOTS = 2000
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number)
@@ -53,7 +47,7 @@ function toTime(minutes: number): string {
 }
 
 export function buildSlots(schedule: Step3): SlotRow[] {
-  const { appointment_duration_minutes: duration, min_interval_minutes: interval, pause } = schedule
+  const { pause } = schedule
   const rows: SlotRow[] = []
 
   const pauseStart = pause.enabled ? toMinutes(pause.start) : null
@@ -66,25 +60,30 @@ export function buildSlots(schedule: Step3): SlotRow[] {
     const open = toMinutes(day.open)
     const close = toMinutes(day.close)
 
-    for (let start = open; start + duration <= close; start += interval) {
-      const end = start + duration
-      // Any overlap with lunch, not just a start inside it: an appointment that
-      // begins at 12:45 and runs to 13:30 is in the middle of the break.
-      if (pauseStart !== null && pauseEnd !== null && start < pauseEnd && end > pauseStart) continue
+    // One window, or two with the break between them. A break that falls
+    // outside opening hours is not a break, and a break that swallows the day
+    // leaves nothing: both come out as no window rather than as a negative one.
+    const spans: Array<[number, number]> =
+      pauseStart !== null && pauseEnd !== null && pauseStart > open && pauseEnd < close
+        ? [
+            [open, pauseStart],
+            [pauseEnd, close],
+          ]
+        : [[open, close]]
 
+    for (const [from, to] of spans) {
+      if (to <= from) continue
       for (const weekday of GROUP_WEEKDAYS[group]) {
         rows.push({
           weekday,
-          start_time: toTime(start),
-          end_time: toTime(end),
-          // One seat. A clinic with two chairs raises this in the horários
-          // screen, where it can see what it is doing; guessing it from the
-          // interval being shorter than the duration would be clever and wrong.
+          start_time: toTime(from),
+          end_time: toTime(to),
+          // One seat. A clinic with two chairs adds a second diary in the
+          // horários screen, where it can see what it is doing.
           capacity: 1,
           active: true,
         })
       }
-      if (rows.length > MAX_SLOTS) return rows.slice(0, MAX_SLOTS)
     }
   }
 

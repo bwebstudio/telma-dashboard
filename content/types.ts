@@ -204,6 +204,15 @@ export interface Dictionary {
   }
   horarios: {
     title: string
+    /** The windows editor that replaced the hour grid. */
+    openLabel: string
+    closeLabel: string
+    addWindow: string
+    removeWindow: string
+    closedDay: string
+    stepLabel: string
+    stepHelp: string
+    overlaps: string
     help: string
     gridHint: string
     gridReadOnly: string

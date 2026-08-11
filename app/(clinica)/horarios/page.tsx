@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle } from '@/components/ui'
-import { AvailabilityGrid } from '@/components/AvailabilityGrid'
+import { OpeningHours } from '@/components/OpeningHours'
 import { BlockedDaysManager } from '@/components/BlockedDaysManager'
 import { Planner, type PlannerView } from '@/components/clinic/Planner'
 import { PlannerNav } from '@/components/clinic/PlannerNav'
@@ -119,7 +119,12 @@ export default async function HorariosPage({
           <p className="text-lg font-medium">{dict.horarios.help}</p>
         </div>
         <div className="card p-5 sm:p-6">
-          <AvailabilityGrid slots={slots} dict={dict} readOnly={readOnly} />
+          <OpeningHours
+            slots={slots}
+            step={clinic?.slot_minutes ?? 60}
+            dict={dict}
+            readOnly={readOnly}
+          />
         </div>
       </section>
 

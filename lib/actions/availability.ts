@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { getAppUser } from '@/lib/auth'
 
 const pad = (n: number) => String(n).padStart(2, '0')
-const hourToTime = (h: number) => `${pad(h)}:00:00`
 
 // Opening hours belong to the clinic that keeps them. The administrator reads
 // them from inside a client's panel but never sets them: a schedule changed by
@@ -16,50 +15,94 @@ async function clinicId(): Promise<string> {
   return user.clinic_id
 }
 
-// Toggle one hour on one weekday on or off for this clinic.
-export async function toggleSlot(weekday: number, hour: number) {
+/**
+ * The hours one weekday is open, rewritten whole.
+ *
+ * A window, not a list of hours. The grid this replaced could only speak in
+ * whole hours, so a clinic open until quarter to ten had no way to say so, and
+ * every row it wrote was exactly one appointment long, which left a longer
+ * treatment nowhere to go.
+ *
+ * The day is replaced rather than patched. Editing opening hours is not a
+ * series of small independent facts, it is one answer to one question, and
+ * applying half of it is how a clinic ends up open at a time it just closed.
+ */
+export async function saveDayHours(
+  weekday: number,
+  windows: Array<{ open: string; close: string }>
+) {
   const supabase = await createClient()
   const cid = await clinicId()
-  const start = hourToTime(hour)
+  if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) throw new Error('bad_weekday')
 
-  const { data: existing } = await supabase
-    .from('availability_slots')
+  const clean = windows
+    .map((w) => ({ open: normalise(w.open), close: normalise(w.close) }))
+    .filter((w) => w.open && w.close && w.open < w.close)
+    .sort((a, b) => a.open.localeCompare(b.open))
+
+  // Two windows over the same minute would offer the same time twice, and the
+  // second insert would collide on (resource, weekday, start) anyway. Caught
+  // here so it reads as an answer rather than as a database error.
+  for (let i = 1; i < clean.length; i++) {
+    if (clean[i].open < clean[i - 1].close) throw new Error('overlapping_windows')
+  }
+
+  const { data: diary } = await supabase
+    .from('resources')
     .select('id')
     .eq('clinic_id', cid)
-    .eq('weekday', weekday)
-    .eq('start_time', start)
+    .eq('active', true)
+    .order('sort')
+    .order('created_at')
+    .limit(1)
     .maybeSingle()
+  if (!diary) throw new Error('no_resource')
 
-  if (existing) {
-    const { error } = await supabase.from('availability_slots').delete().eq('id', existing.id)
-    if (error) throw new Error(error.message)
-  } else {
-    // A window with no diary behind it is invisible: `available_slots` joins
-    // resources, so a row written without one would be saved, shown as ticked,
-    // and never offered to a caller. The clinic would have no way to tell.
-    const { data: resource } = await supabase
-      .from('resources')
-      .select('id')
-      .eq('clinic_id', cid)
-      .eq('active', true)
-      .order('sort')
-      .order('created_at')
-      .limit(1)
-      .maybeSingle()
-    if (!resource) throw new Error('no_resource')
+  const { error: wipe } = await supabase
+    .from('availability_slots')
+    .delete()
+    .eq('clinic_id', cid)
+    .eq('weekday', weekday)
+  if (wipe) throw new Error(wipe.message)
 
-    const { error } = await supabase.from('availability_slots').insert({
-      clinic_id: cid,
-      resource_id: (resource as { id: string }).id,
-      weekday,
-      start_time: start,
-      end_time: hourToTime((hour + 1) % 24),
-      capacity: 1,
-      active: true,
-    })
+  if (clean.length) {
+    const { error } = await supabase.from('availability_slots').insert(
+      clean.map((w) => ({
+        clinic_id: cid,
+        resource_id: (diary as { id: string }).id,
+        weekday,
+        start_time: `${w.open}:00`,
+        end_time: `${w.close}:00`,
+        capacity: 1,
+        active: true,
+      }))
+    )
     if (error) throw new Error(error.message)
   }
   revalidatePath('/horarios')
+}
+
+/** How often an appointment may start. The width of the grid, not the length
+ *  of a treatment: those are different questions and both are asked. */
+export async function setSlotStep(minutes: number) {
+  const supabase = await createClient()
+  const cid = await clinicId()
+  const step = Math.round(Number(minutes))
+  if (!Number.isFinite(step) || step < 5 || step > 240) throw new Error('bad_step')
+
+  const { error } = await supabase.from('clinics').update({ slot_minutes: step }).eq('id', cid)
+  if (error) throw new Error(error.message)
+  revalidatePath('/horarios')
+}
+
+/** "9:5" and "09:05" are the same time typed by two different people. */
+function normalise(raw: string): string {
+  const m = /^\s*(\d{1,2})\s*[:.]?\s*(\d{2})?\s*$/.exec(raw ?? '')
+  if (!m) return ''
+  const h = Number(m[1])
+  const min = Number(m[2] ?? '0')
+  if (h > 23 || min > 59) return ''
+  return `${pad(h)}:${pad(min)}`
 }
 
 export async function addBlockedDay(day: string, reason: string) {

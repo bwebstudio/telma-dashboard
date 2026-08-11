@@ -285,6 +285,10 @@ export async function completeOnboarding(
         // record for ever, invisible, and come back if that service were ever
         // ticked again.
         service_durations: keepChosen(wizard.service_durations, wizard.services),
+        // How finely the day is cut. The sign-up already asks this as "how
+        // often can an appointment start"; it just had nowhere to live before,
+        // because the generator baked it into the rows it wrote.
+        slot_minutes: wizard.min_interval_minutes ?? 30,
         address: wizard.address || null,
         price_info: wizard.price_info || null,
         formality: wizard.formality,
@@ -365,7 +369,21 @@ export async function completeOnboarding(
 
     // The diary. Written in one insert: a half-generated week is worse than
     // none, because the clinic cannot tell which hours are missing on purpose.
-    const slots = buildSlots(wizard).map((s) => ({ ...s, clinic_id: cid }))
+    // The diary the trigger created when the clinic was inserted. A window with
+    // no diary behind it is saved, shown as correct, and never offered.
+    const { data: diary } = await admin
+      .from('resources')
+      .select('id')
+      .eq('clinic_id', cid)
+      .order('created_at')
+      .limit(1)
+      .maybeSingle()
+
+    const slots = buildSlots(wizard).map((s) => ({
+      ...s,
+      clinic_id: cid,
+      resource_id: (diary as { id: string } | null)?.id ?? null,
+    }))
     if (slots.length) {
       const { error: slotErr } = await admin.from('availability_slots').insert(slots)
       if (slotErr) throw new Error(slotErr.message)

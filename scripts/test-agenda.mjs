@@ -79,6 +79,27 @@ async function freshDatabase() {
   // account unique and stops the run rather than leave nobody able to log in,
   // which is right in production and needs the account to exist first here.
   const PRELUDE = {
+    // A clinic as the sign-up used to leave it: one row per bookable start,
+    // with a break in the middle. 0035 has to turn this back into the two
+    // windows it came from without changing a single offered time.
+    '0035_merge_slots_into_windows.sql': `
+      insert into clinics (id, name, timezone, selected_languages, appointment_duration_minutes)
+      values ('33333333-3333-3333-3333-333333333333', 'Clínica Explotada', 'Europe/Madrid', array['es'], 30);
+      insert into availability_slots (clinic_id, resource_id, weekday, start_time, end_time, capacity, active)
+      select '33333333-3333-3333-3333-333333333333', r.id, 1, v.s::time, v.e::time, 1, true
+        from resources r, (values
+      ('09:00:00','09:30:00'),
+      ('09:30:00','10:00:00'),
+      ('10:00:00','10:30:00'),
+      ('10:30:00','11:00:00'),
+      ('11:00:00','11:30:00'),
+      ('11:30:00','12:00:00'),
+      ('12:00:00','12:30:00'),
+      ('15:00:00','15:30:00'),
+      ('15:30:00','16:00:00')
+        ) as v(s, e)
+       where r.clinic_id = '33333333-3333-3333-3333-333333333333';
+    `,
     '0010_one_admin.sql': `
       insert into auth.users (id, email)
       values ('00000000-0000-0000-0000-0000000000aa', 'info@bwebstudio.com')
@@ -279,5 +300,43 @@ test('a clinic is born with a diary, without anybody remembering to make one', a
   const { rows } = await db.query(`select name from resources where clinic_id = $1`, [id])
   assert.equal(rows.length, 1)
   assert.equal(rows[0].name, 'Clínica Nueva')
+  await db.close()
+})
+
+// The migration that has to change nothing visible.
+//
+// Clinics signed up before 0034 have one row per bookable start. Read as
+// windows those still work, but a thirty minute window has no room for a
+// forty-five minute service, so every long treatment would offer nothing at
+// all, on every day, with the hours sitting there ticked and correct.
+test('merging exploded rows into windows offers exactly the same times', async () => {
+  const db = await freshDatabase()
+  const OLD = '33333333-3333-3333-3333-333333333333'
+
+  const { rows: windows } = await db.query(
+    `select to_char(start_time, 'HH24:MI') as s, to_char(end_time, 'HH24:MI') as e
+       from availability_slots where clinic_id = $1 order by start_time`,
+    [OLD]
+  )
+  // Nine rows became two: the morning and the afternoon, with the break as the
+  // gap between them rather than as an absence of rows.
+  assert.deepEqual(
+    windows.map((w) => `${w.s}-${w.e}`),
+    ['09:00-12:30', '15:00-16:00']
+  )
+
+  const { rows: step } = await db.query(`select slot_minutes from clinics where id = $1`, [OLD])
+  assert.equal(step[0].slot_minutes, 30, 'the step is read off the data, not guessed')
+
+  const { rows: offered } = await db.query(
+    `select to_char(slot_start at time zone 'Europe/Madrid', 'HH24:MI') as t
+       from available_slots($1, $2::date) order by slot_start`,
+    [OLD, MONDAY]
+  )
+  // The list the exploded rows produced, to the minute.
+  assert.deepEqual(
+    offered.map((r) => r.t),
+    ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '15:00', '15:30']
+  )
   await db.close()
 })

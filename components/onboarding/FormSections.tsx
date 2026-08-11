@@ -585,7 +585,7 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
  * Nothing is required. An empty duration means the clinic's usual appointment,
  * an empty price means Telma quotes none for that service and says so.
  */
-function ServiceDetails({ values, set, locale }: StepProps) {
+function ServiceDetails({ values, set, errors, locale }: StepProps) {
   const t = copyFor(locale)
   const [open, setOpen] = useState(false)
   const chosen: string[] = values.services ?? []
@@ -635,8 +635,8 @@ function ServiceDetails({ values, set, locale }: StepProps) {
           <div className="mt-4 flex flex-col gap-2.5">
             <div className="hidden gap-3 sm:flex">
               <span className="label-caps flex-1">{t.detailsService}</span>
-              <span className="label-caps w-24 text-right">{t.detailsDuration}</span>
-              <span className="label-caps w-24 text-right">{t.detailsPrice}</span>
+              <span className="label-caps w-28 text-right">{t.detailsDuration}</span>
+              <span className="label-caps w-28 text-right">{t.detailsPrice}</span>
             </div>
 
             {rows.map((id) => (
@@ -644,7 +644,7 @@ function ServiceDetails({ values, set, locale }: StepProps) {
                 <label htmlFor={`dur-${id}`} className="min-w-0 flex-1 text-base text-ink">
                   {serviceLabel(id, locale)}
                 </label>
-                <span className="flex w-24 items-center gap-1.5">
+                <span className="flex w-28 items-center gap-1.5">
                   <input
                     id={`dur-${id}`}
                     type="number"
@@ -655,11 +655,12 @@ function ServiceDetails({ values, set, locale }: StepProps) {
                     value={durations[id] ?? ''}
                     placeholder={String(fallback)}
                     onChange={(e) => write('service_durations', id, e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
                     className="w-full rounded-card border border-line bg-surface px-2.5 py-2 text-right text-base text-ink"
                   />
                   <span className="text-sm text-ink-mute">{t.durationsUnit}</span>
                 </span>
-                <span className="flex w-24 items-center gap-1.5">
+                <span className="flex w-28 items-center gap-1.5">
                   <input
                     aria-label={`${serviceLabel(id, locale)} ${t.detailsPrice}`}
                     type="number"
@@ -667,14 +668,38 @@ function ServiceDetails({ values, set, locale }: StepProps) {
                     min={0}
                     step="0.01"
                     value={prices[id] ?? ''}
-                    placeholder={t.detailsNoPrice}
+                    // A number input changes value when the wheel passes over
+                    // it, so scrolling down this page while the pointer happens
+                    // to be over a box silently sets a price. Nothing on screen
+                    // says so, and the clinic finds out when Telma quotes it.
                     onChange={(e) => write('service_prices', id, e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
                     className="w-full rounded-card border border-line bg-surface px-2.5 py-2 text-right text-base text-ink"
                   />
                   <span className="text-sm text-ink-mute">€</span>
                 </span>
               </div>
             ))}
+          </div>
+
+          {/* The sentences a table cannot hold: "laser varies with the area",
+              "the first estimate is free". It used to be a box of its own on
+              this page, directly under a column headed PRICE, which read as two
+              places to answer the same question and invited the numbers to be
+              typed twice. One place, folded, and this is the overflow. */}
+          <div className="mt-5">
+            <label htmlFor="price_info" className="field-label">
+              {t.detailsNotes}
+            </label>
+            <textarea
+              id="price_info"
+              name="price_info"
+              rows={2}
+              placeholder={t.priceInfoPlaceholder}
+              value={values.price_info ?? ''}
+              onChange={(e) => set({ price_info: e.target.value })}
+              className={`${inputClass(errors.price_info)} py-2.5`}
+            />
           </div>
         </div>
       )}
@@ -748,25 +773,6 @@ export function ServicesStep({ values, set, errors, locale }: StepProps) {
 
       <ServiceDetails {...{ values, set, errors, locale }} />
 
-      {/* Prices are optional on purpose. Some clinics quote on the phone and
-          some refuse on principle, and left empty the prompt tells Telma not to
-          discuss them at all rather than leaving her to improvise. */}
-      <Field
-        label={t.priceInfo}
-        htmlFor="price_info"
-        hint={t.priceInfoHelp}
-        error={errors.price_info}
-      >
-        <textarea
-          id="price_info"
-          name="price_info"
-          rows={3}
-          placeholder={t.priceInfoPlaceholder}
-          value={values.price_info ?? ''}
-          onChange={(e) => set({ price_info: e.target.value })}
-          className={`${inputClass(errors.price_info)} py-2.5`}
-        />
-      </Field>
     </div>
   )
 }

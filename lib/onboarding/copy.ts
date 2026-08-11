@@ -80,7 +80,7 @@ export interface Copy {
   detailsService: string
   detailsDuration: string
   detailsPrice: string
-  detailsNoPrice: string
+  detailsNotes: string
 
   address: string
   addressHelp: string
@@ -252,7 +252,7 @@ const pt: Copy = {
   detailsService: 'Serviço',
   detailsDuration: 'Duração',
   detailsPrice: 'Preço',
-  detailsNoPrice: 'sem preço',
+  detailsNotes: 'Alguma coisa sobre preços que não caiba num número',
 
   address: 'Morada',
   addressHelp: 'A pergunta que mais fazem ao telefone. A Telma dá-a tal como a escrever aqui.',
@@ -434,7 +434,7 @@ const es: Copy = {
   detailsService: 'Servicio',
   detailsDuration: 'Duración',
   detailsPrice: 'Precio',
-  detailsNoPrice: 'sin precio',
+  detailsNotes: 'Algo sobre precios que no quepa en un número',
 
   address: 'Dirección',
   addressHelp: 'La pregunta que más hacen por teléfono. Telma la da tal como la escriba aquí.',

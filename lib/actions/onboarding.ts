@@ -284,7 +284,12 @@ export async function completeOnboarding(
         // service the clinic unticked on the way through would sit in the
         // record for ever, invisible, and come back if that service were ever
         // ticked again.
-        service_durations: keepChosen(wizard.service_durations, wizard.services),
+        service_durations: keepChosen(
+          wizard.service_durations,
+          wizard.services,
+          wizard.custom_services
+        ),
+        service_prices: keepChosen(wizard.service_prices, wizard.services, wizard.custom_services),
         // How finely the day is cut. The sign-up already asks this as "how
         // often can an appointment start"; it just had nowhere to live before,
         // because the generator baked it into the rows it wrote.

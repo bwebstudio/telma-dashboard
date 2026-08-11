@@ -220,6 +220,13 @@ function build(m: Messages) {
     // takes the length from the hours step. Nobody is made to fill in a table
     // of numbers to sign up, which is the point: the clinics that need this
     // know they need it, and the rest must never meet it.
+    // Prices go against the service they belong to, so what a clinic charges can
+    // be shown back beside what it charges for. `price_info` below is still
+    // there for the sentences a table cannot hold.
+    service_prices: z
+      .record(z.string(), z.coerce.number().min(0).max(100000))
+      .optional()
+      .default({}),
     service_durations: z
       .record(z.string(), z.coerce.number().int().min(5, { error: m.durationMin }).max(480, { error: m.durationMax }))
       .optional()

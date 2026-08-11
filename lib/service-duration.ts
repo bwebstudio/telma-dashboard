@@ -98,11 +98,19 @@ export function resolveDuration(clinic: DurationSource, said: string | null): Re
  * and waiting to reappear the day somebody ticks laser again.
  */
 export function keepChosen(
-  durations: Record<string, number> | null | undefined,
-  services: string[] | null | undefined
+  values: Record<string, number> | null | undefined,
+  services: string[] | null | undefined,
+  /** The free-text list, one service per line. Those carry lengths and prices
+   *  too, keyed by the line itself, and dropping them here would quietly wipe
+   *  the price of everything the catalogue has never heard of. */
+  customServices?: string | null
 ): Record<string, number> {
   const offered = new Set(services ?? [])
-  return Object.fromEntries(Object.entries(durations ?? {}).filter(([id]) => offered.has(id)))
+  for (const line of (customServices ?? '').split('\n')) {
+    const clean = line.trim()
+    if (clean) offered.add(clean)
+  }
+  return Object.fromEntries(Object.entries(values ?? {}).filter(([id]) => offered.has(id)))
 }
 
 /**

@@ -75,3 +75,15 @@ test('a sign-up that never opens the durations panel is still valid', () => {
   assert.equal(r.minutes, 30)
   assert.equal(r.service_id, null)
 })
+
+// A clinic offering something the catalogue has never heard of still puts a
+// price on it. Those rows are keyed by the typed line, so a prune that only
+// knew about catalogue ids would wipe the price of every custom service.
+test('a service typed by hand keeps its price', () => {
+  const kept = keepChosen(
+    { est_laser: 45, 'Masaje descontracturante': 60, Fantasma: 10 },
+    ['est_laser'],
+    'Masaje descontracturante\nOtra cosa\n\n'
+  )
+  assert.deepEqual(kept, { est_laser: 45, 'Masaje descontracturante': 60 })
+})

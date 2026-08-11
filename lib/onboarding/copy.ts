@@ -77,6 +77,10 @@ export interface Copy {
   durationsHelp: string
   durationsUnit: string
   durationsDefault: (minutes: number) => string
+  detailsService: string
+  detailsDuration: string
+  detailsPrice: string
+  detailsNoPrice: string
 
   address: string
   addressHelp: string
@@ -240,16 +244,20 @@ const pt: Copy = {
   servicesHelp: 'Pode escolher vários.',
   customServices: 'Outros serviços',
   customServicesHelp: 'Um por linha. Opcional.',
-  durationsToggle: 'Há serviços que demoram mais do que os outros',
+  durationsToggle: 'Duração e preço de cada serviço',
   durationsHelp:
-    'Abra isto só se precisar. A Telma deixa este tempo livre na agenda para cada um, para não marcar uma sessão de uma hora num espaço de vinte minutos. Pode mudar isto quando quiser no seu painel.',
+    'Tudo opcional. A duração é o tempo que a Telma deixa livre na agenda, para não marcar uma sessão de uma hora num espaço de vinte minutos. O preço só o diz se o escrever aqui. Pode mudar isto quando quiser no seu painel.',
   durationsUnit: 'min',
   durationsDefault: (m) => `${m} min`,
+  detailsService: 'Serviço',
+  detailsDuration: 'Duração',
+  detailsPrice: 'Preço',
+  detailsNoPrice: 'sem preço',
 
   address: 'Morada',
   addressHelp: 'A pergunta que mais fazem ao telefone. A Telma dá-a tal como a escrever aqui.',
   priceInfo: 'Preços',
-  priceInfoHelp: 'Opcional. Se deixar vazio, a Telma não fala de preços e remete para a clínica.',
+  priceInfoHelp: 'Opcional, e só para o que não cabe num número: "o laser varia com a zona", "o primeiro orçamento é gratuito". Os preços de cada serviço põem-se em cima.',
   priceInfoPlaceholder: 'Primeira consulta 40 €. Limpeza a partir de 60 €.',
   greetingLanguage: 'Idioma com que atende',
   greetingLanguageHelp: 'O primeiro que se ouve, antes de quem liga dizer nada. Depois a Telma acompanha a língua da pessoa.',
@@ -418,16 +426,20 @@ const es: Copy = {
   servicesHelp: 'Puede elegir varios.',
   customServices: 'Otros servicios',
   customServicesHelp: 'Uno por línea. Opcional.',
-  durationsToggle: 'Hay servicios que duran más que los demás',
+  durationsToggle: 'Duración y precio de cada servicio',
   durationsHelp:
-    'Abra esto solo si lo necesita. Telma deja este tiempo libre en la agenda para cada uno, para no meter una sesión de una hora en un hueco de veinte minutos. Puede cambiarlo cuando quiera desde su panel.',
+    'Todo opcional. La duración es el tiempo que Telma deja libre en la agenda, para no meter una sesión de una hora en un hueco de veinte minutos. El precio solo lo dice si lo escribe aquí. Puede cambiarlo cuando quiera desde su panel.',
   durationsUnit: 'min',
   durationsDefault: (m) => `${m} min`,
+  detailsService: 'Servicio',
+  detailsDuration: 'Duración',
+  detailsPrice: 'Precio',
+  detailsNoPrice: 'sin precio',
 
   address: 'Dirección',
   addressHelp: 'La pregunta que más hacen por teléfono. Telma la da tal como la escriba aquí.',
   priceInfo: 'Precios',
-  priceInfoHelp: 'Opcional. Si lo deja vacío, Telma no habla de precios y remite a la clínica.',
+  priceInfoHelp: 'Opcional, y solo para lo que no cabe en un número: "el láser varía según la zona", "el primer presupuesto es gratis". Los precios de cada servicio se ponen arriba.',
   priceInfoPlaceholder: 'Primera visita 40 €. Limpieza desde 60 €.',
   greetingLanguage: 'Idioma con el que descuelga',
   greetingLanguageHelp: 'Lo primero que se oye, antes de que quien llama diga nada. Después Telma sigue la lengua de la persona.',

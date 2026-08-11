@@ -564,33 +564,57 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
 }
 
 /**
- * How long each service takes, for the clinics where that differs.
+ * What each service costs and how long it takes.
  *
- * Folded away, and it stays folded unless somebody opens it. A clinic run by
- * one person books everything in the same slot and has nothing to say here; a
- * laser clinic has a lot to say and will find it, because the summary line
- * names the problem it solves rather than the feature it is.
+ * Folded away, and it stays folded unless somebody opens it. A clinic that
+ * charges one price for one thing has nothing to say here; a laser clinic has a
+ * lot, and will find it, because the summary names what is inside rather than
+ * being a feature nobody was looking for.
  *
- * Nothing is required. A service left alone takes the length set in the hours
- * step, which is what the whole diary did before any of this existed, and the
- * placeholder shows that length rather than leaving the box looking unanswered.
+ * The price used to live in the free text box below, and that was the wrong
+ * shape for it. `price_info` is still there and still useful, because a real
+ * price list has sentences in it that no table holds. But it should never have
+ * been the only place a number could go: it is the field a clinic charges money
+ * with, typed into a box with no shape, so a price that lands in the wrong
+ * sentence is read out to a patient and nothing anywhere can notice.
+ *
+ * Rows come from what has been ticked and from what has been typed into "other
+ * services", one per line, so a clinic that offers something the catalogue has
+ * never heard of can still put a price on it.
+ *
+ * Nothing is required. An empty duration means the clinic's usual appointment,
+ * an empty price means Telma quotes none for that service and says so.
  */
-function ServiceDurations({ values, set, locale }: StepProps) {
+function ServiceDetails({ values, set, locale }: StepProps) {
   const t = copyFor(locale)
   const [open, setOpen] = useState(false)
   const chosen: string[] = values.services ?? []
   const durations: Record<string, number> = values.service_durations ?? {}
+  const prices: Record<string, number> = values.service_prices ?? {}
   const fallback = Number(values.appointment_duration_minutes) || 30
 
-  const setOne = (id: string, raw: string) => {
-    const next = { ...durations }
-    const minutes = Number(raw)
-    // An emptied box means "the usual", not zero. Deleting the key rather than
-    // storing 0 is what makes the clinic's default keep applying afterwards.
-    if (!raw.trim() || !Number.isFinite(minutes) || minutes <= 0) delete next[id]
-    else next[id] = Math.round(minutes)
-    set({ service_durations: next })
+  // Typed lines become rows too, trimmed and de-duplicated. They are keyed by
+  // the line itself, which means renaming one loses its price: the alternative
+  // was inventing an id for a line of text somebody is still editing, and
+  // carrying it through a wizard that keeps everything in one plain object.
+  const custom = String(values.custom_services ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const rows = [...chosen, ...custom.filter((c) => !chosen.includes(c))]
+
+  const write = (field: 'service_durations' | 'service_prices', id: string, raw: string) => {
+    const current: Record<string, number> = { ...(values[field] ?? {}) }
+    const n = Number(raw.replace(',', '.'))
+    // An emptied box means "not set", not zero. Deleting the key is what makes
+    // the clinic's default keep applying, and what makes "no price" readable as
+    // no price rather than as free.
+    if (!raw.trim() || !Number.isFinite(n) || n < 0) delete current[id]
+    else current[id] = field === 'service_durations' ? Math.round(n) : n
+    set({ [field]: current })
   }
+
+  if (!rows.length) return null
 
   return (
     <div className="rounded-card border border-line bg-surface-sunken">
@@ -601,19 +625,26 @@ function ServiceDurations({ values, set, locale }: StepProps) {
         className="flex w-full items-center justify-between gap-3 p-4 text-left"
       >
         <span className="text-base font-medium text-ink">{t.durationsToggle}</span>
-        <span aria-hidden className="text-ink-mute">{open ? '−' : '+'}</span>
+        <span aria-hidden className="text-ink-mute">{open ? '\u2212' : '+'}</span>
       </button>
 
       {open && (
         <div className="border-t border-line p-4">
           <p className="text-sm text-ink-mute">{t.durationsHelp}</p>
+
           <div className="mt-4 flex flex-col gap-2.5">
-            {chosen.map((id) => (
-              <div key={id} className="flex items-center justify-between gap-4">
-                <label htmlFor={`dur-${id}`} className="text-base text-ink">
+            <div className="hidden gap-3 sm:flex">
+              <span className="label-caps flex-1">{t.detailsService}</span>
+              <span className="label-caps w-24 text-right">{t.detailsDuration}</span>
+              <span className="label-caps w-24 text-right">{t.detailsPrice}</span>
+            </div>
+
+            {rows.map((id) => (
+              <div key={id} className="flex flex-wrap items-center gap-3">
+                <label htmlFor={`dur-${id}`} className="min-w-0 flex-1 text-base text-ink">
                   {serviceLabel(id, locale)}
                 </label>
-                <div className="flex shrink-0 items-center gap-2">
+                <span className="flex w-24 items-center gap-1.5">
                   <input
                     id={`dur-${id}`}
                     type="number"
@@ -623,11 +654,25 @@ function ServiceDurations({ values, set, locale }: StepProps) {
                     step={5}
                     value={durations[id] ?? ''}
                     placeholder={String(fallback)}
-                    onChange={(e) => setOne(id, e.target.value)}
-                    className="w-20 rounded-card border border-line bg-surface px-3 py-2 text-right text-base text-ink"
+                    onChange={(e) => write('service_durations', id, e.target.value)}
+                    className="w-full rounded-card border border-line bg-surface px-2.5 py-2 text-right text-base text-ink"
                   />
                   <span className="text-sm text-ink-mute">{t.durationsUnit}</span>
-                </div>
+                </span>
+                <span className="flex w-24 items-center gap-1.5">
+                  <input
+                    aria-label={`${serviceLabel(id, locale)} ${t.detailsPrice}`}
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="0.01"
+                    value={prices[id] ?? ''}
+                    placeholder={t.detailsNoPrice}
+                    onChange={(e) => write('service_prices', id, e.target.value)}
+                    className="w-full rounded-card border border-line bg-surface px-2.5 py-2 text-right text-base text-ink"
+                  />
+                  <span className="text-sm text-ink-mute">€</span>
+                </span>
               </div>
             ))}
           </div>
@@ -685,8 +730,6 @@ export function ServicesStep({ values, set, errors, locale }: StepProps) {
         )}
       </div>
 
-      {chosen.length > 0 && <ServiceDurations {...{ values, set, errors, locale }} />}
-
       <Field
         label={t.customServices}
         htmlFor="custom_services"
@@ -702,6 +745,8 @@ export function ServicesStep({ values, set, errors, locale }: StepProps) {
           className={`${inputClass(errors.custom_services)} py-2.5`}
         />
       </Field>
+
+      <ServiceDetails {...{ values, set, errors, locale }} />
 
       {/* Prices are optional on purpose. Some clinics quote on the phone and
           some refuse on principle, and left empty the prompt tells Telma not to

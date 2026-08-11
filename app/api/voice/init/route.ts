@@ -132,12 +132,28 @@ export async function POST(request: Request) {
     // (the diary already leaves the right gap) but she is asked how long things
     // take, and the alternative was the honest but useless "the clinic will
     // tell you" about a number the clinic has already written down.
-    services: (clinic.services ?? []).map((id) => {
+    services: [
+      ...(clinic.services ?? []),
+      ...String(clinic.custom_services ?? '')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean),
+    ].map((id) => {
       const label = serviceLabel(id, promptLocale)
       const minutes = clinic.service_durations?.[id]
-      return minutes ? `${label} (${minutes} min)` : label
+      const price = clinic.service_prices?.[id]
+      const notes = [
+        minutes ? `${minutes} min` : null,
+        // Euros written out rather than symbol-first, because this is read
+        // aloud and "40 euros" is what a person says.
+        price != null ? `${formatEuros(price, promptLocale)}` : null,
+      ].filter(Boolean)
+      return notes.length ? `${label} (${notes.join(', ')})` : label
     }),
-    custom_services: clinic.custom_services ?? null,
+    // Already folded into `services` above, each with its own length and price,
+    // so repeating the raw list here would have Telma read the same treatments
+    // twice, once priced and once not.
+    custom_services: null,
     opening_hours: hours.map((h) => `${weekdayName(h.weekday, promptLocale)}: ${h.opens}-${h.closes}`),
     appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,
     languages: languageNames,
@@ -297,4 +313,16 @@ const WEEKDAYS: Record<'pt' | 'es', string[]> = {
 
 function weekdayName(weekday: number, locale: 'pt' | 'es'): string {
   return WEEKDAYS[locale][weekday] ?? String(weekday)
+}
+
+/** "40 €" for a whole number, "39,50 €" when there are cents. Written the way
+ *  the country writes it, because the base is read aloud. */
+function formatEuros(value: number, locale: 'pt' | 'es'): string {
+  const whole = Number.isInteger(value)
+  return new Intl.NumberFormat(locale === 'es' ? 'es-ES' : 'pt-PT', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(value)
 }

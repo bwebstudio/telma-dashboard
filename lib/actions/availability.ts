@@ -137,10 +137,51 @@ export async function addResource(name: string) {
   const clean = name.trim().slice(0, 80)
   if (!clean) throw new Error('name_required')
 
-  const { error } = await supabase
+  const { data: created, error } = await supabase
     .from('resources')
     .insert({ clinic_id: cid, name: clean, kind: 'profissional' })
+    .select('id')
+    .single()
   if (error) throw new Error(error.message)
+
+  // Born with the clinic's hours rather than with none.
+  //
+  // An empty diary is not a blank slate, it is a person who appears in the
+  // panel, appears to Telma, and is never offered to anybody, on any day, until
+  // somebody fills in seven weekdays by hand. Nobody would guess that from
+  // looking at it: the name is there and the hours screen looks finished.
+  //
+  // Copied from whoever was already there, because a colleague joining a clinic
+  // usually works the clinic's hours, and changing them afterwards is one edit
+  // instead of fourteen.
+  const { data: existing } = await supabase
+    .from('availability_slots')
+    .select('weekday, start_time, end_time, capacity, active, resource_id')
+    .eq('clinic_id', cid)
+  const rows = (existing ?? []) as Array<{
+    weekday: number
+    start_time: string
+    end_time: string
+    capacity: number
+    active: boolean
+    resource_id: string | null
+  }>
+  const from = rows[0]?.resource_id ?? null
+  const template = rows.filter((r) => r.resource_id === from)
+
+  if (template.length) {
+    await supabase.from('availability_slots').insert(
+      template.map((r) => ({
+        clinic_id: cid,
+        resource_id: (created as { id: string }).id,
+        weekday: r.weekday,
+        start_time: r.start_time,
+        end_time: r.end_time,
+        capacity: r.capacity,
+        active: r.active,
+      }))
+    )
+  }
   revalidatePath('/horarios')
 }
 

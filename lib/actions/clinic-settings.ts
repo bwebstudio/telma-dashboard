@@ -301,7 +301,13 @@ export async function updateClinicProfile(
     // service dropped in this same edit must take its length with it.
     service_durations: keepChosen(
       clean.service_durations as Record<string, number> | undefined,
-      clean.services as string[] | undefined
+      clean.services as string[] | undefined,
+      clean.custom_services as string | undefined
+    ),
+    service_prices: keepChosen(
+      clean.service_prices as Record<string, number> | undefined,
+      clean.services as string[] | undefined,
+      clean.custom_services as string | undefined
     ),
     price_info: clean.price_info || null,
     appointment_duration_minutes: clean.appointment_duration_minutes,

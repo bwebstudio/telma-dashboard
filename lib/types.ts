@@ -100,6 +100,8 @@ export interface Clinic {
   slot_minutes?: number | null
   /** { "<service id>": minutes }. Absent services take the default above. */
   service_durations?: Record<string, number> | null
+  /** { "<service id>": euros }. Absent means no price is quoted for it. */
+  service_prices?: Record<string, number> | null
   min_interval_minutes?: number | null
   // The receptionist's briefing: the variables half of the prompt. The other
   // half is the personality, which lives in lib/onboarding/prompt.ts.

@@ -47,6 +47,7 @@ export default async function TelmaPage() {
     // So the panel opens showing the lengths already in force rather than
     // blank boxes that would quietly wipe them on the next save.
     service_durations: clinic.service_durations ?? {},
+    service_prices: clinic.service_prices ?? {},
     custom_services: clinic.custom_services ?? '',
     price_info: clinic.price_info ?? '',
     appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,

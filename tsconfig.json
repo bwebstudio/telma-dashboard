@@ -6,6 +6,11 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    // So a module can be imported with its extension and therefore loaded by
+    // plain node. scripts/test-*.mjs run the real files with node's own type
+    // stripping, no bundler and no path aliases, which is what keeps the SQL
+    // and the prompt testable without a build step.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",

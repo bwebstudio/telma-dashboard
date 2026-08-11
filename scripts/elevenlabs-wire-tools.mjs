@@ -97,6 +97,11 @@ const TOOLS = [
             description:
               'O primeiro dia a consultar, no formato YYYY-MM-DD. Se a pessoa não pediu um dia concreto, põe hoje.',
           },
+          service: {
+            type: 'string',
+            description:
+              'Para que é a consulta, nas palavras da própria pessoa: "lifting", "depilação laser", "uma limpeza". Serve para reservar o tempo certo: há tratamentos que levam quinze minutos e outros que levam uma hora, e as horas que te devolvo já contam com isso. Se ela ainda não disse para que é, pergunta primeiro.',
+          },
           days: {
             type: 'integer',
             description:
@@ -124,6 +129,11 @@ const TOOLS = [
           slot_start: {
             type: 'string',
             description: 'O identificador slot_start da hora escolhida, copiado tal e qual de telma_horas_livres. Não é a hora que disseste em voz alta.',
+          },
+          service: {
+            type: 'string',
+            description:
+              'Para que é a consulta, nas palavras da própria pessoa: "lifting", "depilação laser", "uma limpeza". Serve para reservar o tempo certo: há tratamentos que levam quinze minutos e outros que levam uma hora, e as horas que te devolvo já contam com isso. O mesmo que passaste a telma_horas_livres.',
           },
           call_ref: { type: 'string', dynamic_variable: 'system__conversation_id' },
         },

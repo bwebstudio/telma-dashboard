@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveDuration, type DurationSource } from '@/lib/service-duration'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -61,6 +62,20 @@ export async function POST(request: Request) {
       ? [body.appointment as Record<string, unknown>]
       : []
 
+  const admin = createAdminClient()
+
+  // How long each of these takes, worked out from the reason the caller gave.
+  // The same matching the diary used when it offered the time, so what is
+  // written down blocks exactly what was held.
+  const { data: lengths } = await admin
+    .from('clinics')
+    .select('service_durations, appointment_duration_minutes, slot_minutes')
+    .eq('id', clinicId)
+    .maybeSingle()
+  const clinicLengths = (lengths ?? {}) as DurationSource
+  const minutesFor = (a: Record<string, unknown>) =>
+    resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
+
   const appointment = many[0] ?? null
   const extras = many.slice(1)
   let rejected: string | null = null
@@ -98,11 +113,10 @@ export async function POST(request: Request) {
         scheduled_at: at,
         origin: 'telefone',
         note: appointment.note ?? null,
+        duration_minutes: minutesFor(appointment),
       }
     }
   }
-
-  const admin = createAdminClient()
 
   // One conversation, one call row, however many times this is asked for.
   //
@@ -168,6 +182,7 @@ export async function POST(request: Request) {
           scheduled_at: a.scheduled_at,
           origin: 'telefone',
           summary: (a.note as string) ?? null,
+          duration_minutes: minutesFor(a),
         }))
 
       if (fresh.length) await admin.from('appointments').insert(fresh)
@@ -210,6 +225,7 @@ export async function POST(request: Request) {
         // so the second booking of a conversation reached the clinic as a bare
         // time with no word about what the patient had asked for.
         summary: (a.note as string) ?? null,
+        duration_minutes: minutesFor(a),
       }))
     if (rows.length) {
       const { error: extraErr } = await admin.from('appointments').insert(rows)

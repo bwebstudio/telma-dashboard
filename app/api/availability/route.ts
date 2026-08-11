@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveDuration } from '@/lib/service-duration'
 import { authorizedWebhook } from '@/lib/api-auth'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
 
@@ -61,6 +62,11 @@ export async function GET(request: Request) {
   // somebody for whom Monday morning is bad lost both at once. She was not
   // ignoring the rule, she had nothing else to offer.
   const days = Math.min(Math.max(Number(searchParams.get('days')) || 1, 1), 14)
+  // What the caller said they are coming for, in their own words. Matched to a
+  // configured service here rather than by the model: asking Telma to pick an
+  // internal id mid-call means reading her a list of identifiers, and she would
+  // guess wrong on exactly the unusual treatments whose length is not standard.
+  const wanted = resolveDuration(context.clinic, searchParams.get('service'))
   const admin = createAdminClient()
 
   const start = new Date(`${date}T12:00:00Z`)
@@ -77,6 +83,12 @@ export async function GET(request: Request) {
     const { data, error } = await admin.rpc('available_slots', {
       p_clinic_id: clinicId,
       p_date: iso,
+      // Asked for the length this particular treatment takes, so a forty-five
+      // minute session is never offered at a time that runs past closing and
+      // never has half an hour booked against it. Null when the clinic has set
+      // no per-service lengths, which is the same question this endpoint has
+      // always asked.
+      p_duration: wanted.minutes,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     for (const slot of (data ?? []) as Array<Record<string, unknown>>) {
@@ -157,6 +169,11 @@ export async function GET(request: Request) {
     // which comes back empty because it is over reads differently from a day
     // which comes back empty because it is full.
     past_today: all.length - slots.length,
+    // How long each of these lasts. Sent back so the answer explains itself: a
+    // list of times means one thing for a twenty minute check-up and another
+    // for an hour of laser, and the difference is invisible otherwise.
+    duration_minutes: wanted.minutes,
+    service_matched: wanted.service_id,
     blocked: null,
     minutes: context.minutes,
   })
@@ -197,11 +214,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'slot_in_the_past' }, { status: 409 })
   }
 
+  // Held for as long as the treatment takes, not for the width of the grid. A
+  // ninety minute session held as half an hour leaves the hour after it on
+  // offer, and the next caller is given a time that is already gone.
+  const held = await getClinicWithPlan(clinicId)
+  const wanted = resolveDuration(held?.clinic ?? {}, (body.service as string) ?? null)
+
   const admin = createAdminClient()
   const { data, error } = await admin.rpc('hold_slot', {
     p_clinic_id: clinicId,
     p_slot_start: slotStart,
     p_call_ref: (body.call_ref as string) ?? null,
+    p_duration: wanted.minutes,
   })
 
   if (error) {

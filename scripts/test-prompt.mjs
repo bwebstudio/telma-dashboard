@@ -54,9 +54,13 @@ const BASE_CLINIC = {
   emergency_protocol: null,
   recording: true,
   professionals: [],
+  veterinary: false,
 }
 
 const CASES = {
+  // Emergencies go somewhere else entirely when the patients are animals.
+  'veterinary': { ...BASE_CLINIC, veterinary: true },
+
   // A clinic where more than one person sees patients. Everything the base says
   // about choosing a person appears here and nowhere else.
   'two-professionals': {
@@ -697,5 +701,18 @@ test('the emergency number comes before anything else is asked', () => {
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(first), `${lang}: 112 is mentioned but not put first`)
+  }
+})
+
+// 112 is for people. Sending somebody there with a dog that has been hit by a
+// car is wrong advice, and it occupies a line somebody else needs.
+test('an animal emergency does not go to 112', () => {
+  for (const [lang, never] of [['pt', 'para o 112 por causa de um animal'], ['es', 'al 112 por un animal']]) {
+    const vet = buildPrompt({ ...CASES['veterinary'], can_book: true }, lang)
+    assert.ok(vet.text.includes(never), `${lang}: a vet clinic still sends people to 112`)
+
+    const human = buildPrompt({ ...CASES['open-can-book'], can_book: true, veterinary: false }, lang)
+    assert.ok(human.text.includes('112'), `${lang}: a human clinic lost its 112`)
+    assert.ok(!human.text.includes(never), `${lang}: a human clinic carries the animal rule`)
   }
 })

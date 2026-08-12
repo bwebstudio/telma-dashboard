@@ -89,6 +89,7 @@ export async function GET(request: Request) {
   const variables: PromptVariables = {
     clinic_name: clinic.name,
     professionals: [],
+    veterinary: clinic.specialty === 'veterinaria',
     specialty: clinic.specialty
       ? specialtyLabel(clinic.specialty as Specialty, promptLocale)
       : null,

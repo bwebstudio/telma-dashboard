@@ -22,6 +22,7 @@ import { serviceLabel } from './onboarding/catalog.ts'
 
 export interface DurationSource {
   services?: string[] | null
+  custom_services?: string | null
   service_durations?: Record<string, number> | null
   appointment_duration_minutes?: number | null
   slot_minutes?: number | null
@@ -45,29 +46,39 @@ function flatten(text: string): string {
     .trim()
 }
 
-export function resolveDuration(clinic: DurationSource, said: string | null): ResolvedDuration {
-  const fallback =
-    clinic.appointment_duration_minutes ?? clinic.slot_minutes ?? 30
-  const durations = clinic.service_durations ?? {}
-  const configured = Object.keys(durations)
-  if (!said || !configured.length) return { minutes: fallback, service_id: null }
+/** Everything this clinic offers: what it ticked, and what it typed. */
+export function allServices(clinic: DurationSource): string[] {
+  return [
+    ...(clinic.services ?? []),
+    ...String(clinic.custom_services ?? '')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean),
+  ]
+}
 
+/**
+ * Which service the caller meant.
+ *
+ * Matched against everything the clinic offers, not against the services it
+ * happens to have given a length to. Tying it to the lengths was the mistake:
+ * lengths are optional, most clinics set none, and a clinic that had set one
+ * could only ever match that one. The panel colours a booking by this, so every
+ * chip in the week came out the same shade of nothing.
+ *
+ * Answers only when exactly one service fits. A clinic with two things called
+ * "Consulta de valoración" gets neither rather than the wrong one.
+ */
+export function matchService(services: string[], said: string | null): string | null {
+  if (!said || !services.length) return null
   const heard = flatten(said)
-  if (!heard) return { minutes: fallback, service_id: null }
+  if (!heard) return null
 
-  // The id itself, in case a caller of this endpoint already knows it.
-  if (durations[said] != null) return { minutes: durations[said], service_id: said }
+  if (services.includes(said)) return said
 
-  // Both passes collect every service that fits and only answer when exactly one
-  // does. Returning the first match instead looks identical almost always and is
-  // wrong in the one case that matters: the catalogue deliberately keeps
-  // `dent_consulta` and `est_consulta` apart, and both read "Consulta de
-  // valoración", so a clinic offering the two would have every valuation booked
-  // at whichever length happened to be listed first, silently and for ever.
-  const only = (ids: string[]): ResolvedDuration | null =>
-    ids.length === 1 ? { minutes: durations[ids[0]], service_id: ids[0] } : null
+  const only = (ids: string[]): string | null => (ids.length === 1 ? ids[0] : null)
 
-  const labelled = configured.filter((id) =>
+  const labelled = services.filter((id) =>
     [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
       .map(flatten)
       .some((l) => l && (l === heard || heard.includes(l) || l.includes(heard)))
@@ -75,19 +86,26 @@ export function resolveDuration(clinic: DurationSource, said: string | null): Re
   const byLabel = only(labelled)
   if (byLabel) return byLabel
 
-  // Last resort: a distinctive word from the label, inside what was said.
   // Callers say "el láser", not "depilación láser". Short words are excluded
   // because "de" and "una" would match everything there is.
-  const worded = configured.filter((id) =>
-    [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
-      .flatMap((l) => flatten(l).split(' '))
-      .filter((w) => w.length >= 5)
-      .some((w) => heard.includes(w))
+  return only(
+    services.filter((id) =>
+      [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
+        .flatMap((l) => flatten(l).split(' '))
+        .filter((w) => w.length >= 5)
+        .some((w) => heard.includes(w))
+    )
   )
-  const byWord = only(worded)
-  if (byWord) return byWord
+}
 
-  return { minutes: fallback, service_id: null }
+export function resolveDuration(clinic: DurationSource, said: string | null): ResolvedDuration {
+  const fallback = clinic.appointment_duration_minutes ?? clinic.slot_minutes ?? 30
+  const durations = clinic.service_durations ?? {}
+
+  const id = matchService(allServices(clinic), said)
+  // A service the clinic named but gave no length to takes the usual one, which
+  // is the same answer as before and the safe direction to be wrong in.
+  return { minutes: (id && durations[id]) || fallback, service_id: id }
 }
 
 /**

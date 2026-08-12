@@ -14,7 +14,11 @@ import assert from 'node:assert/strict'
 const { resolveDuration, keepChosen } = await import('../lib/service-duration.ts')
 
 const CLINIC = {
-  service_durations: { est_laser: 45, est_limpeza: 60, dent_consulta: 20 },
+  // What the clinic offers, and separately the lengths it bothered to set.
+  // Those are different lists on purpose: most clinics set no lengths at all,
+  // and a service still has to be recognisable by name when they have not.
+  services: ['est_laser', 'dent_consulta', 'dent_implantes'],
+  service_durations: { est_laser: 45, dent_consulta: 20 },
   appointment_duration_minutes: 30,
 }
 
@@ -36,6 +40,7 @@ test('an ambiguous word falls back rather than guessing', () => {
   // first listed would be wrong half the time and wrong invisibly.
   const ambiguous = {
     ...CLINIC,
+    services: ['dent_consulta', 'est_consulta'],
     service_durations: { dent_consulta: 20, est_consulta: 45 },
   }
   const r = resolveDuration(ambiguous, 'una consulta de valoración')
@@ -50,6 +55,11 @@ test('nothing said, nothing configured, nothing clever', () => {
   // A clinic that has never opened the durations screen behaves exactly as it
   // did before any of this existed.
   assert.equal(resolveDuration({ appointment_duration_minutes: 30 }, 'láser').minutes, 30)
+  // Offered, but with no length set: the usual appointment, and still
+  // recognised as that service so the panel can colour it.
+  const known = resolveDuration(CLINIC, 'implantes')
+  assert.equal(known.service_id, 'dent_implantes')
+  assert.equal(known.minutes, 30)
 })
 
 test('short words never match, or everything would match', () => {
@@ -86,4 +96,36 @@ test('a service typed by hand keeps its price', () => {
     'Masaje descontracturante\nOtra cosa\n\n'
   )
   assert.deepEqual(kept, { est_laser: 45, 'Masaje descontracturante': 60 })
+})
+
+// Colours, which is what the panel actually shows.
+const { bookingCategory, CATEGORY_COUNT } = await import('../lib/service-colour.ts')
+
+test('the same treatment gets the same colour however it was said', () => {
+  // A caller says "the laser" one week and "laser hair removal" the next. Both
+  // match the service, so both land on the same colour: that is the whole
+  // reason for colouring by service rather than by the words.
+  const a = bookingCategory(resolveDuration(CLINIC, 'el láser').service_id, 'el láser')
+  const b = bookingCategory(resolveDuration(CLINIC, 'Depilación láser').service_id, 'Depilación láser')
+  assert.equal(a.index, b.index)
+  assert.equal(a.key, 'est_laser')
+})
+
+test('a reason no catalogue knows still gets a colour of its own', () => {
+  // Clinics write down what people actually come in for, and half of it is in
+  // nobody's catalogue. Giving all of that one grey left most weeks looking
+  // exactly as they did before any of this, which is what happened first time.
+  const cat = bookingCategory(null, 'revisión del gato')
+  assert.ok(cat && cat.index >= 1 && cat.index <= CATEGORY_COUNT)
+  assert.ok(bookingCategory(null, 'vacuna anual').index >= 1)
+  // Nothing written down is nothing to colour by, and the chip stays neutral.
+  assert.equal(bookingCategory(null, '   '), null)
+  assert.equal(bookingCategory(null, null), null)
+})
+
+test('punctuation and accents do not split one reason into two colours', () => {
+  assert.equal(
+    bookingCategory(null, 'Revisión del gato.').key,
+    bookingCategory(null, 'revision del gato').key
+  )
 })

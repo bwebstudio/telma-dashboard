@@ -3,8 +3,9 @@ import type { Dictionary, Locale } from '@/content'
 import type { Appointment, AvailabilitySlot, BlockedDay } from '@/lib/types'
 import { dayIn, dayKeyIn, timeIn, weekdayIn } from '@/lib/time'
 import { startsIn } from '@/lib/slots'
-import { categoryBackground, serviceColourIndex } from '@/lib/service-colour'
+import { bookingCategory, categoryBackground } from '@/lib/service-colour'
 import { resolveDuration, type DurationSource } from '@/lib/service-duration'
+import { serviceLabel } from '@/lib/onboarding/catalog'
 
 export type PlannerView = 'semana' | 'mes'
 
@@ -237,7 +238,29 @@ export function Planner({
   // but *how* free the day is.
   const days = Array.from({ length: 7 }, (_, i) => dayIn(tz, i, anchor))
 
+  // The catalogue only speaks the two languages Telma answers in. An English
+  // panel reads the Portuguese label, which is better than reading an id.
+  const labelLocale = locale === 'es' ? 'es' : 'pt'
+
+  function categoryOf(a: Appointment) {
+    const matched = resolveDuration(clinic, a.reason ?? null).service_id
+    const cat = bookingCategory(matched, a.reason)
+    return cat && { ...cat, label: matched ? serviceLabel(matched, labelLocale) : (a.reason ?? '') }
+  }
+
+  // What the colours mean, for the services this week actually contains. A key
+  // listing everything the clinic offers would be longer than the week and
+  // mostly about days that are not on screen.
+  const key = new Map<string, { index: number | null; label: string }>()
+  for (const date of days) {
+    for (const a of dayState(date).appts) {
+      const cat = categoryOf(a)
+      if (cat && !key.has(cat.key)) key.set(cat.key, { index: cat.index, label: cat.label })
+    }
+  }
+
   return (
+    <>
     <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7 lg:gap-2">
       {days.map((date) => {
         const d = dayState(date)
@@ -294,16 +317,14 @@ export function Planner({
 
                 <ul className="mt-2 flex min-w-0 flex-col gap-1">
                   {d.appts.map((a) => {
-                    const colour = serviceColourIndex(
-                      resolveDuration(clinic, a.reason ?? null).service_id
-                    )
+                    const cat = categoryOf(a)
                     return (
                       <li
                         key={a.id}
                         title={[timeIn(a.scheduled_at, locale, tz), a.patient_name, a.reason]
                           .filter(Boolean)
                           .join(' · ')}
-                        style={{ backgroundColor: categoryBackground(colour) }}
+                        style={{ backgroundColor: categoryBackground(cat?.index ?? null) }}
                         className="flex min-w-0 items-baseline gap-1.5 rounded-lg px-1.5 py-1 text-sm text-ink"
                       >
                         <span className="shrink-0 tabular-nums font-medium">
@@ -320,6 +341,22 @@ export function Planner({
         )
       })}
     </ol>
+
+    {key.size > 1 && (
+      <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-ink-soft">
+        {[...key.values()].map((c) => (
+          <li key={c.label} className="flex min-w-0 items-center gap-1.5">
+            <span
+              aria-hidden
+              className="h-3 w-3 shrink-0 rounded-full"
+              style={{ backgroundColor: categoryBackground(c.index) }}
+            />
+            <span className="truncate">{c.label}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+    </>
   )
 
 }

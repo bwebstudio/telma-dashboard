@@ -16,12 +16,40 @@
 export const CATEGORY_COUNT = 8
 
 /** Stable across deploys, machines and languages. Deliberately not a
- *  cryptographic hash: this only has to spread ids evenly over eight buckets. */
-export function serviceColourIndex(serviceId: string | null | undefined): number | null {
-  if (!serviceId) return null
+ *  cryptographic hash: this only has to spread keys evenly over eight buckets. */
+export function serviceColourIndex(key: string | null | undefined): number | null {
+  if (!key) return null
   let h = 0
-  for (let i = 0; i < serviceId.length; i++) h = (h * 31 + serviceId.charCodeAt(i)) >>> 0
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0
   return (h % CATEGORY_COUNT) + 1
+}
+
+/**
+ * What decides a booking's colour, and its label in the key.
+ *
+ * The service when the reason matched one, because that survives the caller
+ * saying "the laser" one week and "laser hair removal" the next: both land on
+ * the same colour, which is the entire point of colouring by service.
+ *
+ * When nothing matched, the reason itself, flattened. A clinic writes down what
+ * people actually come in for, and half of it will never be in any catalogue;
+ * giving all of that one grey would leave most weeks looking exactly as they
+ * did before any of this, which is what happened on the first attempt.
+ */
+export function bookingCategory(
+  serviceId: string | null,
+  reason: string | null | undefined
+): { key: string; index: number | null } | null {
+  if (serviceId) return { key: serviceId, index: serviceColourIndex(serviceId) }
+  const flat = (reason ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!flat) return null
+  return { key: flat, index: serviceColourIndex(flat) }
 }
 
 /** The CSS custom property holding that colour, or the neutral wash when the

@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-08-11.5'
+export const PROMPT_VERSION = '2026-08-12.1'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -223,6 +223,15 @@ Duas frases de cada vez, no máximo.
     '',
     'Não avalias, não perguntas detalhes clínicos e não decides se é grave. Se soa a urgência, é urgência.',
     'Nunca ofereces uma hora futura a quem descreve uma urgência.',
+    '',
+    // Antes do ramo aberto/fechado de propósito. Sem isto, o único caminho de
+    // uma urgência dentro do horário era passar a chamada à clínica, e se
+    // ninguém atendesse ficava um recado: uma criança a sangrar às onze da
+    // manhã acabava num recado. E uma clínica fechada COM número de urgência
+    // também nunca ouvia falar do 112.
+    'Há sinais que não são para a clínica, são para o **112**: hemorragia que não pára, dificuldade em respirar ou engolir, perda de consciência, uma pancada forte na cabeça, ou alguém dizer que teme pela vida de outra pessoa.',
+    'Quando ouvires um desses, **a primeira coisa que dizes é que ligue já para o 112 ou vá às urgências**. Antes de tudo o resto, antes de perguntar seja o que for.',
+    'Passar a chamada à clínica não substitui isso, nem com a clínica aberta: no tempo que levas a encontrar alguém, quem ligou não ligou a ninguém. Dizes o 112 primeiro e só depois tratas do resto.',
     '',
   ],
   emergencyOpen: (v) =>
@@ -481,6 +490,11 @@ Dos frases cada vez, como mucho.
     '',
     'No valoras, no preguntas detalles clínicos y no decides si es grave. Si suena a urgencia, es urgencia.',
     'Nunca ofreces una hora futura a quien describe una urgencia.',
+    '',
+    // Ver el comentario en la versión portuguesa: misma regla, misma razón.
+    'Hay señales que no son para la clínica, son para el **112**: hemorragia que no para, dificultad para respirar o tragar, pérdida de conocimiento, un golpe fuerte en la cabeza, o que alguien diga que teme por la vida de otra persona.',
+    'Cuando oigas una de esas, **lo primero que dices es que llame ya al 112 o vaya a urgencias**. Antes que nada, antes de preguntar nada.',
+    'Pasar la llamada a la clínica no sustituye eso, ni con la clínica abierta: en el tiempo que tardas en localizar a alguien, quien llamó no ha llamado a nadie. Dices el 112 primero y luego ya te ocupas del resto.',
     '',
   ],
   emergencyOpen: (v) =>

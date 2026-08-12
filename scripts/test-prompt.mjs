@@ -666,3 +666,36 @@ test('who sees patients is only mentioned when there is more than one', () => {
     assert.ok(team.text.includes(dont), `${lang}: she may recite the list of names`)
   }
 })
+
+// The one rule whose failure is not commercial.
+//
+// Before this, the only in-hours path for an emergency was "pass the call to
+// the clinic", and if nobody answered, `transferFails` takes a message. A child
+// bleeding heavily at eleven in the morning ended in a message. A closed clinic
+// that HAD an emergency number never heard about 112 either, because the only
+// mention of it lived in the branch for a closed clinic with nobody named.
+test('emergency services are named whatever the clinic looks like', () => {
+  const shapes = [
+    { name: 'open, nobody named', within_opening_hours: true, emergency_number: null },
+    { name: 'open, number named', within_opening_hours: true, emergency_number: '+34911111111' },
+    { name: 'closed, nobody named', within_opening_hours: false, emergency_number: null },
+    { name: 'closed, number named', within_opening_hours: false, emergency_number: '+34911111111' },
+    { name: 'cannot book at all', can_book: false, within_opening_hours: true, emergency_number: null },
+  ]
+  for (const lang of ['pt', 'es']) {
+    for (const shape of shapes) {
+      const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true, ...shape }, lang)
+      assert.ok(text.includes('112'), `${lang}, ${shape.name}: emergency services are never named`)
+    }
+  }
+})
+
+test('the emergency number comes before anything else is asked', () => {
+  for (const [lang, first] of [
+    ['pt', '**a primeira coisa que dizes é que ligue já para o 112 ou vá às urgências**'],
+    ['es', '**lo primero que dices es que llame ya al 112 o vaya a urgencias**'],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(first), `${lang}: 112 is mentioned but not put first`)
+  }
+})

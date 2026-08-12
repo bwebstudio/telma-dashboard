@@ -92,6 +92,9 @@ try {
   }
   console.log(`\n  ${failed === 0 ? 'todos os critérios passam' : `${failed} critério(s) falham`}\n`)
   process.exitCode = failed === 0 ? 0 : 1
+} catch (e) {
+  console.error(`\n  ${e.message}\n`)
+  process.exitCode = 1
 } finally {
   // Always, including after a failure. A simulation agent left behind is one
   // more thing in a list where every other entry answers a real telephone.
@@ -107,7 +110,11 @@ async function api(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
   })
   const text = await res.text()
-  if (!res.ok) fail(`${method} ${path} -> ${res.status}\n  ${text.slice(0, 400)}`)
+  // Thrown, never process.exit(). Exiting here skipped the `finally` that
+  // deletes the throwaway agent, so a rate limit mid-run left one behind in a
+  // list where every other entry answers a real telephone. Which is exactly
+  // what happened, twice, before anybody looked at the list.
+  if (!res.ok) throw new Error(`${method} ${path} -> ${res.status}\n  ${text.slice(0, 400)}`)
   return text ? JSON.parse(text) : {}
 }
 

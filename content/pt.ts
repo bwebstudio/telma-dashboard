@@ -200,6 +200,8 @@ export const pt: Dictionary = {
     stepLabel: 'As marcações podem começar a cada',
     stepHelp: 'De quanto em quanto tempo a Telma pode começar uma marcação. Cada serviço ocupa o tempo que lhe deu.',
     overlaps: 'Há dois intervalos sobrepostos nesse dia.',
+    bookedOfTotal: (b, total) => `${b} de ${total} marcadas`,
+    allFree: (f) => `${f} horas livres`,
     addProfessional: 'Somos mais do que uma pessoa',
     professionalName: 'Nome de quem atende',
     professionalHint: 'Cada pessoa tem a sua agenda e o seu horário. A Telma marca com quem estiver livre, ou com quem lhe pedirem.',

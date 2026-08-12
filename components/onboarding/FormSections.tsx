@@ -571,12 +571,12 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
  * lot, and will find it, because the summary names what is inside rather than
  * being a feature nobody was looking for.
  *
- * The price used to live in the free text box below, and that was the wrong
- * shape for it. `price_info` is still there and still useful, because a real
- * price list has sentences in it that no table holds. But it should never have
- * been the only place a number could go: it is the field a clinic charges money
- * with, typed into a box with no shape, so a price that lands in the wrong
- * sentence is read out to a patient and nothing anywhere can notice.
+ * The price used to live in a free text box, and that was the wrong shape for
+ * it: the field a clinic charges money with, typed into a box with no shape, so
+ * a price landing in the wrong sentence is read out to a patient and nothing
+ * anywhere can notice. The box is gone rather than demoted. Kept as an overflow
+ * for the sentences a table cannot hold, it read as a second answer to the same
+ * question and invited the same number to be typed twice.
  *
  * Rows come from what has been ticked and from what has been typed into "other
  * services", one per line, so a clinic that offers something the catalogue has
@@ -585,7 +585,7 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
  * Nothing is required. An empty duration means the clinic's usual appointment,
  * an empty price means Telma quotes none for that service and says so.
  */
-function ServiceDetails({ values, set, errors, locale }: StepProps) {
+function ServiceDetails({ values, set, locale }: StepProps) {
   const t = copyFor(locale)
   const [open, setOpen] = useState(false)
   const chosen: string[] = values.services ?? []
@@ -682,25 +682,6 @@ function ServiceDetails({ values, set, errors, locale }: StepProps) {
             ))}
           </div>
 
-          {/* The sentences a table cannot hold: "laser varies with the area",
-              "the first estimate is free". It used to be a box of its own on
-              this page, directly under a column headed PRICE, which read as two
-              places to answer the same question and invited the numbers to be
-              typed twice. One place, folded, and this is the overflow. */}
-          <div className="mt-5">
-            <label htmlFor="price_info" className="field-label">
-              {t.detailsNotes}
-            </label>
-            <textarea
-              id="price_info"
-              name="price_info"
-              rows={2}
-              placeholder={t.priceInfoPlaceholder}
-              value={values.price_info ?? ''}
-              onChange={(e) => set({ price_info: e.target.value })}
-              className={`${inputClass(errors.price_info)} py-2.5`}
-            />
-          </div>
         </div>
       )}
     </div>

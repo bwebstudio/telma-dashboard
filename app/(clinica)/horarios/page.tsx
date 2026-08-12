@@ -118,6 +118,9 @@ export default async function HorariosPage({
           locale={locale}
           tz={tz}
           now={now}
+          step={clinic?.slot_minutes ?? 60}
+          duration={clinic?.appointment_duration_minutes ?? 30}
+          clinic={clinic ?? {}}
         />
       </section>
 

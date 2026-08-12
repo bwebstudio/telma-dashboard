@@ -73,6 +73,23 @@
        5.49:1. None of this is decorative — an overdue clinic is the most
        important thing on the HOJE screen and has to survive being read on a
        phone in sunlight. */
+    /* Services, told apart at a glance.
+       Categorical rather than semantic: none of these means good or bad, they
+       only mean "not the same thing as the one next to it". Chosen to stay
+       distinguishable in the two commonest forms of colour blindness, and light
+       enough that ink text sits on them at more than 7:1, because a clinic reads
+       a name inside the chip and not just its colour. Nothing in this product
+       ever uses colour as the only carrier of meaning: every chip says the hour
+       and the name too. */
+    --cat-1: 219 234 254;
+    --cat-2: 254 233 213;
+    --cat-3: 220 240 228;
+    --cat-4: 243 226 245;
+    --cat-5: 253 240 205;
+    --cat-6: 214 240 243;
+    --cat-7: 233 231 250;
+    --cat-8: 249 226 231;
+
     --ok: 21 94 76;
     --ok-soft: 232 241 237;
     --warn: 140 84 10;

@@ -79,6 +79,29 @@ async function freshDatabase() {
   // account unique and stops the run rather than leave nobody able to log in,
   // which is right in production and needs the account to exist first here.
   const PRELUDE = {
+    // A clinic seeing people for thirty minutes and starting one every
+    // fifteen. Its rows overlap, which is what 0035 could not merge.
+    '0038_merge_overlapping_windows.sql': `
+      insert into clinics (id, name, timezone, selected_languages, appointment_duration_minutes)
+      values ('44444444-4444-4444-4444-444444444444', 'Clínica Solapada', 'Europe/Madrid', array['es'], 30);
+      insert into availability_slots (clinic_id, resource_id, weekday, start_time, end_time, capacity, active)
+      select '44444444-4444-4444-4444-444444444444', r.id, 1, v.s::time, v.e::time, 1, true
+        from resources r, (values
+      ('09:00:00','09:30:00'),
+      ('09:15:00','09:45:00'),
+      ('09:30:00','10:00:00'),
+      ('09:45:00','10:15:00'),
+      ('10:00:00','10:30:00'),
+      ('10:15:00','10:45:00'),
+      ('10:30:00','11:00:00'),
+      ('10:45:00','11:15:00'),
+      ('11:00:00','11:30:00'),
+      ('11:15:00','11:45:00'),
+      ('11:30:00','12:00:00'),
+      ('11:45:00','12:15:00')
+        ) as v(s, e)
+       where r.clinic_id = '44444444-4444-4444-4444-444444444444';
+    `,
     // A clinic as the sign-up used to leave it: one row per bookable start,
     // with a break in the middle. 0035 has to turn this back into the two
     // windows it came from without changing a single offered time.
@@ -338,5 +361,71 @@ test('merging exploded rows into windows offers exactly the same times', async (
     offered.map((r) => r.t),
     ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '15:00', '15:30']
   )
+  await db.close()
+})
+
+// The rows 0035 could not see.
+//
+// Appointments of thirty minutes starting every fifteen overlap each other, and
+// a merge that only joined rows meeting end-to-end joined none of them. The
+// clinic opened its hours screen to forty rows for one Monday, which is the
+// exact thing the merge exists to prevent, and nothing anywhere said so.
+test('overlapping rows merge too, and still offer the same times', async () => {
+  const db = await freshDatabase()
+  const OVERLAP = '44444444-4444-4444-4444-444444444444'
+
+  const { rows: windows } = await db.query(
+    `select to_char(start_time, 'HH24:MI') as s, to_char(end_time, 'HH24:MI') as e
+       from availability_slots where clinic_id = $1 order by start_time`,
+    [OVERLAP]
+  )
+  assert.deepEqual(windows.map((w) => `${w.s}-${w.e}`), ['09:00-12:15'])
+
+  const { rows: step } = await db.query(`select slot_minutes from clinics where id = $1`, [OVERLAP])
+  assert.equal(step[0].slot_minutes, 15)
+
+  const { rows: offered } = await db.query(
+    `select to_char(slot_start at time zone 'Europe/Madrid', 'HH24:MI') as t
+       from available_slots($1, $2::date) order by slot_start`,
+    [OVERLAP, MONDAY]
+  )
+  // Every quarter of an hour from nine, last start leaving room to finish.
+  assert.equal(offered.length, 12)
+  assert.equal(offered[0].t, '09:00')
+  assert.equal(offered.at(-1).t, '11:45')
+  await db.close()
+})
+
+// Two implementations of one rule, checked against each other.
+//
+// The SQL is the one that decides: it is what a caller is offered from. The
+// TypeScript copy exists so the panel can draw six weeks without a round trip
+// per day. Nothing forces them to agree, so this does: if they drift, the panel
+// is wrong about how full a Thursday looks, which is the sort of thing that
+// gets noticed months later and blamed on the diary.
+test('the panel generates the same times the diary does', async () => {
+  const { startsIn } = await import('../lib/slots.ts')
+  const db = await freshDatabase()
+
+  for (const [opens, closes, step, duration] of [
+    ['09:00', '19:00', 60, 60],
+    ['15:00', '21:45', 45, 45],
+    ['09:00', '13:00', 15, 30],
+    ['08:30', '14:00', 20, 40],
+  ]) {
+    await db.query(`delete from availability_slots where clinic_id = $1`, [CLINIC])
+    await clinicWith(db, { day: MONDAY, opens, closes, step, duration })
+
+    const { rows } = await db.query(
+      `select to_char(slot_start at time zone 'Europe/Madrid', 'HH24:MI') as t
+         from available_slots($1, $2::date, $3) order by slot_start`,
+      [CLINIC, MONDAY, duration]
+    )
+    assert.deepEqual(
+      startsIn([{ start_time: opens, end_time: closes }], step, duration),
+      rows.map((r) => r.t),
+      `${opens}-${closes} every ${step} for ${duration}`
+    )
+  }
   await db.close()
 })

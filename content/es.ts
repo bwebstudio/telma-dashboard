@@ -200,6 +200,8 @@ export const es: Dictionary = {
     stepLabel: 'Las citas pueden empezar cada',
     stepHelp: 'Cada cuánto puede Telma empezar una cita. Cada servicio ocupa el tiempo que usted le haya dado.',
     overlaps: 'Hay dos tramos que se solapan ese día.',
+    bookedOfTotal: (b, total) => `${b} de ${total} ocupadas`,
+    allFree: (f) => `${f} horas libres`,
     addProfessional: 'Somos más de una persona',
     professionalName: 'Nombre de quien atiende',
     professionalHint: 'Cada persona tiene su agenda y su horario. Telma da cita con quien esté libre, o con quien le pidan.',

@@ -213,6 +213,9 @@ export interface Dictionary {
     stepLabel: string
     stepHelp: string
     overlaps: string
+    /** How full a day is, said in words beside the bar. */
+    bookedOfTotal: (booked: number, total: number) => string
+    allFree: (free: number) => string
     /** Diaries. Invisible while the clinic has one, which is most of them. */
     addProfessional: string
     professionalName: string

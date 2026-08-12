@@ -2,6 +2,9 @@ import Link from 'next/link'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment, AvailabilitySlot, BlockedDay } from '@/lib/types'
 import { dayIn, dayKeyIn, timeIn, weekdayIn } from '@/lib/time'
+import { startsIn } from '@/lib/slots'
+import { categoryBackground, serviceColourIndex } from '@/lib/service-colour'
+import { resolveDuration, type DurationSource } from '@/lib/service-duration'
 
 export type PlannerView = 'semana' | 'mes'
 
@@ -27,6 +30,9 @@ export function Planner({
   locale,
   tz,
   now,
+  step,
+  duration,
+  clinic,
 }: {
   view: PlannerView
   /** The week or month on screen: any day inside it. */
@@ -38,18 +44,30 @@ export function Planner({
   locale: Locale
   tz: string
   now: Date
+  /** How finely the day is cut, and how long an ordinary appointment runs. */
+  step: number
+  duration: number
+  /** To colour a booking by what it is for. */
+  clinic: DurationSource
 }) {
   const t = dict.horarios
 
-  // Which weekdays the clinic opens at all, and at what hours.
-  const hoursByWeekday = new Map<number, string[]>()
+  // Which weekdays the clinic opens, and every time each one produces.
+  //
+  // Generated, not read. A row used to be one bookable hour and this took its
+  // start time; a row is now a window the clinic is open for, so reading it
+  // straight would show one time per day and call the rest closed.
+  const windowsByWeekday = new Map<number, AvailabilitySlot[]>()
   for (const s of slots) {
     if (!s.active) continue
-    const list = hoursByWeekday.get(s.weekday) ?? []
-    list.push(s.start_time.slice(0, 5))
-    hoursByWeekday.set(s.weekday, list)
+    const list = windowsByWeekday.get(s.weekday) ?? []
+    list.push(s)
+    windowsByWeekday.set(s.weekday, list)
   }
-  for (const list of hoursByWeekday.values()) list.sort()
+  const hoursByWeekday = new Map<number, string[]>()
+  for (const [weekday, windows] of windowsByWeekday) {
+    hoursByWeekday.set(weekday, startsIn(windows, step, duration))
+  }
 
   const blockedByDay = new Map(blocked.map((b) => [b.day.slice(0, 10), b]))
 
@@ -205,15 +223,33 @@ export function Planner({
   }
 
   // --- Week -----------------------------------------------------------------
+  //
+  // Bookings, and nothing else.
+  //
+  // This used to draw a row per bookable time, so a clinic open twelve hours in
+  // fifteen minute steps got forty-eight rows a day, of which forty said
+  // "free". Seven of those side by side is a screen nobody can read and a page
+  // that scrolls for ever, and the one thing a clinic opens this view to find
+  // — what is actually happening on Thursday — was buried in the noise.
+  //
+  // Free time is now shown as a number and a bar rather than as a list. It is
+  // the same fact, and it is the fact people want: not *which* forty are free
+  // but *how* free the day is.
   const days = Array.from({ length: 7 }, (_, i) => dayIn(tz, i, anchor))
 
   return (
-    <ol className="grid grid-cols-1 gap-3 lg:grid-cols-7 lg:gap-2">
+    <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7 lg:gap-2">
       {days.map((date) => {
         const d = dayState(date)
-        const taken = new Map(d.appts.map((a) => [timeIn(a.scheduled_at, locale, tz), a]))
+        const total = d.open.length
+        const busy = d.appts.length
+        const free = Math.max(0, total - busy)
+
         return (
-          <li key={d.key} className={`card p-3 ${d.block ? 'bg-warn-soft/60' : ''}`}>
+          <li
+            key={d.key}
+            className={`card flex flex-col p-3 ${d.block ? 'bg-warn-soft/60' : ''}`}
+          >
             <Link href={`/hoje?d=${d.key}`} className="block">
               <span className="label-caps">{dict.weekdays[d.dow].slice(0, 3)}</span>
               <span
@@ -232,32 +268,56 @@ export function Planner({
                   <span className="block font-normal text-ink-soft">{d.block.reason}</span>
                 )}
               </p>
-            ) : d.open.length === 0 ? (
+            ) : total === 0 ? (
               <p className="mt-2 text-sm text-ink-mute">{t.closed}</p>
             ) : (
-              <ul className="mt-2 flex min-w-0 flex-wrap gap-1 lg:flex-col">
-                {d.open.map((hour) => {
-                  const appt = taken.get(hour)
-                  return (
-                    <li
-                      key={hour}
-                      title={appt?.patient_name}
-                      className={`flex min-w-0 max-w-full items-baseline gap-1.5 rounded-lg px-1.5 py-1 text-sm lg:w-full ${
-                        appt ? 'bg-brand-wash text-ink' : 'text-ink-mute'
-                      }`}
-                    >
-                      <span className="shrink-0 tabular-nums">{hour}</span>
-                      <span className="min-w-0 flex-1 truncate">
-                        {appt ? appt.patient_name : <span className="text-ok">{t.free}</span>}
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
+              <>
+                {/* How full the day is, in one line and one bar. The bar is
+                    never the only carrier: the count is written beside it. */}
+                <div className="mt-2">
+                  <div
+                    className="h-1.5 w-full overflow-hidden rounded-full bg-line"
+                    role="img"
+                    aria-label={`${busy} / ${total}`}
+                  >
+                    <div
+                      className="h-full rounded-full bg-brand-accent"
+                      style={{ width: `${total ? (busy / total) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <p className="mt-1.5 text-sm text-ink-mute tabular-nums">
+                    {busy > 0 ? t.bookedOfTotal(busy, total) : t.allFree(free)}
+                  </p>
+                </div>
+
+                <ul className="mt-2 flex min-w-0 flex-col gap-1">
+                  {d.appts.map((a) => {
+                    const colour = serviceColourIndex(
+                      resolveDuration(clinic, a.reason ?? null).service_id
+                    )
+                    return (
+                      <li
+                        key={a.id}
+                        title={[timeIn(a.scheduled_at, locale, tz), a.patient_name, a.reason]
+                          .filter(Boolean)
+                          .join(' · ')}
+                        style={{ backgroundColor: categoryBackground(colour) }}
+                        className="flex min-w-0 items-baseline gap-1.5 rounded-lg px-1.5 py-1 text-sm text-ink"
+                      >
+                        <span className="shrink-0 tabular-nums font-medium">
+                          {timeIn(a.scheduled_at, locale, tz)}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">{a.patient_name}</span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </>
             )}
           </li>
         )
       })}
     </ol>
   )
+
 }

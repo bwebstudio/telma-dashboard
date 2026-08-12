@@ -10,7 +10,7 @@
     "test:prompt": "node --experimental-strip-types --test scripts/test-prompt.mjs",
     "test": "npm run test:prompt",
     "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs",
-    "test:agenda": "node --test scripts/test-agenda.mjs",
+    "test:agenda": "node --experimental-strip-types --test scripts/test-agenda.mjs",
     "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs"
   },
   "dependencies": {

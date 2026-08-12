@@ -286,7 +286,9 @@ export function Planner({
                     />
                   </div>
                   <p className="mt-1.5 text-sm text-ink-mute tabular-nums">
-                    {busy > 0 ? t.bookedOfTotal(busy, total) : t.allFree(free)}
+                    {busy > 0
+                      ? fill(t.bookedOfTotal, { n: busy, total })
+                      : fill(t.allFree, { n: free })}
                   </p>
                 </div>
 
@@ -320,4 +322,13 @@ export function Planner({
     </ol>
   )
 
+}
+
+/** Fills `{n}` and `{total}` in a dictionary string. Dictionary entries are
+ *  strings, never functions: they are handed whole to client components, and a
+ *  function does not survive that crossing. */
+function fill(template: string, values: Record<string, number>): string {
+  return template.replace(/\{(\w+)\}/g, (whole, key) =>
+    key in values ? String(values[key]) : whole
+  )
 }

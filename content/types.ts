@@ -213,9 +213,18 @@ export interface Dictionary {
     stepLabel: string
     stepHelp: string
     overlaps: string
-    /** How full a day is, said in words beside the bar. */
-    bookedOfTotal: (booked: number, total: number) => string
-    allFree: (free: number) => string
+    /** How full a day is, said in words beside the bar. `{n}` and `{total}`
+     *  are filled in by the caller.
+     *
+     *  A string with holes in it rather than a function, and that is a rule for
+     *  this whole file rather than a preference here. The dictionary is handed
+     *  whole to client components, and a function cannot cross that boundary:
+     *  the page throws "Functions cannot be passed directly to Client
+     *  Components" at render time, on the server, with a digest instead of a
+     *  message. Every other entry in this file is a string, which is why it had
+     *  never happened before. */
+    bookedOfTotal: string
+    allFree: string
     /** Diaries. Invisible while the clinic has one, which is most of them. */
     addProfessional: string
     professionalName: string

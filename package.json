@@ -11,7 +11,8 @@
     "test": "npm run test:prompt",
     "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs",
     "test:agenda": "node --experimental-strip-types --test scripts/test-agenda.mjs",
-    "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs"
+    "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs",
+    "test:content": "node --experimental-strip-types --test scripts/test-content.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

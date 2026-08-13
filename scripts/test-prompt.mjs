@@ -716,3 +716,35 @@ test('an animal emergency does not go to 112', () => {
     assert.ok(!human.text.includes(never), `${lang}: a human clinic carries the animal rule`)
   }
 })
+
+// The hole under the other tests.
+//
+// Every assertion above proves a rule is in the text. None of them notices a
+// commit that deletes the rule AND the assertion together, which is exactly
+// what a hurried person does when a rule is in the way: remove it, remove the
+// red test, move on. Nothing was left to say the list had got shorter.
+//
+// A floor is crude and it works. Lowering the number is still possible and is
+// now a deliberate line in a diff, next to a comment saying so, rather than an
+// absence nobody can see.
+const RULE_FLOOR = 28
+
+test('the list of pinned rules has not quietly got shorter', () => {
+  for (const lang of ['pt', 'es']) {
+    const count = Object.keys(RULES[lang]).length
+    assert.ok(
+      count >= RULE_FLOOR,
+      `${lang} pins ${count} rules, fewer than the ${RULE_FLOOR} it had. If a rule was ` +
+        `deliberately dropped, lower RULE_FLOOR in the same commit and say why.`
+    )
+  }
+})
+
+// A rule deleted in one language only is the same loss, harder to see: the
+// Spanish half of the base is not a translation, it is a second original, and
+// a clinic in Barcelona reads its own.
+test('both languages pin the same rules', () => {
+  const pt = Object.keys(RULES.pt).sort()
+  const es = Object.keys(RULES.es).sort()
+  assert.deepEqual(pt, es, 'one language pins a rule the other does not')
+})

@@ -30,7 +30,7 @@ const scenarioPath = process.argv[2]
 if (!scenarioPath) fail('Uso: simulate-call.mjs <ficheiro de cenário>')
 
 const scenario = await import(new URL(`../${scenarioPath}`, import.meta.url).href)
-const { clinic, caller, firstMessage, criteria, language = 'es' } = scenario.default
+const { clinic, caller, firstMessage, criteria, language = 'es', guardrails } = scenario.default
 
 const { buildPrompt, greetingLine, todayInZone } = await import('../lib/onboarding/prompt.ts')
 const variables = { ...clinic, today: todayInZone(clinic.timezone, language) }
@@ -55,6 +55,12 @@ const agent = await api('POST', '/v1/convai/agents/create', {
     // simulation of a product we do not sell.
     tts: { model_id: 'eleven_turbo_v2_5' },
   },
+  // Platform-level guardrails, when a scenario asks for them. Worth being able
+  // to run the same conversation with and without: prompt_injection has an
+  // on/off switch and no logging mode, and the action for a triggered content
+  // guardrail is end_call. Turning it on blind means finding out whether it
+  // hangs up on real patients by hanging up on real patients.
+  ...(guardrails ? { platform_settings: { guardrails } } : {}),
 })
 
 try {

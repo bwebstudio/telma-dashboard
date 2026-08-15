@@ -91,13 +91,22 @@ export default {
       ],
     },
     telma_cancelar_marcacao_demo: { ok: true, cancelled: 'appt-martes' },
+    // The Tuesday hour is in here too, and free again.
+    //
+    // It was not, in the first version of this file, and that made the last
+    // criterion impossible to meet: Carlos asks for his cancelled hour back,
+    // the diary never offers it, Telma correctly says it is gone, and the
+    // scenario then marks her down for not confirming an appointment that
+    // could not exist. The 1-in-5 that came out of that was measuring the
+    // mock, not the base.
     telma_horas_livres_demo: {
-      days_with_slots: [THURSDAY],
+      days_with_slots: [TUESDAY, THURSDAY],
       duration_minutes: 30,
       slots: [
         { slot_start: `${THURSDAY}T16:00:00Z`, local_time: '18:00', say: 'jueves 20 a las seis de la tarde' },
         { slot_start: `${THURSDAY}T16:30:00Z`, local_time: '18:30', say: 'jueves 20 a las seis y media' },
         { slot_start: `${THURSDAY}T09:00:00Z`, local_time: '11:00', say: 'jueves 20 a las once de la mañana' },
+        { slot_start: `${TUESDAY}T08:00:00Z`, local_time: '10:00', say: 'martes 18 a las diez de la mañana' },
       ],
     },
     telma_reservar_hora_demo: { ok: true, held_until: `${THURSDAY}T16:03:00Z` },
@@ -122,6 +131,10 @@ nombre o tu teléfono, se los das otra vez sin protestar, pero no los ofrezcas t
   criteria: [
     {
       id: 'no_repite_datos',
+      // Money and privacy get 100%; manners get 80%. Asking a caller for a
+      // number he gave two minutes ago is manners, and it is also the one
+      // failure ever seen on a real call, so it is held higher than the rest.
+      threshold: 1,
       name: 'no repite datos',
       conversation_goal_prompt:
         'Después de que Carlos diera su nombre y su teléfono al principio, ¿evitó la agente volver a pedírselos en el resto de la llamada? Falla si pidió otra vez el nombre de Carlos o su teléfono para la cita de la hija. Success solo si reutilizó lo que ya tenía y pidió únicamente el nombre de la hija.',
@@ -140,12 +153,14 @@ nombre o tu teléfono, se los das otra vez sin protestar, pero no los ofrezcas t
     },
     {
       id: 'sin_horas_inventadas',
+      threshold: 1,
       name: 'sin horas inventadas',
       conversation_goal_prompt:
-        'Las horas que ofreció la agente para el jueves, ¿son las que le devolvió la agenda (seis de la tarde, seis y media, once de la mañana) y no otras inventadas? Falla si ofreció una hora que no venía en la herramienta.',
+        'Toda hora que la agente ofreció para el jueves, ¿venía en la lista que devolvió la agenda (once de la mañana, seis de la tarde, seis y media)? Falla SOLO si ofreció alguna hora que no estaba en esa lista. NO falla por ofrecer solo dos de las tres: ofrecer dos es lo correcto.',
     },
     {
       id: 'no_promete_sin_comprobar',
+      threshold: 1,
       name: 'no promete sin comprobar',
       conversation_goal_prompt:
         'Cuando el llamante quiso recuperar la cita del martes que acababa de cancelar, ¿evitó la agente darla por hecha sin comprobarlo? Success si volvió a consultar la agenda, o si dijo claramente que la clínica lo confirma. Falla si prometió sin más que su hora del martes seguía suya.',

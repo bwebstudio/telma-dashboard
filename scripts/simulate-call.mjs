@@ -34,6 +34,13 @@ if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
 // it looked. What a rule is worth is how often it is obeyed.
 const RUNS = Math.max(1, Number(process.argv.find((a) => a.startsWith('--runs='))?.slice(7)) || 1)
 
+// The platform stops a simulation at about thirty agent turns and returns what
+// it has, mid-sentence, mid-tool-call, with no flag saying so. Three of twelve
+// runs in one measurement had been cut like that and were scored anyway, and a
+// criterion about how a call ends cannot be judged on a call that never ended.
+// Raised, and a run that reaches it is thrown away rather than counted.
+const MAX_TURNS = 45
+
 const scenarioPath = process.argv[2]
 if (!scenarioPath) fail('Uso: simulate-call.mjs <ficheiro de cenário>')
 
@@ -83,6 +90,7 @@ const agent = await api('POST', '/v1/convai/agents/create', {
 
 try {
   const tally = new Map()
+  let truncated = 0
 
   for (let run = 1; run <= RUNS; run++) {
     const result = await api(
@@ -111,8 +119,15 @@ try {
             : {}),
         },
         extra_evaluation_criteria: criteria,
+        max_turns: MAX_TURNS,
       }
     )
+
+    const turns = (result.simulated_conversation ?? []).filter((t) => t.role === 'agent').length
+    if (turns >= MAX_TURNS) {
+      truncated++
+      continue
+    }
 
     // Only the last transcript is printed. Five of them is not reading, and the
     // numbers underneath are what the run is for.
@@ -136,18 +151,31 @@ try {
     }
   }
 
-  console.log(`  ── critérios, ${RUNS} ${RUNS === 1 ? 'passagem' : 'passagens'} ─────────────────────`)
-  let shaky = 0
+  const valid = RUNS - truncated
+  console.log(`  ── critérios, ${valid} de ${RUNS} passagens válidas ──────────────`)
+  if (truncated) console.log(`     ${truncated} cortada(s) no limite de turnos, fora da conta\n`)
+
+  // A threshold per criterion, not one for all of them. A rule about where an
+  // emergency goes at 19 in 20 is a failure; a rule about how warmly she says
+  // goodbye at 8 in 10 is a Tuesday. Defaults to 0.8 when a scenario says
+  // nothing, so leaving it out is a claim about quality, never about safety.
+  let below = 0
   for (const [id, { ok, n, why }] of tally) {
-    if (ok < n) shaky++
-    const bar = '█'.repeat(ok) + '·'.repeat(n - ok)
-    console.log(`  ${String(ok).padStart(2)}/${n} ${bar.padEnd(Math.max(n, 5))} ${id}`)
-    if (ok < n && why) console.log(`        ${wrap(why, 8)}`)
+    const wanted = criteria.find((c) => c.id === id)?.threshold ?? 0.8
+    const rate = n ? ok / n : 0
+    const good = rate >= wanted
+    if (!good) below++
+    const bar = '█'.repeat(ok) + '·'.repeat(Math.max(0, n - ok))
+    console.log(
+      `  ${good ? ' ' : '!'} ${String(ok).padStart(2)}/${n} ${bar.padEnd(Math.max(n, 5))} ` +
+        `${id.padEnd(26)} exige ${Math.round(wanted * 100)}%`
+    )
+    if (!good && why) console.log(`        ${wrap(why, 8)}`)
   }
   console.log(
-    `\n  ${shaky === 0 ? 'todos os critérios passam sempre' : `${shaky} critério(s) não passam sempre`}\n`
+    `\n  ${below === 0 ? 'todos os critérios chegam ao seu limiar' : `${below} critério(s) abaixo do limiar`}\n`
   )
-  process.exitCode = shaky === 0 ? 0 : 1
+  process.exitCode = below === 0 ? 0 : 1
 } catch (e) {
   console.error(`\n  ${e.message}\n`)
   process.exitCode = 1

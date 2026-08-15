@@ -26,11 +26,29 @@ import { readFileSync } from 'node:fs'
 const KEY = env('ELEVENLABS_API_KEY')
 if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
 
+// Runs the same call N times against one throwaway agent.
+//
+// A single verdict is not a result. The same conversation passed a criterion on
+// one run and failed it on the next, in both directions, which means every
+// pass/fail read off one simulation in this file's history was worth less than
+// it looked. What a rule is worth is how often it is obeyed.
+const RUNS = Math.max(1, Number(process.argv.find((a) => a.startsWith('--runs='))?.slice(7)) || 1)
+
 const scenarioPath = process.argv[2]
 if (!scenarioPath) fail('Uso: simulate-call.mjs <ficheiro de cenário>')
 
 const scenario = await import(new URL(`../${scenarioPath}`, import.meta.url).href)
-const { clinic, caller, firstMessage, criteria, language = 'es', guardrails } = scenario.default
+const {
+  clinic,
+  caller,
+  firstMessage,
+  criteria,
+  language = 'es',
+  guardrails,
+  tools,
+  toolMocks,
+  dynamicVariables,
+} = scenario.default
 
 const { buildPrompt, greetingLine, todayInZone } = await import('../lib/onboarding/prompt.ts')
 const variables = { ...clinic, today: todayInZone(clinic.timezone, language) }
@@ -46,7 +64,7 @@ const agent = await api('POST', '/v1/convai/agents/create', {
   name: `zz-simulacao-${Date.now()}`,
   conversation_config: {
     agent: {
-      prompt: { prompt: built.text, llm: 'gpt-5.4-mini' },
+      prompt: { prompt: built.text, llm: 'gpt-5.4-mini', ...(tools ? { tool_ids: tools } : {}) },
       first_message: greeting,
       language,
     },
@@ -64,40 +82,72 @@ const agent = await api('POST', '/v1/convai/agents/create', {
 })
 
 try {
-  const result = await api(
-    'POST',
-    `/v1/convai/agents/${agent.agent_id}/simulate-conversation`,
-    {
-      simulation_specification: {
-        simulated_user_config: {
-          prompt: { prompt: caller },
-          first_message: firstMessage,
-          language,
+  const tally = new Map()
+
+  for (let run = 1; run <= RUNS; run++) {
+    const result = await api(
+      'POST',
+      `/v1/convai/agents/${agent.agent_id}/simulate-conversation`,
+      {
+        simulation_specification: {
+          simulated_user_config: {
+            prompt: { prompt: caller },
+            first_message: firstMessage,
+            language,
+          },
+          ...(dynamicVariables ? { dynamic_variables: dynamicVariables } : {}),
+          // Faked, so a scenario about keeping track of two bookings is not
+          // also a test of the demo's database, and so it writes nothing to it.
+          // The platform wants each return value as a string, not an object.
+          ...(toolMocks
+            ? {
+                tool_mock_config: Object.fromEntries(
+                  Object.entries(toolMocks).map(([name, value]) => [
+                    name,
+                    { default_return_value: JSON.stringify(value) },
+                  ])
+                ),
+              }
+            : {}),
         },
-      },
-      extra_evaluation_criteria: criteria,
+        extra_evaluation_criteria: criteria,
+      }
+    )
+
+    // Only the last transcript is printed. Five of them is not reading, and the
+    // numbers underneath are what the run is for.
+    if (run === RUNS) {
+      for (const turn of result.simulated_conversation ?? []) {
+        const who = turn.role === 'agent' ? 'TELMA' : 'PESSOA'
+        const said = (turn.message ?? '').trim()
+        if (said) console.log(`  ${who} | ${wrap(said)}\n`)
+        for (const call of turn.tool_calls ?? []) {
+          console.log(`        > ferramenta: ${call.tool_name ?? call.name}\n`)
+        }
+      }
     }
+
+    for (const [id, r] of Object.entries(result.analysis?.evaluation_criteria_results ?? {})) {
+      const seen = tally.get(id) ?? { ok: 0, n: 0, why: '' }
+      seen.n++
+      if (r.result === 'success') seen.ok++
+      else seen.why = r.rationale ?? ''
+      tally.set(id, seen)
+    }
+  }
+
+  console.log(`  ── critérios, ${RUNS} ${RUNS === 1 ? 'passagem' : 'passagens'} ─────────────────────`)
+  let shaky = 0
+  for (const [id, { ok, n, why }] of tally) {
+    if (ok < n) shaky++
+    const bar = '█'.repeat(ok) + '·'.repeat(n - ok)
+    console.log(`  ${String(ok).padStart(2)}/${n} ${bar.padEnd(Math.max(n, 5))} ${id}`)
+    if (ok < n && why) console.log(`        ${wrap(why, 8)}`)
+  }
+  console.log(
+    `\n  ${shaky === 0 ? 'todos os critérios passam sempre' : `${shaky} critério(s) não passam sempre`}\n`
   )
-
-  for (const turn of result.simulated_conversation ?? []) {
-    const who = turn.role === 'agent' ? 'TELMA' : 'PESSOA'
-    const said = (turn.message ?? '').trim()
-    if (said) console.log(`  ${who} | ${wrap(said)}\n`)
-    for (const call of turn.tool_calls ?? []) {
-      console.log(`        > ferramenta: ${call.tool_name ?? call.name}\n`)
-    }
-  }
-
-  const results = result.analysis?.evaluation_criteria_results ?? {}
-  console.log('  ── critérios ───────────────────────────────────────────────')
-  let failed = 0
-  for (const [id, r] of Object.entries(results)) {
-    const ok = r.result === 'success'
-    if (!ok) failed++
-    console.log(`  ${ok ? 'PASSA ' : 'FALHA '} ${id.padEnd(22)} ${wrap(r.rationale ?? '', 24)}`)
-  }
-  console.log(`\n  ${failed === 0 ? 'todos os critérios passam' : `${failed} critério(s) falham`}\n`)
-  process.exitCode = failed === 0 ? 0 : 1
+  process.exitCode = shaky === 0 ? 0 : 1
 } catch (e) {
   console.error(`\n  ${e.message}\n`)
   process.exitCode = 1

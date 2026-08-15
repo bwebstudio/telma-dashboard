@@ -159,6 +159,9 @@ const RULES = {
     closing: '# Como te despedes',
     closingAsks: '1. Perguntas se há mais alguma coisa em que possas ajudar.',
     closingWaits: '**Esperas que a pessoa responda à despedida**',
+    closingSaysAll: '**tudo o que se tratou nesta chamada**',
+    undoIsANewBooking: 'isso **é uma marcação nova**',
+    everyTaskKeepsDetails: '**O telefone continua a ser o mesmo e não voltas a pedi-lo**',
     closingNoHangup: 'nem enquanto a outra pessoa ainda fala',
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
@@ -189,6 +192,9 @@ const RULES = {
     closing: '# Cómo te despides',
     closingAsks: '1. Preguntas si hay algo más en lo que puedas ayudar.',
     closingWaits: '**Esperas a que conteste a la despedida**',
+    closingSaysAll: '**todo lo que se ha tratado en esta llamada**',
+    undoIsANewBooking: 'eso **es una cita nueva**',
+    everyTaskKeepsDetails: '**El teléfono sigue siendo el mismo y no lo vuelves a pedir**',
     closingNoHangup: 'ni mientras la otra persona sigue hablando',
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
@@ -727,7 +733,7 @@ test('an animal emergency does not go to 112', () => {
 // A floor is crude and it works. Lowering the number is still possible and is
 // now a deliberate line in a diff, next to a comment saying so, rather than an
 // absence nobody can see.
-const RULE_FLOOR = 28
+const RULE_FLOOR = 31
 
 test('the list of pinned rules has not quietly got shorter', () => {
   for (const lang of ['pt', 'es']) {
@@ -747,4 +753,33 @@ test('both languages pin the same rules', () => {
   const pt = Object.keys(RULES.pt).sort()
   const es = Object.keys(RULES.es).sort()
   assert.deepEqual(pt, es, 'one language pins a rule the other does not')
+})
+
+// Both of these were found by a simulated call, not by reading the base.
+//
+// The first: the rule about not asking twice lived under "if the person wants
+// another appointment", and the call that broke it began with a cancellation.
+// The rule was right and its scope was wrong, which no assertion could see
+// because the sentence was present the whole time.
+//
+// The second: a call with two things in it ended by confirming only the last
+// one, so the caller hung up not knowing whether the first had happened.
+test('one call, several jobs, and the details are given once', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      text.includes(RULES[lang].everyTaskKeepsDetails),
+      `${lang}: may ask for the phone again on a second job`
+    )
+    assert.ok(
+      text.includes(RULES[lang].closingSaysAll),
+      `${lang}: the closing may mention only the last thing done`
+    )
+    // Undoing a cancellation is neither cancelling nor booking, and the base
+    // said nothing about it: an hour let go two minutes ago belongs to nobody.
+    assert.ok(
+      text.includes(RULES[lang].undoIsANewBooking),
+      `${lang}: an undone cancellation may be promised without checking`
+    )
+  }
 })

@@ -118,6 +118,7 @@ async function previewPrompt(
     // a preview that promised a choice of professionals would be describing a
     // Telma nobody has yet.
     professionals: [],
+    caller_id: null,
     veterinary: specialty === 'veterinaria',
     specialty: specialty ? specialtyLabel(specialty, locale) : null,
     address: str(values.address),

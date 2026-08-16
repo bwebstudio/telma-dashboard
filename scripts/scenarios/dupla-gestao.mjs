@@ -27,7 +27,8 @@ export default {
     phone: '+34910000000',
     timezone: 'Europe/Madrid',
     professionals: [],
-    veterinary: false,
+    caller_id: null,
+  veterinary: false,
     services: ['Revisión', 'Limpieza', 'Empastes', 'Ortodoncia'],
     custom_services: null,
     opening_hours: [

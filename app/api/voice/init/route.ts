@@ -125,6 +125,7 @@ export async function POST(request: Request) {
     // of a one-person clinic invents a choice the caller does not have.
     professionals: ((diaries ?? []) as Array<{ name: string }>).map((r) => r.name),
     // Where an emergency goes, and the only thing about a clinic that changes it.
+    caller_id: body.caller_id?.trim() || null,
     veterinary: clinic.specialty === 'veterinaria',
     specialty: clinic.specialty ? specialtyLabel(clinic.specialty as Specialty, promptLocale) : null,
     address: clinic.address ?? null,

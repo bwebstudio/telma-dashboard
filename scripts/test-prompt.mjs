@@ -54,6 +54,7 @@ const BASE_CLINIC = {
   emergency_protocol: null,
   recording: true,
   professionals: [],
+  caller_id: null,
   veterinary: false,
 }
 
@@ -160,8 +161,10 @@ const RULES = {
     closingAsks: '1. Perguntas se há mais alguma coisa em que possas ajudar.',
     closingWaits: '**Esperas que a pessoa responda à despedida**',
     closingSaysAll: '**tudo o que se tratou nesta chamada**',
+    refusalVaries: '**Nunca dizes duas vezes seguidas a mesma frase para recusar.**',
+    urgencyIsDescribed: 'Urgência é o que a pessoa **descreve**, não a palavra que usa.',
     undoIsANewBooking: 'isso **é uma marcação nova**',
-    everyTaskKeepsDetails: '**Pedes só as que te faltarem.**',
+    everyTaskKeepsDetails: '**Antes de pedires qualquer uma delas, passas em revista o que já te disseram nesta chamada.**',
     closingNoHangup: 'nem enquanto a outra pessoa ainda fala',
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
@@ -193,8 +196,10 @@ const RULES = {
     closingAsks: '1. Preguntas si hay algo más en lo que puedas ayudar.',
     closingWaits: '**Esperas a que conteste a la despedida**',
     closingSaysAll: '**todo lo que se ha tratado en esta llamada**',
+    refusalVaries: '**Nunca dices dos veces seguidas la misma frase para negarte.**',
+    urgencyIsDescribed: 'Urgencia es lo que la persona **describe**, no la palabra que usa.',
     undoIsANewBooking: 'eso **es una cita nueva**',
-    everyTaskKeepsDetails: '**Pides solo las que te falten.**',
+    everyTaskKeepsDetails: '**Antes de pedir cualquiera de ellas, repasas lo que ya te han dicho en esta llamada.**',
     closingNoHangup: 'ni mientras la otra persona sigue hablando',
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
@@ -733,7 +738,7 @@ test('an animal emergency does not go to 112', () => {
 // A floor is crude and it works. Lowering the number is still possible and is
 // now a deliberate line in a diff, next to a comment saying so, rather than an
 // absence nobody can see.
-const RULE_FLOOR = 31
+const RULE_FLOOR = 33
 
 test('the list of pinned rules has not quietly got shorter', () => {
   for (const lang of ['pt', 'es']) {

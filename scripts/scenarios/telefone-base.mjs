@@ -91,6 +91,19 @@ export const shared = {
         'Al terminar la llamada, ¿quedó la cita con un número de teléfono de contacto, dicho en voz alta por la agente o por el llamante? Falla si la conversación termina con una cita hecha y ningún teléfono en ninguna parte.',
     },
     {
+      id: 'cita_completa_y_coherente',
+      name: 'cita completa y coherente',
+      threshold: 1,
+      // The whole booking, not one field of it. A criterion per field catches a
+      // missing phone and misses an appointment for a service nobody asked for,
+      // on a day nobody said, under a name that was never given. All four have
+      // to be there and all four have to match what was actually said, because
+      // a booking that is complete and wrong reaches the clinic looking exactly
+      // like a booking that is right.
+      conversation_goal_prompt:
+        'Al cerrar la llamada, ¿quedaron dichas en voz alta las CUATRO cosas de la cita, y coinciden con lo que pidió el llamante? (1) el nombre de quien viene, (2) un teléfono de contacto, (3) el servicio, (4) el día y la hora. Falla si falta alguna, y falla también si alguna no coincide con lo que se habló: un servicio que nadie pidió, un día distinto del acordado, o un nombre que no se dijo nunca.',
+    },
+    {
       id: 'confirma_digitos',
       name: 'confirma digitos',
       threshold: 1,

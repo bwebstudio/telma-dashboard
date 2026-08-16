@@ -14,7 +14,10 @@ NUNCA das tu número por tu cuenta. Si la agente te propone quedarse con el
 número desde el que llamas, dices que sí. Te llamas Marta Vidal, quieres una
 limpieza, el jueves te va bien, aceptas la primera hora y te despides.`,
   criteria: [
-    ...shared.criteria.filter((c) => c.id === 'cita_con_telefono'),
+    // All of them, not a selection. Filtering here was how the new
+    // whole-booking criterion silently skipped the one branch it was written
+    // for: the branch where the number never gets said.
+    ...shared.criteria,
     {
       id: 'ofrece_no_pregunta',
       name: 'ofrece no pregunta',

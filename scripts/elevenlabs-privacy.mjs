@@ -27,9 +27,15 @@ const PRIVACY = {
   // Seven days, and then the audio is deleted rather than merely hidden.
   retention_days: 7,
   delete_audio: true,
-  // The transcript outlives the audio by design: a clinic settling an argument
-  // three weeks later needs to read what was said, not to hear it.
-  delete_transcript_and_pii: false,
+  // The transcript goes with the audio, at the same seven days.
+  //
+  // It used to outlive it, on the reasoning that a clinic settling an argument
+  // three weeks later needs to read what was said rather than hear it. That
+  // reasoning survived finding out that redaction is an enterprise feature we
+  // do not have: unredacted clinical speech sitting for a month on a third
+  // party's servers, for a month we do not need it there. Our own copy keeps
+  // its thirty days, where we control what is written in the first place.
+  delete_transcript_and_pii: true,
   // Applied to what is already there too. Everything recorded so far was
   // recorded under no retention at all.
   apply_to_existing_conversations: true,
@@ -49,7 +55,7 @@ const PRIVACY = {
 const agent = await api('GET', `/v1/convai/agents/${AGENT}`)
 const before = agent.platform_settings?.privacy ?? {}
 console.log(`\n  agente: ${agent.name}`)
-console.log(`  antes:  retenção ${before.retention_days} dias, apagar áudio ${before.delete_audio}, redação ${before.conversation_history_redaction?.enabled}`)
+console.log(`  antes:  retenção ${before.retention_days} dias, apagar áudio ${before.delete_audio}, apagar transcrição ${before.delete_transcript_and_pii}, redação ${before.conversation_history_redaction?.enabled}`)
 
 if (DRY) {
   console.log('\n  --dry: nada foi alterado.\n')
@@ -63,8 +69,9 @@ await api('PATCH', `/v1/convai/agents/${AGENT}`, {
 // Read back. Settings have gone in silently and done nothing on this platform
 // before, and this is the one where believing the write is a legal answer.
 const after = (await api('GET', `/v1/convai/agents/${AGENT}`)).platform_settings?.privacy ?? {}
-console.log(`  depois: retenção ${after.retention_days} dias, apagar áudio ${after.delete_audio}, redação ${after.conversation_history_redaction?.enabled}`)
-const ok = after.retention_days === 7 && after.delete_audio === true
+console.log(`  depois: retenção ${after.retention_days} dias, apagar áudio ${after.delete_audio}, apagar transcrição ${after.delete_transcript_and_pii}, redação ${after.conversation_history_redaction?.enabled}`)
+const ok =
+  after.retention_days === 7 && after.delete_audio === true && after.delete_transcript_and_pii === true
 console.log(`\n  ${ok ? 'confirmado por leitura' : 'A LEITURA NÃO BATE CERTO'}\n`)
 process.exitCode = ok ? 0 : 1
 

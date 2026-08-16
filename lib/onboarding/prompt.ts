@@ -785,17 +785,34 @@ const OFFER: Record<string, string> = {
   en: 'For English, say "English".',
 }
 
+/**
+ * Whether the recording notice has already been played before Telma speaks.
+ *
+ * The notice belongs in a locution of its own, before the agent, and that
+ * locution is played by the telephone layer rather than by anything here. Until
+ * that exists the notice stays inside her first sentence, because the failure
+ * modes are not symmetrical: saying it twice is clumsy, and saying it never is
+ * recording somebody without telling them.
+ *
+ * So this is a switch that gets turned on when the telephony side plays it, not
+ * a rewrite that assumes it already does.
+ */
 export function greetingLine(
   clinicName: string,
   languageCode: string,
   formality: 'formal' | 'informal',
   recording: boolean,
   /** Every language this clinic answers in, the one it opens in included. */
-  languages: string[] = []
+  languages: string[] = [],
+  /** True once the telephone layer plays the notice before connecting. Then
+   *  Telma does not repeat it; until then she is the only one saying it. */
+  noticeAlreadyPlayed = false
 ): string {
   const set = GREETINGS[languageCode] ?? GREETINGS.pt
   let line = set[formality](clinicName)
-  if (!recording) {
+  // The middle sentence is the recording notice, and it comes out when there is
+  // nothing to notify or when somebody has already said it.
+  if (!recording || noticeAlreadyPlayed) {
     const parts = line.split(/(?<=[.!?])\s+/)
     line = parts.length >= 3 ? [parts[0], parts[parts.length - 1]].join(' ') : line
   }

@@ -796,3 +796,19 @@ test('one call, several jobs, and the details are given once', () => {
     )
   }
 })
+
+// The notice belongs before Telma speaks, played by the telephone layer. Until
+// that exists she is the only one saying it, and the two failures are not
+// symmetrical: saying it twice is clumsy, saying it never is recording somebody
+// without telling them. So this is a switch, not a removal.
+test('the recording notice is said exactly once', () => {
+  const alone = greetingLine('Clínica X', 'es', 'formal', true)
+  assert.ok(alone.includes('graba'), 'nobody warns the caller at all')
+
+  const withPreroll = greetingLine('Clínica X', 'es', 'formal', true, [], true)
+  assert.ok(!withPreroll.includes('graba'), 'the notice is given twice')
+  assert.ok(withPreroll.includes('Clínica X'), 'and the greeting survives losing it')
+
+  const notRecorded = greetingLine('Clínica X', 'es', 'formal', false)
+  assert.ok(!notRecorded.includes('graba'), 'a clinic that does not record still warns')
+})

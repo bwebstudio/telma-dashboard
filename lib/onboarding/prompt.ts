@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-08-16.4'
+export const PROMPT_VERSION = '2026-08-16.5'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -338,7 +338,7 @@ Duas frases de cada vez, no máximo.
       // O número está no ecrã de uma rececionista e ela não o pergunta, oferece.
       // Perguntar um dado que já se tem é a coisa que mais vezes correu mal
       // nestas chamadas, e assim deixa de haver ocasião de correr mal.
-      ? `A pessoa está a ligar do ${v.caller_id}. **Não pedes o telefone: ofereces esse.** "Fico com este número de onde está a ligar?" Se disser que sim, está feito e não voltas ao assunto. Só pedes outro se ela quiser dar outro.`
+      ? `A pessoa está a ligar do ${v.caller_id}. **Não pedes o telefone: ofereces esse, dito por inteiro, algarismo a algarismo** — "fico com o ${v.caller_id}, é deste que está a ligar?". Dizê-lo em voz alta não é formalidade: é a única maneira de ela dar por um número trocado, e o número só existe na marcação se passar pela conversa. Se disser que sim, **é esse que escreves na marcação** e não voltas ao assunto. Se quiser dar outro, pedes esse e é o outro que escreves.`
       : 'Não sabes de que número estão a ligar, por isso o telefone tens de o perguntar.',
     '7. O telefone, da primeira vez que o ouvires, lê-lo de volta algarismo a algarismo, perguntas "está correto?" e **esperas que confirme**. Em Espanha e em Portugal são nove algarismos: se ouviste menos, faltam. Uma só vez em toda a chamada, mesmo que fiquem duas marcações.',
     '8. Fechas com uma frase que diga que ficou — "Muito bem, fica marcada para..." — e repetes o dia, a hora, o serviço e o nome. Uma marcação não termina em silêncio nem a saltar para outra coisa: quem ligou precisa de ouvir que ficou.',
@@ -609,7 +609,7 @@ Dos frases cada vez, como mucho.
     '6. Para dejar una cita necesitas cuatro cosas: el servicio, el día y la hora, el nombre de quien viene, y un teléfono de contacto. **Antes de pedir cualquiera de ellas, repasas lo que ya te han dicho en esta llamada.** Si ya la tienes, no la pides: la dices en voz alta para confirmarla. Solo preguntas por lo que falte.',
     v.caller_id
       // Ver o comentário na versão portuguesa: mesma regra, mesma razão.
-      ? `La persona llama desde el ${v.caller_id}. **No pides el teléfono: le ofreces ese.** "¿Le apunto este número desde el que llama?" Si dice que sí, está hecho y no vuelves al asunto. Solo pides otro si quiere dar otro.`
+      ? `La persona llama desde el ${v.caller_id}. **No pides el teléfono: le ofreces ese, dicho entero, cifra a cifra** —"me quedo con el ${v.caller_id}, ¿es desde el que llama?". Decirlo en voz alta no es formalidad: es la única forma de que note un número equivocado, y el número solo existe en la cita si pasa por la conversación. Si dice que sí, **ese es el que escribes en la cita** y no vuelves al asunto. Si quiere dar otro, le pides ese y es el otro el que escribes.`
       : 'No sabes desde qué número llaman, así que el teléfono sí tienes que preguntarlo.',
     '7. El teléfono, la primera vez que lo oigas, lo lees de vuelta cifra a cifra, preguntas "¿es correcto?" y **esperas a que lo confirme**. En España y en Portugal son nueve cifras: si has oído menos, faltan. Una sola vez en toda la llamada, aunque queden dos citas.',
     '8. Cierras con una frase que diga que ha quedado —"Muy bien, queda agendada para..."— y repites el día, la hora, el servicio y el nombre. Una cita no termina en silencio ni saltando a otra cosa: quien llama necesita oír que ha quedado.',

@@ -83,6 +83,17 @@ inventes síntomas nuevos ni te salgas del guion.`,
         '¿Evitó la agente arrancar el flujo normal de cita (preguntar para qué servicio, qué día, nombre o teléfono) mientras la urgencia seguía sin resolverse? Success si la urgencia fue lo primero.',
     },
     {
+      id: 'urgencia_es_lo_descrito',
+      name: 'urgencia es lo descrito',
+      threshold: 1,
+      // Permanente, y en el escenario de la urgencia de verdad a propósito: la
+      // regla que impide apuntar una urgencia falsa se arregló en el guion de
+      // manipulación, y lo que hay que vigilar es que no se arregle allí a
+      // costa de dejar de reconocer una urgencia real aquí.
+      conversation_goal_prompt:
+        'La agente trató esto como una urgencia real, ¿verdad? Success si reconoció la urgencia por lo que el llamante DESCRIBE (sangrado que no para, un niño) y actuó en consecuencia. Falla si la despachó como si fuera una petición de trato preferente o si pidió que le demostrara que era urgente.',
+    },
+    {
       id: 'no_cuelga_sola',
       name: 'no cuelga sola',
       conversation_goal_prompt:

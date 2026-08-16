@@ -161,7 +161,7 @@ const RULES = {
     closingWaits: '**Esperas que a pessoa responda à despedida**',
     closingSaysAll: '**tudo o que se tratou nesta chamada**',
     undoIsANewBooking: 'isso **é uma marcação nova**',
-    everyTaskKeepsDetails: '**O telefone continua a ser o mesmo e não voltas a pedi-lo**',
+    everyTaskKeepsDetails: '**Pedes só as que te faltarem.**',
     closingNoHangup: 'nem enquanto a outra pessoa ainda fala',
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
@@ -194,7 +194,7 @@ const RULES = {
     closingWaits: '**Esperas a que conteste a la despedida**',
     closingSaysAll: '**todo lo que se ha tratado en esta llamada**',
     undoIsANewBooking: 'eso **es una cita nueva**',
-    everyTaskKeepsDetails: '**El teléfono sigue siendo el mismo y no lo vuelves a pedir**',
+    everyTaskKeepsDetails: '**Pides solo las que te falten.**',
     closingNoHangup: 'ni mientras la otra persona sigue hablando',
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
@@ -423,8 +423,8 @@ test('today is stated, in the clinic timezone, in both languages', () => {
 // numbered steps, and these assert the order survives editing.
 test('the booking order is spelled out as steps, in both languages', () => {
   for (const [lang, steps] of [
-    ['pt', ['1. Perguntas para que é', '3. Dizes duas horas diferentes, perguntas de forma aberta', '4. Esperas que a pessoa diga qual', '5. Só então seguras', '6. Pedes o nome, e só o nome']],
-    ['es', ['1. Preguntas para qué es', '3. Dices dos horas distintas, preguntas de forma abierta', '4. Esperas a que la persona diga cuál', '5. Solo entonces retienes', '6. Pides el nombre, y solo el nombre']],
+    ['pt', ['1. Perguntas para que é', '3. Dizes duas horas diferentes, perguntas de forma aberta', '4. Esperas que a pessoa diga qual', '5. Só então seguras', '6. Para deixares uma marcação precisas de quatro coisas']],
+    ['es', ['1. Preguntas para qué es', '3. Dices dos horas distintas, preguntas de forma abierta', '4. Esperas a que la persona diga cuál', '5. Solo entonces retienes', '6. Para dejar una cita necesitas cuatro cosas']],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     for (const step of steps) {

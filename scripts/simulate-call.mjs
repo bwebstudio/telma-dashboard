@@ -123,7 +123,20 @@ try {
       }
     )
 
-    const turns = (result.simulated_conversation ?? []).filter((t) => t.role === 'agent').length
+    // Everything up to the caller hanging up. After that the simulator keeps
+    // going anyway: it does not honour its own END_CALL marker, the caller
+    // repeats it, and Telma answers each one by registering the call again,
+    // until the turn limit. That loop is not Telma being long-winded and not
+    // the caller going round in circles, and counting it made a thirteen-turn
+    // conversation look like thirty-one. A real telephone hangs up.
+    //
+    // It does say something true about production, though: she will re-register
+    // a call given the chance, which is why the webhook is idempotent on the
+    // conversation id.
+    const all = result.simulated_conversation ?? []
+    const hungUp = all.findIndex((t) => (t.message ?? '').includes('END_CALL'))
+    const spoken = hungUp === -1 ? all : all.slice(0, hungUp)
+    const turns = spoken.filter((t) => t.role === 'agent').length
     if (turns >= MAX_TURNS) {
       truncated++
       continue
@@ -132,7 +145,7 @@ try {
     // Only the last transcript is printed. Five of them is not reading, and the
     // numbers underneath are what the run is for.
     if (run === RUNS) {
-      for (const turn of result.simulated_conversation ?? []) {
+      for (const turn of spoken) {
         const who = turn.role === 'agent' ? 'TELMA' : 'PESSOA'
         const said = (turn.message ?? '').trim()
         if (said) console.log(`  ${who} | ${wrap(said)}\n`)

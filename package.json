@@ -14,7 +14,8 @@
     "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs",
     "test:content": "node --experimental-strip-types --test scripts/test-content.mjs",
     "simulate": "node --experimental-strip-types scripts/simulate-call.mjs",
-    "evaluation": "node scripts/elevenlabs-evaluation.mjs"
+    "evaluation": "node scripts/elevenlabs-evaluation.mjs",
+    "validate:criteria": "node --experimental-strip-types scripts/validate-criteria.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

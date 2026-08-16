@@ -17,7 +17,7 @@ se firma.
 |---|---|---|---|
 | Grabación de audio de la llamada | ElevenLabs | **7 días**, con borrado efectivo | sí, leído de la API |
 | Transcripción de la llamada | ElevenLabs | **7 días**, borrado junto con el audio | sí, leído de la API |
-| Transcripción de la llamada | nuestra base | **no se guarda** | sí: la columna existe y ningún código la escribe |
+| Transcripción de la llamada | nuestra base | **no se guarda, y ya no se puede guardar** | sí: la columna se eliminó en la migración 0041 |
 | Resumen de la llamada | nuestra base | **90 días** | sí, `purge_expired()` |
 | Teléfono de quien llama | nuestra base | **90 días** | sí, `purge_expired()` |
 | Duración, resultado, clínica | nuestra base | indefinido (facturación, no identifica) | sí |
@@ -84,7 +84,25 @@ responder leyendo nuestro código:
 
 ---
 
-## 4. Pendientes conocidos
+## 4. Derecho de supresión
+
+La clínica lo ejecuta desde su propio panel, en **Mi clínica**, sin pasar por
+nosotros: la petición le llega a ella y el plazo legal es de un mes, que se
+consumiría en correos si tuviera que pedírnoslo.
+
+Busca por teléfono, enseña lo que hay antes de tocar nada, y al confirmar:
+
+- **Las citas se anonimizan, no se borran.** Pierden nombre y teléfono; el
+  día, la hora y el servicio se mantienen, porque esa fila también es el
+  registro de una tarde que la clínica trabajó y facturó.
+- Las llamadas de ese número pierden número, resumen y grabación.
+- Las líneas del registro de actividad que llevan su nombre se eliminan.
+- Queda constancia en la tabla `erasures`: fecha, quién lo hizo, cuántas
+  filas y la referencia que la clínica quiera anotar. **Sin el teléfono y sin
+  el nombre**: guardar un hash de nueve dígitos es guardar el número con
+  pasos extra, y en una tabla creada para demostrar que borramos.
+
+## 5. Pendientes conocidos
 
 - **Locución de aviso de grabación previa al agente.** Hoy el aviso lo da
   Telma dentro de su primera frase. El interruptor para que deje de darlo
@@ -94,6 +112,4 @@ responder leyendo nuestro código:
   y no al conectar con el agente, hay audio anterior al aviso. **Primera
   medición a hacer en cuanto haya número conectado**, antes de cualquier
   llamada real de cliente.
-- **Derecho de supresión.** Hoy no hay forma de borrar los datos de un
-  paciente concreto a petición suya. `purge_expired()` borra por antigüedad,
-  no por persona.
+- **Cuándo empieza a grabar Twilio**, más abajo.

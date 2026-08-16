@@ -1,0 +1,17 @@
+-- The transcript column, which has never held anything.
+--
+-- It was added in 0012 for a panel that would show what was said. Nothing ever
+-- wrote to it: the webhook does not receive a transcript, and the simulator
+-- fetches one from ElevenLabs and throws it away. So the answer to "what do we
+-- store of the transcript" turned out to be "nothing", by accident.
+--
+-- Dropped rather than documented. A column that exists is a column somebody
+-- fills in six months from now, reasonably, without knowing that keeping
+-- clinical speech in our database for ninety days is a decision that was taken
+-- deliberately and written into a contract. The schema is the only comment
+-- nobody can fail to read.
+--
+-- If a transcript is ever needed in the panel, fetch it from ElevenLabs inside
+-- its seven days, and show it without storing it. That is what the simulator
+-- already does.
+alter table calls drop column if exists transcript;

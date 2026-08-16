@@ -42,10 +42,9 @@ begin
      and created_at < now() - interval '7 days';
   get diagnostics v_audio = row_count;
 
-  update calls set transcript = null
-   where transcript is not null
-     and created_at < now() - interval '30 days';
-  get diagnostics v_transcript = row_count;
+  -- Nothing to clear: `calls.transcript` was dropped in 0041 because it had
+  -- never held anything. Kept as a zero so the report shape does not change.
+  v_transcript := 0;
 
   update calls set summary = null, from_phone = null
    where (summary is not null or from_phone is not null)

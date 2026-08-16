@@ -447,8 +447,8 @@ test('what is past its date is deleted, and what is not stays', async () => {
   const call = async (ageDays) =>
     (
       await db.query(
-        `insert into calls (clinic_id, from_phone, duration_seconds, result, summary, transcript, recording_url, created_at)
-         values ($1,'+34600000000',60,'marcacao','resumo','[]'::jsonb,'https://audio', now() - ($2 || ' days')::interval)
+        `insert into calls (clinic_id, from_phone, duration_seconds, result, summary, recording_url, created_at)
+         values ($1,'+34600000000',60,'marcacao','resumo','https://audio', now() - ($2 || ' days')::interval)
          returning id`,
         [C, ageDays]
       )
@@ -469,13 +469,10 @@ test('what is past its date is deleted, and what is not stays', async () => {
   const row = async (id) => (await db.query(`select * from calls where id = $1`, [id])).rows[0]
 
   const f = await row(fresh)
-  assert.ok(f.recording_url && f.transcript && f.summary, 'a call from yesterday keeps everything')
+  assert.ok(f.recording_url && f.summary, 'a call from yesterday keeps everything')
 
   assert.equal((await row(week)).recording_url, null, 'audio goes at seven days')
-  assert.ok((await row(week)).transcript, 'and the transcript does not go with it')
-
-  assert.equal((await row(month)).transcript, null, 'the transcript goes at thirty days')
-  assert.ok((await row(month)).summary, 'and the summary does not go with it')
+  assert.ok((await row(month)).summary, 'the summary outlives the audio')
 
   const q = await row(quarter)
   assert.equal(q.summary, null, 'the summary goes at ninety days')
@@ -520,5 +517,89 @@ test('appointments outlive the clinic by thirty days and no more', async () => {
   assert.equal(await left(rows[0]), 1, 'an active clinic keeps its appointments however old')
   assert.equal(await left(rows[1]), 0, 'a clinic gone forty days does not')
   assert.equal(await left(rows[2]), 1, 'a clinic gone five days still has its thirty')
+  await db.close()
+})
+
+// Erasing one person, which is the test that matters: not that hers goes, but
+// that nobody else's does. A function that empties the table passes any test
+// that only checks for absence.
+test('one patient is erased and the others are untouched', async () => {
+  const db = await freshDatabase()
+  const C = '99999999-9999-9999-9999-999999999999'
+  const OTHER = 'aaaaaaaa-9999-9999-9999-999999999999'
+  for (const [id, name] of [[C, 'Clínica A'], [OTHER, 'Clínica B']]) {
+    await db.query(
+      `insert into clinics (id, name, timezone, selected_languages) values ($1,$2,'Europe/Madrid',array['es'])`,
+      [id, name]
+    )
+  }
+
+  const book = async (clinic, name, phone) => {
+    const r = await db.query(`select id from resources where clinic_id = $1`, [clinic])
+    await db.query(
+      `insert into appointments (clinic_id, resource_id, patient_name, patient_phone, reason, scheduled_at, duration_minutes)
+       values ($1,$2,$3,$4,'Limpieza', now() + interval '2 days', 30)`,
+      [clinic, r.rows[0].id, name, phone]
+    )
+    await db.query(
+      `insert into calls (clinic_id, from_phone, duration_seconds, result, summary)
+       values ($1,$2,90,'marcacao','resumen')`,
+      [clinic, phone]
+    )
+    await db.query(
+      `insert into activity_log (clinic_id, type, message) values ($1,'appointment_created', $2)`,
+      [clinic, `A Telma deixou uma pre-marcacao para ${name}`]
+    )
+  }
+
+  await book(C, 'Ana Torres', '+34623456789')
+  await book(C, 'Luis Prado', '+34611000111')
+  // Same number, different clinic: two relationships, and only one asked.
+  await book(OTHER, 'Ana Torres', '623456789')
+
+  const preview = (await db.query(`select find_patient_data($1, $2) as r`, [C, '623 456 789'])).rows[0].r
+  assert.equal(preview.appointments, 1, 'the preview finds her booking however the number is written')
+  assert.deepEqual(preview.names, ['Ana Torres'])
+
+  const done = (await db.query(`select erase_patient($1, $2, $3) as r`, [C, '+34 623 456 789', 'caso 12'])).rows[0].r
+  assert.equal(done.appointments_anonymised, 1)
+  assert.equal(done.calls_redacted, 1)
+  assert.equal(done.activity_deleted, 1)
+
+  const hers = (
+    await db.query(
+      `select patient_name, patient_phone, reason, scheduled_at from appointments
+        where clinic_id = $1 and patient_name = 'Apagado a pedido'`,
+      [C]
+    )
+  ).rows[0]
+  assert.ok(hers, 'her booking is still there')
+  assert.equal(hers.patient_phone, '', 'without a number')
+  assert.equal(hers.reason, 'Limpieza', 'and the clinic keeps what it billed')
+
+  const call = (await db.query(`select * from calls where clinic_id = $1 and from_phone is null`, [C])).rows[0]
+  assert.equal(call.summary, null)
+
+  // Everyone else, in both clinics.
+  const luis = (
+    await db.query(`select count(*)::int as n from appointments where clinic_id = $1 and patient_name = 'Luis Prado'`, [C])
+  ).rows[0].n
+  assert.equal(luis, 1, 'the other patient of the same clinic is untouched')
+
+  const elsewhere = (
+    await db.query(`select count(*)::int as n from appointments where clinic_id = $1 and patient_name = 'Ana Torres'`, [OTHER])
+  ).rows[0].n
+  assert.equal(elsewhere, 1, 'the same person at another clinic is untouched')
+
+  const log = (await db.query(`select count(*)::int as n from activity_log where clinic_id = $1`, [C])).rows[0].n
+  assert.equal(log, 1, 'only the line naming her is gone')
+
+  const proof = (await db.query(`select * from erasures where clinic_id = $1`, [C])).rows[0]
+  assert.equal(proof.reference, 'caso 12')
+  // No number and no name anywhere in the proof: a table created to show we
+  // delete things must not be the place a number outlives the deletion.
+  assert.ok(!JSON.stringify(proof).includes('623456789'))
+  assert.ok(!JSON.stringify(proof).includes('Ana'))
+
   await db.close()
 })

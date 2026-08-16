@@ -6,6 +6,7 @@ import { startsIn } from '@/lib/slots'
 import { bookingCategory, categoryBackground } from '@/lib/service-colour'
 import { resolveDuration, type DurationSource } from '@/lib/service-duration'
 import { serviceLabel } from '@/lib/onboarding/catalog'
+import { fill } from '@/lib/fill'
 
 export type PlannerView = 'semana' | 'mes'
 
@@ -359,13 +360,4 @@ export function Planner({
     </>
   )
 
-}
-
-/** Fills `{n}` and `{total}` in a dictionary string. Dictionary entries are
- *  strings, never functions: they are handed whole to client components, and a
- *  function does not survive that crossing. */
-function fill(template: string, values: Record<string, number>): string {
-  return template.replace(/\{(\w+)\}/g, (whole, key) =>
-    key in values ? String(values[key]) : whole
-  )
 }

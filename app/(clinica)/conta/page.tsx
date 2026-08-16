@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle } from '@/components/ui'
+import { ErasureForm } from '@/components/clinic/ErasureForm'
 import { BrandingForm } from '@/components/clinic/BrandingForm'
 import { BillingLive } from '@/components/clinic/BillingLive'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
@@ -151,6 +152,13 @@ export default async function ContaPage() {
             />
           </section>
         )}
+
+        <section className="mt-12">
+          <SectionTitle>{dict.erasure.title}</SectionTitle>
+          <div className="card mt-5 p-5 sm:p-6">
+            <ErasureForm dict={dict} />
+          </div>
+        </section>
       </div>
     </>
   )

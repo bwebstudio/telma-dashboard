@@ -202,6 +202,20 @@ export interface Dictionary {
     filterAll: string
     filterPending: string
   }
+  /** A patient asking to be forgotten, answered by the clinic itself. */
+  erasure: {
+    title: string
+    help: string
+    phoneLabel: string
+    look: string
+    nothingFound: string
+    foundCount: string
+    whatSurvives: string
+    referenceLabel: string
+    referencePlaceholder: string
+    erase: string
+    doneCount: string
+  }
   horarios: {
     title: string
     /** The windows editor that replaced the hour grid. */

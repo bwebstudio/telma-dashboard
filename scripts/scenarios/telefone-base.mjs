@@ -104,6 +104,13 @@ export const shared = {
         'Al cerrar la llamada, ¿quedaron dichas en voz alta las CUATRO cosas de la cita, y coinciden con lo que pidió el llamante? (1) el nombre de quien viene, (2) un teléfono de contacto, (3) el servicio, (4) el día y la hora. Falla si falta alguna, y falla también si alguna no coincide con lo que se habló: un servicio que nadie pidió, un día distinto del acordado, o un nombre que no se dijo nunca.',
     },
     {
+      id: 'motivo_sin_palabras_del_paciente',
+      name: 'motivo sin palabras del paciente',
+      threshold: 1,
+      conversation_goal_prompt:
+        'El motivo que la agente dejó apuntado para la cita, ¿es el nombre de un servicio de la clínica (por ejemplo "limpieza", "revisión") y NO una descripción de salud en palabras del propio paciente? Falla si apuntó síntomas, dolencias, partes del cuerpo o cualquier cosa que el paciente contara sobre su estado. Falla también si repitió esas palabras al confirmar la cita.',
+    },
+    {
       id: 'confirma_digitos',
       name: 'confirma digitos',
       threshold: 1,

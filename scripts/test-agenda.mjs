@@ -429,3 +429,96 @@ test('the panel generates the same times the diary does', async () => {
   }
   await db.close()
 })
+
+// Retention, proved by watching things disappear.
+//
+// A column saying when a row should go is a promise. This deletes, so the test
+// plants rows already past their date and checks they are gone afterwards, and
+// checks in the same breath that the rows still inside their window survive:
+// a purge that deletes everything passes a test that only looks for absence.
+test('what is past its date is deleted, and what is not stays', async () => {
+  const db = await freshDatabase()
+  const C = '55555555-5555-5555-5555-555555555555'
+  await db.query(
+    `insert into clinics (id, name, timezone, selected_languages) values ($1,'Clínica Vieja','Europe/Madrid',array['es'])`,
+    [C]
+  )
+
+  const call = async (ageDays) =>
+    (
+      await db.query(
+        `insert into calls (clinic_id, from_phone, duration_seconds, result, summary, transcript, recording_url, created_at)
+         values ($1,'+34600000000',60,'marcacao','resumo','[]'::jsonb,'https://audio', now() - ($2 || ' days')::interval)
+         returning id`,
+        [C, ageDays]
+      )
+    ).rows[0].id
+
+  const fresh = await call(1)
+  const week = await call(10)
+  const month = await call(40)
+  const quarter = await call(100)
+  await db.query(
+    `insert into activity_log (clinic_id, type, message, created_at)
+     values ($1,'call_received','vieja', now() - interval '13 months'), ($1,'call_received','nueva', now())`,
+    [C]
+  )
+
+  await db.query(`select purge_expired()`)
+
+  const row = async (id) => (await db.query(`select * from calls where id = $1`, [id])).rows[0]
+
+  const f = await row(fresh)
+  assert.ok(f.recording_url && f.transcript && f.summary, 'a call from yesterday keeps everything')
+
+  assert.equal((await row(week)).recording_url, null, 'audio goes at seven days')
+  assert.ok((await row(week)).transcript, 'and the transcript does not go with it')
+
+  assert.equal((await row(month)).transcript, null, 'the transcript goes at thirty days')
+  assert.ok((await row(month)).summary, 'and the summary does not go with it')
+
+  const q = await row(quarter)
+  assert.equal(q.summary, null, 'the summary goes at ninety days')
+  assert.equal(q.from_phone, null, 'and so does the number that identifies somebody')
+  assert.equal(q.duration_seconds, 60, 'what billing needs survives')
+
+  const { rows: log } = await db.query(`select message from activity_log where clinic_id = $1`, [C])
+  assert.deepEqual(log.map((l) => l.message), ['nueva'], 'the log keeps twelve months')
+
+  await db.close()
+})
+
+// A clinic that left thirty days ago has no claim on its patients' data, and
+// neither have we. One that is still paying keeps everything.
+test('appointments outlive the clinic by thirty days and no more', async () => {
+  const db = await freshDatabase()
+  const rows = []
+  for (const [id, status, ago] of [
+    ['66666666-6666-6666-6666-666666666666', 'ativa', 400],
+    ['77777777-7777-7777-7777-777777777777', 'cancelada', 40],
+    ['88888888-8888-8888-8888-888888888888', 'cancelada', 5],
+  ]) {
+    await db.query(
+      `insert into clinics (id, name, timezone, selected_languages, status, updated_at)
+       values ($1,'C','Europe/Madrid',array['es'],$2, now() - ($3 || ' days')::interval)`,
+      [id, status, ago]
+    )
+    const r = await db.query(`select id from resources where clinic_id = $1`, [id])
+    await db.query(
+      `insert into appointments (clinic_id, resource_id, patient_name, patient_phone, scheduled_at, duration_minutes)
+       values ($1,$2,'Ana','+34600000000', now(), 30)`,
+      [id, r.rows[0].id]
+    )
+    rows.push(id)
+  }
+
+  await db.query(`select purge_expired()`)
+
+  const left = async (id) =>
+    (await db.query(`select count(*)::int as n from appointments where clinic_id = $1`, [id])).rows[0].n
+
+  assert.equal(await left(rows[0]), 1, 'an active clinic keeps its appointments however old')
+  assert.equal(await left(rows[1]), 0, 'a clinic gone forty days does not')
+  assert.equal(await left(rows[2]), 1, 'a clinic gone five days still has its thirty')
+  await db.close()
+})

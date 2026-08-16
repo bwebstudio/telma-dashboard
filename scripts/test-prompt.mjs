@@ -610,13 +610,21 @@ test('the language is settled at the greeting and does not move', () => {
 // The clinic reads that line to prepare the appointment, and a generic label
 // tells it nothing. Discretion is about what is said out loud in somebody's
 // living room; it was never about what the clinic gets to know.
-test('what is not said aloud is still written down', () => {
+// The rule this replaced said the opposite, and it was ours: the base told her
+// to write down "lifting" rather than "consulta de valoración" so the clinic
+// would know what was coming. It read as care and it was health data, in the
+// patient's own words, in a database of ours, kept for as long as the row
+// lived. The specification had said not to do this the whole time.
+//
+// What the clinic needs is the service, which is a field it already configured.
+// What the patient said stays in the conversation.
+test('what goes in the panel is the service, never the words about health', () => {
   for (const [lang, rule] of [
-    ['pt', '**No painel escreves o motivo tal como a pessoa o disse**'],
-    ['es', '**En el panel apuntas el motivo tal como lo dijo la persona**'],
+    ['pt', '**No painel escreves o serviço da agenda, não as palavras da pessoa.**'],
+    ['es', '**En el panel apuntas el servicio de la agenda, no las palabras de la persona.**'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
-    assert.ok(text.includes(rule), `${lang}: may file a generic label`)
+    assert.ok(text.includes(rule), `${lang}: still files the patient's own words`)
   }
 })
 

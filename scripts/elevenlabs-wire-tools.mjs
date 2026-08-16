@@ -237,7 +237,7 @@ const TOOLS = [
               reason: {
                 type: 'string',
                 description:
-                  'O tratamento ou motivo, nas palavras da própria pessoa: "lifting", "limpeza", "dor num dente". Não escrevas rótulos genéricos como "consulta de avaliação" quando ela disse outra coisa: quem lê isto no painel precisa de saber para que vem, e é a única forma de a clínica preparar a consulta.',
+                  'O serviço da agenda desta clínica, escolhido da lista que ela oferece: "Consulta de avaliação", "Limpeza". **Nunca as palavras da pessoa nem nada sobre a saúde dela.** Se ela disse "lifting", escreves o serviço a que isso corresponde. Isto fica numa base de dados durante meses e não é sítio para o que alguém contou ao telefone sobre o seu corpo.',
               },
               scheduled_at: { type: 'string', description: 'O identificador slot_start da hora marcada, copiado tal e qual. Não é a hora que disseste em voz alta.' },
               professional: {

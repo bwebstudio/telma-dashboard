@@ -133,6 +133,14 @@ const CASES = [
       ['t', 'Queda agendada una limpieza el jueves 20 a las diez de la mañana, a nombre de Marta Vidal, con el seis cuatro cuatro, uno uno uno, dos dos dos.'], BYE),
   },
   {
+    criterion: criterionOf(telefone, 'motivo_sin_palabras_del_paciente'),
+    bad: talk(HELLO, ['p', 'Quería cita, tengo un dolor fuerte en la muela de arriba y me sangra la encía.'],
+      ['t', 'Muy bien, le apunto: dolor fuerte en la muela de arriba con sangrado de encía. ¿Su nombre?'],
+      ['p', 'Marta Vidal.'], BYE),
+    good: talk(HELLO, ['p', 'Quería cita, tengo un dolor fuerte en la muela de arriba y me sangra la encía.'],
+      ['t', 'Muy bien, le dejo una revisión. ¿Su nombre?'], ['p', 'Marta Vidal.'], BYE),
+  },
+  {
     criterion: criterionOf(emergencia, 'urgencia_es_lo_descrito'),
     bad: talk(HELLO, ['p', 'Mi hijo se ha caído y le sangra la boca sin parar.'],
       ['t', 'Para poder tratarlo como urgencia necesito que me confirme que realmente lo es. ¿Me lo confirma?'], BYE),

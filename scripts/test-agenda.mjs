@@ -603,3 +603,35 @@ test('one patient is erased and the others are untouched', async () => {
 
   await db.close()
 })
+
+// The hole that is only visible from outside the application.
+//
+// Every table in `public` is reachable through PostgREST with a session, so a
+// table without row level security is one anybody logged in can read and write.
+// 0002 has a loop covering every clinic-scoped table; the ones added afterwards
+// fell through it and nobody noticed, because nothing in the product tries.
+test('every clinic-scoped table has row level security and a policy', async () => {
+  const db = await freshDatabase()
+  const { rows } = await db.query(`
+    select c.relname as table_name,
+           c.relrowsecurity as rls,
+           (select count(*) from pg_policies p
+             where p.schemaname = 'public' and p.tablename = c.relname) as policies
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'r'
+       and exists (
+         select 1 from information_schema.columns col
+          where col.table_schema = 'public' and col.table_name = c.relname
+            and col.column_name = 'clinic_id'
+       )
+     order by c.relname
+  `)
+  const bad = rows.filter((r) => !r.rls || Number(r.policies) === 0)
+  assert.deepEqual(
+    bad.map((r) => r.table_name),
+    [],
+    'these hold clinic data and anybody with a session can read them'
+  )
+  await db.close()
+})

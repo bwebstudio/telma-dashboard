@@ -159,7 +159,7 @@ const RULES = {
     toneInWords: 'O tom faz-se com as palavras',
     closing: '# Como te despedes',
     closingAsks: '1. Perguntas se há mais alguma coisa em que possas ajudar.',
-    closingWaits: '**Esperas que a pessoa responda à despedida**',
+    closingWaits: '**esperas que a pessoa responda à despedida**',
     closingSaysAll: '**tudo o que se tratou nesta chamada**',
     refusalVaries: '**Nunca dizes duas vezes seguidas a mesma frase para recusar.**',
     urgencyIsDescribed: 'Urgência é o que a pessoa **descreve**, não a palavra que usa.',
@@ -171,7 +171,8 @@ const RULES = {
     neverRecitesAll: '**Mesmo que peçam tudo, não recitas tudo.**',
     refusalHelps: 'recusas em três tempos',
     bridgeIsNotAnEcho: '**A ponte nunca é repetir o que a pessoa disse.**',
-    noPaperworkAloud: 'Registar a chamada é coisa tua e não se anuncia',
+    noPaperworkAloud: 'Registar é coisa tua e não se anuncia',
+    alwaysFiles: '**Registas sempre a chamada antes de desligar**',
     lastWordWins: '**vale sempre o último**',
     silenceOnce: '**Duas perguntas antes de desligar, nunca uma**',
     letsThemGo: 'aceitas sem insistir',
@@ -202,7 +203,7 @@ const RULES = {
     toneInWords: 'El tono se hace con las palabras',
     closing: '# Cómo te despides',
     closingAsks: '1. Preguntas si hay algo más en lo que puedas ayudar.',
-    closingWaits: '**Esperas a que conteste a la despedida**',
+    closingWaits: '**esperas a que conteste a la despedida**',
     closingSaysAll: '**todo lo que se ha tratado en esta llamada**',
     refusalVaries: '**Nunca dices dos veces seguidas la misma frase para negarte.**',
     urgencyIsDescribed: 'Urgencia es lo que la persona **describe**, no la palabra que usa.',
@@ -214,7 +215,8 @@ const RULES = {
     neverRecitesAll: '**Aunque te pidan todo, no lo recitas todo.**',
     refusalHelps: 'te niegas en tres tiempos',
     bridgeIsNotAnEcho: '**El puente nunca es repetir lo que ha dicho la persona.**',
-    noPaperworkAloud: 'Registrar la llamada es cosa tuya y no se anuncia',
+    noPaperworkAloud: 'Registrar es cosa tuya y no se anuncia',
+    alwaysFiles: '**Registras siempre la llamada antes de colgar**',
     lastWordWins: '**vale siempre lo último**',
     silenceOnce: '**Dos preguntas antes de colgar, nunca una**',
     letsThemGo: 'lo aceptas sin insistir',
@@ -762,7 +764,7 @@ test('an animal emergency does not go to 112', () => {
 // A floor is crude and it works. Lowering the number is still possible and is
 // now a deliberate line in a diff, next to a comment saying so, rather than an
 // absence nobody can see.
-const RULE_FLOOR = 39
+const RULE_FLOOR = 40
 
 test('the list of pinned rules has not quietly got shorter', () => {
   for (const lang of ['pt', 'es']) {
@@ -1047,6 +1049,23 @@ test('the paperwork is never announced, and the goodbye is a goodbye', () => {
     assert.ok(
       text.includes(RULES[lang].noPaperworkAloud),
       `${lang}: she may sign off by announcing that she is filing the call`
+    )
+  }
+})
+
+// A caller swore at her four times. She handled it well — deflected, warned
+// once, ended the call thanking him — and never filed it. She even said "voy a
+// dejarlo registrado" and then did not, because the rule about filing lived
+// inside the booking procedure and that call never entered it.
+//
+// The clinic was billed for five and a half minutes with no record that the
+// telephone had rung.
+test('every call is filed, booking or no booking', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      text.includes(RULES[lang].alwaysFiles),
+      `${lang}: a call with no booking in it can end unrecorded`
     )
   }
 })

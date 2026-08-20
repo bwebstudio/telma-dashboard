@@ -86,25 +86,38 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'date_not_a_date' }, { status: 400 })
   }
 
-  const collected: Array<Record<string, unknown>> = []
-  for (let i = 0; i < days; i++) {
+  // Every day at once, not one after another.
+  //
+  // This asked the database for one day, waited, asked for the next, and so on.
+  // A caller who says "whenever you have something" gets seven days looked at,
+  // which was seven round trips in a row while she sat there saying "a ver..."
+  // The days do not depend on each other and never did.
+  const days_ = Array.from({ length: days }, (_, i) => {
     const day = new Date(start)
     day.setUTCDate(day.getUTCDate() + i)
-    const iso = day.toISOString().slice(0, 10)
+    return day.toISOString().slice(0, 10)
+  })
 
-    const { data, error } = await admin.rpc('available_slots', {
-      p_clinic_id: clinicId,
-      p_date: iso,
-      // Asked for the length this particular treatment takes, so a forty-five
-      // minute session is never offered at a time that runs past closing and
-      // never has half an hour booked against it. Null when the clinic has set
-      // no per-service lengths, which is the same question this endpoint has
-      // always asked.
-      p_duration: wanted.minutes,
-      p_resource_id: withWhom,
-    })
+  const answers = await Promise.all(
+    days_.map((iso) =>
+      admin
+        .rpc('available_slots', {
+          p_clinic_id: clinicId,
+          p_date: iso,
+          // Asked for the length this particular treatment takes, so a
+          // forty-five minute session is never offered at a time that runs past
+          // closing and never has half an hour booked against it.
+          p_duration: wanted.minutes,
+          p_resource_id: withWhom,
+        })
+        .then((r: { data: unknown; error: { message: string } | null }) => ({ iso, ...r }))
+    )
+  )
+
+  const collected: Array<Record<string, unknown>> = []
+  for (const { iso, data: rows, error } of answers) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    for (const slot of (data ?? []) as Array<Record<string, unknown>>) {
+    for (const slot of (rows ?? []) as Array<Record<string, unknown>>) {
       collected.push({ ...slot, date: iso })
     }
   }

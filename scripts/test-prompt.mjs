@@ -171,7 +171,7 @@ const RULES = {
     neverRecitesAll: '**Mesmo que peçam tudo, não recitas tudo.**',
     refusalHelps: 'recusas em três tempos',
     lastWordWins: '**vale sempre o último**',
-    silenceOnce: 'perguntas uma vez se ainda está aí',
+    silenceOnce: '**Duas perguntas antes de desligar, nunca uma**',
     letsThemGo: 'aceitas sem insistir',
     noHoursRecital: 'recitas o horário de abertura',
     soonest: 'o mais cedo possível',
@@ -181,6 +181,7 @@ const RULES = {
     noTags: 'Não escreves etiquetas de nenhum tipo',
     twoRealOptions: 'não são duas opções, são uma',
     numberOnce: 'Uma só vez em toda a chamada, mesmo que fiquem duas marcações.',
+    nameAndNumberTogether: '**Confirmas o nome e o telefone juntos, numa só vez**',
     noRoutineSpelling: 'não soletras um nome que percebeste bem',
     toolsTitle: '# A agenda',
     toolsBeforeOffering: 'Chamas isto **antes** de ofereceres qualquer hora',
@@ -211,7 +212,7 @@ const RULES = {
     neverRecitesAll: '**Aunque te pidan todo, no lo recitas todo.**',
     refusalHelps: 'te niegas en tres tiempos',
     lastWordWins: '**vale siempre lo último**',
-    silenceOnce: 'preguntas una vez si sigue ahí',
+    silenceOnce: '**Dos preguntas antes de colgar, nunca una**',
     letsThemGo: 'lo aceptas sin insistir',
     noHoursRecital: 'recitas el horario de apertura',
     soonest: 'lo antes posible',
@@ -225,6 +226,7 @@ const RULES = {
     toolsHoldOnPick: 'en cuanto elige',
     toolsNoInventOnError: 'no inventas horas',
     numberOnce: 'Una sola vez en toda la llamada, aunque queden dos citas.',
+    nameAndNumberTogether: '**Confirmas el nombre y el teléfono juntos, de una sola vez**',
     noRoutineSpelling: 'no deletreas un nombre que has entendido bien',
   },
 }
@@ -756,7 +758,7 @@ test('an animal emergency does not go to 112', () => {
 // A floor is crude and it works. Lowering the number is still possible and is
 // now a deliberate line in a diff, next to a comment saying so, rather than an
 // absence nobody can see.
-const RULE_FLOOR = 36
+const RULE_FLOOR = 37
 
 test('the list of pinned rules has not quietly got shorter', () => {
   for (const lang of ['pt', 'es']) {
@@ -995,5 +997,18 @@ test('the procedures are the same for every clinic', () => {
         )
       }
     }
+  }
+})
+
+// Reported from a real call: the name was misheard and never read back, and
+// asking about it separately from the number would have meant two
+// confirmations in a row, which is the thing callers find most wearing.
+test('the name and the number are confirmed in one go', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      text.includes(RULES[lang].nameAndNumberTogether),
+      `${lang}: the name can go into a booking without ever being read back`
+    )
   }
 })

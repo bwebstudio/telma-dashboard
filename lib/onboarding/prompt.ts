@@ -111,12 +111,24 @@ export interface PromptVariables {
   today: string | null
 }
 
+/** The base, cut into the pieces a node graph needs. `core` is true in every
+ *  sentence of every call; the rest are procedures, true only while doing
+ *  them. Joined back together they are the whole sheet, word for word, which
+ *  is what the test asserts. */
+export interface PromptNodes {
+  core: string
+  booking: string
+  cancelling: string
+  closing: string
+}
+
 export interface BuiltPrompt {
   version: string
   /** The language the base is written in. */
   base_language: BaseLanguage
   text: string
   variables: PromptVariables
+  nodes: PromptNodes
 }
 
 /**
@@ -969,7 +981,21 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
   facts.push(t.languages(v.languages.join(', ')))
   facts.push(t.greetsIn(v.languages[0] ?? ''))
 
-  const sections = [
+  // The four pieces, named.
+  //
+  // Split because the whole sheet is read on every sentence Telma says, and the
+  // measurement is that a rule obeyed five times in ten with seventeen thousand
+  // characters around it is obeyed once in eight with twenty-two thousand. The
+  // rules did not change; the noise beside them did.
+  //
+  // `core` is what has to be true in every sentence of every call: who she is,
+  // how she speaks, what she never does, emergencies, and the facts about this
+  // clinic. Emergencies live here rather than in a node of their own on
+  // purpose: it is the one thing that must interrupt anything else, and a node
+  // you have to reach is a node you can fail to reach.
+  //
+  // The other three are procedures, only true while you are doing them.
+  const core = [
     t.intro(v),
     '',
     t.whoTitle,
@@ -988,7 +1014,9 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     emergency.join('\n'),
     '',
     tools.join('\n'),
-    '',
+  ]
+
+  const bookingSection = [
     booking.join('\n'),
     '',
     // Omitido por completo quando há uma só agenda, que é a maioria das
@@ -997,16 +1025,20 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     ...((v.professionals?.length ?? 0) > 1
       ? [t.professionalsTitle, ...t.professionals(v.professionals), '']
       : []),
-    t.cancellationsTitle,
-    ...t.cancellations,
-    '',
-    // The normal end of a call, before the two exception paths below it. The
-    // instruction about waiting is the one that earns its place: a voice agent
-    // that ends the turn on its own last word hangs up on somebody drawing
-    // breath to say thank you, and that is the last thing they remember.
-    t.closingTitle,
-    ...t.closing,
-    '',
+  ]
+
+  const cancellingSection = [t.cancellationsTitle, ...t.cancellations]
+
+  // The normal end of a call, before the two exception paths below it. The
+  // instruction about waiting is the one that earns its place: a voice agent
+  // that ends the turn on its own last word hangs up on somebody drawing
+  // breath to say thank you, and that is the last thing they remember.
+  const closingSection = [t.closingTitle, ...t.closing]
+
+  // Everything after the procedures, which belongs with the core: what to do
+  // when she does not understand, when she cannot help, when a transfer rings
+  // out, and the facts about this clinic.
+  const coreTail = [
     t.notUnderstoodTitle,
     ...t.notUnderstood,
     '',
@@ -1016,17 +1048,35 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     t.transferFails,
     '',
     facts.join('\n'),
+    ...(v.briefing
+      ? ['', t.briefingTitle, t.briefingLead, '', v.briefing, '', t.briefingFence]
+      : []),
   ]
 
-  if (v.briefing) {
-    sections.push('', t.briefingTitle, t.briefingLead, '', v.briefing, '', t.briefingFence)
-  }
+  const sections = [
+    ...core,
+    '',
+    ...bookingSection,
+    ...cancellingSection,
+    '',
+    ...closingSection,
+    '',
+    ...coreTail,
+  ]
+
+  const tidy = (lines: string[]) => lines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
 
   return {
     version: PROMPT_VERSION,
     base_language: language,
     text: sections.join('\n').replace(/\n{3,}/g, '\n\n'),
     variables: v,
+    nodes: {
+      core: tidy([...core, '', ...coreTail]),
+      booking: tidy(bookingSection),
+      cancelling: tidy(cancellingSection),
+      closing: tidy(closingSection),
+    },
   }
 }
 

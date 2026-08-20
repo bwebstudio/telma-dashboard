@@ -906,3 +906,59 @@ test('a call that goes nowhere ends kindly and ends', () => {
     assert.ok(text.includes(RULES[lang].letsThemGo), `${lang}: may push somebody who has decided`)
   }
 })
+
+// The split has to be a split and nothing else.
+//
+// Step one of moving to nodes is separating the sheet without changing a word,
+// so that if behaviour drops afterwards it is the separation and not the
+// content. This is what makes that claim checkable: every sentence that was in
+// the base is in exactly one piece, and nothing was quietly reworded on the way
+// out.
+test('the pieces contain the whole base and nothing new', () => {
+  for (const lang of ['pt', 'es']) {
+    for (const name of Object.keys(CASES)) {
+      const built = buildPrompt({ ...CASES[name], can_book: true }, lang)
+      const { core, booking, cancelling, closing } = built.nodes
+
+      const flat = (s) => s.replace(/\s+/g, ' ').trim()
+      const whole = flat(built.text)
+
+      for (const [piece, text] of Object.entries({ core, booking, cancelling, closing })) {
+        for (const line of text.split('\n')) {
+          const needle = flat(line)
+          if (needle.length < 12) continue
+          assert.ok(
+            whole.includes(needle),
+            `${lang}/${name}: ${piece} says something the base does not: ${needle.slice(0, 60)}`
+          )
+        }
+      }
+
+      // And the other way: nothing was dropped on the floor between them.
+      const together = flat([core, booking, cancelling, closing].join(' '))
+      for (const line of built.text.split('\n')) {
+        const needle = flat(line)
+        if (needle.length < 12) continue
+        assert.ok(
+          together.includes(needle),
+          `${lang}/${name}: the pieces lost a line: ${needle.slice(0, 60)}`
+        )
+      }
+    }
+  }
+})
+
+test('the core is a fraction of the sheet, and the pieces are small', () => {
+  const built = buildPrompt({ ...CASES['open-can-book'], can_book: true }, 'es')
+  const { core, booking, cancelling, closing } = built.nodes
+  // The point of the exercise: what is present in every sentence has to be
+  // much less than what used to be. If this ever stops being true the split
+  // has been undone by growth, which is exactly how it happened last time.
+  assert.ok(
+    core.length < built.text.length * 0.62,
+    `the core is ${core.length} of ${built.text.length}, which is not a reduction`
+  )
+  for (const [name, piece] of Object.entries({ booking, cancelling, closing })) {
+    assert.ok(piece.length > 200, `${name} came out empty, which means the split missed it`)
+  }
+})

@@ -52,6 +52,7 @@ const {
   criteria,
   language = 'es',
   guardrails,
+  nodes,
   tools,
   toolMocks,
   dynamicVariables,
@@ -65,13 +66,84 @@ const greeting = greetingLine(clinic.clinic_name, language, clinic.formality, cl
 ])
 
 console.log(`\n  cenário: ${scenarioPath}`)
-console.log(`  prompt:  ${built.text.length} caracteres, versão ${built.version}\n`)
+if (nodes) {
+  const n = built.nodes
+  console.log(`  núcleo:  ${n.core.length + n.closing.length} caracteres`)
+  console.log(`  nós:     reservar ${n.booking.length}, cancelar ${n.cancelling.length}`)
+  console.log(`  a mais:  ${n.core.length + n.closing.length + n.booking.length} numa marcação, contra ${built.text.length} sem nós\n`)
+} else {
+  console.log(`  prompt:  ${built.text.length} caracteres, versão ${built.version}\n`)
+}
+
+// With `nodes`, the agent carries only the core and the procedures hang off it
+// as nodes the conversation walks into. `additional_prompt` adds to the core
+// rather than replacing it, which is what keeps her the same person inside a
+// node: only the procedure changes, not who is following it.
+//
+// Emergencies and the closing stay in the core deliberately. A node has to be
+// reached, and the two things that must work when nothing else does are the
+// two you cannot afford to have behind a door.
+const WORKFLOW = nodes
+  ? {
+      nodes: {
+        start_node: { type: 'start', position: { x: 0, y: 0 }, edge_order: ['to_book', 'to_cancel'] },
+        reservar: {
+          type: 'override_agent',
+          label: 'Reservar',
+          position: { x: 260, y: -120 },
+          additional_prompt: built.nodes.booking,
+          edge_order: [],
+        },
+        cancelar: {
+          type: 'override_agent',
+          label: 'Cancelar',
+          position: { x: 260, y: 120 },
+          additional_prompt: built.nodes.cancelling,
+          edge_order: ['cancel_to_book'],
+        },
+      },
+      edges: {
+        to_book: {
+          source: 'start_node',
+          target: 'reservar',
+          forward_condition: { type: 'llm', condition: 'A pessoa quer marcar uma consulta, ou mudar uma marcação para outra hora.' },
+        },
+        to_cancel: {
+          source: 'start_node',
+          target: 'cancelar',
+          forward_condition: { type: 'llm', condition: 'A pessoa quer anular uma marcação que já tem.' },
+        },
+        // One call, two jobs. The platform treats a pair of nodes as one edge
+        // whichever way you draw it — two edges between the same two nodes is
+        // rejected as a duplicate — so the way back is a condition on the same
+        // edge rather than an edge of its own.
+        //
+        // This crossing is where "does not ask for the details twice" either
+        // survives or does not, and it is the whole reason the first test after
+        // splitting is Carlos.
+        cancel_to_book: {
+          source: 'cancelar',
+          target: 'reservar',
+          forward_condition: { type: 'llm', condition: 'Depois de anular, a pessoa quer também marcar uma consulta.' },
+          backward_condition: { type: 'llm', condition: 'Depois de marcar, a pessoa quer também anular uma marcação.' },
+        },
+      },
+      prevent_subagent_loops: false,
+    }
+  : null
 
 const agent = await api('POST', '/v1/convai/agents/create', {
   name: `zz-simulacao-${Date.now()}`,
   conversation_config: {
     agent: {
-      prompt: { prompt: built.text, llm: 'gpt-5.4-mini', ...(tools ? { tool_ids: tools } : {}) },
+      prompt: {
+        // Only the core when running as a graph: the procedures arrive with
+        // the node.
+        prompt: nodes ? `${built.nodes.core}\n\n${built.nodes.closing}` : built.text,
+        llm: 'gpt-5.4-mini',
+        max_tokens: 300,
+        ...(tools ? { tool_ids: tools } : {}),
+      },
       first_message: greeting,
       language,
     },
@@ -86,6 +158,7 @@ const agent = await api('POST', '/v1/convai/agents/create', {
   // guardrail is end_call. Turning it on blind means finding out whether it
   // hangs up on real patients by hanging up on real patients.
   ...(guardrails ? { platform_settings: { guardrails } } : {}),
+  ...(WORKFLOW ? { workflow: WORKFLOW } : {}),
 })
 
 try {

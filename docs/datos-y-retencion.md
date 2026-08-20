@@ -74,9 +74,12 @@ responder leyendo nuestro código:
 1. **Región del proyecto de Supabase.** Se ve en el panel de Supabase, en
    Project Settings, General. Hace falta que sea UE para que el anexo diga
    que no hay transferencia internacional.
-2. **Región de despliegue de Vercel.** No hay `vercel.json` en el
-   repositorio, así que usa la región por defecto del proyecto. Se ve en
-   Project Settings, Functions.
+2. ~~**Región de despliegue de Vercel.**~~ **Contestado, y era la respuesta
+   mala.** Las cabeceras decían `x-vercel-id: cdg1::iad1`, es decir que las
+   funciones se ejecutaban en Washington: los datos de pacientes se trataban
+   fuera del Espacio Económico Europeo en cada consulta. Ya hay un
+   `vercel.json` que las fija en París (`cdg1`), y el cambio entra con el
+   siguiente despliegue. Ver `region.md`.
 3. **Residencia de datos de ElevenLabs.** La API de suscripción no la
    expone y su cabecera de respuesta indica infraestructura de Google
    Cloud. Hay que preguntárselo a ElevenLabs por escrito y guardar la

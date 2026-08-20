@@ -180,7 +180,7 @@ const RULES = {
     readBackNumber: 'algarismo a algarismo',
     noTags: 'Não escreves etiquetas de nenhum tipo',
     twoRealOptions: 'não são duas opções, são uma',
-    numberOnce: 'Uma vez, não três',
+    numberOnce: 'Uma só vez em toda a chamada, mesmo que fiquem duas marcações.',
     noRoutineSpelling: 'não soletras um nome que percebeste bem',
     toolsTitle: '# A agenda',
     toolsBeforeOffering: 'Chamas isto **antes** de ofereceres qualquer hora',
@@ -224,7 +224,7 @@ const RULES = {
     toolsBeforeOffering: 'La llamas **antes** de ofrecer ninguna hora',
     toolsHoldOnPick: 'en cuanto elige',
     toolsNoInventOnError: 'no inventas horas',
-    numberOnce: 'Una vez, no tres',
+    numberOnce: 'Una sola vez en toda la llamada, aunque queden dos citas.',
     noRoutineSpelling: 'no deletreas un nombre que has entendido bien',
   },
 }

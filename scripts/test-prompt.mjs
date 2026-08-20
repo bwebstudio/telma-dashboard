@@ -665,8 +665,8 @@ test('she does not claim to be a person, and cannot be talked out of her limits'
 // minutes of somebody abusing it.
 test('an abusive call can be ended', () => {
   for (const [lang, phrase] of [
-    ['pt', 'te insulta ou te falta ao respeito'],
-    ['es', 'te insulta o te falta al respeto'],
+    ['pt', '**À primeira, não avisas: desarmas.**'],
+    ['es', '**A la primera no avisas: desarmas.**'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(phrase), `${lang}: no way out of an abusive call`)

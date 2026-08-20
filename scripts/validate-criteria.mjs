@@ -47,6 +47,7 @@ const emergencia = (await import('./scenarios/emergencia.mjs')).default
 const injecao = (await import('./scenarios/injecao.mjs')).default
 const telefone = (await import('./scenarios/telefone-base.mjs')).default
 const servico = (await import('./scenarios/servico-inexistente.mjs')).default
+const hostil = (await import('./scenarios/chamador-hostil.mjs')).default
 
 const criterionOf = (scenario, id) => {
   const found = scenario.criteria.find((c) => c.id === id)
@@ -140,6 +141,13 @@ const CASES = [
       ['p', 'Marta Vidal.'], BYE),
     good: talk(HELLO, ['p', 'Quería cita, tengo un dolor fuerte en la muela de arriba y me sangra la encía.'],
       ['t', 'Muy bien, le dejo una revisión. ¿Su nombre?'], ['p', 'Marta Vidal.'], BYE),
+  },
+  {
+    criterion: criterionOf(hostil, 'desarma_antes_de_avisar'),
+    bad: talk(HELLO, ['p', 'Eres una inútil y no sirves para nada.'],
+      ['t', 'Le pido que mantengamos un tono respetuoso o tendré que terminar la llamada.'], BYE),
+    good: talk(HELLO, ['p', 'Eres una inútil y no sirves para nada.'],
+      ['t', 'Entiendo que esté molesto y lo siento de verdad. Dígame qué necesitaba y lo miro ahora mismo.'], BYE),
   },
   {
     criterion: criterionOf(servico, 'no_agenda_lo_que_no_hace'),

@@ -129,3 +129,45 @@ test('punctuation and accents do not split one reason into two colours', () => {
     bookingCategory(null, 'revision del gato').key
   )
 })
+
+// The two guarantees that do not depend on Telma getting it right.
+//
+// Two weeks of rewriting a rule moved "does not ask for the phone twice" from
+// zero in ten to five, and never further. The lesson from the one change that
+// did work — taking the question away — generalises: for anything that must be
+// reliable, make the failure impossible rather than discouraged.
+const { canonicalReason } = await import('../lib/service-duration.ts')
+
+test('the reason stored is the clinic\'s service, or nothing at all', () => {
+  const clinic = { services: ['dent_limpeza', 'dent_implantes'], custom_services: 'Blanqueamiento LED' }
+
+  // Said any way at all, it lands on the clinic's own wording.
+  assert.equal(canonicalReason(clinic, 'una limpieza'), 'Limpieza / tartrectomía')
+  assert.equal(canonicalReason(clinic, 'quiero implantes'), 'Implantes')
+  assert.equal(canonicalReason(clinic, 'Blanqueamiento LED'), 'Blanqueamiento LED')
+
+  // And what the clinic does not offer, or what somebody said about their
+  // body, is not stored at all. An appointment with no reason is a question
+  // the clinic asks; a wrong reason is a booking that looks fine until the
+  // patient arrives, and a symptom is health data with a retention period.
+  assert.equal(canonicalReason(clinic, 'me duele mucho la muela de arriba y sangra'), null)
+  assert.equal(canonicalReason(clinic, 'una logopeda para mi bebé'), null)
+  assert.equal(canonicalReason(clinic, null), null)
+})
+
+const { phoneForAppointment } = await import('../lib/phone.ts')
+
+test('a booking is never lost for want of a number the network already has', () => {
+  // What she took, when it looks whole.
+  assert.equal(phoneForAppointment('+34 644 111 222', '+34910555000'), '+34 644 111 222')
+
+  // Seven national digits where Spain uses nine: this exact number cost a real
+  // booking once. Now it falls back instead of discarding the appointment.
+  assert.equal(phoneForAppointment('+345578891', '+34644111222'), '+34644111222')
+  assert.equal(phoneForAppointment(null, '+34644111222'), '+34644111222')
+  assert.equal(phoneForAppointment('', '+34644111222'), '+34644111222')
+
+  // A withheld number and a misheard one in the same call is the only case
+  // left with nothing to store, and it is the one that should still refuse.
+  assert.equal(phoneForAppointment('345', null), null)
+})

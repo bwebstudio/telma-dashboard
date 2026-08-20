@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveDuration, resolveResource, type DurationSource } from '@/lib/service-duration'
+import { phoneForAppointment, plausiblePhone } from '@/lib/phone'
+import {
+  canonicalReason,
+  resolveDuration,
+  resolveResource,
+  type DurationSource,
+} from '@/lib/service-duration'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -69,7 +75,7 @@ export async function POST(request: Request) {
   // written down blocks exactly what was held.
   const { data: lengths } = await admin
     .from('clinics')
-    .select('service_durations, appointment_duration_minutes, slot_minutes')
+    .select('service_durations, appointment_duration_minutes, slot_minutes, services, custom_services')
     .eq('id', clinicId)
     .maybeSingle()
   const clinicLengths = (lengths ?? {}) as DurationSource
@@ -119,7 +125,7 @@ export async function POST(request: Request) {
     const at = appointment.scheduled_at
     if (typeof at !== 'string' || Number.isNaN(Date.parse(at))) {
       rejected = 'scheduled_at_not_a_time'
-    } else if (!plausiblePhone(appointment.patient_phone)) {
+    } else if (!plausiblePhone(appointment.patient_phone) && !plausiblePhone(body.from_phone)) {
       // An appointment nobody can be rung about is barely an appointment. On a
       // real call Telma accepted "345578891", read it back digit by digit, heard
       // "sí", and wrote +345578891: seven national digits where Spain uses nine.
@@ -142,8 +148,16 @@ export async function POST(request: Request) {
       // the model invents cannot reach the database at all.
       usable = {
         patient_name: appointment.patient_name ?? null,
-        patient_phone: appointment.patient_phone ?? null,
-        reason: appointment.reason ?? null,
+        // The number she took, or failing that the number the call came from.
+        //
+        // A booking used to be thrown away when the phone did not look whole,
+        // on the reasoning that an appointment nobody can be rung about is
+        // barely an appointment. True, and it discarded a real booking while
+        // the network was holding the caller's number the whole time. Losing
+        // the appointment was the worse of the two mistakes.
+        patient_phone: phoneForAppointment(appointment.patient_phone, body.from_phone),
+        // The clinic's own service, or nothing. Never what the caller said.
+        reason: canonicalReason(clinicLengths, (appointment.reason as string) ?? null),
         scheduled_at: at,
         origin: 'telefone',
         note: appointment.note ?? null,
@@ -201,7 +215,7 @@ export async function POST(request: Request) {
 
       const fresh = many
         .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
-        .filter((a) => plausiblePhone(a.patient_phone))
+        .filter((a) => plausiblePhone(a.patient_phone) || plausiblePhone(body.from_phone))
         .filter(
           (a) =>
             !seenKeys.has(
@@ -215,8 +229,8 @@ export async function POST(request: Request) {
           clinic_id: clinicId,
           call_id: existing.id,
           patient_name: a.patient_name ?? null,
-          patient_phone: a.patient_phone ?? null,
-          reason: a.reason ?? null,
+          patient_phone: phoneForAppointment(a.patient_phone, body.from_phone),
+          reason: canonicalReason(clinicLengths, (a.reason as string) ?? null),
           scheduled_at: a.scheduled_at,
           origin: 'telefone',
           summary: (a.note as string) ?? null,
@@ -252,15 +266,15 @@ export async function POST(request: Request) {
   if (callId && extras.length) {
     const usableExtras = extras
       .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
-      .filter((a) => plausiblePhone(a.patient_phone))
+      .filter((a) => plausiblePhone(a.patient_phone) || plausiblePhone(body.from_phone))
     const rows = []
     for (const a of usableExtras) {
       rows.push({
         clinic_id: clinicId,
         call_id: callId,
         patient_name: a.patient_name ?? null,
-        patient_phone: a.patient_phone ?? null,
-        reason: a.reason ?? null,
+        patient_phone: phoneForAppointment(a.patient_phone, body.from_phone),
+        reason: canonicalReason(clinicLengths, (a.reason as string) ?? null),
         scheduled_at: a.scheduled_at,
         origin: 'telefone',
         // Its own note, not the call's. Until now these carried nothing at all,
@@ -304,24 +318,3 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true, ...(data as object) })
 }
 
-/**
- * Whether a number is long enough to be a number at all.
- *
- * Deliberately not a full validator: this runs on what a voice model heard down
- * a telephone, and being strict about which ranges exist would reject real
- * people. It only catches the failure that actually happened, which is digits
- * quietly going missing.
- *
- * Spain and Portugal both use nine national digits. Anything else is checked
- * only against E.164's own bounds, because Telma answers callers from anywhere.
- */
-function plausiblePhone(raw: unknown): boolean {
-  if (typeof raw !== 'string') return false
-  const digits = raw.replace(/\D/g, '')
-  if (digits.length < 8 || digits.length > 15) return false
-  if (digits.startsWith('34') || digits.startsWith('351')) {
-    const national = digits.slice(digits.startsWith('34') ? 2 : 3)
-    return national.length === 9
-  }
-  return true
-}

@@ -164,3 +164,23 @@ export function resolveResource(
   )
   return worded.length === 1 ? worded[0].id : null
 }
+
+/**
+ * The reason as the clinic's own service, or nothing.
+ *
+ * The base tells Telma to write the service rather than the patient's words,
+ * and a rule is a request. This is the guarantee: whatever arrives is matched
+ * against what the clinic offers, and only the clinic's own label is stored.
+ *
+ * When nothing matches, nothing is stored. That is the safe direction twice
+ * over: it cannot be a description of somebody's symptoms sitting in a database
+ * for months, and it is visible — an appointment with no reason is a question
+ * the clinic asks, where "consulta general" for somebody who needed a speech
+ * therapist is a booking that looks fine until they arrive.
+ */
+export function canonicalReason(clinic: DurationSource, said: string | null): string | null {
+  const id = matchService(allServices(clinic), said)
+  if (!id) return null
+  // The catalogue's own wording, in the clinic's language, never the caller's.
+  return serviceLabel(id, 'es') === id ? id : serviceLabel(id, 'es')
+}

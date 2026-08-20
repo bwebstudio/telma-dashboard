@@ -239,6 +239,8 @@ export interface Dictionary {
      *  never happened before. */
     bookedOfTotal: string
     allFree: string
+    /** The chip with no service behind it, named so grey is not a fault. */
+    noService: string
     /** Diaries. Invisible while the clinic has one, which is most of them. */
     addProfessional: string
     professionalName: string

@@ -252,11 +252,21 @@ export function Planner({
   // What the colours mean, for the services this week actually contains. A key
   // listing everything the clinic offers would be longer than the week and
   // mostly about days that are not on screen.
+  //
+  // Shown from one entry, not from two. It used to need two, so a week with a
+  // single kind of appointment lost the key altogether, which reads as the
+  // feature having disappeared rather than as there being nothing to tell
+  // apart.
   const key = new Map<string, { index: number | null; label: string }>()
+  let uncategorised = 0
   for (const date of days) {
     for (const a of dayState(date).appts) {
       const cat = categoryOf(a)
-      if (cat && !key.has(cat.key)) key.set(cat.key, { index: cat.index, label: cat.label })
+      if (!cat) {
+        uncategorised++
+        continue
+      }
+      if (!key.has(cat.key)) key.set(cat.key, { index: cat.index, label: cat.label })
     }
   }
 
@@ -343,7 +353,7 @@ export function Planner({
       })}
     </ol>
 
-    {key.size > 1 && (
+    {(key.size > 0 || uncategorised > 0) && (
       <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-ink-soft">
         {[...key.values()].map((c) => (
           <li key={c.label} className="flex min-w-0 items-center gap-1.5">
@@ -355,8 +365,23 @@ export function Planner({
             <span className="truncate">{c.label}</span>
           </li>
         ))}
+        {/* Grey is a colour too, and without a line saying so it reads as a
+            fault. A booking gets here when its reason matched nothing the
+            clinic offers, which is worth the clinic noticing rather than
+            hiding: it is usually somebody who asked for something else. */}
+        {uncategorised > 0 && (
+          <li className="flex min-w-0 items-center gap-1.5">
+            <span
+              aria-hidden
+              className="h-3 w-3 shrink-0 rounded-full border border-line"
+              style={{ backgroundColor: categoryBackground(null) }}
+            />
+            <span className="truncate">{dict.horarios.noService}</span>
+          </li>
+        )}
       </ul>
     )}
+
     </>
   )
 

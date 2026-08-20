@@ -215,6 +215,7 @@ export const pt: Dictionary = {
     overlaps: 'Há dois intervalos sobrepostos nesse dia.',
     bookedOfTotal: '{n} de {total} marcadas',
     allFree: '{n} horas livres',
+    noService: 'Sem serviço reconhecido',
     addProfessional: 'Somos mais do que uma pessoa',
     professionalName: 'Nome de quem atende',
     professionalHint: 'Cada pessoa tem a sua agenda e o seu horário. A Telma marca com quem estiver livre, ou com quem lhe pedirem.',

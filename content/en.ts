@@ -215,6 +215,7 @@ export const en: Dictionary = {
     overlaps: 'Two periods overlap on that day.',
     bookedOfTotal: '{n} of {total} booked',
     allFree: '{n} hours free',
+    noService: 'No service recognised',
     addProfessional: 'There is more than one of us',
     professionalName: 'Name of whoever sees patients',
     professionalHint: 'Each person keeps their own diary and their own hours. Telma books whoever is free, or whoever is asked for.',

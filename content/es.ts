@@ -215,6 +215,7 @@ export const es: Dictionary = {
     overlaps: 'Hay dos tramos que se solapan ese día.',
     bookedOfTotal: '{n} de {total} ocupadas',
     allFree: '{n} horas libres',
+    noService: 'Sin servicio reconocido',
     addProfessional: 'Somos más de una persona',
     professionalName: 'Nombre de quien atiende',
     professionalHint: 'Cada persona tiene su agenda y su horario. Telma da cita con quien esté libre, o con quien le pidan.',

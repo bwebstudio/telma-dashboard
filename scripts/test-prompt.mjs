@@ -170,6 +170,8 @@ const RULES = {
     noServiceList: 'Não enumeras a lista de serviços',
     neverRecitesAll: '**Mesmo que peçam tudo, não recitas tudo.**',
     refusalHelps: 'recusas em três tempos',
+    bridgeIsNotAnEcho: '**A ponte nunca é repetir o que a pessoa disse.**',
+    noPaperworkAloud: 'Registar a chamada é coisa tua e não se anuncia',
     lastWordWins: '**vale sempre o último**',
     silenceOnce: '**Duas perguntas antes de desligar, nunca uma**',
     letsThemGo: 'aceitas sem insistir',
@@ -211,6 +213,8 @@ const RULES = {
     noServiceList: 'No enumeras la lista de servicios',
     neverRecitesAll: '**Aunque te pidan todo, no lo recitas todo.**',
     refusalHelps: 'te niegas en tres tiempos',
+    bridgeIsNotAnEcho: '**El puente nunca es repetir lo que ha dicho la persona.**',
+    noPaperworkAloud: 'Registrar la llamada es cosa tuya y no se anuncia',
     lastWordWins: '**vale siempre lo último**',
     silenceOnce: '**Dos preguntas antes de colgar, nunca una**',
     letsThemGo: 'lo aceptas sin insistir',
@@ -758,7 +762,7 @@ test('an animal emergency does not go to 112', () => {
 // A floor is crude and it works. Lowering the number is still possible and is
 // now a deliberate line in a diff, next to a comment saying so, rather than an
 // absence nobody can see.
-const RULE_FLOOR = 37
+const RULE_FLOOR = 39
 
 test('the list of pinned rules has not quietly got shorter', () => {
   for (const lang of ['pt', 'es']) {
@@ -1009,6 +1013,40 @@ test('the name and the number are confirmed in one go', () => {
     assert.ok(
       text.includes(RULES[lang].nameAndNumberTogether),
       `${lang}: the name can go into a booking without ever being read back`
+    )
+  }
+})
+
+// From a real call: asked "who are you?" she answered "who am I?", and asked
+// "what is your engine?" she answered "what is your engine?". The bridge was
+// meant to be an acknowledgement — "of course", "right" — and was being taken
+// as licence to repeat the question back, which is the sound of a machine
+// rather than of somebody listening.
+test('the bridge is never an echo of the question', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      text.includes(RULES[lang].bridgeIsNotAnEcho),
+      `${lang}: she may repeat the question back before answering it`
+    )
+  }
+})
+
+// The last two turns of a real call:
+//
+//   PERSON | Nothing, thanks. Bye.
+//   TELMA  | one moment, I'll close the call.
+//   TELMA  | one second. Até logo.
+//
+// No thanks, no clinic name, the paperwork announced out loud, and a
+// Portuguese goodbye on a Spanish call. The goodbye was the last thing that
+// caller heard.
+test('the paperwork is never announced, and the goodbye is a goodbye', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      text.includes(RULES[lang].noPaperworkAloud),
+      `${lang}: she may sign off by announcing that she is filing the call`
     )
   }
 })

@@ -327,11 +327,10 @@ const AGENT_SPEC = {
           // "respondes na língua em que te falarem", e a conversa fica presa na
           // que abriu: o modelo escreve português e o reconhecimento continua à
           // espera de espanhol.
-          language_detection: {
-            name: 'language_detection',
-            description:
-              'Muda a língua da conversa quando a pessoa passa a falar outra das que esta clínica atende, ou quando pede para falares noutra.',
-          },
+          // Sem deteção de idioma, de propósito: o prompt diz que a língua se escolhe
+          // na saudação e não muda, e esta ferramenta existe para a mudar. Numa
+          // chamada real a Telma leu em voz alta a opção do menu — "português" — e
+          // mudou-se a si própria de língua a meio de uma conversa em castelhano.
         },
       },
       first_message:

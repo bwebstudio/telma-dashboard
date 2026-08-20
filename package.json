@@ -16,7 +16,8 @@
     "simulate": "node --experimental-strip-types scripts/simulate-call.mjs",
     "evaluation": "node scripts/elevenlabs-evaluation.mjs",
     "validate:criteria": "node --experimental-strip-types scripts/validate-criteria.mjs",
-    "probe": "node scripts/probe-reference-agent.mjs"
+    "probe": "node scripts/probe-reference-agent.mjs",
+    "latency": "node --experimental-strip-types scripts/measure-latency.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

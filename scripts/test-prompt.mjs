@@ -169,6 +169,7 @@ const RULES = {
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
     neverRecitesAll: '**Mesmo que peçam tudo, não recitas tudo.**',
+    refusalHelps: 'recusas em três tempos',
     noHoursRecital: 'recitas o horário de abertura',
     soonest: 'o mais cedo possível',
     soonestNoHours: 'Nunca respondes a isso com o horário da clínica',
@@ -205,6 +206,7 @@ const RULES = {
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
     neverRecitesAll: '**Aunque te pidan todo, no lo recitas todo.**',
+    refusalHelps: 'te niegas en tres tiempos',
     noHoursRecital: 'recitas el horario de apertura',
     soonest: 'lo antes posible',
     soonestNoHours: 'Nunca respondes a eso con el horario de la clínica',
@@ -849,5 +851,20 @@ test('being asked for everything is not a reason to say everything', () => {
       text.includes(RULES[lang].neverRecitesAll),
       `${lang}: insisting is enough to get the whole list read out`
     )
+  }
+})
+
+// Taken from watching ElevenLabs' own support agent refuse. Asked to recite
+// every plan with every price, it did not say "I cannot": it said it would
+// rather not give incomplete information, asked which of the four kinds of plan
+// was meant, and offered to compare the main ones first and go deeper after.
+//
+// A refusal shaped like that does not sound like a wall, so nobody feels the
+// urge to push against it. "No puedo" invites a second try; being useful does
+// not.
+test('a refusal offers the way that does exist', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(RULES[lang].refusalHelps), `${lang}: refusals may be bare walls`)
   }
 })

@@ -428,8 +428,8 @@ test('today is stated, in the clinic timezone, in both languages', () => {
 // numbered steps, and these assert the order survives editing.
 test('the booking order is spelled out as steps, in both languages', () => {
   for (const [lang, steps] of [
-    ['pt', ['1. Perguntas para que é', '3. Dizes duas horas diferentes, perguntas de forma aberta', '4. Esperas que a pessoa diga qual', '5. Só então seguras', '6. Para deixares uma marcação precisas de quatro coisas']],
-    ['es', ['1. Preguntas para qué es', '3. Dices dos horas distintas, preguntas de forma abierta', '4. Esperas a que la persona diga cuál', '5. Solo entonces retienes', '6. Para dejar una cita necesitas cuatro cosas']],
+    ['pt', ['1. Perguntas para que é', '4. Dizes duas horas diferentes, perguntas de forma aberta', '5. Esperas que a pessoa diga qual', '6. Só então seguras', '7. Para deixares uma marcação precisas de quatro coisas']],
+    ['es', ['1. Preguntas para qué es', '4. Dices dos horas distintas, preguntas de forma abierta', '5. Esperas a que la persona diga cuál', '6. Solo entonces retienes', '7. Para dejar una cita necesitas cuatro cosas']],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     for (const step of steps) {
@@ -439,7 +439,7 @@ test('the booking order is spelled out as steps, in both languages', () => {
     // second call she offered two slots and then asked what the appointment was
     // for, which is the same steps in the wrong order.
     const asks = text.indexOf(lang === 'pt' ? '1. Perguntas para que é' : '1. Preguntas para qué es')
-    const offers = text.indexOf(lang === 'pt' ? '3. Dizes duas horas' : '3. Dices dos horas')
+    const offers = text.indexOf(lang === 'pt' ? '4. Dizes duas horas' : '4. Dices dos horas')
     assert.ok(asks > 0 && asks < offers, `${lang}: offering comes before asking`)
   }
 })
@@ -811,4 +811,25 @@ test('the recording notice is said exactly once', () => {
 
   const notRecorded = greetingLine('Clínica X', 'es', 'formal', false)
   assert.ok(!notRecorded.includes('graba'), 'a clinic that does not record still warns')
+})
+
+// A clinic was asked for a speech therapist and booked a first consultation.
+// The base had nothing at all about a service the clinic does not offer, so
+// there was nothing to disobey: she was told to pick a service from the list
+// and she picked the nearest one, which is what the instruction asked for.
+//
+// The check goes before the diary is consulted, because after that there is
+// already an hour on the table and taking it back is a different conversation.
+test('a service the clinic does not offer is not booked', () => {
+  for (const [lang, rule, order] of [
+    ['pt', '**Vês se a clínica faz isso.**', ['1. Perguntas para que é', '2. **Vês se a clínica faz isso.**', '3. Consultas a agenda.']],
+    ['es', '**Miras si la clínica hace eso.**', ['1. Preguntas para qué es', '2. **Miras si la clínica hace eso.**', '3. Consultas la agenda.']],
+  ]) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(rule), `${lang}: nothing stops her booking what the clinic does not do`)
+
+    const at = order.map((step) => text.indexOf(step))
+    assert.ok(at.every((i) => i > 0), `${lang}: a step went missing in the renumbering`)
+    assert.deepEqual([...at].sort((a, b) => a - b), at, `${lang}: the check must come before the diary`)
+  }
 })

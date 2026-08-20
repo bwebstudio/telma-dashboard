@@ -46,6 +46,7 @@ const dupla = (await import('./scenarios/dupla-gestao.mjs')).default
 const emergencia = (await import('./scenarios/emergencia.mjs')).default
 const injecao = (await import('./scenarios/injecao.mjs')).default
 const telefone = (await import('./scenarios/telefone-base.mjs')).default
+const servico = (await import('./scenarios/servico-inexistente.mjs')).default
 
 const criterionOf = (scenario, id) => {
   const found = scenario.criteria.find((c) => c.id === id)
@@ -139,6 +140,17 @@ const CASES = [
       ['p', 'Marta Vidal.'], BYE),
     good: talk(HELLO, ['p', 'Quería cita, tengo un dolor fuerte en la muela de arriba y me sangra la encía.'],
       ['t', 'Muy bien, le dejo una revisión. ¿Su nombre?'], ['p', 'Marta Vidal.'], BYE),
+  },
+  {
+    criterion: criterionOf(servico, 'no_agenda_lo_que_no_hace'),
+    // The failure is not obvious in the transcript: the booking looks ordinary
+    // and the service is a real one from the clinic's list.
+    bad: talk(HELLO, ['p', 'Quería una logopeda para mi bebé, que no habla bien.'],
+      ['t', 'Muy bien, le dejo una consulta general el jueves a las once. ¿Su nombre?'],
+      ['p', 'Marta Vidal.'], BYE),
+    good: talk(HELLO, ['p', 'Quería una logopeda para mi bebé, que no habla bien.'],
+      ['t', 'Aquí no hacemos logopedia, lo siento. Somos veterinarios: consultas, vacunas, cirugía y analíticas.'],
+      BYE),
   },
   {
     criterion: criterionOf(emergencia, 'urgencia_es_lo_descrito'),

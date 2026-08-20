@@ -43,7 +43,7 @@ const finish = (why) => {
 
 // Generous, because their agent thinks before it answers and a probe that gives
 // up early reports silence as if it were an answer.
-setTimeout(() => finish('tiempo agotado'), 40000 + SCRIPT.length * 30000)
+setTimeout(() => finish('tiempo agotado'), 45000 + SCRIPT.length * 60000)
 
 ws.onopen = () =>
   ws.send(
@@ -79,15 +79,26 @@ ws.onmessage = (ev) => {
     ws.send(JSON.stringify({ type: 'pong', event_id: m.ping_event?.event_id }))
     return
   }
-  if (m.type === 'conversation_initiation_metadata') {
-    setTimeout(() => ws.send(JSON.stringify({ type: 'user_message', text: SCRIPT[step++] })), 1200)
-  }
+  // The greeting arrives as an `agent_response` like any other, and counting it
+  // as an answer sent the second line before the first had been replied to: two
+  // questions collapsed into one turn and the transcript looked like an answer
+  // to a question nobody had asked yet. Wait for a reply to something we said.
   if (m.type === 'agent_response') {
-    said.push(m.agent_response_event?.agent_response ?? '')
-    if (step < SCRIPT.length) {
-      setTimeout(() => ws.send(JSON.stringify({ type: 'user_message', text: SCRIPT[step++] })), 900)
-    } else {
+    const text = m.agent_response_event?.agent_response ?? ''
+    said.push(text)
+    const isGreeting = said.length === 1
+    if (!isGreeting && step >= SCRIPT.length) {
       setTimeout(() => finish('guion terminado'), 4000)
+      return
     }
+    // Nine hundred milliseconds, found by trying. Longer and the agent has
+    // already moved on and answers "how can I help you today"; shorter and the
+    // message lands while it is still speaking and is dropped in silence. This
+    // is a text client on a channel built for speech, and the seam shows.
+    //
+    // It is reliable for one question and unreliable for a second, so probes
+    // here ask one thing at a time. A conversation that needs two turns to make
+    // its point has to fit both into one message.
+    setTimeout(() => ws.send(JSON.stringify({ type: 'user_message', text: SCRIPT[step++] })), 900)
   }
 }

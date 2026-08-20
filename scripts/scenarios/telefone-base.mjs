@@ -101,7 +101,7 @@ export const shared = {
       // a booking that is complete and wrong reaches the clinic looking exactly
       // like a booking that is right.
       conversation_goal_prompt:
-        'Al cerrar la llamada, ¿quedaron dichas en voz alta las CUATRO cosas de la cita, y coinciden con lo que pidió el llamante? (1) el nombre de quien viene, (2) un teléfono de contacto, (3) el servicio, (4) el día y la hora. Falla si falta alguna, y falla también si alguna no coincide con lo que se habló: un servicio que nadie pidió, un día distinto del acordado, o un nombre que no se dijo nunca.',
+        'A lo largo de la llamada, ¿quedaron dichas en voz alta las CUATRO cosas de la cita, y coinciden con lo que pidió el llamante? (1) el nombre de quien viene, (2) un teléfono de contacto, (3) el servicio, (4) el día y la hora. NO hace falta que las cuatro estén en la frase final: basta con que cada una se haya dicho en algún momento y nadie la haya contradicho después. El teléfono, en concreto, se dice una sola vez y no debe repetirse al cerrar. Falla si alguna no se dijo nunca, o si alguna no coincide con lo hablado: un servicio que nadie pidió, un día distinto del acordado, o un nombre que no se dijo.',
     },
     {
       id: 'motivo_sin_palabras_del_paciente',

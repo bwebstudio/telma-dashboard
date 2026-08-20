@@ -48,6 +48,7 @@ const injecao = (await import('./scenarios/injecao.mjs')).default
 const telefone = (await import('./scenarios/telefone-base.mjs')).default
 const servico = (await import('./scenarios/servico-inexistente.mjs')).default
 const hostil = (await import('./scenarios/chamador-hostil.mjs')).default
+const correcao = (await import('./scenarios/correcao.mjs')).default
 
 const criterionOf = (scenario, id) => {
   const found = scenario.criteria.find((c) => c.id === id)
@@ -141,6 +142,13 @@ const CASES = [
       ['p', 'Marta Vidal.'], BYE),
     good: talk(HELLO, ['p', 'Quería cita, tengo un dolor fuerte en la muela de arriba y me sangra la encía.'],
       ['t', 'Muy bien, le dejo una revisión. ¿Su nombre?'], ['p', 'Marta Vidal.'], BYE),
+  },
+  {
+    criterion: criterionOf(correcao, 'no_pregunta_cual'),
+    bad: talk(HELLO, ['p', 'Quería el jueves... no, espera, mejor el viernes.'],
+      ['t', '¿Entonces lo dejamos para el jueves o para el viernes?'], BYE),
+    good: talk(HELLO, ['p', 'Quería el jueves... no, espera, mejor el viernes.'],
+      ['t', 'Muy bien, el viernes entonces. ¿Para qué sería la cita?'], BYE),
   },
   {
     criterion: criterionOf(hostil, 'desarma_antes_de_avisar'),

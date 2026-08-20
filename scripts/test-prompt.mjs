@@ -170,6 +170,7 @@ const RULES = {
     noServiceList: 'Não enumeras a lista de serviços',
     neverRecitesAll: '**Mesmo que peçam tudo, não recitas tudo.**',
     refusalHelps: 'recusas em três tempos',
+    lastWordWins: '**vale sempre o último**',
     noHoursRecital: 'recitas o horário de abertura',
     soonest: 'o mais cedo possível',
     soonestNoHours: 'Nunca respondes a isso com o horário da clínica',
@@ -207,6 +208,7 @@ const RULES = {
     noServiceList: 'No enumeras la lista de servicios',
     neverRecitesAll: '**Aunque te pidan todo, no lo recitas todo.**',
     refusalHelps: 'te niegas en tres tiempos',
+    lastWordWins: '**vale siempre lo último**',
     noHoursRecital: 'recitas el horario de apertura',
     soonest: 'lo antes posible',
     soonestNoHours: 'Nunca respondes a eso con el horario de la clínica',
@@ -750,7 +752,7 @@ test('an animal emergency does not go to 112', () => {
 // A floor is crude and it works. Lowering the number is still possible and is
 // now a deliberate line in a diff, next to a comment saying so, rather than an
 // absence nobody can see.
-const RULE_FLOOR = 33
+const RULE_FLOOR = 34
 
 test('the list of pinned rules has not quietly got shorter', () => {
   for (const lang of ['pt', 'es']) {
@@ -866,5 +868,19 @@ test('a refusal offers the way that does exist', () => {
   for (const lang of ['pt', 'es']) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(RULES[lang].refusalHelps), `${lang}: refusals may be bare walls`)
+  }
+})
+
+// Their agent was told "we are two hundred people... actually, I lie, we are
+// three". It did not ask which. It used the later figure and showed it had
+// heard the earlier one by naming the plan it was no longer recommending.
+//
+// Asking "so is it two hundred or three?" makes somebody who corrected
+// themselves feel caught out, and people correct themselves constantly on the
+// telephone.
+test('a correction replaces, and is not queried', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(RULES[lang].lastWordWins), `${lang}: may ask which of the two they meant`)
   }
 })

@@ -962,3 +962,38 @@ test('the core is a fraction of the sheet, and the pieces are small', () => {
     assert.ok(piece.length > 200, `${name} came out empty, which means the split missed it`)
   }
 })
+
+// The architecture, guarded.
+//
+// The node graph lives on one agent shared by every clinic, and the core is the
+// only part generated per call. So a procedure that changes from clinic to
+// clinic cannot be a node, and this is what stops one becoming one again: the
+// day somebody puts an opening hour or a price inside the booking steps, this
+// fails instead of quietly making the split impossible.
+//
+// `can_book: false` is excluded on purpose. That is not a variation of the
+// booking procedure, it is a different procedure, and it belongs in a node of
+// its own rather than in this one.
+test('the procedures are the same for every clinic', () => {
+  const one = { ...CASES['open-can-book'], can_book: true }
+  const others = [
+    { ...one, appointment_duration_minutes: 45 },
+    { ...one, caller_id: '+34600111222' },
+    { ...one, professionals: ['Dra. Ruiz', 'Dr. Marques'] },
+    { ...one, clinic_name: 'Otra', address: 'Otra calle 1', price_info: 'Todo gratis.' },
+    { ...one, opening_hours: ['Domingo: 08:00-09:00'] },
+  ]
+  for (const lang of ['pt', 'es']) {
+    const base = buildPrompt(one, lang).nodes
+    for (const variant of others) {
+      const got = buildPrompt(variant, lang).nodes
+      for (const piece of ['booking', 'cancelling', 'closing']) {
+        assert.equal(
+          got[piece],
+          base[piece],
+          `${lang}: ${piece} changes with the clinic, so it cannot live on the shared agent`
+        )
+      }
+    }
+  }
+})

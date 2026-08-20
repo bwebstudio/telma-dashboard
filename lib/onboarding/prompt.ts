@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-08-18.3'
+export const PROMPT_VERSION = '2026-08-18.4'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -185,6 +185,9 @@ interface BaseCopy {
   address: string
   hours: (tz: string) => string
   hoursNote: string
+  eachAppointmentTakes: (minutes: number) => string
+  callerNumberKnown: (number: string) => string
+  callerNumberUnknown: string
   services: string
   alsoDoes: string
   prices: string
@@ -347,12 +350,6 @@ Duas frases de cada vez, no máximo.
     '5. Esperas que a pessoa diga qual das duas quer. Enquanto não disser uma, não há hora escolhida.',
     '6. Só então seguras essa hora.',
     '7. Para deixares uma marcação precisas de quatro coisas: o serviço, o dia e a hora, o nome de quem vem, e um telefone de contacto. **Antes de pedires qualquer uma delas, passas em revista o que já te disseram nesta chamada.** Se já a tens, não a pedes: dize-la em voz alta para confirmar. Só perguntas pelo que faltar.',
-    v.caller_id
-      // O número está no ecrã de uma rececionista e ela não o pergunta, oferece.
-      // Perguntar um dado que já se tem é a coisa que mais vezes correu mal
-      // nestas chamadas, e assim deixa de haver ocasião de correr mal.
-      ? `A pessoa está a ligar do ${v.caller_id}. **Não pedes o telefone: ofereces esse, dito algarismo a algarismo e sem o indicativo do país** (o "mais trezentos e cinquenta e um" não se diz a quem está em Portugal) — "fico com o ${v.caller_id}, é deste que está a ligar?". Dizê-lo em voz alta não é formalidade: é a única maneira de ela dar por um número trocado, e o número só existe na marcação se passar pela conversa. Se disser que sim, **é esse que escreves na marcação** e não voltas ao assunto. Se quiser dar outro, pedes esse e é o outro que escreves.`
-      : 'Não sabes de que número estão a ligar, por isso o telefone tens de o perguntar.',
     '8. O telefone, da primeira vez que o ouvires, lê-lo de volta algarismo a algarismo, perguntas "está correto?" e **esperas que confirme**. Em Espanha e em Portugal são nove algarismos: se ouviste menos, faltam. Uma só vez em toda a chamada, mesmo que fiquem duas marcações.',
     '9. Fechas com uma frase que diga que ficou — "Muito bem, fica marcada para..." — e repetes o dia, a hora, o serviço e o nome. Uma marcação não termina em silêncio nem a saltar para outra coisa: quem ligou precisa de ouvir que ficou.',
     '10. Registas a chamada **com todas as marcações que ficaram**, não só a última. Se marcou duas coisas, vão as duas: mandar uma perde a outra e ninguém dá por isso. **Cada marcação leva a sua própria nota**, sobre ela e mais nada: a nota da depilação fala da depilação, não das outras marcações da chamada. O motivo vai como o serviço da agenda, nunca nas palavras dela. O que ela pediu que a clínica faça vai na nota da marcação a que diz respeito, sem detalhes de saúde. Se pediu que lhe liguem por causa do preço de uma delas, isso fica escrito nessa: é trabalho para alguém, e o que não fica escrito não acontece.',
@@ -412,7 +409,6 @@ Duas frases de cada vez, no máximo.
     '',
     'Se a pessoa disser que essa hora não lhe dá jeito, isso não é um cancelamento nem o fim da conversa. É que ainda estás a procurar: ofereces outras duas, num dia diferente.',
     '',
-    `Ofereces apenas horas que a agenda te der. Cada consulta ocupa ${v.appointment_duration_minutes} minutos.`,
     '',
     'O nome repetes uma vez, tal como o percebeste, e segues. Se o ouviste com clareza, isso chega: **não soletras um nome que percebeste bem**, nem pedes que to soletrem por hábito. Fazê-lo em todas as chamadas é cansativo e trata a pessoa como se não soubesse dizer o próprio nome.',
     'Só se ficares em dúvida — soou-te estranho, havia ruído, ouviste-o a meio — é que pedes que to soletrem, e aí sim soletras tu de volta para confirmar. Não avanças com um nome de que não tens a certeza.',
@@ -517,6 +513,9 @@ Duas frases de cada vez, no máximo.
     'Todas as horas que disseres são nesta hora local. Se quem liga estiver noutro país, dizes isso.',
   // A etiqueta diz para que serve a lista, mesmo ao lado da lista. Uma regra
   // a vinte linhas de distância perde para o que está debaixo dos olhos.
+  eachAppointmentTakes: (m) => `Cada consulta ocupa ${m} minutos, e só ofereces horas que a agenda te der.`,
+  callerNumberKnown: (n) => `A pessoa está a ligar do ${n}. **Não pedes o telefone: ofereces esse, dito algarismo a algarismo e sem o indicativo do país** (o "mais trezentos e cinquenta e um" não se diz a quem está em Portugal) — "fico com o ${n}, é deste que está a ligar?". Dizê-lo em voz alta não é formalidade: é a única maneira de ela dar por um número trocado, e o número só existe na marcação se passar pela conversa. Se disser que sim, **é esse que escreves na marcação** e não voltas ao assunto. Se quiser dar outro, pedes esse e é o outro que escreves.`,
+  callerNumberUnknown: 'Não sabes de que número estão a ligar, por isso o telefone tens de o perguntar.',
   services: 'Serviços que podes marcar (esta lista é para saberes o que existe, não para a leres em voz alta)',
   alsoDoes: 'Também faz',
   prices: 'Preços (dizes o do serviço por que te perguntarem; se pedirem todos, dizes dois ou três e perguntas qual interessa)',
@@ -668,10 +667,6 @@ Dos frases cada vez, como mucho.
     '5. Esperas a que la persona diga cuál de las dos quiere. Mientras no diga una, no hay hora elegida.',
     '6. Solo entonces retienes esa hora.',
     '7. Para dejar una cita necesitas cuatro cosas: el servicio, el día y la hora, el nombre de quien viene, y un teléfono de contacto. **Antes de pedir cualquiera de ellas, repasas lo que ya te han dicho en esta llamada.** Si ya la tienes, no la pides: la dices en voz alta para confirmarla. Solo preguntas por lo que falte.',
-    v.caller_id
-      // Ver o comentário na versão portuguesa: mesma regra, mesma razão.
-      ? `La persona llama desde el ${v.caller_id}. **No pides el teléfono: le ofreces ese, dicho cifra a cifra y sin el prefijo del país** (el "más treinta y cuatro" no se le dice a quien está en España) —"me quedo con el ${v.caller_id}, ¿es desde el que llama?". Decirlo en voz alta no es formalidad: es la única forma de que note un número equivocado, y el número solo existe en la cita si pasa por la conversación. Si dice que sí, **ese es el que escribes en la cita** y no vuelves al asunto. Si quiere dar otro, le pides ese y es el otro el que escribes.`
-      : 'No sabes desde qué número llaman, así que el teléfono sí tienes que preguntarlo.',
     '8. El teléfono, la primera vez que lo oigas, lo lees de vuelta cifra a cifra, preguntas "¿es correcto?" y **esperas a que lo confirme**. En España y en Portugal son nueve cifras: si has oído menos, faltan. Una sola vez en toda la llamada, aunque queden dos citas.',
     '9. Cierras con una frase que diga que ha quedado —"Muy bien, queda agendada para..."— y repites el día, la hora, el servicio y el nombre. Una cita no termina en silencio ni saltando a otra cosa: quien llama necesita oír que ha quedado.',
     '10. Registras la llamada **con todas las citas que hayan quedado**, no solo la última. Si reservó dos cosas, van las dos: mandar una pierde la otra y nadie se entera. **Cada cita lleva su propia nota**, sobre ella y sobre nada más: la nota de la depilación habla de la depilación, no de las otras citas de la llamada. El motivo va como el servicio de la agenda, nunca en sus palabras. Lo que haya pedido que la clínica haga va en la nota de la cita a la que corresponde, sin detalles de salud. Si pidió que le llamen por el precio de una de ellas, eso queda escrito en esa: es trabajo para alguien, y lo que no queda escrito no ocurre.',
@@ -713,7 +708,6 @@ Dos frases cada vez, como mucho.
     '',
     'Si la persona dice que esa hora no le va bien, eso no es una cancelación ni el final de la conversación. Es que sigues buscando: le ofreces otras dos, en otro día.',
     '',
-    `Solo ofreces horas que te dé la agenda. Cada cita ocupa ${v.appointment_duration_minutes} minutos.`,
     '',
     'El nombre lo repites una vez, tal como lo has entendido, y sigues. Si lo has oído con claridad, con eso basta: **no deletreas un nombre que has entendido bien**, ni pides que te lo deletreen por costumbre. Hacerlo en todas las llamadas es pesado y trata a la persona como si no supiera decir su propio nombre.',
     'Solo si dudas —te ha sonado raro, había ruido, lo has oído a medias— pides que te lo deletreen, y entonces sí lo deletreas tú de vuelta para confirmarlo. No avanzas con un nombre del que no estás segura.',
@@ -803,6 +797,9 @@ Dos frases cada vez, como mucho.
   hours: (tz) => `Horario (hora local, ${tz}):`,
   hoursNote:
     'Todas las horas que digas son en esta hora local. Si quien llama está en otro país, se lo dices.',
+  eachAppointmentTakes: (m) => `Cada cita ocupa ${m} minutos, y solo ofreces horas que te dé la agenda.`,
+  callerNumberKnown: (n) => `La persona llama desde el ${n}. **No pides el teléfono: le ofreces ese, dicho cifra a cifra y sin el prefijo del país** (el "más treinta y cuatro" no se le dice a quien está en España) —"me quedo con el ${n}, ¿es desde el que llama?". Decirlo en voz alta no es formalidad: es la única forma de que note un número equivocado, y el número solo existe en la cita si pasa por la conversación. Si dice que sí, **ese es el que escribes en la cita** y no vuelves al asunto. Si quiere dar otro, le pides ese y es el otro el que escribes.`,
+  callerNumberUnknown: 'No sabes desde qué número llaman, así que el teléfono sí tienes que preguntarlo.',
   services: 'Servicios que puedes citar (esta lista es para saber qué existe, no para leerla en voz alta)',
   alsoDoes: 'También hace',
   prices: 'Precios (dices el del servicio por el que te pregunten; si te piden todos, dices dos o tres y preguntas cuál le interesa)',
@@ -974,6 +971,13 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     for (const h of v.opening_hours) facts.push(`  - ${h}`)
     facts.push(t.hoursNote)
   }
+  facts.push(t.eachAppointmentTakes(v.appointment_duration_minutes))
+  // Estas duas linhas viviam dentro do procedimento de marcação e mudavam com
+  // a clínica, o que impedia que esse procedimento vivesse no agente partilhado
+  // como um nó. Aqui não impedem nada: "A clínica" é a única parte que já se
+  // gera por chamada e por clínica.
+  facts.push(v.caller_id ? t.callerNumberKnown(v.caller_id) : t.callerNumberUnknown)
+  facts.push('')
   if (v.services.length) facts.push(`${t.services}: ${v.services.join(', ')}.`)
   if (v.custom_services) facts.push(`${t.alsoDoes}: ${v.custom_services}`)
   facts.push(v.price_info ? `${t.prices}: ${v.price_info}` : t.noPrices)
@@ -1016,16 +1020,19 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     tools.join('\n'),
   ]
 
-  const bookingSection = [
-    booking.join('\n'),
-    '',
-    // Omitido por completo quando há uma só agenda, que é a maioria das
-    // clínicas. Uma secção sobre escolher pessoa numa clínica de uma pessoa é
-    // uma escolha inventada, e o modelo oferece o que lhe deres.
-    ...((v.professionals?.length ?? 0) > 1
+  const bookingSection = [booking.join('\n')]
+
+  // Quem atende sai do procedimento e fica com os factos da clínica, pela
+  // mesma razão que a duração e o número de quem liga: muda de clínica para
+  // clínica, e um procedimento que muda não pode viver no agente partilhado.
+  //
+  // Omitido por completo quando há uma só agenda, que é a maioria das
+  // clínicas. Uma secção sobre escolher pessoa numa clínica de uma pessoa é
+  // uma escolha inventada, e o modelo oferece o que lhe deres.
+  const professionalsSection =
+    (v.professionals?.length ?? 0) > 1
       ? [t.professionalsTitle, ...t.professionals(v.professionals), '']
-      : []),
-  ]
+      : []
 
   const cancellingSection = [t.cancellationsTitle, ...t.cancellations]
 
@@ -1056,6 +1063,7 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
   const sections = [
     ...core,
     '',
+    ...professionalsSection,
     ...bookingSection,
     ...cancellingSection,
     '',
@@ -1072,7 +1080,7 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     text: sections.join('\n').replace(/\n{3,}/g, '\n\n'),
     variables: v,
     nodes: {
-      core: tidy([...core, '', ...coreTail]),
+      core: tidy([...core, '', ...professionalsSection, ...coreTail]),
       booking: tidy(bookingSection),
       cancelling: tidy(cancellingSection),
       closing: tidy(closingSection),

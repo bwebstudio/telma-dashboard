@@ -171,6 +171,8 @@ const RULES = {
     neverRecitesAll: '**Mesmo que peçam tudo, não recitas tudo.**',
     refusalHelps: 'recusas em três tempos',
     lastWordWins: '**vale sempre o último**',
+    silenceOnce: 'perguntas uma vez se ainda está aí',
+    letsThemGo: 'aceitas sem insistir',
     noHoursRecital: 'recitas o horário de abertura',
     soonest: 'o mais cedo possível',
     soonestNoHours: 'Nunca respondes a isso com o horário da clínica',
@@ -209,6 +211,8 @@ const RULES = {
     neverRecitesAll: '**Aunque te pidan todo, no lo recitas todo.**',
     refusalHelps: 'te niegas en tres tiempos',
     lastWordWins: '**vale siempre lo último**',
+    silenceOnce: 'preguntas una vez si sigue ahí',
+    letsThemGo: 'lo aceptas sin insistir',
     noHoursRecital: 'recitas el horario de apertura',
     soonest: 'lo antes posible',
     soonestNoHours: 'Nunca respondes a eso con el horario de la clínica',
@@ -752,7 +756,7 @@ test('an animal emergency does not go to 112', () => {
 // A floor is crude and it works. Lowering the number is still possible and is
 // now a deliberate line in a diff, next to a comment saying so, rather than an
 // absence nobody can see.
-const RULE_FLOOR = 34
+const RULE_FLOOR = 36
 
 test('the list of pinned rules has not quietly got shorter', () => {
   for (const lang of ['pt', 'es']) {
@@ -882,5 +886,23 @@ test('a correction replaces, and is not queried', () => {
   for (const lang of ['pt', 'es']) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(RULES[lang].lastWordWins), `${lang}: may ask which of the two they meant`)
+  }
+})
+
+// Two ways a call ends without going anywhere, neither of which was written
+// down. The "are you still there?" Telma had been saying was her own invention.
+//
+// Their agent, told "leave it, I'll look later", did not push: it said that was
+// fine, offered one small thing, and gave permission to go. Pressing somebody
+// who has already decided is what stops them ringing back.
+//
+// The silence half is ours rather than theirs. An abandoned web session costs
+// them nothing; an abandoned telephone line bills the clinic for as long as it
+// stays open.
+test('a call that goes nowhere ends kindly and ends', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(RULES[lang].silenceOnce), `${lang}: silence is never handled`)
+    assert.ok(text.includes(RULES[lang].letsThemGo), `${lang}: may push somebody who has decided`)
   }
 })

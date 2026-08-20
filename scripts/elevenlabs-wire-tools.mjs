@@ -375,6 +375,18 @@ const AGENT_SPEC = {
       // Cuatro segundos, no siete. Siete es una eternidad al teléfono: quien ha
       // terminado de hablar cree que la línea se ha caído.
       turn_timeout: 4.0,
+      // Forty-five seconds of nothing, and the line closes.
+      //
+      // The platform default never closes it, and ElevenLabs' own agent behaves
+      // the same way: right for them, because an abandoned browser tab costs
+      // nobody anything. An abandoned telephone line bills the clinic for as
+      // long as it stays open, and somebody putting the handset on the counter
+      // to look for a diary and forgetting is not a rare event.
+      //
+      // Long enough to hunt for a calendar, short enough not to fund a dead
+      // line. The base asks once whether they are still there before it gets
+      // here; this is what happens when nobody is.
+      silence_end_call_timeout: 45.0,
       // `eager` cierra el turno en cuanto la frase suena terminada, en vez de
       // esperar a que el silencio lo confirme. Es la única palanca que queda
       // contra el ruido de sala: la plataforma no expone un umbral de VAD, solo

@@ -168,6 +168,7 @@ const RULES = {
     closingNoHangup: 'nem enquanto a outra pessoa ainda fala',
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
+    neverRecitesAll: '**Mesmo que peçam tudo, não recitas tudo.**',
     noHoursRecital: 'recitas o horário de abertura',
     soonest: 'o mais cedo possível',
     soonestNoHours: 'Nunca respondes a isso com o horário da clínica',
@@ -203,6 +204,7 @@ const RULES = {
     closingNoHangup: 'ni mientras la otra persona sigue hablando',
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
+    neverRecitesAll: '**Aunque te pidan todo, no lo recitas todo.**',
     noHoursRecital: 'recitas el horario de apertura',
     soonest: 'lo antes posible',
     soonestNoHours: 'Nunca respondes a eso con el horario de la clínica',
@@ -831,5 +833,21 @@ test('a service the clinic does not offer is not booked', () => {
     const at = order.map((step) => text.indexOf(step))
     assert.ok(at.every((i) => i > 0), `${lang}: a step went missing in the renumbering`)
     assert.deepEqual([...at].sort((a, b) => a - b), at, `${lang}: the check must come before the diary`)
+  }
+})
+
+// Asked for every service and every price, she recited all six, and the rule
+// that was supposed to stop her only covered not volunteering the list: it said
+// she may say it if asked, and he asked.
+//
+// On a telephone there is no skimming. The listener waits through the list or
+// hangs up, and a wall of hours is indistinguishable from a fault.
+test('being asked for everything is not a reason to say everything', () => {
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      text.includes(RULES[lang].neverRecitesAll),
+      `${lang}: insisting is enough to get the whole list read out`
+    )
   }
 })

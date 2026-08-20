@@ -298,6 +298,20 @@ const AGENT_SPEC = {
         // ocho pasos de una cita sin costar el segundo de más.
         llm: 'gpt-5.4-mini',
         reasoning_effort: 'low',
+        // A ceiling on one spoken turn, and a backstop rather than a style.
+        //
+        // It was -1, which is no ceiling at all: asked for every service with
+        // every price she read out all six, and a diary with a month free is
+        // several hundred hours she would have been equally willing to recite.
+        // The prompt now says not to, and a prompt is a request; this is the
+        // thing that cannot be talked around by a caller insisting.
+        //
+        // Three hundred is far above any legitimate turn — the longest thing
+        // she ever has to say is a closing that lists two appointments, well
+        // under a hundred — so it should never fire in an ordinary call. Set
+        // low enough to cut a real sentence, it would truncate her mid-word,
+        // which sounds like a fault rather than like brevity.
+        max_tokens: 300,
         built_in_tools: {
           end_call: {
             name: 'end_call',

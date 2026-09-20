@@ -28,7 +28,7 @@ const SNAP_DIR = join(here, '__snapshots__')
 // the update silently does nothing.
 const UPDATE = process.env.UPDATE_SNAPSHOTS === '1'
 
-const { buildPrompt, PROMPT_VERSION, baseLanguageFor, greetingLine } = await import('../lib/onboarding/prompt.ts')
+const { buildPrompt, PROMPT_VERSION, baseLanguageFor, greetingLine, todayInZone } = await import('../lib/onboarding/prompt.ts')
 
 // A clinic with everything filled in. Each case below is this, changed in one
 // way, so a diff between two snapshots shows the effect of that one change.
@@ -424,8 +424,8 @@ test('a clinic that cannot book still logs its calls', () => {
 // two hours of every morning.
 test('today is stated, in the clinic timezone, in both languages', () => {
   for (const [lang, expected] of [
-    ['pt', 'Hoje é sábado, 8 de agosto de 2026.'],
-    ['es', 'Hoy es sábado, 8 de agosto de 2026.'],
+    ['pt', 'Hoje é sábado, 8 de agosto de 2026, hora da clínica.'],
+    ['es', 'Hoy es sábado, 8 de agosto de 2026, hora de la clínica.'],
   ]) {
     const { text } = buildPrompt(
       { ...CASES['open-can-book'], today: 'sábado, 8 de agosto de 2026' },
@@ -1068,4 +1068,71 @@ test('every call is filed, booking or no booking', () => {
       `${lang}: a call with no booking in it can end unrecorded`
     )
   }
+})
+
+
+// The hour, and not only the date.
+//
+// Two rules in the base already assumed she knew what time it was: "never offer
+// an hour that has already gone", and a goodbye that fits the time of day. She
+// was only ever sent the date, so neither could be obeyed, and on a real call
+// at 22:18 she wished the caller a good morning.
+test('the clock reaches the prompt, not only the date', () => {
+  for (const lang of ['pt', 'es']) {
+    const said = todayInZone('Europe/Lisbon', lang)
+    assert.match(said, /\d{1,2}:\d{2}/, `${lang}: today carries no clock`)
+    const { text } = buildPrompt({ ...CASES['open-can-book'], today: said }, lang)
+    assert.ok(text.includes(said), `${lang}: the clock did not reach the text`)
+  }
+})
+
+// A booking is not the end of a call.
+//
+// The booking procedure used to finish by filing the call, which is also the
+// last step of the closing. On a real call she read that as the end of the
+// whole conversation: she confirmed the appointment, filed it, said goodbye and
+// hung up, without once asking whether there was anything else. Two procedures
+// cannot both own the ending, and the one that owns it is the closing.
+//
+// This matters most for the caller who books and then remembers a second thing
+// ("and one for my daughter?"), which is the case the whole design is measured
+// against.
+test('a booking hands over to the closing instead of ending the call', () => {
+  const WORDS = {
+    pt: { goes: 'Como te despedes', notHere: 'Não registas a chamada aqui' },
+    es: { goes: 'Cómo te despides', notHere: 'No registras la llamada aquí' },
+  }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      nodes.booking.includes(WORDS[lang].goes),
+      `${lang}: the booking never hands over to the closing`
+    )
+    assert.ok(
+      nodes.booking.includes(WORDS[lang].notHere),
+      `${lang}: the booking still owns the filing, so it still owns the ending`
+    )
+  }
+})
+
+// "Se precisar de mais alguma coisa, é só ligar" is not the question. It is a
+// farewell wearing the question's clothes: it closes the door instead of
+// holding it open, and it is what came out of her on the real call. The closing
+// now names that sentence and refuses it.
+test('the closing asks a real question, and says goodbye once', () => {
+  const WORDS = {
+    pt: { asks: 'tem de soar a pergunta', once: 'Despedes-te uma vez só' },
+    es: { asks: 'tiene que sonar a pregunta', once: 'Te despides una sola vez' },
+  }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.closing.includes(WORDS[lang].asks), `${lang}: a farewell can pass as the question`)
+    assert.ok(nodes.closing.includes(WORDS[lang].once), `${lang}: nothing stops her repeating the goodbye`)
+  }
+})
+
+// She is a she, and said "muito obrigado" twice on one call.
+test('she thanks in the feminine, in Portuguese', () => {
+  const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, 'pt')
+  assert.ok(nodes.closing.includes('obrigada'), 'the closing does not say which form she uses')
 })

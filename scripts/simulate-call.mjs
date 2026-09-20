@@ -273,13 +273,25 @@ try {
 
 // ---------------------------------------------------------------------------
 
-async function api(method, path, body) {
+async function api(method, path, body, attempt = 1) {
   const res = await fetch(`https://api.elevenlabs.io${path}`, {
     method,
     headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   })
   const text = await res.text()
+
+  // A 500 from the far end used to take the whole run down, and it happened
+  // twice in one afternoon: six simulated calls thrown away because the last
+  // one crashed on their side. Retried three times, widening, because the
+  // alternative is a measurement that silently reports nothing and gets read
+  // as "no findings". Only for their faults — a 4xx is ours and stays fatal.
+  if (res.status >= 500 && attempt <= 3) {
+    console.log(`  ${res.status} de ElevenLabs, tentativa ${attempt} de 3...`)
+    await new Promise((r) => setTimeout(r, attempt * 4000))
+    return api(method, path, body, attempt + 1)
+  }
+
   // Thrown, never process.exit(). Exiting here skipped the `finally` that
   // deletes the throwaway agent, so a rate limit mid-run left one behind in a
   // list where every other entry answers a real telephone. Which is exactly

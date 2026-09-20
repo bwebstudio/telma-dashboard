@@ -1,7 +1,7 @@
 # Qué se guarda, dónde, quién lo toca y cuánto dura
 
 Para el anexo de tratamiento de datos del contrato con cada clínica.
-Última revisión: 17 de agosto de 2026, versión de prompt `2026-08-17.1`.
+Última revisión: 24 de agosto de 2026, versión de prompt `2026-08-17.1`.
 
 Cada línea es verificable en el código o leyendo la configuración del
 proveedor. Lo que **no** he podido verificar desde aquí está marcado como
@@ -43,7 +43,7 @@ pasados 7 días, no queda en ninguna parte.
 
 | Proveedor | Para qué | Qué datos personales ve |
 |---|---|---|
-| **ElevenLabs** | voz del agente, reconocimiento y transcripción | audio y transcripción íntegros: todo lo que se diga en la llamada, incluida información de salud |
+| **ElevenLabs** | voz del agente, reconocimiento y transcripción | audio y transcripción íntegros: todo lo que se diga en la llamada, incluida información de salud. **Almacenado en EE. UU.**, transferencia cubierta por las CCT de la Decisión 2021/914 (ver punto 3.3) |
 | **Supabase** | base de datos y autenticación | todo lo de la tabla anterior |
 | **Vercel** | alojamiento de la aplicación y del alta | los datos pasan por sus servidores en tránsito; no se almacenan allí |
 | **Twilio** | numeración telefónica | metadatos de la llamada y, si graba, audio (**pendiente**: aún no hay número conectado) |
@@ -68,8 +68,8 @@ la ventana es de 7 días y no de 30.
 
 ## 3. Lo que NO he podido verificar desde aquí
 
-Estos tres huecos son los que bloquean el anexo. Ninguno se puede
-responder leyendo nuestro código:
+Estos huecos son los que bloquean el anexo, y ninguno se puede responder
+leyendo nuestro código. Dos de los tres ya están contestados.
 
 1. **Región del proyecto de Supabase.** Se ve en el panel de Supabase, en
    Project Settings, General. Hace falta que sea UE para que el anexo diga
@@ -80,10 +80,45 @@ responder leyendo nuestro código:
    fuera del Espacio Económico Europeo en cada consulta. Ya hay un
    `vercel.json` que las fija en París (`cdg1`), y el cambio entra con el
    siguiente despliegue. Ver `region.md`.
-3. **Residencia de datos de ElevenLabs.** La API de suscripción no la
-   expone y su cabecera de respuesta indica infraestructura de Google
-   Cloud. Hay que preguntárselo a ElevenLabs por escrito y guardar la
-   respuesta: es un subencargado que trata datos de salud.
+3. ~~**Residencia de datos de ElevenLabs.**~~ **Contestado el 19 de agosto
+   de 2026, y hay que leerlo entero antes de firmar nada.** Legal respondió
+   remitiendo a sus documentos públicos, que dicen esto:
+
+   - **Almacenan en Estados Unidos, siempre.** Política de privacidad
+     (actualizada el 20 de mayo de 2026): *"Regardless of your location,
+     all Personal Data will be transferred to the United States for
+     storage."* Proveedor de infraestructura citado como ejemplo: Google
+     Cloud, con ubicaciones en EE. UU., Países Bajos y Singapur.
+   - **Hay DPA en vigor y no hay que firmarlo.** `elevenlabs.io/dpa`
+     (8 de abril de 2026) se incorpora por referencia a los términos, así
+     que ya nos aplica. Incorpora las Cláusulas Contractuales-Tipo de la
+     Decisión 2021/914, módulo responsable a subencargado o subencargado a
+     subencargado según el caso, *"deemed executed upon this DPA taking
+     effect"*. Ese es el mecanismo de transferencia que el anexo debe citar.
+   - **Lista de subencargados** en `compliance.elevenlabs.io`, con 30 días
+     de preaviso y derecho de oposición fundamentada. La lista en sí es un
+     visor JavaScript que hay que abrir a mano: **queda por copiar**.
+   - **Residencia en la UE existe y es de plan enterprise.** *"Data
+     residency is an Enterprise feature."* Y aun con ella activada,
+     *"processing may nevertheless occur outside of the selected location...
+     for support purposes, and for content moderation purposes"*, salvo que
+     se combine con Zero Retention Mode, que también es enterprise.
+   - **Zero Retention Mode: enterprise, solo API, y discrecional.** Cubre
+     inputs y outputs de la API, no el uso por interfaz, y puede
+     restringirse *"at ElevenLabs' sole discretion"*.
+   - **El anexo I del DPA declara los datos sensibles como `N/A`.** Es
+     decir, la plantilla no contempla datos del artículo 9. Para un
+     despliegue sanitario europeo esto es lo que hay que mirar con un
+     abogado, más que la residencia.
+   - **Los términos prohíben enviar PHI sin BAA firmado**, y el BAA es
+     enterprise. PHI es una definición de HIPAA, ley estadounidense, y una
+     clínica dental portuguesa no es una *covered entity*, así que
+     probablemente no nos aplica. **Probablemente no es suficiente en un
+     anexo contractual: esto lo decide un abogado, no nosotros.**
+
+   Patrón que conviene nombrar: redacción automática, residencia europea,
+   retención cero y BAA son la misma puerta, y es enterprise. Cuatro cosas
+   distintas contra las que hemos chocado son una sola decisión de coste.
 
 ---
 

@@ -184,7 +184,7 @@ const RULES = {
     noTags: 'Não escreves etiquetas de nenhum tipo',
     twoRealOptions: 'não são duas opções, são uma',
     numberOnce: 'Uma só vez em toda a chamada, mesmo que fiquem duas marcações.',
-    nameAndNumberTogether: '**Confirmas o nome e o telefone juntos, numa só vez**',
+    nameAndNumberTogether: '**Confirmas o telefone e o nome juntos, numa só vez, e o nome fica para o fim**',
     noRoutineSpelling: 'não soletras um nome que percebeste bem',
     toolsTitle: '# A agenda',
     toolsBeforeOffering: 'Chamas isto **antes** de ofereceres qualquer hora',
@@ -232,7 +232,7 @@ const RULES = {
     toolsHoldOnPick: 'en cuanto elige',
     toolsNoInventOnError: 'no inventas horas',
     numberOnce: 'Una sola vez en toda la llamada, aunque queden dos citas.',
-    nameAndNumberTogether: '**Confirmas el nombre y el teléfono juntos, de una sola vez**',
+    nameAndNumberTogether: '**Confirmas el teléfono y el nombre juntos, de una sola vez, y el nombre queda para el final**',
     noRoutineSpelling: 'no deletreas un nombre que has entendido bien',
   },
 }
@@ -1135,4 +1135,86 @@ test('the closing asks a real question, and says goodbye once', () => {
 test('she thanks in the feminine, in Portuguese', () => {
   const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, 'pt')
   assert.ok(nodes.closing.includes('obrigada'), 'the closing does not say which form she uses')
+})
+
+
+// The name goes last, because the question sticks to whatever it follows.
+//
+// She heard "Mim Chevia Pinto Gual" where the caller had said "Domingos Xavier
+// Pinto Coelho", read it back in front of nine digits, asked "está tudo certo?"
+// and he said yes. He caught it forty seconds later, and only because it
+// occurred to him to ask what name she had. Bundling the two is still right,
+// since two confirmations in a row tire people out, but whatever sits next to
+// the question is the part that gets checked, and the name is what a telephone
+// line garbles worst.
+test('the name is confirmed last, where the question can reach it', () => {
+  const WORDS = {
+    pt: 'a pergunta colada ao nome',
+    es: 'la pregunta pegada al nombre',
+  }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(
+      nodes.booking.includes(RULES[lang].nameAndNumberTogether),
+      `${lang}: the name can go into a booking without being read back`
+    )
+    assert.ok(
+      nodes.booking.includes(WORDS[lang]),
+      `${lang}: nothing says which of the two the question has to reach`
+    )
+  }
+})
+
+// "Entrei na agenda com o nome correto e fica tudo registado. Vou terminar a
+// chamada agora." The rule against announcing the filing was already there and
+// she said it anyway, so the closing now names the sentences she produced
+// rather than only the one somebody imagined in advance.
+test('the goodbye is not a machine narrating itself', () => {
+  const SAID = {
+    pt: ['vou terminar a chamada agora', 'fica tudo registado', 'entrei na agenda'],
+    es: ['voy a terminar la llamada ahora', 'queda todo registrado', 'he entrado en la agenda'],
+  }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    for (const phrase of SAID[lang]) {
+      assert.ok(
+        nodes.closing.includes(phrase),
+        `${lang}: the closing does not refuse "${phrase}"`
+      )
+    }
+  }
+})
+
+// Where she got it from. A clinic that takes messages is told twice to say the
+// message is filed in the clinic's panel, which is right for a message and is
+// what she generalised into the goodbye of a booking. The sentence keeps its
+// job and loses the other one.
+test('the panel sentence belongs to a message, not to a booking', () => {
+  const SCOPED = {
+    pt: 'Isso diz-se de um recado, nunca de uma marcação.',
+    es: 'Eso se dice de un recado, nunca de una cita.',
+  }
+  for (const lang of ['pt', 'es']) {
+    // A clinic that books says it in the fallback, when it cannot help.
+    const books = buildPrompt(
+      { ...CASES['open-can-book'], can_book: true, fallback_policy: 'message' },
+      lang
+    ).text
+    assert.equal(
+      books.split(SCOPED[lang]).length - 1,
+      1,
+      `${lang}: unscoped where a message is taken instead of helping`
+    )
+    // A clinic that cannot book says it there and again when taking a note,
+    // which is the whole of what it can do.
+    const cannot = buildPrompt(
+      { ...CASES['open-can-book'], can_book: false, fallback_policy: 'message' },
+      lang
+    ).text
+    assert.equal(
+      cannot.split(SCOPED[lang]).length - 1,
+      2,
+      `${lang}: unscoped where a clinic that cannot book takes notes`
+    )
+  }
 })

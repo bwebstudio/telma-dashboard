@@ -14,6 +14,14 @@ export interface NavItem {
   href: string
   label: string
   icon: ReactNode
+  /**
+   * The heading this entry sits under in the sidebar. Grouping is what tells a
+   * receptionist that Citas is something she opens every morning and Horarios
+   * is something she sets once, which is the distinction the two names alone
+   * were never going to carry. Ignored by the phone bar, where five icons in a
+   * row have no space for headings and no need of them.
+   */
+  group?: string
 }
 
 export interface PanelLink {
@@ -135,9 +143,16 @@ export function Shell({
         </div>
         {showSwitcher && <div className="px-3 pb-3">{switcher()}</div>}
         <nav className="flex-1 px-3 py-4" aria-label={panelLabel}>
-          {nav.map((item) => (
+          {nav.map((item, i) => (
+            <div key={item.href}>
+              {item.group && item.group !== nav[i - 1]?.group && (
+                <p
+                  className={`${i === 0 ? '' : 'mt-5'} mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-ink-mute`}
+                >
+                  {item.group}
+                </p>
+              )}
             <Link
-              key={item.href}
               href={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={`mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors ${
@@ -149,6 +164,7 @@ export function Shell({
               {item.icon}
               {item.label}
             </Link>
+            </div>
           ))}
           {aside}
         </nav>

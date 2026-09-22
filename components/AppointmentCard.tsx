@@ -90,7 +90,7 @@ export function AppointmentCard({
         <Row label={dict.common.date} value={formatWeekdayDate(appt.scheduled_at, locale)} />
         <Row label={dict.common.time} value={formatTime(appt.scheduled_at, locale)} />
         {appt.reason && <Row label={dict.common.reason} value={appt.reason} />}
-        <Row label="" value={dict.status.origin[appt.origin]} />
+        <Row label={dict.common.channel} value={dict.status.origin[appt.origin]} />
       </dl>
 
       {appt.summary && (

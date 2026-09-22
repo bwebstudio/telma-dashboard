@@ -64,7 +64,7 @@ export default async function MarcacoesPage({
       <div className="mb-6 inline-flex rounded-full border border-line-strong bg-surface p-1">
         {tab('all', dict.marcacoes.filterAll)}
         {tab('pending', dict.marcacoes.filterPending)}
-        {tab('cancelled', dict.status.appointment.cancelada)}
+        {tab('cancelled', dict.marcacoes.filterCancelled)}
       </div>
 
       {error ? (

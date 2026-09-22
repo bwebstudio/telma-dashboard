@@ -41,6 +41,8 @@ export interface Dictionary {
     email: string
     name: string
     reason: string
+    /** Label for how a booking arrived: by phone or by WhatsApp. */
+    channel: string
     date: string
     time: string
     status: string
@@ -111,6 +113,9 @@ export interface Dictionary {
     /** What Telma says, which is the clinic's to change and not ours. */
     telma: string
     /** Only shown where the simulator exists, which is never in production. */
+    /** Sidebar group headings: today's work, and what is set once. */
+    groupDay: string
+    groupSetup: string
     testCall: string
   }
   telmaSettings: {
@@ -200,6 +205,8 @@ export interface Dictionary {
     rejectReasonHint: string
     confirmConfirm: string
     filterAll: string
+    /** A filter's own label. It used to borrow the singular status badge. */
+    filterCancelled: string
     filterPending: string
   }
   /** A patient asking to be forgotten, answered by the clinic itself. */

@@ -25,6 +25,7 @@ export const pt: Dictionary = {
     email: 'Email',
     name: 'Nome',
     reason: 'Motivo',
+    channel: 'Canal',
     date: 'Data',
     time: 'Hora',
     status: 'Estado',
@@ -96,12 +97,14 @@ export const pt: Dictionary = {
     exitView: 'Sair desta vista',
   },
   clinicNav: {
-    hoje: 'Agenda',
+    hoje: 'Hoje',
     marcacoes: 'Marcações',
     horarios: 'Horários',
     chamadas: 'Conversas',
     conta: 'A minha clínica',
     telma: 'Telma',
+    groupDay: 'O seu dia',
+    groupSetup: 'Configuração',
     testCall: 'Simulador',
   },
   telmaSettings: {
@@ -188,6 +191,7 @@ export const pt: Dictionary = {
     rejectReasonHint: 'Fica registado, o paciente não é avisado automaticamente.',
     confirmConfirm: 'Marcar como confirmada',
     filterAll: 'Todas',
+    filterCancelled: 'Canceladas',
     filterPending: 'Por confirmar',
   },
   erasure: {
@@ -304,7 +308,7 @@ export const pt: Dictionary = {
       'A pré-marcação segura a hora até alguém confirmar ou rejeitar, sem prazo. Nenhuma reserva desaparece durante a noite.',
   },
   billing: {
-    minutesTitle: 'Minutos disponíveis',
+    minutesTitle: 'Minutos gastos',
     percentUsed: 'usado',
     minutesWord: 'minutos',
     minuteWord: 'minuto',

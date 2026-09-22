@@ -125,6 +125,7 @@ export default async function AgendaPage({
   ])
   const minutesCard = billing ? (
     <MinutesProgressCard
+      quiet
       minutes={billing.minutes}
       pack={pack}
       canBuy={!readOnly}

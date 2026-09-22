@@ -25,6 +25,7 @@ export const en: Dictionary = {
     email: 'Email',
     name: 'Name',
     reason: 'Reason',
+    channel: 'Channel',
     date: 'Date',
     time: 'Time',
     status: 'Status',
@@ -96,12 +97,14 @@ export const en: Dictionary = {
     exitView: 'Leave this view',
   },
   clinicNav: {
-    hoje: 'Agenda',
+    hoje: 'Today',
     marcacoes: 'Bookings',
     horarios: 'Hours',
     chamadas: 'Conversations',
     conta: 'My clinic',
     telma: 'Telma',
+    groupDay: 'Your day',
+    groupSetup: 'Setup',
     testCall: 'Simulator',
   },
   telmaSettings: {
@@ -188,6 +191,7 @@ export const en: Dictionary = {
     rejectReasonHint: 'Kept for the record, the patient is not told automatically.',
     confirmConfirm: 'Mark as confirmed',
     filterAll: 'All',
+    filterCancelled: 'Cancelled',
     filterPending: 'To confirm',
   },
   erasure: {
@@ -303,7 +307,7 @@ export const en: Dictionary = {
       'The booking holds its slot until somebody confirms or turns it down, with no deadline. Nothing disappears overnight.',
   },
   billing: {
-    minutesTitle: 'Minutes available',
+    minutesTitle: 'Minutes spent',
     percentUsed: 'used',
     minutesWord: 'minutes',
     minuteWord: 'minute',

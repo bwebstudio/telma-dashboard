@@ -25,6 +25,7 @@ export const es: Dictionary = {
     email: 'Email',
     name: 'Nombre',
     reason: 'Motivo',
+    channel: 'Canal',
     date: 'Fecha',
     time: 'Hora',
     status: 'Estado',
@@ -96,12 +97,14 @@ export const es: Dictionary = {
     exitView: 'Salir de esta vista',
   },
   clinicNav: {
-    hoje: 'Agenda',
+    hoje: 'Hoy',
     marcacoes: 'Citas',
     horarios: 'Horarios',
     chamadas: 'Conversaciones',
     conta: 'Mi clínica',
     telma: 'Telma',
+    groupDay: 'Tu día',
+    groupSetup: 'Configuración',
     testCall: 'Simulador',
   },
   telmaSettings: {
@@ -188,6 +191,7 @@ export const es: Dictionary = {
     rejectReasonHint: 'Queda registrado, el paciente no recibe aviso automático.',
     confirmConfirm: 'Marcar como confirmada',
     filterAll: 'Todas',
+    filterCancelled: 'Canceladas',
     filterPending: 'Por confirmar',
   },
   erasure: {
@@ -303,7 +307,7 @@ export const es: Dictionary = {
       'La reserva retiene la hora hasta que alguien confirme o rechace, sin plazo. Ninguna reserva desaparece por la noche.',
   },
   billing: {
-    minutesTitle: 'Minutos disponibles',
+    minutesTitle: 'Minutos gastados',
     percentUsed: 'usado',
     minutesWord: 'minutos',
     minuteWord: 'minuto',

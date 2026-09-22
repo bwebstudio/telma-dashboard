@@ -30,6 +30,7 @@ export function MinutesProgressCard({
   minutes,
   pack,
   canBuy,
+  quiet = false,
   dict,
   locale,
 }: {
@@ -38,6 +39,13 @@ export function MinutesProgressCard({
   pack: MinutePackOffer | null
   /** False while an administrator is visiting: a visit spends nothing. */
   canBuy: boolean
+  /**
+   * On the day screen. The pack is then offered only when something is
+   * actually running out, which is what the rest of this card already does:
+   * a price tag on the first screen of the morning, at one per cent spent,
+   * is the panel selling rather than the panel informing.
+   */
+  quiet?: boolean
   dict: Dictionary
   locale: Locale
 }) {
@@ -45,7 +53,6 @@ export function MinutesProgressCard({
   const percent = percentUsed(minutes.used, minutes.allowance)
   const tone = usageTone(percent, minutes.exhausted)
   const used = Math.round(minutes.used)
-  const remaining = Math.round(minutes.remaining)
 
   return (
     <section className="card p-5 sm:p-6">
@@ -62,9 +69,7 @@ export function MinutesProgressCard({
           {dict.common.of} {minutes.allowance}
         </span>
         <span className="text-lg text-ink-mute">{t.minutesWord}</span>
-        <span className={`ml-auto text-lg font-medium tabular-nums ${TEXT[tone]}`}>
-          {remaining} {t.remaining}
-        </span>
+
       </div>
 
       {/* The bar carries a number for anyone who cannot see the colour, and the
@@ -100,7 +105,7 @@ export function MinutesProgressCard({
         </p>
       ) : null}
 
-      {pack && canBuy && (
+      {pack && canBuy && (!quiet || minutes.exhausted || percent >= 80) && (
         <div className="mt-5">
           <BuyMinutesButton
             pack={pack}
@@ -115,7 +120,7 @@ export function MinutesProgressCard({
         </div>
       )}
 
-      {pack && !canBuy && <p className="mt-5 text-sm text-ink-mute">{t.readOnly}</p>}
+      {pack && !canBuy && !quiet && <p className="mt-5 text-sm text-ink-mute">{t.readOnly}</p>}
     </section>
   )
 }

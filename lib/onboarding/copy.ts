@@ -260,7 +260,8 @@ const pt: Copy = {
   priceInfoHelp: 'Opcional, e só para o que não cabe num número: "o laser varia com a zona", "o primeiro orçamento é gratuito". Os preços de cada serviço põem-se em cima.',
   priceInfoPlaceholder: 'Primeira consulta 40 €. Limpeza a partir de 60 €.',
   greetingLanguage: 'Idioma com que atende',
-  greetingLanguageHelp: 'O primeiro que se ouve, antes de quem liga dizer nada. Depois a Telma acompanha a língua da pessoa.',
+  greetingLanguageHelp:
+    'O primeiro que se ouve, antes de quem liga dizer nada. Se a clínica atende em mais línguas, a saudação diz como pedi-las, e a partir daí a Telma não muda de língua durante a chamada.',
   formality: 'Como trata os pacientes',
   formalityHelp: 'A primeira coisa que se nota ao telefone.',
   formalityFormal: 'Por "o senhor" / "a senhora"',
@@ -442,7 +443,8 @@ const es: Copy = {
   priceInfoHelp: 'Opcional, y solo para lo que no cabe en un número: "el láser varía según la zona", "el primer presupuesto es gratis". Los precios de cada servicio se ponen arriba.',
   priceInfoPlaceholder: 'Primera visita 40 €. Limpieza desde 60 €.',
   greetingLanguage: 'Idioma con el que descuelga',
-  greetingLanguageHelp: 'Lo primero que se oye, antes de que quien llama diga nada. Después Telma sigue la lengua de la persona.',
+  greetingLanguageHelp:
+    'Lo primero que se oye, antes de que quien llama diga nada. Si la clínica atiende en más idiomas, el saludo dice cómo pedirlos, y a partir de ahí Telma no cambia de idioma en toda la llamada.',
   formality: 'Cómo trata a los pacientes',
   formalityHelp: 'Lo primero que se nota por teléfono.',
   formalityFormal: 'De usted',

@@ -15,6 +15,7 @@ export const es: Dictionary = {
     search: 'Buscar',
     all: 'Todas',
     none: 'Ninguna',
+    noNumber: 'Sin número',
     today: 'Hoy',
     signOut: 'Salir',
     language: 'Idioma',
@@ -155,7 +156,8 @@ export const es: Dictionary = {
     transcript: 'Transcripción',
     showTranscript: 'Leer la conversación',
     hideTranscript: 'Cerrar la conversación',
-    noTranscript: 'Esta conversación no tiene transcripción.',
+    noTranscript:
+      'Aquí queda el resumen. La transcripción no se guarda: vive 7 días en la plataforma de voz y se borra.',
     speakerTelma: 'Telma',
     speakerPatient: 'Paciente',
     booked: 'Cita',

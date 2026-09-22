@@ -52,7 +52,7 @@ export function ConversationItem({
         </span>
 
         <span className="min-w-0 flex-1 truncate text-base text-ink">
-          {call.patient_name || call.from_phone || dict.common.none}
+          {call.patient_name || call.from_phone || dict.common.noNumber}
           {call.patient_name && call.from_phone && (
             <span className="ml-2 hidden text-sm text-ink-mute sm:inline">{call.from_phone}</span>
           )}

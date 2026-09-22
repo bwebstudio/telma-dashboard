@@ -31,6 +31,8 @@ export interface Dictionary {
     search: string
     all: string
     none: string
+    /** A call that arrived without a caller id. "None" read as a phone number. */
+    noNumber: string
     today: string
     signOut: string
     language: string

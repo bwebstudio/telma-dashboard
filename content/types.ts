@@ -250,6 +250,8 @@ export interface Dictionary {
     removeProfessional: string
     lastProfessional: string
     help: string
+    /** The weekly grid's own heading. It used to repeat the page title. */
+    gridTitle: string
     gridHint: string
     gridReadOnly: string
     capacityNote: string

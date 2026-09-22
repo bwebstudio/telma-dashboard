@@ -224,6 +224,7 @@ export const en: Dictionary = {
     removeProfessional: 'Remove',
     lastProfessional: 'At least one diary has to remain.',
     help: 'Telma only offers these hours. She will never book outside them.',
+    gridTitle: 'The hours you offer',
     gridHint: 'Tap the hours you want to offer on each day.',
     gridReadOnly: 'The hours this clinic has available on each day.',
     capacityNote: 'Each hour takes one booking. Talk to us to change this.',

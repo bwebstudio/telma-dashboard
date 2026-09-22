@@ -321,9 +321,10 @@ export function Planner({
                     />
                   </div>
                   <p className="mt-1.5 text-sm text-ink-mute tabular-nums">
-                    {busy > 0
-                      ? fill(t.bookedOfTotal, { n: busy, total })
-                      : fill(t.allFree, { n: free })}
+                    {/* Always the same sentence. A row that says "1 de 6
+                        ocupadas" next to "6 horas libres" makes the reader
+                        convert between two units to compare two days. */}
+                    {fill(t.bookedOfTotal, { n: busy, total })}
                   </p>
                 </div>
 

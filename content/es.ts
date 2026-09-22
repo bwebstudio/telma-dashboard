@@ -224,6 +224,7 @@ export const es: Dictionary = {
     removeProfessional: 'Quitar',
     lastProfessional: 'Tiene que quedar al menos una agenda.',
     help: 'Telma solo ofrece estos horarios. Nunca va a citar fuera de aquí.',
+    gridTitle: 'Las horas que ofreces',
     gridHint: 'Toca las horas que quieres ofrecer cada día.',
     gridReadOnly: 'Las horas que esta clínica tiene disponibles cada día.',
     capacityNote: 'Cada hora acepta una cita. Habla con nosotros para cambiarlo.',

@@ -50,10 +50,10 @@ export function MinutesProgressCard({
   return (
     <section className="card p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        {/* The percentage is not printed here: the bar below is the
+            percentage, drawn. It stays in the bar's aria-valuenow, which is
+            where it is worth having. */}
         <h2 className="text-xl font-semibold text-ink">{t.minutesTitle}</h2>
-        <p className="text-sm text-ink-mute tabular-nums">
-          {percent}% {t.percentUsed}
-        </p>
       </div>
 
       <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Dictionary, Locale } from '@/content'
-import type { Appointment, AvailabilitySlot, BlockedDay } from '@/lib/types'
+import { holdsAnHour, type Appointment, type AvailabilitySlot, type BlockedDay } from '@/lib/types'
 import { dayIn, dayKeyIn, timeIn, weekdayIn } from '@/lib/time'
 import { startsIn } from '@/lib/slots'
 import { bookingCategory, categoryBackground } from '@/lib/service-colour'
@@ -73,10 +73,11 @@ export function Planner({
 
   const blockedByDay = new Map(blocked.map((b) => [b.day.slice(0, 10), b]))
 
-  // A cancelled or refused booking does not occupy its hour any more, so it is
-  // not counted and its slot shows as free — which is the whole point of
-  // looking ahead.
-  const live = appointments.filter((a) => a.status !== 'cancelada' && a.status !== 'rejeitada')
+  // A booking that was cancelled, refused or left to lapse does not occupy its
+  // hour any more, so it is not counted and its slot shows as free, which is
+  // the whole point of looking ahead. The list of which ones still hold time
+  // lives in one place and matches the database.
+  const live = appointments.filter((a) => holdsAnHour(a.status))
   const byDay = new Map<string, Appointment[]>()
   for (const a of live) {
     const key = dayKeyIn(tz, new Date(a.scheduled_at))

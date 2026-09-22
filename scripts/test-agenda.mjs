@@ -635,3 +635,50 @@ test('every clinic-scoped table has row level security and a policy', async () =
   )
   await db.close()
 })
+
+// The panel and the diary have to agree on which bookings hold an hour.
+//
+// Every diary function asks Postgres for `status in ('pendente', 'confirmada',
+// 'copiada')`. The week planner asked the opposite question, naming the two to
+// drop, and when 'expirada' arrived in migration 0019 nobody added it there. So
+// a pre-marcação that had lapsed still read as "1 de 6 ocupadas" in the planner
+// while available_slots had already put the hour back on sale. The clinic and
+// Telma were looking at the same hour and seeing different things.
+//
+// This does not run SQL: it reads the two lists and compares them, which is the
+// only way to catch a status that gets added to one side and not the other.
+test('the panel and the diary agree on which bookings hold an hour', () => {
+  const types = readFileSync(join(here, '..', 'lib', 'types.ts'), 'utf8')
+
+  const union = types.match(/export type AppointmentStatus =([\s\S]*?)\nexport /)
+  assert.ok(union, 'AppointmentStatus is no longer where this test looks for it')
+  const all = [...union[1].matchAll(/'([a-z]+)'/g)].map((m) => m[1])
+
+  const declared = types.match(/HOLDS_AN_HOUR: AppointmentStatus\[\] = \[([^\]]*)\]/)
+  assert.ok(declared, 'HOLDS_AN_HOUR is gone, and the panel is filtering by hand again')
+  const holds = [...declared[1].matchAll(/'([a-z]+)'/g)].map((m) => m[1])
+
+  const sql = readdirSync(MIGRATIONS)
+    .filter((f) => f.endsWith('.sql'))
+    .map((f) => readFileSync(join(MIGRATIONS, f), 'utf8'))
+    .join('\n')
+  const lists = [...sql.matchAll(/a\.status in \(([^)]*)\)/g)].map((m) =>
+    [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1])
+  )
+  assert.ok(lists.length, 'no diary function asks about status any more')
+  const widest = lists.sort((a, b) => b.length - a.length)[0]
+
+  assert.deepEqual(
+    [...holds].sort(),
+    [...widest].sort(),
+    'the panel and the diary disagree about which bookings hold an hour'
+  )
+
+  const released = ['rejeitada', 'cancelada', 'expirada']
+  for (const s of all) {
+    assert.ok(
+      holds.includes(s) || released.includes(s),
+      `nobody decided whether "${s}" holds an hour`
+    )
+  }
+})

@@ -43,12 +43,19 @@ export function ConversationItem({
           {timeIn(call.created_at, locale, tz)}
         </span>
 
+        {/* The two channels read differently while scanning the column, not
+            only when the pointer rests on the icon. A WhatsApp conversation
+            and a telephone call are answered by the same Telma and are not the
+            same errand: one has a duration and somebody waiting on the line,
+            the other does not. */}
         <span
-          className={isWhatsapp ? 'shrink-0 text-ok' : 'shrink-0 text-ink-mute'}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+            isWhatsapp ? 'bg-ok-soft text-ok' : 'bg-surface-sunken text-ink-mute'
+          }`}
           title={dict.status.channel[call.channel]}
           aria-label={dict.status.channel[call.channel]}
         >
-          {isWhatsapp ? <IconWhatsApp className="h-5 w-5" /> : <IconPhone className="h-5 w-5" />}
+          {isWhatsapp ? <IconWhatsApp className="h-4 w-4" /> : <IconPhone className="h-4 w-4" />}
         </span>
 
         <span className="min-w-0 flex-1 truncate text-base text-ink">
@@ -109,9 +116,7 @@ export function ConversationItem({
               })}
             </ol>
           </>
-        ) : (
-          <p className="text-base text-ink-mute">{t.noTranscript}</p>
-        )}
+        ) : null}
 
         {call.recording_url && (
           <audio controls preload="none" className="mt-4 w-full max-w-md">

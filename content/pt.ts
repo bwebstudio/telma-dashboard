@@ -157,7 +157,7 @@ export const pt: Dictionary = {
     showTranscript: 'Ler a conversa',
     hideTranscript: 'Fechar a conversa',
     noTranscript:
-      'Aqui fica o resumo. A transcrição não é guardada: vive 7 dias na plataforma de voz e é apagada.',
+      'As transcrições não são guardadas: vivem 7 dias na plataforma de voz e são lá apagadas. De cada conversa fica o resumo.',
     speakerTelma: 'Telma',
     speakerPatient: 'Paciente',
     booked: 'Marcação',

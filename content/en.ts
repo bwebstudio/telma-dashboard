@@ -157,7 +157,7 @@ export const en: Dictionary = {
     showTranscript: 'Read the conversation',
     hideTranscript: 'Close the conversation',
     noTranscript:
-      'The summary is what is kept. The transcript is not: it lives seven days in the voice platform and is deleted.',
+      'Transcripts are not kept: they live seven days in the voice platform and are deleted there. What stays of each conversation is its summary.',
     speakerTelma: 'Telma',
     speakerPatient: 'Patient',
     booked: 'Booking',

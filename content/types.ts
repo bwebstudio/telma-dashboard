@@ -125,6 +125,18 @@ export interface Dictionary {
   telmaSettings: {
     title: string
     lead: string
+    /**
+     * The rules that are ours, shown and not editable.
+     *
+     * An owner being sold this asks "and what if she makes something up?", and
+     * until now the answer lived only in the prompt, where nobody could see it.
+     * A screen full of fields says the clinic is in control; this says the
+     * control has a floor under it, which is the half that makes the other
+     * half safe to sell.
+     */
+    guaranteesTitle: string
+    guaranteesLead: string
+    guarantees: string[]
   }
   // The clinic's home screen: the day, and what needs an answer before it.
   agenda: {

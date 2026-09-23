@@ -32,6 +32,7 @@ const COPY = {
     clinic: 'A clínica',
     services: 'O que faz',
     telma: 'Como a Telma atende',
+    effect: 'Entra na chamada seguinte.',
   },
   es: {
     save: 'Guardar cambios',
@@ -42,6 +43,7 @@ const COPY = {
     clinic: 'La clínica',
     services: 'Qué hace',
     telma: 'Cómo contesta Telma',
+    effect: 'Entra en la siguiente llamada.',
   },
 } as const
 
@@ -100,7 +102,7 @@ export function TelmaSettingsForm({
       <PromptPreview values={values} locale={locale} />
 
       <Section title={t.clinic}>
-        <ClinicStep {...stepProps} />
+        <ClinicStep {...stepProps} showIdentity={false} />
       </Section>
 
       <Section title={t.services}>
@@ -119,6 +121,7 @@ export function TelmaSettingsForm({
           // acima vem filtrada pelas que esta clínica já paga.
           showLanguages={false}
           showGreetingLanguage
+          showPreview={false}
         />
       </Section>
 
@@ -135,8 +138,10 @@ export function TelmaSettingsForm({
           otherwise be somewhere the reader is not. */}
       {!readOnly && (
         <div className="sticky bottom-0 -mx-5 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-surface/95 px-5 py-4 backdrop-blur sm:-mx-8 sm:px-8">
+          {/* When it takes effect, which is the question a save button on a
+              page like this always raises and never answers. */}
           <p className="text-sm text-ink-mute">
-            {pending ? t.saving : dirty ? t.unsaved : saved ? t.saved : ''}
+            {pending ? t.saving : dirty ? t.unsaved : saved ? t.saved : t.effect}
           </p>
           <button
             type="button"

@@ -111,7 +111,16 @@ export const en: Dictionary = {
   },
   telmaSettings: {
     title: 'What Telma knows about your clinic',
-    lead: 'Everything you told us at sign-up. Change it whenever you like: the next call already knows.',
+    lead: 'Everything you told her at sign-up. Change it whenever you like: the next call already knows.',
+    guaranteesTitle: 'What Telma never does',
+    guaranteesLead: 'This is not configurable, and nobody can change it. It is built into her.',
+    guarantees: [
+      'She never offers an hour that is not free in your diary.',
+      'She never gives clinical advice, diagnoses or the names of medicines.',
+      'She never leaves an appointment booked without confirming the caller\u2019s name and number.',
+      'She never gives or confirms another patient\u2019s details, even to somebody claiming to be family.',
+      'An emergency interrupts everything else, even with the plan out of minutes.',
+    ],
   },
   agenda: {
     title: 'Agenda',

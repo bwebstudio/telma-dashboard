@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle } from '@/components/ui'
+import { ClinicIdentityForm } from '@/components/clinic/ClinicIdentityForm'
+import { clinicProfileValues } from '@/lib/clinic-profile'
+import { DEFAULT_ONBOARDING_LOCALE, isOnboardingLocale } from '@/lib/onboarding/locale'
 import { ErasureForm } from '@/components/clinic/ErasureForm'
 import { BrandingForm } from '@/components/clinic/BrandingForm'
 import { BillingLive } from '@/components/clinic/BillingLive'
@@ -20,6 +23,7 @@ export const dynamic = 'force-dynamic'
 export default async function ContaPage() {
   const { locale, dict } = await getDict()
   const { clinicId, clinic, readOnly } = await requireClinicContext()
+  const onboardingLocale = isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE
   const supabase = await createClient()
 
   const [billing, pack, purchasesRes] = await Promise.all([
@@ -48,13 +52,27 @@ export default async function ContaPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="card p-6">
           <SectionTitle>{dict.conta.clinicData}</SectionTitle>
+          {/* The name, the number and the plan still change by talking to us:
+              one is on the contract, one is a line somebody bought and one is
+              billing. The email and where the clinic is do not, and they moved
+              off the Telma screen, which is about how she answers and had no
+              business asking. */}
           <dl className="flex flex-col gap-3">
             <Field label={dict.common.name} value={clinic?.name} />
-            <Field label="Email" value={clinic?.contact_email} />
             <Field label={dict.common.phone} value={clinic?.phone} />
             <Field label={dict.conta.plan} value={clinic ? dict.plans[clinic.plan] : undefined} />
           </dl>
-          <p className="mt-5 text-sm text-ink-mute">{dict.conta.contactSupport}</p>
+          <p className="mt-4 text-sm text-ink-mute">{dict.conta.contactSupport}</p>
+
+          {clinic && (
+            <div className="mt-6 border-t border-line pt-6">
+              <ClinicIdentityForm
+                profile={clinicProfileValues(clinic)}
+                locale={onboardingLocale}
+                readOnly={readOnly}
+              />
+            </div>
+          )}
         </section>
 
         {/* The same card as the agenda's, on purpose. Two drawings of one

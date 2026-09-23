@@ -19,6 +19,7 @@ export const en: Dictionary = {
     today: 'Today',
     signOut: 'Sign out',
     language: 'Language',
+    switchLanguage: 'Switch to {lang}',
     copy: 'Copy',
     copied: 'Copied',
     patient: 'Patient',

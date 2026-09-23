@@ -36,6 +36,8 @@ export interface Dictionary {
     today: string
     signOut: string
     language: string
+    /** Read out by the language button. Carries {lang}, the target language. */
+    switchLanguage: string
     copy: string
     copied: string
     patient: string

@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { locales, type Locale } from '@/content'
+import { locales, localeNames, type Locale } from '@/content'
 import { setLocale, signOut } from '@/lib/actions/session'
 import type { Panel } from '@/lib/access'
 import type { ClinicAccent } from '@/lib/types'
-import { IconSignOut, IconAccount } from './icons'
+import { fill } from '@/lib/fill'
+import { IconSignOut, IconAccount, IconLanguage } from './icons'
 import { Logo } from './Logo'
 
 export interface NavItem {
@@ -136,13 +137,18 @@ export function Shell({
     >
       {/* Sidebar. Desktop only: on a tablet in portrait a 16rem rail eats a
           third of the width for four links that fit in the bottom bar. */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface-sunken lg:flex">
+      {/* Sticky and exactly one screen tall, with the links scrolling inside
+          it. The block at the bottom holds the account, the language and the
+          way out, and it used to scroll off with the page: on a long list of
+          bookings, signing out or changing language meant scrolling back to
+          the top of something you were not reading. */}
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface-sunken lg:sticky lg:top-0 lg:flex lg:h-screen">
         <div className="flex h-16 items-center gap-2 px-6">
           {mark}
           <PanelName panel={panel} label={panelLabel} />
         </div>
         {showSwitcher && <div className="px-3 pb-3">{switcher()}</div>}
-        <nav className="flex-1 px-3 py-4" aria-label={panelLabel}>
+        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={panelLabel}>
           {nav.map((item, i) => (
             <div key={item.href}>
               {item.group && item.group !== nav[i - 1]?.group && (
@@ -185,12 +191,18 @@ export function Shell({
             <form action={setLocale}>
               <input type="hidden" name="locale" value={other} />
               <input type="hidden" name="next" value={pathname} />
+              {/* "ES · EN" was a puzzle: two codes, no verb, and no way to
+                  tell which one you are in. It now says the name of the
+                  language it would take you to, written in that language, so
+                  a receptionist who reads only one of the two still
+                  recognises her own. */}
               <button
                 type="submit"
-                className="rounded-full border border-line-strong px-3 py-1.5 text-sm text-ink-soft hover:border-ink hover:text-ink"
-                aria-label={langLabel}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-sm text-ink-soft hover:border-ink hover:text-ink"
+                aria-label={fill(langLabel, { lang: localeNames[other] })}
               >
-                {locale.toUpperCase()} · {other.toUpperCase()}
+                <IconLanguage className="h-4 w-4 shrink-0" />
+                {localeNames[other]}
               </button>
             </form>
             <form action={signOut}>
@@ -233,9 +245,10 @@ export function Shell({
                 <input type="hidden" name="next" value={pathname} />
                 <button
                   type="submit"
-                  className="inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 text-sm text-ink-soft"
-                  aria-label={langLabel}
+                  className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm text-ink-soft"
+                  aria-label={fill(langLabel, { lang: localeNames[other] })}
                 >
+                  <IconLanguage className="h-5 w-5 shrink-0" />
                   {other.toUpperCase()}
                 </button>
               </form>

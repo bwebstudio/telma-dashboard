@@ -58,7 +58,7 @@ export default async function ClinicaLayout({
       switchLabel={dict.panels.switch}
       locale={locale}
       userLabel={clinicName}
-      langLabel={dict.common.language}
+      langLabel={dict.common.switchLanguage}
       signOutLabel={dict.common.signOut}
       accountHref="/conta"
       accent={clinic?.accent}

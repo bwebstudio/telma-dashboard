@@ -111,7 +111,7 @@ export const es: Dictionary = {
   },
   telmaSettings: {
     title: 'Lo que Telma sabe de su clínica',
-    lead: 'Todo lo que le contó en el alta. Cámbielo cuando quiera: la próxima llamada ya lo sabe.',
+    lead: 'Lo que cambie aquí, Telma lo aplica en la siguiente llamada.',
     guaranteesTitle: 'Lo que Telma nunca hace',
     guaranteesLead: 'Esto no se configura, y nadie puede cambiarlo. Va dentro de ella.',
     guarantees: [

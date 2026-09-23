@@ -33,6 +33,7 @@ const COPY = {
     services: 'O que faz',
     telma: 'Como a Telma atende',
     effect: 'Entra na chamada seguinte.',
+    previewHelp: 'É assim que fica com o que está agora. Se alguma coisa não encaixar, mude aqui em baixo.',
   },
   es: {
     save: 'Guardar cambios',
@@ -44,6 +45,7 @@ const COPY = {
     services: 'Qué hace',
     telma: 'Cómo contesta Telma',
     effect: 'Entra en la siguiente llamada.',
+    previewHelp: 'Así queda con lo que hay ahora mismo. Si algo no encaja, cámbielo aquí abajo.',
   },
 } as const
 
@@ -99,7 +101,7 @@ export function TelmaSettingsForm({
 
   return (
     <div className="flex flex-col gap-10">
-      <PromptPreview values={values} locale={locale} />
+      <PromptPreview values={values} locale={locale} help={t.previewHelp} />
 
       <Section title={t.clinic}>
         <ClinicStep {...stepProps} showIdentity={false} />

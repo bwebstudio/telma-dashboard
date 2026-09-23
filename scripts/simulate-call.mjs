@@ -34,6 +34,12 @@ if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
 // it looked. What a rule is worth is how often it is obeyed.
 const RUNS = Math.max(1, Number(process.argv.find((a) => a.startsWith('--runs='))?.slice(7)) || 1)
 
+// Which model answers. Hardcoded until now, which made "is the model the
+// problem?" a question nobody could answer without editing this file, and an
+// answer nobody could reproduce afterwards. The default is what the live
+// agents run, so an unflagged run still measures the product.
+const LLM = process.argv.find((a) => a.startsWith('--llm='))?.slice(6) || 'gpt-5.4-mini'
+
 // The platform stops a simulation at about thirty agent turns and returns what
 // it has, mid-sentence, mid-tool-call, with no flag saying so. Three of twelve
 // runs in one measurement had been cut like that and were scored anyway, and a
@@ -140,7 +146,7 @@ const agent = await api('POST', '/v1/convai/agents/create', {
         // Only the core when running as a graph: the procedures arrive with
         // the node.
         prompt: nodes ? `${built.nodes.core}\n\n${built.nodes.closing}` : built.text,
-        llm: 'gpt-5.4-mini',
+        llm: LLM,
         max_tokens: 300,
         ...(tools ? { tool_ids: tools } : {}),
       },

@@ -43,16 +43,26 @@ export function ConversationItem({
           {timeIn(call.created_at, locale, tz)}
         </span>
 
+        {/* The channel, in a word and not only in an icon.
+            A tinted disc alone was not a difference while scanning twenty
+            rows: both channels are answered by the same Telma and both end in
+            the same badge, so the eye has nothing to catch on. The word is
+            read out on every screen and drawn from `sm` up, where the row has
+            the space for it; below that the disc and its colour carry it. */}
         <span
-          className={isWhatsapp ? 'shrink-0 text-ok' : 'shrink-0 text-ink-mute'}
+          className={`flex shrink-0 items-center gap-1.5 rounded-full py-1 pl-1 text-xs font-medium sm:pr-2.5 ${
+            isWhatsapp ? 'bg-ok-soft text-ok' : 'bg-surface-sunken text-ink-soft'
+          }`}
           title={dict.status.channel[call.channel]}
-          aria-label={dict.status.channel[call.channel]}
         >
-          {isWhatsapp ? <IconWhatsApp className="h-5 w-5" /> : <IconPhone className="h-5 w-5" />}
+          <span className="flex h-6 w-6 items-center justify-center">
+            {isWhatsapp ? <IconWhatsApp className="h-4 w-4" /> : <IconPhone className="h-4 w-4" />}
+          </span>
+          <span className="sr-only sm:not-sr-only">{dict.status.channel[call.channel]}</span>
         </span>
 
         <span className="min-w-0 flex-1 truncate text-base text-ink">
-          {call.patient_name || call.from_phone || dict.common.none}
+          {call.patient_name || call.from_phone || dict.common.noNumber}
           {call.patient_name && call.from_phone && (
             <span className="ml-2 hidden text-sm text-ink-mute sm:inline">{call.from_phone}</span>
           )}
@@ -95,10 +105,15 @@ export function ConversationItem({
                     <span className="px-1 text-xs font-medium uppercase tracking-label text-ink-mute">
                       {telma ? t.speakerTelma : t.speakerPatient}
                     </span>
+                    {/* On WhatsApp, what Telma sends is green, which is what
+                        the app itself does with the side that is talking. It
+                        costs nothing and it means an opened conversation is
+                        recognisable as a thread of messages rather than as a
+                        call written down. */}
                     <p
                       className={`max-w-[46ch] rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
                         telma
-                          ? 'rounded-tl-sm bg-brand-wash-strong text-ink'
+                          ? `rounded-tl-sm text-ink ${isWhatsapp ? 'bg-ok-soft' : 'bg-brand-wash-strong'}`
                           : 'rounded-tr-sm bg-surface-sunken text-ink'
                       }`}
                     >
@@ -109,9 +124,7 @@ export function ConversationItem({
               })}
             </ol>
           </>
-        ) : (
-          <p className="text-base text-ink-mute">{t.noTranscript}</p>
-        )}
+        ) : null}
 
         {call.recording_url && (
           <audio controls preload="none" className="mt-4 w-full max-w-md">

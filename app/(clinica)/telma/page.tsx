@@ -2,6 +2,8 @@ import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PageHeader } from '@/components/ui'
 import { TelmaSettingsForm } from '@/components/clinic/TelmaSettingsForm'
+import { TelmaGuarantees } from '@/components/clinic/TelmaGuarantees'
+import { clinicProfileValues } from '@/lib/clinic-profile'
 import { signupLanguages } from '@/lib/actions/onboarding'
 import { DEFAULT_ONBOARDING_LOCALE, isOnboardingLocale } from '@/lib/onboarding/locale'
 
@@ -34,36 +36,8 @@ export default async function TelmaPage() {
   const onboardingLocale = isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE
   const languages = await signupLanguages(onboardingLocale)
 
-  // The clinic row, in the shape the sign-up's fields expect. Mapped here rather
-  // than renaming columns, because the wizard's names are what its schemas and
-  // its components already agree on.
-  const initial: Record<string, unknown> = {
-    clinic_name: clinic.name ?? '',
-    address: clinic.address ?? '',
-    phone: clinic.phone ?? '',
-    specialty: clinic.specialty ?? '',
-    region: clinic.region ?? '',
-    services: clinic.services ?? [],
-    // So the panel opens showing the lengths already in force rather than
-    // blank boxes that would quietly wipe them on the next save.
-    service_durations: clinic.service_durations ?? {},
-    service_prices: clinic.service_prices ?? {},
-    custom_services: clinic.custom_services ?? '',
-    price_info: clinic.price_info ?? '',
-    appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,
-    formality: clinic.formality ?? 'formal',
-    fallback_policy: clinic.fallback_policy ?? 'message',
-    fallback_number: clinic.fallback_number ?? '',
-    briefing: clinic.briefing ?? '',
-    emergency_number: clinic.emergency_number ?? '',
-    emergency_protocol: clinic.emergency_protocol ?? '',
-    after_hours_transfer: clinic.after_hours_transfer === true,
-    after_hours_number: clinic.after_hours_number ?? '',
-    after_hours_patients_only: clinic.after_hours_patients_only !== false,
-    calls_recorded: clinic.calls_recorded !== false,
-    selected_languages: clinic.selected_languages ?? [clinic.language ?? 'pt'],
-    greeting_language: clinic.language ?? 'pt',
-  }
+  const initial = clinicProfileValues(clinic)
+
 
   return (
     <>
@@ -74,6 +48,9 @@ export default async function TelmaPage() {
         languages={languages}
         readOnly={readOnly}
       />
+      <div className="mt-10">
+        <TelmaGuarantees dict={dict} />
+      </div>
     </>
   )
 }

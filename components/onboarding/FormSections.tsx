@@ -275,7 +275,22 @@ function Checkbox({
 
 // Step 1: the clinic ---------------------------------------------------------
 
-export function ClinicStep({ values, set, errors, locale }: StepProps) {
+export function ClinicStep({
+  values,
+  set,
+  errors,
+  locale,
+  showIdentity = true,
+}: StepProps & {
+  /**
+   * False on the Telma screen. The email, the country and the region are who
+   * the clinic is and where its number comes from, not how she answers, and on
+   * a screen whose whole promise is "this is how she behaves" they were a
+   * third of the fields saying nothing about behaviour. They live on the
+   * account page now, beside the name and the plan.
+   */
+  showIdentity?: boolean
+}) {
   const t = copyFor(locale)
   const country = countryOf(values, locale)
   return (
@@ -293,18 +308,20 @@ export function ClinicStep({ values, set, errors, locale }: StepProps) {
         />
       </div>
 
-      <Text
-        name="email"
-        label={t.email}
-        hint={t.emailHelp}
-        error={errors.email}
-        value={values.email}
-        onChange={(v) => set({ email: v })}
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder="geral@clinicaserrano.pt"
-      />
+      {showIdentity && (
+        <Text
+          name="email"
+          label={t.email}
+          hint={t.emailHelp}
+          error={errors.email}
+          value={values.email}
+          onChange={(v) => set({ email: v })}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="geral@clinicaserrano.pt"
+        />
+      )}
 
       <Text
         name="phone"
@@ -331,24 +348,26 @@ export function ClinicStep({ values, set, errors, locale }: StepProps) {
         />
       </div>
 
-      <Select
-        name="country"
-        label={t.country}
-        error={errors.country}
-        value={country}
-        onChange={(v) =>
-          // Changing country empties the region: a Portuguese district is not a
-          // valid answer for a clinic in Spain, and leaving it selected would
-          // buy a number with the wrong dial code.
-          set({ country: v, region: '', area_region: '' })
-        }
-      >
-        {COUNTRIES.map((c) => (
-          <option key={c} value={c}>
-            {COUNTRY_LABEL[locale][c]}
-          </option>
-        ))}
-      </Select>
+      {showIdentity && (
+        <Select
+          name="country"
+          label={t.country}
+          error={errors.country}
+          value={country}
+          onChange={(v) =>
+            // Changing country empties the region: a Portuguese district is not
+            // a valid answer for a clinic in Spain, and leaving it selected
+            // would buy a number with the wrong dial code.
+            set({ country: v, region: '', area_region: '' })
+          }
+        >
+          {COUNTRIES.map((c) => (
+            <option key={c} value={c}>
+              {COUNTRY_LABEL[locale][c]}
+            </option>
+          ))}
+        </Select>
+      )}
 
       <Select
         name="specialty"
@@ -370,26 +389,28 @@ export function ClinicStep({ values, set, errors, locale }: StepProps) {
         ))}
       </Select>
 
-      <Select
-        name="region"
-        label={t.region}
-        error={errors.region}
-        value={values.region}
-        onChange={(v) =>
-          // The new number's area follows the clinic's region. Almost every
-          // clinic wants a number where it is, and step 6 can still change it.
-          // Without this the select there *showed* the region and stored
-          // nothing, so leaving the default was the one answer that failed.
-          set({ region: v, area_region: values.area_region || v })
-        }
-      >
-        <option value="">{t.choose}</option>
-        {regionsFor(country).map((r) => (
-          <option key={r.id} value={r.id}>
-            {r.label}
-          </option>
-        ))}
-      </Select>
+      {showIdentity && (
+        <Select
+          name="region"
+          label={t.region}
+          error={errors.region}
+          value={values.region}
+          onChange={(v) =>
+            // The new number's area follows the clinic's region. Almost every
+            // clinic wants a number where it is, and step 6 can still change
+            // it. Without this the select there *showed* the region and stored
+            // nothing, so leaving the default was the one answer that failed.
+            set({ region: v, area_region: values.area_region || v })
+          }
+        >
+          <option value="">{t.choose}</option>
+          {regionsFor(country).map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
+        </Select>
+      )}
     </div>
   )
 }
@@ -778,6 +799,7 @@ export function TelmaStep({
   maxLanguages,
   showLanguages = true,
   showGreetingLanguage,
+  showPreview = true,
 }: StepProps & {
   /** In the panel the languages themselves are billing, and live on the account
    *  page. Which of them she answers in is not, and belongs here. */
@@ -790,6 +812,8 @@ export function TelmaStep({
   /** The ceiling of the most generous plan on sale. The plan itself is chosen
    *  two steps later, so this caps the picker and step 6 marks what fits. */
   maxLanguages: number | null
+  /** False in the panel, which shows it at the top instead. */
+  showPreview?: boolean
 }) {
   const t = copyFor(locale)
   const chosen: string[] = values.selected_languages ?? []
@@ -977,8 +1001,13 @@ export function TelmaStep({
 
       {/* Emergencies. Its own block, above the catch-all, because it is a
           different path from "I do not know": one takes a message, the other
-          interrupts. The landing promises this in writing. */}
-      <div className="rounded-card border border-danger/25 bg-danger-soft/40 p-4">
+          interrupts. The landing promises this in writing.
+
+          Drawn in the brand's emphasis and not in the danger red it used to
+          wear. Red on a settings screen means something is wrong with what you
+          typed; this is the strongest guarantee on the page, and an owner
+          being shown the product read it as a warning. */}
+      <div className="rounded-card border border-brand-accent/30 bg-brand-wash p-4">
         <p className="field-label">{t.emergency}</p>
         <p className="mb-4 text-sm text-ink-soft">{t.emergencyHelp}</p>
         <div className="flex flex-col gap-5">
@@ -1090,9 +1119,12 @@ export function TelmaStep({
         />
       </Field>
 
-      {/* Last, and not first. Everything above is a question; this is the
-          answer, and it only means anything once there is something to show. */}
-      <PromptPreview values={values} locale={locale} />
+      {/* Last, and not first, in the sign-up: everything above is a question
+          and this is the answer. The panel asks for it at the top instead,
+          because somebody arriving there is not answering questions, they are
+          checking what she says today and going to the line that is wrong. It
+          was rendering in both places at once. */}
+      {showPreview && <PromptPreview values={values} locale={locale} />}
     </div>
   )
 }

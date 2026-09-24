@@ -397,11 +397,22 @@ const AGENT_SPEC = {
       speculative_turn: false,
       // El relleno mientras espera una herramienta lo pone la plataforma. Pedirlo
       // en el prompt le hacía hablar dos veces por cada consulta.
+      //
+      // Y lo escribe esta lista, no el modelo. Con
+      // `use_llm_generated_message` la muletilla se genera en cada espera, y se
+      // generaba en el idioma que le apeteciera: "a ver" (español) dos veces en
+      // una llamada en portugués, y "Позвольте" (ruso) en otra, dicho en voz
+      // alta por el altavoz. No era la detección de idioma, que lleva semanas
+      // apagada, ni el tamaño del modelo: era esto. Cuatro frases escritas a
+      // mano y `randomize_fillers` dan la variedad que se buscaba al
+      // encenderlo, sin que haya un idioma que elegir.
       soft_timeout_config: {
-        timeout_seconds: 2.5,
-        message: 'Mmm...',
-        use_llm_generated_message: true,
-        max_soft_timeouts_per_generation: 1,
+        timeout_seconds: 3,
+        message: 'Deixe ver...',
+        additional_soft_timeout_messages: ['Um momento...', 'Ora bem...', 'Já lhe digo...'],
+        use_llm_generated_message: false,
+        randomize_fillers: true,
+        max_soft_timeouts_per_generation: 4,
       },
     },
     // Distingue la voz de quien llama de la tele, de un bebé o de alguien más

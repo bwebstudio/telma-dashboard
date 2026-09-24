@@ -4,10 +4,15 @@ import { panelLinks } from '@/lib/panels'
 import { Shell, type NavItem } from '@/components/Shell'
 import { ViewingAsBar } from '@/components/ViewingAsBar'
 import { ClinicMark } from '@/components/clinic/ClinicMark'
-import { IconBookings, IconCalls, IconHours, IconSimulate, IconTelma, IconToday } from '@/components/icons'
+import {
+  IconToday,
+  IconBookings,
+  IconHours,
+  IconCalls,
+  IconTelma,
+} from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { isDemo } from '@/lib/demo/config'
-import { mockCallsEnabled } from '@/lib/mock-call'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,19 +27,25 @@ export default async function ClinicaLayout({
   const { user, clinic, viewingAs } = await requireClinicContext()
   const { locale, dict } = await getDict()
 
+  // Two groups, because the three calendar words were the first thing anybody
+  // had to decode: Agenda, Citas and Horarios all sound like the same drawer.
+  // The split says which ones are today's work and which are settings, and
+  // "Agenda" becomes "Hoy" so that its name is the answer rather than another
+  // word for diary.
+  //
+  // The simulator is gone from here. It wrote real rows to prove the loop
+  // before there was a telephone, and there is a telephone now, so on a panel
+  // a clinic looks at it is one more thing to explain and one more way to put
+  // an invented booking in a real diary. The route still exists.
+  const day = dict.clinicNav.groupDay
+  const setup = dict.clinicNav.groupSetup
   const nav: NavItem[] = [
-    { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday /> },
-    { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings /> },
-    { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours /> },
-    { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls /> },
-    { href: '/telma', label: dict.clinicNav.telma, icon: <IconTelma /> },
+    { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday />, group: day },
+    { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings />, group: day },
+    { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls />, group: day },
+    { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours />, group: setup },
+    { href: '/telma', label: dict.clinicNav.telma, icon: <IconTelma />, group: setup },
   ]
-
-  // Only where the page exists. A nav entry that leads to a 404 in production
-  // is worse than no entry at all.
-  if (mockCallsEnabled()) {
-    nav.push({ href: '/test-call', label: dict.clinicNav.testCall, icon: <IconSimulate /> })
-  }
 
   const clinicName = clinic?.name ?? dict.clinicNav.conta
 
@@ -47,7 +58,7 @@ export default async function ClinicaLayout({
       switchLabel={dict.panels.switch}
       locale={locale}
       userLabel={clinicName}
-      langLabel={dict.common.language}
+      langLabel={dict.common.switchLanguage}
       signOutLabel={dict.common.signOut}
       accountHref="/conta"
       accent={clinic?.accent}

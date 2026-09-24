@@ -3,17 +3,26 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { locales, type Locale } from '@/content'
+import { locales, localeNames, type Locale } from '@/content'
 import { setLocale, signOut } from '@/lib/actions/session'
 import type { Panel } from '@/lib/access'
 import type { ClinicAccent } from '@/lib/types'
-import { IconSignOut, IconAccount } from './icons'
+import { fill } from '@/lib/fill'
+import { IconSignOut, IconAccount, IconLanguage } from './icons'
 import { Logo } from './Logo'
 
 export interface NavItem {
   href: string
   label: string
   icon: ReactNode
+  /**
+   * The heading this entry sits under in the sidebar. Grouping is what tells a
+   * receptionist that Citas is something she opens every morning and Horarios
+   * is something she sets once, which is the distinction the two names alone
+   * were never going to carry. Ignored by the phone bar, where five icons in a
+   * row have no space for headings and no need of them.
+   */
+  group?: string
 }
 
 export interface PanelLink {
@@ -128,16 +137,28 @@ export function Shell({
     >
       {/* Sidebar. Desktop only: on a tablet in portrait a 16rem rail eats a
           third of the width for four links that fit in the bottom bar. */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface-sunken lg:flex">
+      {/* Sticky and exactly one screen tall, with the links scrolling inside
+          it. The block at the bottom holds the account, the language and the
+          way out, and it used to scroll off with the page: on a long list of
+          bookings, signing out or changing language meant scrolling back to
+          the top of something you were not reading. */}
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface-sunken lg:sticky lg:top-0 lg:flex lg:h-screen">
         <div className="flex h-16 items-center gap-2 px-6">
           {mark}
           <PanelName panel={panel} label={panelLabel} />
         </div>
         {showSwitcher && <div className="px-3 pb-3">{switcher()}</div>}
-        <nav className="flex-1 px-3 py-4" aria-label={panelLabel}>
-          {nav.map((item) => (
+        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={panelLabel}>
+          {nav.map((item, i) => (
+            <div key={item.href}>
+              {item.group && item.group !== nav[i - 1]?.group && (
+                <p
+                  className={`${i === 0 ? '' : 'mt-5'} mb-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-ink-mute`}
+                >
+                  {item.group}
+                </p>
+              )}
             <Link
-              key={item.href}
               href={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={`mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors ${
@@ -149,6 +170,7 @@ export function Shell({
               {item.icon}
               {item.label}
             </Link>
+            </div>
           ))}
           {aside}
         </nav>
@@ -169,12 +191,18 @@ export function Shell({
             <form action={setLocale}>
               <input type="hidden" name="locale" value={other} />
               <input type="hidden" name="next" value={pathname} />
+              {/* "ES · EN" was a puzzle: two codes, no verb, and no way to
+                  tell which one you are in. It now says the name of the
+                  language it would take you to, written in that language, so
+                  a receptionist who reads only one of the two still
+                  recognises her own. */}
               <button
                 type="submit"
-                className="rounded-full border border-line-strong px-3 py-1.5 text-sm text-ink-soft hover:border-ink hover:text-ink"
-                aria-label={langLabel}
+                className="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-3 py-1.5 text-sm text-ink-soft hover:border-ink hover:text-ink"
+                aria-label={fill(langLabel, { lang: localeNames[other] })}
               >
-                {locale.toUpperCase()} · {other.toUpperCase()}
+                <IconLanguage className="h-4 w-4 shrink-0" />
+                {localeNames[other]}
               </button>
             </form>
             <form action={signOut}>
@@ -217,9 +245,10 @@ export function Shell({
                 <input type="hidden" name="next" value={pathname} />
                 <button
                   type="submit"
-                  className="inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 text-sm text-ink-soft"
-                  aria-label={langLabel}
+                  className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm text-ink-soft"
+                  aria-label={fill(langLabel, { lang: localeNames[other] })}
                 >
+                  <IconLanguage className="h-5 w-5 shrink-0" />
                   {other.toUpperCase()}
                 </button>
               </form>

@@ -125,7 +125,7 @@ export default async function HorariosPage({
       </section>
 
       <section className="mb-12">
-        <SectionTitle>{dict.horarios.title}</SectionTitle>
+        <SectionTitle>{dict.horarios.gridTitle}</SectionTitle>
         <div className="mb-5 rounded-2xl bg-brand px-5 py-4 text-white">
           <p className="text-lg font-medium">{dict.horarios.help}</p>
         </div>

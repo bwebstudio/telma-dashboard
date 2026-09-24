@@ -16,6 +16,25 @@ export type AppointmentStatus =
   | 'copiada'
   | 'cancelada'
   | 'expirada'
+/**
+ * The statuses that still hold an hour.
+ *
+ * Written as an allowlist because that is what the database uses: every diary
+ * function in supabase/migrations asks for `status in ('pendente',
+ * 'confirmada', 'copiada')`. The panel asked the opposite question, listing the
+ * ones to drop, and a denylist rots every time a status is added. 'expirada'
+ * arrived in migration 0019 and nobody added it, so the week planner went on
+ * counting an hour the database had already put back on sale: an expired
+ * pre-marcação showed as "1 de 6 ocupadas" while Telma was free to offer it.
+ *
+ * Add a status to the type and this list decides, once, whether it holds time.
+ */
+export const HOLDS_AN_HOUR: AppointmentStatus[] = ['pendente', 'confirmada', 'copiada']
+
+export function holdsAnHour(status: AppointmentStatus): boolean {
+  return HOLDS_AN_HOUR.includes(status)
+}
+
 export type AppointmentOrigin = 'telefone' | 'whatsapp'
 export type CallResult = 'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida'
 export type ConversationChannel = 'telefone' | 'whatsapp'

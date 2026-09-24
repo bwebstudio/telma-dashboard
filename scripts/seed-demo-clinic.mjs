@@ -76,28 +76,51 @@ for (const t of ['appointments', 'calls', 'usage', 'activity_log', 'availability
   await api(`/rest/v1/${t}?clinic_id=eq.${CLINIC}`, { method: 'DELETE' })
 }
 await api(`/rest/v1/users?id=eq.${userId}`, { method: 'DELETE' })
-await api(`/rest/v1/clinics?id=eq.${CLINIC}`, { method: 'DELETE' })
 
 // --- Clinic ------------------------------------------------------------------
-await api('/rest/v1/clinics', {
-  method: 'POST',
-  body: JSON.stringify({
-    id: CLINIC,
-    name: 'Clínica Dentária Sorriso',
-    address: 'Rua das Flores 12, Porto',
-    phone: '+351 220 000 000',
-    contact_email: 'geral@sorriso.pt',
-    plan: 'clinica',
-    addon_whatsapp: true,
-    status: 'ativa',
-    minute_limit: 750,
-    assigned_phone: '+351 300 500 900',
-    voice_agent_id: 'agent_sorriso_01',
-    voice_name: 'Telma PT',
-    timezone: TZ,
-    accent: 'brand',
-  }),
-})
+//
+// The clinic row is no longer deleted and rebuilt. This script writes a day,
+// not a configuration, and the two had been tangled together: rebuilding the
+// row put back the invented +351 300 500 900 over a real Twilio line, dropped
+// the speciality, region and services, and switched pre-appointment expiry
+// back on. Re-seeding the morning of a demo would have quietly unplugged the
+// telephone it was being demonstrated on.
+//
+// So: created whole the first time, and afterwards only the fields this seed
+// is actually about. Everything that says how the clinic answers the phone is
+// left exactly as it was found.
+const PRESENTATION = {
+  name: 'Clínica Dentária Sorriso',
+  address: 'Rua das Flores 12, Porto',
+  phone: '+351 220 000 000',
+  contact_email: 'geral@sorriso.pt',
+  plan: 'clinica',
+  addon_whatsapp: true,
+  status: 'ativa',
+  minute_limit: 750,
+  timezone: TZ,
+  accent: 'brand',
+}
+
+const already = await api(`/rest/v1/clinics?id=eq.${CLINIC}&select=id`)
+if (already.length) {
+  await api(`/rest/v1/clinics?id=eq.${CLINIC}`, {
+    method: 'PATCH',
+    body: JSON.stringify(PRESENTATION),
+  })
+  console.log('clínica: já existia, configuração telefónica intacta')
+} else {
+  await api('/rest/v1/clinics', {
+    method: 'POST',
+    body: JSON.stringify({
+      id: CLINIC,
+      ...PRESENTATION,
+      assigned_phone: '+351 300 500 900',
+      voice_name: 'Telma PT',
+    }),
+  })
+  console.log('clínica: criada de raiz')
+}
 
 await api('/rest/v1/users', {
   method: 'POST',
@@ -112,14 +135,40 @@ await api('/rest/v1/users', {
 })
 
 // --- Opening hours: Mon-Fri, 09-13 and 14-18 --------------------------------
+//
+// Two windows a day, not eight one-hour rows. Since 0034 a row means "open
+// from here to here" and the bookable times are generated from it with the
+// clinic's step, which is why 0035 merged every clinic's exploded rows back
+// into windows: an hour-long row has no room for a service that takes longer,
+// and the clinic sees a ticked, correct-looking timetable that offers nothing.
+// This seed was still writing the exploded shape, so re-seeding undid that
+// migration for the demo clinic and turned a tidy Horários screen into forty
+// one-hour entries.
+//
+// And attached to the clinic's diary. Since 0034 the hours belong to a
+// resource, one is created with the clinic, and available_slots joins through
+// it: rows with a null resource_id belong to nobody and generate nothing. This
+// seed predates that, so it was leaving a clinic whose timetable looked full in
+// the panel and returned zero free hours to every question Telma asked it.
+const [diary] = await api(
+  `/rest/v1/resources?clinic_id=eq.${CLINIC}&active=is.true&select=id&order=sort,created_at&limit=1`
+)
+if (!diary) throw new Error('a clínica não tem agenda: available_slots devolveria sempre vazio')
+
 const slots = []
 for (const wd of [1, 2, 3, 4, 5]) {
-  for (const h of [9, 10, 11, 12, 14, 15, 16, 17]) {
+  for (const [start_time, end_time] of [
+    ['09:00:00', '13:00:00'],
+    ['14:00:00', '18:00:00'],
+  ]) {
     slots.push({
-      clinic_id: CLINIC, weekday: wd,
-      start_time: `${String(h).padStart(2, '0')}:00:00`,
-      end_time: `${String(h + 1).padStart(2, '0')}:00:00`,
-      capacity: 1, active: true,
+      clinic_id: CLINIC,
+      resource_id: diary.id,
+      weekday: wd,
+      start_time,
+      end_time,
+      capacity: 1,
+      active: true,
     })
   }
 }
@@ -227,7 +276,14 @@ const calls = [
     transcript: turns(
       ['telma', 'Clínica Dentária Sorriso, boa tarde. Fala a Telma, em que posso ajudar?'],
       ['paciente', 'Sim, boa tarde, era para…']) },
-].map((c) => ({ ...c, clinic_id: CLINIC, recording_url: null }))
+// The written conversations stay in this file, because they are the script of
+// the day this seed builds and they read well. They are not sent: the
+// `transcript` column was dropped in migration 0041, on purpose, and the
+// transcript now lives seven days in the voice platform and nowhere here.
+// Sending it made the whole seed fail on the first call, which is why the
+// staged day was never finished and the demo clinic held three conversations
+// instead of nine.
+].map(({ transcript: _script, ...c }) => ({ ...c, clinic_id: CLINIC, recording_url: null }))
 
 await api('/rest/v1/calls', { method: 'POST', body: JSON.stringify(calls) })
 

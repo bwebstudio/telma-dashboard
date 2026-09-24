@@ -3,7 +3,6 @@ import type { Locale } from '@/content'
 const LOCALE_TAGS: Record<Locale, string> = {
   pt: 'pt-PT',
   es: 'es-ES',
-  en: 'en-GB',
 }
 const localeTag = (l: Locale) => LOCALE_TAGS[l] ?? 'pt-PT'
 

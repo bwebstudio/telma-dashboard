@@ -34,6 +34,12 @@ if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
 // it looked. What a rule is worth is how often it is obeyed.
 const RUNS = Math.max(1, Number(process.argv.find((a) => a.startsWith('--runs='))?.slice(7)) || 1)
 
+// Which model answers. Hardcoded until now, which made "is the model the
+// problem?" a question nobody could answer without editing this file, and an
+// answer nobody could reproduce afterwards. The default is what the live
+// agents run, so an unflagged run still measures the product.
+const LLM = process.argv.find((a) => a.startsWith('--llm='))?.slice(6) || 'gpt-5.4-mini'
+
 // The platform stops a simulation at about thirty agent turns and returns what
 // it has, mid-sentence, mid-tool-call, with no flag saying so. Three of twelve
 // runs in one measurement had been cut like that and were scored anyway, and a
@@ -140,7 +146,7 @@ const agent = await api('POST', '/v1/convai/agents/create', {
         // Only the core when running as a graph: the procedures arrive with
         // the node.
         prompt: nodes ? `${built.nodes.core}\n\n${built.nodes.closing}` : built.text,
-        llm: 'gpt-5.4-mini',
+        llm: LLM,
         max_tokens: 300,
         ...(tools ? { tool_ids: tools } : {}),
       },
@@ -273,13 +279,25 @@ try {
 
 // ---------------------------------------------------------------------------
 
-async function api(method, path, body) {
+async function api(method, path, body, attempt = 1) {
   const res = await fetch(`https://api.elevenlabs.io${path}`, {
     method,
     headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   })
   const text = await res.text()
+
+  // A 500 from the far end used to take the whole run down, and it happened
+  // twice in one afternoon: six simulated calls thrown away because the last
+  // one crashed on their side. Retried three times, widening, because the
+  // alternative is a measurement that silently reports nothing and gets read
+  // as "no findings". Only for their faults — a 4xx is ours and stays fatal.
+  if (res.status >= 500 && attempt <= 3) {
+    console.log(`  ${res.status} de ElevenLabs, tentativa ${attempt} de 3...`)
+    await new Promise((r) => setTimeout(r, attempt * 4000))
+    return api(method, path, body, attempt + 1)
+  }
+
   // Thrown, never process.exit(). Exiting here skipped the `finally` that
   // deletes the throwaway agent, so a rate limit mid-run left one behind in a
   // list where every other entry answers a real telephone. Which is exactly

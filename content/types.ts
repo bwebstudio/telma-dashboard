@@ -31,9 +31,13 @@ export interface Dictionary {
     search: string
     all: string
     none: string
+    /** A call that arrived without a caller id. "None" read as a phone number. */
+    noNumber: string
     today: string
     signOut: string
     language: string
+    /** Read out by the language button. Carries {lang}, the target language. */
+    switchLanguage: string
     copy: string
     copied: string
     patient: string
@@ -41,6 +45,8 @@ export interface Dictionary {
     email: string
     name: string
     reason: string
+    /** Label for how a booking arrived: by phone or by WhatsApp. */
+    channel: string
     date: string
     time: string
     status: string
@@ -111,11 +117,26 @@ export interface Dictionary {
     /** What Telma says, which is the clinic's to change and not ours. */
     telma: string
     /** Only shown where the simulator exists, which is never in production. */
+    /** Sidebar group headings: today's work, and what is set once. */
+    groupDay: string
+    groupSetup: string
     testCall: string
   }
   telmaSettings: {
     title: string
     lead: string
+    /**
+     * The rules that are ours, shown and not editable.
+     *
+     * An owner being sold this asks "and what if she makes something up?", and
+     * until now the answer lived only in the prompt, where nobody could see it.
+     * A screen full of fields says the clinic is in control; this says the
+     * control has a floor under it, which is the half that makes the other
+     * half safe to sell.
+     */
+    guaranteesTitle: string
+    guaranteesLead: string
+    guarantees: string[]
   }
   // The clinic's home screen: the day, and what needs an answer before it.
   agenda: {
@@ -200,6 +221,8 @@ export interface Dictionary {
     rejectReasonHint: string
     confirmConfirm: string
     filterAll: string
+    /** A filter's own label. It used to borrow the singular status badge. */
+    filterCancelled: string
     filterPending: string
   }
   /** A patient asking to be forgotten, answered by the clinic itself. */
@@ -250,6 +273,8 @@ export interface Dictionary {
     removeProfessional: string
     lastProfessional: string
     help: string
+    /** The weekly grid's own heading. It used to repeat the page title. */
+    gridTitle: string
     gridHint: string
     gridReadOnly: string
     capacityNote: string

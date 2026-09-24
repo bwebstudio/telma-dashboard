@@ -32,6 +32,8 @@ const COPY = {
     clinic: 'A clínica',
     services: 'O que faz',
     telma: 'Como a Telma atende',
+    effect: 'Entra na chamada seguinte.',
+    previewHelp: 'É assim que fica com o que está agora. Se alguma coisa não encaixar, mude aqui em baixo.',
   },
   es: {
     save: 'Guardar cambios',
@@ -42,6 +44,8 @@ const COPY = {
     clinic: 'La clínica',
     services: 'Qué hace',
     telma: 'Cómo contesta Telma',
+    effect: 'Entra en la siguiente llamada.',
+    previewHelp: 'Así queda con lo que hay ahora mismo. Si algo no encaja, cámbielo aquí abajo.',
   },
 } as const
 
@@ -97,10 +101,10 @@ export function TelmaSettingsForm({
 
   return (
     <div className="flex flex-col gap-10">
-      <PromptPreview values={values} locale={locale} />
+      <PromptPreview values={values} locale={locale} help={t.previewHelp} />
 
       <Section title={t.clinic}>
-        <ClinicStep {...stepProps} />
+        <ClinicStep {...stepProps} showIdentity={false} />
       </Section>
 
       <Section title={t.services}>
@@ -119,6 +123,7 @@ export function TelmaSettingsForm({
           // acima vem filtrada pelas que esta clínica já paga.
           showLanguages={false}
           showGreetingLanguage
+          showPreview={false}
         />
       </Section>
 
@@ -135,8 +140,10 @@ export function TelmaSettingsForm({
           otherwise be somewhere the reader is not. */}
       {!readOnly && (
         <div className="sticky bottom-0 -mx-5 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-surface/95 px-5 py-4 backdrop-blur sm:-mx-8 sm:px-8">
+          {/* When it takes effect, which is the question a save button on a
+              page like this always raises and never answers. */}
           <p className="text-sm text-ink-mute">
-            {pending ? t.saving : dirty ? t.unsaved : saved ? t.saved : ''}
+            {pending ? t.saving : dirty ? t.unsaved : saved ? t.saved : t.effect}
           </p>
           <button
             type="button"

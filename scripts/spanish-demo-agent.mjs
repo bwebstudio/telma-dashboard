@@ -64,8 +64,22 @@ if (del >= 0) {
   const id = process.argv[del + 1]
   if (!id) throw new Error('uso: --delete agent_...')
   if (id === LIVE) throw new Error('ese es el agente en vivo, no se borra desde aquí')
+  // Las herramientas copiadas se van con él: quedan cinco por agente y nadie
+  // las reconocería como basura dentro de una semana.
+  let tools = []
+  try {
+    const a = await api(`/convai/agents/${id}`)
+    tools = a.conversation_config?.agent?.prompt?.tool_ids ?? []
+  } catch {}
   await api(`/convai/agents/${id}`, 'DELETE')
-  console.log(`\n  borrado ${id}\n`)
+  let gone = 0
+  for (const t of tools) {
+    const { tool_config } = await api(`/convai/tools/${t}`).catch(() => ({ tool_config: null }))
+    // Sólo las copias. Las del agente en vivo no terminan en `_es`.
+    if (!tool_config?.name?.endsWith('_es')) continue
+    await api(`/convai/tools/${t}`, 'DELETE').then(() => gone++).catch(() => {})
+  }
+  console.log(`\n  borrado ${id}${gone ? ` y ${gone} herramienta(s)` : ''}\n`)
   process.exit(0)
 }
 
@@ -94,6 +108,39 @@ if (!override?.prompt?.prompt) throw new Error(`init no devolvió prompt: ${JSON
 const live = await api(`/convai/agents/${LIVE}`)
 const turn = live.conversation_config.turn
 
+// Copies of the five tools, with the clinic written into them.
+//
+// Each tool takes `clinic_id` from a dynamic variable, and a dynamic variable
+// has to be handed over when the conversation opens or the platform refuses to
+// start it: "Missing required dynamic variables in tools: {'clinic_id'}". The
+// live agent is handed them by the workspace's initiation webhook. This one has
+// no webhook on purpose, and placeholders do not count, so without this the
+// console can only be made to work by pasting variables by hand every session.
+//
+// The parameters carry a `constant_value` beside the `dynamic_variable`, so the
+// copies pin the value instead of asking for it. They are deleted with the
+// agent.
+const VALUES = init.dynamic_variables ?? {}
+const pin = (node) => {
+  if (Array.isArray(node)) return node.forEach(pin)
+  if (!node || typeof node !== 'object') return
+  const name = node.dynamic_variable
+  if (typeof name === 'string' && name && !node.is_system_provided && name in VALUES) {
+    node.constant_value = String(VALUES[name])
+    node.dynamic_variable = ''
+  }
+  Object.values(node).forEach(pin)
+}
+
+const toolIds = []
+for (const id of live.conversation_config.agent.prompt.tool_ids ?? []) {
+  const { tool_config } = await api(`/convai/tools/${id}`)
+  pin(tool_config)
+  tool_config.name = `${tool_config.name}_es`.slice(0, 64)
+  const made = await api('/convai/tools', 'POST', { tool_config })
+  toolIds.push(made.id ?? made.tool_id)
+}
+
 const agent = await api('/convai/agents/create', 'POST', {
   name: `zz-demo-es-${Date.now()}`,
   conversation_config: {
@@ -104,7 +151,7 @@ const agent = await api('/convai/agents/create', 'POST', {
         // Como el del teléfono. Sin límite se alarga, y una respuesta larga es
         // latencia y es una toma peor.
         max_tokens: live.conversation_config.agent.prompt.max_tokens ?? 300,
-        tool_ids: live.conversation_config.agent.prompt.tool_ids ?? [],
+        tool_ids: toolIds,
         built_in_tools: live.conversation_config.agent.prompt.built_in_tools,
       },
       first_message: override.first_message,
@@ -133,10 +180,6 @@ const agent = await api('/convai/agents/create', 'POST', {
 // variables in tools: {'clinic_id'}". En el agente en vivo las entrega el
 // webhook de arranque; aquí no hay webhook, así que se pegan a mano una vez,
 // en el botón `{} Vars` de la consola.
-const vars = Object.entries(init.dynamic_variables ?? {})
-  .map(([k, v]) => `    ${k} = ${v === '' ? '(vacío)' : v}`)
-  .join('\n')
-
 console.log(`
   Agente de grabación listo.
 
@@ -146,11 +189,7 @@ console.log(`
     modelo   ${MODEL}${EXPRESSIVE ? ', expressive mode' : ''}
     prompt   ${override.prompt.prompt.length} caracteres
 
-  Antes de hablarle, en la consola: botón {} Vars, y pega estas:
-
-${vars}
-
-  Y después graba aquí:
+  Habla y graba aquí, sin tocar nada más:
     https://elevenlabs.io/app/agents/${agent.agent_id}
 
   Cuando termines:

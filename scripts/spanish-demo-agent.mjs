@@ -127,6 +127,16 @@ const agent = await api('/convai/agents/create', 'POST', {
   },
 })
 
+// Las herramientas exigen que estas variables se **entreguen** al abrir la
+// conversación. Los placeholders de arriba solo rellenan el texto del prompt:
+// sin esto la consola se niega a empezar con "Missing required dynamic
+// variables in tools: {'clinic_id'}". En el agente en vivo las entrega el
+// webhook de arranque; aquí no hay webhook, así que se pegan a mano una vez,
+// en el botón `{} Vars` de la consola.
+const vars = Object.entries(init.dynamic_variables ?? {})
+  .map(([k, v]) => `    ${k} = ${v === '' ? '(vacío)' : v}`)
+  .join('\n')
+
 console.log(`
   Agente de grabación listo.
 
@@ -136,7 +146,11 @@ console.log(`
     modelo   ${MODEL}${EXPRESSIVE ? ', expressive mode' : ''}
     prompt   ${override.prompt.prompt.length} caracteres
 
-  Háblale aquí y graba el audio:
+  Antes de hablarle, en la consola: botón {} Vars, y pega estas:
+
+${vars}
+
+  Y después graba aquí:
     https://elevenlabs.io/app/agents/${agent.agent_id}
 
   Cuando termines:

@@ -18,6 +18,28 @@
 // so nothing is spent on hearing the caller stop talking, and a real call adds
 // the telephone network on top. Useful for comparing two agents on the same
 // wire, which is exactly what it is for.
+//
+// ── ROTO, Y ESTO ES LO QUE YA SE COMPROBÓ ──────────────────────────────────
+// Devuelve -1 en todas las medidas. No es la clave, ni el agente, ni el
+// override, y se descartaron uno por uno:
+//
+//   · get-signed-url responde 200 y el socket abre.
+//   · Llegan conversation_initiation_metadata, audio del saludo, y
+//     agent_response sobre los 3,5s.
+//   · Con `conversation_config_override` también abre y sigue vivo.
+//   · ELEVENLABS_AGENT_ID apuntaba a un agente que ya no existe; repuntado.
+//
+// Lo que falla es esto: al enviar `{type:'user_message', text:...}` el agente
+// no contesta nunca. Se probó enviándolo 900ms después de agent_response y
+// también esperando a que el audio del saludo callara un segundo entero, por
+// si el primer mensaje no admitía interrupción. En los dos casos, silencio
+// hasta el tiempo límite.
+//
+// O sea que mide el hueco que deja una pregunta que el agente no oye. Para
+// arreglarlo hay que hablarle como le habla un teléfono, con
+// `user_audio_chunk`, y eso es escribir el envío de audio que este script
+// nunca tuvo. Hasta entonces la latencia se juzga con un oído en una llamada
+// de verdad, que es como se juzgó la última vez.
 
 import { readFileSync } from 'node:fs'
 

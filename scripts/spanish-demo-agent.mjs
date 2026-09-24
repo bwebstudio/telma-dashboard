@@ -30,19 +30,23 @@ const BASE = 'https://telma-dashboard-demo.vercel.app'
 const NUMBER = '+34910000001'
 const LIVE = 'agent_9701kzp690x6fnaba03rmp81kt9a'
 
-// Voice, for a recording rather than for a telephone.
+// Voice. The same one the telephone uses, and that is not a compromise.
 //
-//   --model=eleven_multilingual_v2   la más cuidada de las permitidas (por defecto)
-//   --model=eleven_v3_conversational la del agente en vivo, más rápida
-//   --stability=1                    la más firme; 0.5 varía más entre frases
+//   --model=eleven_v3_conversational  la del agente en vivo (por defecto)
+//   --model=eleven_multilingual_v2    más lenta y sin expressive; ver abajo
 //
-// `eleven_v3` y `eleven_v4` los rechaza la cuenta: "Expressive TTS is not
-// allowed", "V4 TTS is not allowed". Es el plan de ElevenLabs y no un ajuste,
-// así que la voz que suena en HeyGen no se puede pedir aquí sin cambiarlo.
-// Latencia no importa en una grabación, y por eso aquí el modelo lento es el
-// que conviene y en el teléfono no.
-const MODEL = process.argv.find((a) => a.startsWith('--model='))?.slice(8) || 'eleven_multilingual_v2'
-const STABILITY = Number(process.argv.find((a) => a.startsWith('--stability='))?.slice(12) ?? 1)
+// `eleven_v3` y `eleven_v4` los rechaza la cuenta ("Expressive TTS is not
+// allowed", "V4 TTS is not allowed"): es el plan de ElevenLabs, no un ajuste,
+// y por eso la voz de HeyGen no se puede pedir desde aquí.
+//
+// Multilingual parecía la opción de calidad porque en una grabación la latencia
+// da igual. Es al revés: el propio panel la mide en ~482ms contra ~172ms de V3
+// Conversational, y sobre todo **no admite expressive mode**, que es lo que le
+// da la entonación. Las otras palancas tampoco existen ahí: "voice settings
+// (stability, speed, similarity) are not customizable for v3 models", así que
+// la estabilidad que se le pase a un modelo v3 no hace nada.
+const MODEL = process.argv.find((a) => a.startsWith('--model='))?.slice(8) || 'eleven_v3_conversational'
+const EXPRESSIVE = MODEL.startsWith('eleven_v3')
 
 const api = async (path, method = 'GET', body) => {
   const r = await fetch(`https://api.elevenlabs.io/v1${path}`, {
@@ -91,6 +95,9 @@ const agent = await api('/convai/agents/create', 'POST', {
       prompt: {
         prompt: override.prompt.prompt,
         llm: live.conversation_config.agent.prompt.llm,
+        // Como el del teléfono. Sin límite se alarga, y una respuesta larga es
+        // latencia y es una toma peor.
+        max_tokens: live.conversation_config.agent.prompt.max_tokens ?? 300,
         tool_ids: live.conversation_config.agent.prompt.tool_ids ?? [],
         built_in_tools: live.conversation_config.agent.prompt.built_in_tools,
       },
@@ -100,7 +107,7 @@ const agent = await api('/convai/agents/create', 'POST', {
       // The tools read clinic_id and would otherwise have nothing to take.
       dynamic_variables: { dynamic_variable_placeholders: init.dynamic_variables ?? {} },
     },
-    tts: { voice_id: VOICE_ES, model_id: MODEL, stability: STABILITY },
+    tts: { voice_id: VOICE_ES, model_id: MODEL, expressive_mode: EXPRESSIVE },
     turn: {
       ...turn,
       soft_timeout_config: {
@@ -120,7 +127,7 @@ console.log(`
     id       ${agent.agent_id}
     clínica  ${init.dynamic_variables?.clinic_name}
     voz      Carolina Ruiz (peninsular)
-    modelo   ${MODEL}, estabilidad ${STABILITY}
+    modelo   ${MODEL}${EXPRESSIVE ? ', expressive mode' : ''}
     prompt   ${override.prompt.prompt.length} caracteres
 
   Háblale aquí y graba el audio:

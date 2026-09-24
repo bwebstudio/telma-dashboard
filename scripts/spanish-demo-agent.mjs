@@ -190,7 +190,7 @@ console.log(`
     prompt   ${override.prompt.prompt.length} caracteres
 
   Habla y graba aquí, sin tocar nada más:
-    https://elevenlabs.io/app/agents/${agent.agent_id}
+    https://elevenlabs.io/app/agents/agents/${agent.agent_id}
 
   Cuando termines:
     node scripts/spanish-demo-agent.mjs --delete ${agent.agent_id}

@@ -76,7 +76,13 @@ const init = await (
   await fetch(`${BASE}/api/voice/init`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ called_number: NUMBER, caller_id: '+34600111222' }),
+    // Sin caller_id a propósito. La consola no trae número de quien llama, y
+    // pasarle uno inventado hacía que la base tomase la rama de "ya sabes el
+    // teléfono": en la primera grabación cantó "me quedo con el teléfono seis
+    // cero cero, uno uno uno, dos dos dos" con total naturalidad, y ese número
+    // no era de nadie. Sin él toma la otra rama y lo pregunta, que además es
+    // mejor toma: se ve a Telma confirmando el número cifra a cifra.
+    body: JSON.stringify({ called_number: NUMBER }),
   })
 ).json()
 const override = init.conversation_config_override?.agent

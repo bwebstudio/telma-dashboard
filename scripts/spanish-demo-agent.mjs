@@ -30,6 +30,20 @@ const BASE = 'https://telma-dashboard-demo.vercel.app'
 const NUMBER = '+34910000001'
 const LIVE = 'agent_9701kzp690x6fnaba03rmp81kt9a'
 
+// Voice, for a recording rather than for a telephone.
+//
+//   --model=eleven_multilingual_v2   la más cuidada de las permitidas (por defecto)
+//   --model=eleven_v3_conversational la del agente en vivo, más rápida
+//   --stability=1                    la más firme; 0.5 varía más entre frases
+//
+// `eleven_v3` y `eleven_v4` los rechaza la cuenta: "Expressive TTS is not
+// allowed", "V4 TTS is not allowed". Es el plan de ElevenLabs y no un ajuste,
+// así que la voz que suena en HeyGen no se puede pedir aquí sin cambiarlo.
+// Latencia no importa en una grabación, y por eso aquí el modelo lento es el
+// que conviene y en el teléfono no.
+const MODEL = process.argv.find((a) => a.startsWith('--model='))?.slice(8) || 'eleven_multilingual_v2'
+const STABILITY = Number(process.argv.find((a) => a.startsWith('--stability='))?.slice(12) ?? 1)
+
 const api = async (path, method = 'GET', body) => {
   const r = await fetch(`https://api.elevenlabs.io/v1${path}`, {
     method,
@@ -86,7 +100,7 @@ const agent = await api('/convai/agents/create', 'POST', {
       // The tools read clinic_id and would otherwise have nothing to take.
       dynamic_variables: { dynamic_variable_placeholders: init.dynamic_variables ?? {} },
     },
-    tts: { voice_id: VOICE_ES, model_id: live.conversation_config.tts?.model_id },
+    tts: { voice_id: VOICE_ES, model_id: MODEL, stability: STABILITY },
     turn: {
       ...turn,
       soft_timeout_config: {
@@ -106,6 +120,7 @@ console.log(`
     id       ${agent.agent_id}
     clínica  ${init.dynamic_variables?.clinic_name}
     voz      Carolina Ruiz (peninsular)
+    modelo   ${MODEL}, estabilidad ${STABILITY}
     prompt   ${override.prompt.prompt.length} caracteres
 
   Háblale aquí y graba el audio:

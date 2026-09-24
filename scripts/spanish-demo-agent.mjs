@@ -66,18 +66,33 @@ if (del >= 0) {
   if (id === LIVE) throw new Error('ese es el agente en vivo, no se borra desde aquí')
   // Las herramientas copiadas se van con él: quedan cinco por agente y nadie
   // las reconocería como basura dentro de una semana.
+  //
+  // Y se sueltan ANTES de borrar el agente. Al revés no se puede: borrarlo deja
+  // atrás una rama suya que las sigue reteniendo, la API responde 409 "tool is
+  // still in use by: Unknown / Main", y esa rama ya no se puede borrar porque
+  // su agente no existe. Quedan huérfanas para siempre.
   let tools = []
   try {
     const a = await api(`/convai/agents/${id}`)
     tools = a.conversation_config?.agent?.prompt?.tool_ids ?? []
   } catch {}
+  if (tools.length) {
+    await api(`/convai/agents/${id}`, 'PATCH', {
+      conversation_config: { agent: { prompt: { tool_ids: [] } } },
+    })
+  }
   await api(`/convai/agents/${id}`, 'DELETE')
   let gone = 0
   for (const t of tools) {
     const { tool_config } = await api(`/convai/tools/${t}`).catch(() => ({ tool_config: null }))
     // Sólo las copias. Las del agente en vivo no terminan en `_es`.
     if (!tool_config?.name?.endsWith('_es')) continue
-    await api(`/convai/tools/${t}`, 'DELETE').then(() => gone++).catch(() => {})
+    try {
+      await api(`/convai/tools/${t}`, 'DELETE')
+      gone++
+    } catch (e) {
+      console.log(`  no se pudo borrar ${tool_config.name}: ${e.message.slice(0, 90)}`)
+    }
   }
   console.log(`\n  borrado ${id}${gone ? ` y ${gone} herramienta(s)` : ''}\n`)
   process.exit(0)

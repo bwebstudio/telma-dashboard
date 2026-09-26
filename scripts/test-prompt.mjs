@@ -172,7 +172,7 @@ const RULES = {
     refusalHelps: 'recusas em três tempos',
     bridgeIsNotAnEcho: '**A ponte nunca é repetir o que a pessoa disse.**',
     noPaperworkAloud: 'Registar é coisa tua e não se anuncia',
-    alwaysFiles: '**Registas sempre a chamada antes de desligar**',
+    alwaysFiles: '**Registas a chamada antes de desligar, se ainda não a tiveres registado.**',
     lastWordWins: '**vale sempre o último**',
     silenceOnce: '**Duas perguntas antes de desligar, nunca uma**',
     letsThemGo: 'aceitas sem insistir',
@@ -216,7 +216,7 @@ const RULES = {
     refusalHelps: 'te niegas en tres tiempos',
     bridgeIsNotAnEcho: '**El puente nunca es repetir lo que ha dicho la persona.**',
     noPaperworkAloud: 'Registrar es cosa tuya y no se anuncia',
-    alwaysFiles: '**Registras siempre la llamada antes de colgar**',
+    alwaysFiles: '**Registras la llamada antes de colgar, si no la has registrado ya.**',
     lastWordWins: '**vale siempre lo último**',
     silenceOnce: '**Dos preguntas antes de colgar, nunca una**',
     letsThemGo: 'lo aceptas sin insistir',
@@ -1098,9 +1098,13 @@ test('the clock reaches the prompt, not only the date', () => {
 // ("and one for my daughter?"), which is the case the whole design is measured
 // against.
 test('a booking hands over to the closing instead of ending the call', () => {
+  // The filing moved into the booking on 26/09, after a caller hung up between
+  // "fica registada" and the goodbye and the appointment was never written. So
+  // what the booking must no longer do is hang up; filing there is now the
+  // point, and it happens before she says the booking is made.
   const WORDS = {
-    pt: { goes: 'Como te despedes', notHere: 'Não registas a chamada aqui' },
-    es: { goes: 'Cómo te despides', notHere: 'No registras la llamada aquí' },
+    pt: { goes: 'Como te despedes', notHere: 'não desligas aqui', files: 'Registas a chamada aqui' },
+    es: { goes: 'Cómo te despides', notHere: 'no cuelgas aquí', files: 'Registras la llamada aquí' },
   }
   for (const lang of ['pt', 'es']) {
     const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
@@ -1110,7 +1114,11 @@ test('a booking hands over to the closing instead of ending the call', () => {
     )
     assert.ok(
       nodes.booking.includes(WORDS[lang].notHere),
-      `${lang}: the booking still owns the filing, so it still owns the ending`
+      `${lang}: nothing stops the booking hanging up on its own`
+    )
+    assert.ok(
+      nodes.booking.includes(WORDS[lang].files),
+      `${lang}: the appointment is not written until the call is over`
     )
   }
 })

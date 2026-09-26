@@ -1271,3 +1271,17 @@ test('the diary is not consulted before the service is checked', () => {
     assert.ok(nodes.booking.includes(WORDS[lang]), `${lang}: the diary can be opened first`)
   }
 })
+
+// A booking's service is written in the clinic's language.
+//
+// canonicalReason asked serviceLabel for 'es' whatever the clinic was, so a
+// Portuguese clinic that booked a branqueamento read "Blanqueamiento" back off
+// its own panel, in a language nobody there had used.
+test('the service a booking is filed under speaks the clinic language', async () => {
+  const { canonicalReason } = await import('../lib/service-duration.ts')
+  const services = ['dent_branqueamento', 'dent_limpeza']
+  assert.equal(canonicalReason({ services, language: 'pt' }, 'branqueamento'), 'Branqueamento')
+  assert.equal(canonicalReason({ services, language: 'es' }, 'branqueamento'), 'Blanqueamiento')
+  // Nothing the clinic does not offer is stored at all, in either language.
+  assert.equal(canonicalReason({ services, language: 'pt' }, 'implantes'), null)
+})

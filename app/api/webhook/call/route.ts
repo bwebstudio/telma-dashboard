@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   // written down blocks exactly what was held.
   const { data: lengths } = await admin
     .from('clinics')
-    .select('service_durations, appointment_duration_minutes, slot_minutes, services, custom_services')
+    .select('service_durations, appointment_duration_minutes, slot_minutes, services, custom_services, language')
     .eq('id', clinicId)
     .maybeSingle()
   const clinicLengths = (lengths ?? {}) as DurationSource

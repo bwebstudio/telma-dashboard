@@ -23,6 +23,8 @@ import { serviceLabel } from './onboarding/catalog.ts'
 export interface DurationSource {
   services?: string[] | null
   custom_services?: string | null
+  /** The clinic's own language. What a booking's service is written in. */
+  language?: string | null
   service_durations?: Record<string, number> | null
   appointment_duration_minutes?: number | null
   slot_minutes?: number | null
@@ -182,5 +184,10 @@ export function canonicalReason(clinic: DurationSource, said: string | null): st
   const id = matchService(allServices(clinic), said)
   if (!id) return null
   // The catalogue's own wording, in the clinic's language, never the caller's.
-  return serviceLabel(id, 'es') === id ? id : serviceLabel(id, 'es')
+  //
+  // It said 'es' here whatever the clinic was, so a Portuguese clinic that
+  // booked a branqueamento read "Blanqueamiento" back off its own panel. The
+  // comment was right and the argument was not.
+  const locale = clinic.language === 'pt' ? 'pt' : 'es'
+  return serviceLabel(id, locale) === id ? id : serviceLabel(id, locale)
 }

@@ -1226,3 +1226,48 @@ test('the panel sentence belongs to a message, not to a booking', () => {
     )
   }
 })
+
+// The number is asked for, never assumed.
+//
+// The caller id is where the call comes from, which is not the same thing as
+// where the clinic should ring back: the work phone, the street, somebody
+// else's mobile, a landline in a corridor. The base used to hand it over
+// already spoken, waiting for a yes, and a yes given out of politeness to a
+// number that is not yours is a booking nobody can confirm afterwards.
+//
+// Asked for three times before it stuck, so it has a test.
+test('the phone number is asked for, not offered from the caller id', () => {
+  const ASKS = {
+    pt: 'Perguntas sempre o número',
+    es: 'Preguntas siempre el número',
+  }
+  const NEVER = {
+    pt: 'Nunca o ofereces já dito',
+    es: 'Nunca se lo ofreces ya dicho',
+  }
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt(
+      { ...CASES['open-can-book'], can_book: true, caller_id: '+351910523903' },
+      lang
+    )
+    assert.ok(text.includes(ASKS[lang]), `${lang}: nothing tells her to ask for the number`)
+    assert.ok(text.includes(NEVER[lang]), `${lang}: she may still offer the caller id and wait for a yes`)
+    // And the caller id is still on the page, because a number that never
+    // arrives is a number she cannot notice is wrong.
+    assert.ok(text.includes('910523903'), `${lang}: the caller id vanished entirely`)
+  }
+})
+
+// The diary is opened after the clinic has been checked, not instead of it.
+//
+// Somebody asked for whitening, which this clinic does not do, and left with
+// an appointment for whitening: the first sentence named the service and she
+// went straight to availability, skipping the two steps that exist to catch
+// exactly that.
+test('the diary is not consulted before the service is checked', () => {
+  const WORDS = { pt: 'Nunca antes dos passos 1 e 2', es: 'Nunca antes de los pasos 1 y 2' }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.booking.includes(WORDS[lang]), `${lang}: the diary can be opened first`)
+  }
+})

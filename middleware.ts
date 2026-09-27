@@ -15,9 +15,13 @@ export const config = {
   // because nothing had called it yet: it is the first thing an agent asks for
   // at the start of a call, and it would have failed on the first real one.
   //
+  // And then `api/service-check` was added and forgotten here too, and answered
+  // a 307 to the browser check that caught it. Every route the voice platform
+  // calls has to be on this list, and the list is the only thing that says so.
+  //
   // /api/crm is deliberately included: the offline queue on the phone posts
   // there and needs a refreshed session.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/availability|api/appointments|api/clinic-context|api/voice|dev/voz|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|webmanifest|woff2)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/availability|api/appointments|api/clinic-context|api/service-check|api/voice|dev/voz|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|webmanifest|woff2)$).*)',
   ],
 }

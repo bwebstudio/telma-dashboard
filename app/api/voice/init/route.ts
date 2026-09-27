@@ -178,11 +178,27 @@ export async function POST(request: Request) {
 
   const built = buildPrompt(variables, baseLanguage)
 
+  // The whole sheet, or only the part of it that is true in every sentence.
+  //
+  // scripts/elevenlabs-procedures.mjs puts the booking, the cancellations, the
+  // goodbye and the difficult calls on the agent as procedures, where the
+  // platform loads each one when the conversation matches its trigger. Once
+  // they are live on the branch answering the telephone, sending them in the
+  // prompt as well means every call carries them twice, and the thing this was
+  // all for -- ElevenLabs asks for a system prompt under two thousand tokens --
+  // does not happen.
+  //
+  // Off unless somebody sets it, and deliberately not inferred: this endpoint
+  // cannot see which branch a call arrived on, so guessing would mean a call
+  // routed to a branch without the procedures losing them entirely. Turn it on
+  // in the same change that publishes them.
+  const procedures = process.env.TELMA_PROCEDURES_ON_AGENT === '1'
+
   return NextResponse.json({
     type: 'conversation_initiation_client_data',
     conversation_config_override: {
       agent: {
-        prompt: { prompt: built.text },
+        prompt: { prompt: procedures ? built.nodes.core : built.text },
         // The opening line, authored rather than improvised, so the recording
         // notice is always in it and always in the right language.
         first_message: greetingLine(
@@ -219,6 +235,7 @@ export async function POST(request: Request) {
       clinic_language: promptLocale,
       can_book: String(variables.can_book),
       prompt_version: built.version,
+      prompt_shape: procedures ? 'core' : 'whole',
       // Read by the built-in transfer tool, which needs a number and cannot be
       // given one per clinic any other way: there is a single shared agent, so
       // the destination has to arrive with the call.

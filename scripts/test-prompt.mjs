@@ -970,16 +970,21 @@ test('what is behind a trigger is what is rare', () => {
   //
   // This fails if somebody moves it back out, which is the point: the reason
   // is a measurement and measurements are easy to forget.
-  for (const line of booking.split('\n')) {
-    const needle = line.trim()
-    if (needle.length < 12) continue
-    assert.ok(core.includes(needle), `the booking left the core: ${needle.slice(0, 60)}`)
+  // The goodbye is here for the same reason and the same measurement: its own
+  // start_procedure was heard as a silence at the end of a call, and every
+  // call ends.
+  for (const [name, piece] of Object.entries({ booking, closing })) {
+    for (const line of piece.split('\n')) {
+      const needle = line.trim()
+      if (needle.length < 12) continue
+      assert.ok(core.includes(needle), `the ${name} left the core: ${needle.slice(0, 60)}`)
+    }
   }
 
   // And the three that stayed behind a trigger are still real. A procedure
   // that came out empty means the split missed it, and nothing would say so:
   // the conversation would simply never be told what to do.
-  for (const [name, piece] of Object.entries({ cancelling, closing, difficult })) {
+  for (const [name, piece] of Object.entries({ cancelling, difficult })) {
     assert.ok(piece.length > 200, `${name} came out empty, which means the split missed it`)
     for (const line of piece.split('\n')) {
       const needle = line.trim()

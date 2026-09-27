@@ -96,9 +96,7 @@ if (nodes) {
   const tok = (t) => Math.round(t.length / 3.4)
   console.log(`  forma:   como produção — núcleo no prompt, procedimentos no agente`)
   console.log(`  núcleo:  ${tok(n.core)} tokens`)
-  console.log(
-    `  procs:   cancelar ${tok(n.cancelling)}, despedir ${tok(n.closing)}, difícil ${tok(n.difficult)}`
-  )
+  console.log(`  procs:   cancelar ${tok(n.cancelling)}, difícil ${tok(n.difficult)}`)
   console.log(`  numa marcação: ${tok(n.core)} sem voltas a mais, contra ${tok(built.text)} com a folha inteira\n`)
 } else {
   console.log(`  prompt:  ${built.text.length} caracteres, versão ${built.version}\n`)
@@ -207,7 +205,6 @@ if (PROCEDURES) {
   // exists to stop repeating.
   const pieces = [
     ['cancelamentos', 'cancelling', 'The caller wants to cancel or move an appointment they already have.'],
-    ['despedida', 'closing', 'What the caller rang about has been dealt with and the call is ready to end.'],
     ['dificil', 'difficult', 'The caller has gone quiet, has said they will leave it for another time, or is being abusive.'],
   ]
   const branch = (await api('GET', `/v1/convai/agents/${agent.agent_id}/branches`)).results.find(

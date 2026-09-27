@@ -1258,7 +1258,15 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
       // latência. Quando medida aqui, aplicá-la a este nó subia-a. O que fica
       // atrás de um gatilho é o que é raro: cancelar, despedir-se, e a chamada
       // que não vai a lado nenhum.
-      core: tidy([...core, '', ...professionalsSection, ...bookingSection, ...coreTail]),
+      // A despedida segue a marcação para cá, e pela mesma medição: ouviu-se
+      // o `start_procedure` de telma/despedida-pt como um silêncio no fim de
+      // uma chamada que até aí ia bem. Toda a chamada acaba. Um caminho por
+      // onde passam todas não pode estar atrás de um gatilho, porque o gatilho
+      // é uma volta ao modelo e a volta ouve-se.
+      //
+      // Ficam dois procedimentos, e são os dois raros a sério: cancelar, e a
+      // chamada que não vai a lado nenhum.
+      core: tidy([...core, '', ...professionalsSection, ...bookingSection, ...closingSection, ...coreTail]),
       booking: tidy(bookingSection),
       cancelling: tidy(cancellingSection),
       closing: tidy(closingSection),

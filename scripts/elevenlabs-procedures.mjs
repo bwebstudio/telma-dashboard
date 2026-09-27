@@ -32,7 +32,7 @@
 // opening hour into the booking steps, that test fails and this script stops
 // being possible, which is the point of it.
 //
-// ── WHY BOOKING IS NOT ONE OF THEM ──────────────────────────────────────────
+// ── WHY BOOKING AND THE GOODBYE ARE NOT AMONG THEM ──────────────────────────
 // It was, for a day. Then a real call was timed: the caller stopped talking at
 // twelve seconds and Telma said her first word at twenty-one, and five of those
 // nine seconds were `start_procedure`. Loading a procedure is itself a tool
@@ -43,9 +43,11 @@
 // trade is a bad one: context costs milliseconds of prefill and is cached
 // between turns, a round trip costs seconds that the caller spends in silence
 // wondering whether the line dropped. What stays behind a trigger is what is
-// actually rare.
+// actually rare. The goodbye followed for the same reason and the same
+// evidence: its `start_procedure` was heard as a silence at the end of a call
+// that had gone well until then, and every call ends.
 //
-// ── WHY SIX AND NOT THREE ───────────────────────────────────────────────────
+// ── WHY FOUR AND NOT TWO ────────────────────────────────────────────────────
 // The base is written in the language the clinic greets in, and the agent is
 // shared by Portuguese and Spanish clinics. A procedure holds one text, so each
 // piece is pushed twice and the trigger names the language. Only one of each
@@ -140,14 +142,6 @@ const PIECES = [
     trigger: {
       pt: 'The caller wants to cancel or move an appointment they already have, in a conversation held in Portuguese.',
       es: 'The caller wants to cancel or move an appointment they already have, in a conversation held in Spanish.',
-    },
-  },
-  {
-    node: 'closing',
-    slug: 'despedida',
-    trigger: {
-      pt: 'What the caller rang about has been dealt with and the call is ready to end, in a conversation held in Portuguese.',
-      es: 'What the caller rang about has been dealt with and the call is ready to end, in a conversation held in Spanish.',
     },
   },
   {

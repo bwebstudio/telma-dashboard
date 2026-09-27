@@ -546,7 +546,10 @@ const AGENT_SPEC = {
         // nenhuma pendente. Numa chamada real saiu três vezes, duas delas sem
         // sentido. As que ficam são hesitações e não promessas.
         message: 'Deixe ver...',
-        additional_soft_timeout_messages: ['Um momento...', 'Ora bem...', 'Pronto...'],
+        // "Pronto..." saiu. Ouviu-se no fim de uma chamada, antes da
+        // despedida, e "pronto" sozinho não é uma hesitação: é o que se diz
+        // quando algo acabou, dito antes de acabar.
+        additional_soft_timeout_messages: ['Um momento...', 'Ora bem...'],
         use_llm_generated_message: false,
         randomize_fillers: true,
         max_soft_timeouts_per_generation: 4,

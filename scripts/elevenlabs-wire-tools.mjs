@@ -491,9 +491,20 @@ const AGENT_SPEC = {
       // 0 y no 3: el troceado agresivo arranca una entonación nueva por trozo, y
       // eso es lo que se oye como voz de máquina.
       optimize_streaming_latency: 0,
-      // 0.7 está en la ventana: por debajo salta de aguda a seria entre frases,
-      // por encima de 0.8 arrastra y repite sílabas.
-      stability: 0.7,
+      // 0.8, que es el techo de la ventana: por debajo de 0.7 salta de aguda a
+      // seria entre frases, por encima de 0.8 arrastra y repite sílabas.
+      //
+      // Estaba en 0.7 y subió porque el modo expresivo de v3 deriva de acento a
+      // media llamada -- en una real se le escapó un acento brasileño. Más
+      // estabilidad es menos deriva. Elegido escuchando: la misma frase de
+      // cuarenta segundos generada a 0.7, 0.8 y 0.85, y 0.8 es la que conserva
+      // la voz sin irse.
+      //
+      // Lo que eso NO prueba: una muestra se genera de una vez y una
+      // conversación se genera turno a turno, así que la deriva real sólo se ve
+      // llamando. Si vuelve a aparecer a 0.8, es el precio del modo expresivo y
+      // hay que elegir entre sonar bien y sonar estable.
+      stability: 0.8,
       similarity_boost: 0.75,
     },
     turn: {

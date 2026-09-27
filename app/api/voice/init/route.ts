@@ -178,6 +178,13 @@ export async function POST(request: Request) {
 
   const built = buildPrompt(variables, baseLanguage)
 
+  // Whether this clinic has anywhere to put a call through to. Either it asked
+  // for transfers as its answer when Telma cannot help, or it agreed to be rung
+  // out of hours. Anything else and there is no destination, which is a fact
+  // about the clinic and not a state of the call.
+  const transfersAllowed =
+    variables.fallback_policy === 'transfer' || variables.after_hours_transfer
+
   // The whole sheet, or only the part of it that is true in every sentence.
   //
   // scripts/elevenlabs-procedures.mjs puts the booking, the cancellations, the
@@ -240,10 +247,20 @@ export async function POST(request: Request) {
       // given one per clinic any other way: there is a single shared agent, so
       // the destination has to arrive with the call.
       //
-      // Empty string rather than null when the clinic named nobody. The tool
+      // Empty string rather than null when there is nobody to ring. The tool
       // then has nothing to dial, which is correct: a clinic that gave no number
       // must not have its main line rung by an agent improvising.
-      fallback_number: variables.fallback_number ?? clinic.phone ?? '',
+      //
+      // And empty for a clinic that does not transfer at all. This used to fall
+      // through to `clinic.phone` whatever the policy was, so a clinic whose
+      // answer to "I want to speak to someone" is "I will take a message" would
+      // have had its own front desk dialled by the tool -- while the base was
+      // telling her, correctly, never to say she was putting anybody through.
+      // The policy decides, in one place, and the number only exists when it is
+      // allowed to be used.
+      fallback_number: transfersAllowed
+        ? (variables.fallback_number ?? clinic.phone ?? '')
+        : '',
       emergency_number: variables.emergency_number ?? '',
     },
   })

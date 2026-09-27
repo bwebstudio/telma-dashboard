@@ -323,14 +323,53 @@ const AGENT_SPEC = {
             description:
               'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
           },
-          // Sem isto o prompt promete uma coisa que a plataforma não faz. Ele diz
-          // "respondes na língua em que te falarem", e a conversa fica presa na
-          // que abriu: o modelo escreve português e o reconhecimento continua à
-          // espera de espanhol.
           // Sem deteção de idioma, de propósito: o prompt diz que a língua se escolhe
           // na saudação e não muda, e esta ferramenta existe para a mudar. Numa
           // chamada real a Telma leu em voz alta a opção do menu — "português" — e
           // mudou-se a si própria de língua a meio de uma conversa em castelhano.
+
+          // ── PASSAR A CHAMADA ────────────────────────────────────────────
+          // A base diz "passas a chamada" em dois sítios: numa urgência, e numa
+          // clínica cuja resposta a "quero falar com alguém" é transferir. O
+          // agente não tinha ferramenta nenhuma para o fazer, por isso as duas
+          // eram promessas que nada cumpria. Numa chamada real ela disse quatro
+          // vezes "ahora mismo le paso con la clínica" a quem descrevia uma
+          // possível complicação, e nunca ia acontecer nada. Prometer uma
+          // transferência é mau em qualquer sítio e pior aqui, porque a pessoa
+          // deixa de procurar ajuda.
+          //
+          // O destino é uma variável dinâmica e não um número: há um só agente
+          // partilhado por todas as clínicas, e é /api/voice/init que manda o
+          // número desta chamada. `fallback_number` chega vazio quando a
+          // política da clínica não é transferir, e uma transferência sem
+          // destino não parte para lado nenhum — que é o que tem de acontecer
+          // numa clínica que nunca pediu transferências.
+          //
+          // `conference` e não `blind`: blind exige que o número tenha entrado
+          // pela integração nativa da Twilio, e o nosso não entrou.
+          transfer_to_number: {
+            name: 'transfer_to_number',
+            type: 'system',
+            description:
+              'Passa a chamada a uma pessoa. Avisas sempre antes de passar. Se não houver número, não passas e não dizes que vais passar.',
+            params: {
+              system_tool_type: 'transfer_to_number',
+              transfers: [
+                {
+                  transfer_destination: { type: 'phone', phone_number: '{{emergency_number}}' },
+                  transfer_type: 'conference',
+                  condition:
+                    'Quem liga descreve uma urgência e a clínica está aberta, ou está fechada mas autorizou receber urgências fora de horas.',
+                },
+                {
+                  transfer_destination: { type: 'phone', phone_number: '{{fallback_number}}' },
+                  transfer_type: 'conference',
+                  condition:
+                    'Quem liga pede para falar com uma pessoa da clínica, ou há alguma coisa que a Telma não consegue resolver, e esta clínica transfere chamadas.',
+                },
+              ],
+            },
+          },
         },
       },
       first_message:

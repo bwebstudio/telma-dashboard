@@ -463,20 +463,23 @@ const AGENT_SPEC = {
       // 0 y no 3: el troceado agresivo arranca una entonación nueva por trozo, y
       // eso es lo que se oye como voz de máquina.
       optimize_streaming_latency: 0,
-      // 0.8, que es el techo de la ventana: por debajo de 0.7 salta de aguda a
-      // seria entre frases, por encima de 0.8 arrastra y repite sílabas.
+      // 0.7. Estuvo en 0.8 durante una tarde y volvió.
       //
-      // Estaba en 0.7 y subió porque el modo expresivo de v3 deriva de acento a
-      // media llamada -- en una real se le escapó un acento brasileño. Más
-      // estabilidad es menos deriva. Elegido escuchando: la misma frase de
-      // cuarenta segundos generada a 0.7, 0.8 y 0.85, y 0.8 es la que conserva
-      // la voz sin irse.
+      // Subió porque el modo expresivo de v3 deriva de acento, y se eligió 0.8
+      // escuchando tres muestras de cuarenta segundos. Al ponerlo en una
+      // llamada real dijo "fica hoje, segunda-feira segunda-feira, às nove" —
+      // y la transcripción demuestra que el modelo escribió el día UNA vez. Lo
+      // repitió la voz.
       //
-      // Lo que eso NO prueba: una muestra se genera de una vez y una
-      // conversación se genera turno a turno, así que la deriva real sólo se ve
-      // llamando. Si vuelve a aparecer a 0.8, es el precio del modo expresivo y
-      // hay que elegir entre sonar bien y sonar estable.
-      stability: 0.8,
+      // Que es exactamente lo que este comentario avisaba desde antes de que yo
+      // lo tocara: por encima de 0.8 arrastra y repite sílabas. 0.8 no estaba
+      // dentro de la ventana, era el borde, y el borde se nota.
+      //
+      // Repetir el día de una cita es peor que un acento que se va: el acento
+      // es incómodo, el día repetido es la información que importa dicha mal.
+      // Si el acento vuelve a molestar, 0.75 es lo siguiente que probar, y se
+      // prueba llamando: una muestra se genera de una vez y no enseña esto.
+      stability: 0.7,
       similarity_boost: 0.75,
     },
     turn: {
@@ -526,12 +529,17 @@ const AGENT_SPEC = {
       // mano y `randomize_fillers` dan la variedad que se buscaba al
       // encenderlo, sin que haya un idioma que elegir.
       soft_timeout_config: {
-        // Seis, não três. A três apanhava gerações que não são uma espera: a
-        // frase que anuncia a marcação levava mais do que isso a sair, e
-        // ouvia-se uma muleta antes de uma boa notícia. E agora que a Telma diz
-        // ela própria uma frase inteira antes de consultar a agenda, o silêncio
-        // que isto existe para encher já vem meio cheio.
-        timeout_seconds: 6,
+        // Três segundos. Esteve em 3, subiu a 4.5 e a 6 para não sobrepor a
+        // frase da própria Telma, e volta porque o problema é outro: quem liga
+        // não sabe que há uma espera. Nove segundos de silêncio antes da
+        // primeira palavra fazem uma pessoa normal falar por cima, e a seguir
+        // são dois a falar ao mesmo tempo.
+        //
+        // A sobreposição que fez subir isto já está resolvida do outro lado: a
+        // base diz-lhe, por palavras, que não comece por "deixe ver", "um
+        // momento", "ora bem" nem "pronto", que são precisamente as quatro
+        // desta lista. As duas vozes deixaram de partilhar vocabulário.
+        timeout_seconds: 3,
         // "Já lhe digo..." saiu daqui. Promete uma resposta a uma pergunta,
         // e a plataforma di-lo sempre que uma geração demora — incluindo antes
         // de registar a chamada e antes de se despedir, onde não há pergunta
@@ -662,7 +670,26 @@ if (AGENT && !DRY) {
   // devolve-o na leitura mas recusa recebê-lo ao lado de `tool_ids`, por isso
   // reenviar tal e qual o que se leu rebenta. Fica de fora.
   const { tools: _legacy, ...prompt } = agent?.conversation_config?.agent?.prompt ?? {}
-  const merged = [...new Set([...(prompt.tool_ids ?? []), ...ids])]
+  // La unión menos las nuestras que ya no existen.
+  //
+  // Esto sólo sumaba. Cuando telma_verificar_servico se fundió con la agenda,
+  // la herramienta siguió colgada del agente: el modelo leía su descripción en
+  // cada turno y podía llamarla, contra un prompt que ya no la nombraba. Una
+  // herramienta que nadie retira es una herramienta que se queda.
+  //
+  // Sólo se sueltan las que llevan nuestro prefijo y no están en TOOLS. Una que
+  // alguien haya añadido a mano en la consola no se toca: este script no la
+  // creó y no le toca decidir sobre ella.
+  const ours = new Set(TOOLS.map((t) => `${t.name}${SUFFIX}`))
+  const byId = new Map((existing.tools ?? []).map((t) => [t.id ?? t.tool_id, t.tool_config?.name ?? t.name]))
+  const stale = (prompt.tool_ids ?? []).filter((id) => {
+    const name = byId.get(id)
+    return name?.startsWith('telma_') && name.endsWith(SUFFIX) && !ours.has(name)
+  })
+  const merged = [...new Set([...(prompt.tool_ids ?? []), ...ids])].filter((id) => !stale.includes(id))
+  if (stale.length) {
+    console.log(`  soltadas do agente: ${stale.map((id) => byId.get(id)).join(', ')}`)
+  }
 
   // A partial patch, deliberately. `tts` and `turn` sit beside `agent` under
   // conversation_config and are not sent, so a voice or a timeout chosen in the

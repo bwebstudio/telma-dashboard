@@ -20,9 +20,18 @@ export type { NotifyKind }
  * the clinic then rejects. Three moments: confirmed, moved, refused.
  *
  * ── WHICH CHANNEL ──────────────────────────────────────────────────────────
- * SMS for everybody, WhatsApp only where the clinic pays for that add-on.
- * `activeAddons` is the one place that knows, and it already carries the
- * pre-migration fallback.
+ * SMS for everybody, WhatsApp only where the clinic pays for that add-on AND
+ * there is an approved template to send. `activeAddons` knows the first half.
+ *
+ * The second half is Meta's rule and it is not optional: a message the business
+ * starts, outside the twenty-four hours after the patient last wrote, has to be
+ * a template approved in advance. A confirmation goes out days after the call,
+ * so it is always outside that window and always needs one. Free text there is
+ * not "worse", it is refused.
+ *
+ * This shipped without that and would have failed on the one clinic that has
+ * the add-on. Until the templates exist, WhatsApp falls back to SMS, which
+ * arrives, and the row says which one carried it.
  *
  * ── WHAT A FAILURE MUST NOT DO ─────────────────────────────────────────────
  * Stop the confirmation. The clinic's decision is the thing that matters and
@@ -80,18 +89,31 @@ export async function notifyPatient(appointmentId: string, kind: NotifyKind): Pr
 
     const from = senderFor(clinic)
     const to = appt.patient_phone?.trim()
-    const channel = activeAddons(clinic).includes('whatsapp') ? 'whatsapp' : 'sms'
+    // One content sid per kind, because the three say different things and
+    // Meta approves each on its own. Set them and WhatsApp starts carrying the
+    // clinics that pay for it; leave them unset and everybody gets an SMS.
+    const template = process.env[`TWILIO_WHATSAPP_TEMPLATE_${kind.toUpperCase()}`]?.trim()
+    const wantsWhatsapp = activeAddons(clinic).includes('whatsapp')
+    const channel = wantsWhatsapp && template ? 'whatsapp' : 'sms'
 
     if (!ACCOUNT_SID || !AUTH_TOKEN || !from || !to) {
       await record(admin, appointmentId, kind, channel, 'por_configurar')
       return
     }
 
-    const body = new URLSearchParams({
-      To: channel === 'whatsapp' ? `whatsapp:${to}` : to,
-      From: channel === 'whatsapp' ? `whatsapp:${from}` : from,
-      Body: messageFor(kind, clinic, appt.scheduled_at, appt.reject_reason),
-    })
+    const said = messageFor(kind, clinic, appt.scheduled_at, appt.reject_reason)
+    const body = new URLSearchParams(
+      channel === 'whatsapp'
+        ? {
+            To: `whatsapp:${to}`,
+            From: `whatsapp:${from}`,
+            // The approved template, with the one sentence as its single
+            // variable. Meta approves the shape, not the words inside it.
+            ContentSid: template as string,
+            ContentVariables: JSON.stringify({ '1': said }),
+          }
+        : { To: to, From: from, Body: said }
+    )
 
     const res = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json`,

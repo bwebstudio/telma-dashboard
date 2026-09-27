@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getAppUser } from '@/lib/auth'
+import { notifyPatient } from '@/lib/notify-patient'
 
 // Answering a patient is the clinic's decision and carries the clinic's name,
 // so only the clinic that owns the booking may write it. The administrator can
@@ -31,6 +32,11 @@ export async function confirmAppointment(id: string) {
     .eq('id', id)
     .eq('clinic_id', cid)
   if (error) throw new Error(error.message)
+  // After the write and never before it, and it cannot throw: the clinic's
+  // decision is the thing that matters and a dead SMS must not undo it. Telma
+  // ends every booking saying it is subject to the clinic confirming, and this
+  // is the half of that sentence that never used to travel.
+  await notifyPatient(id, 'confirmada')
   refresh()
 }
 
@@ -59,6 +65,10 @@ export async function alterAppointment(id: string, scheduledAtISO: string) {
     .eq('id', id)
     .eq('clinic_id', cid)
   if (error) throw new Error(error.message)
+  // 'alterada' and not 'confirmada': moving an hour is the one thing a patient
+  // must not find out by turning up at the old one, and the kind is also what
+  // lets a second message go out after a first.
+  await notifyPatient(id, 'alterada')
   refresh()
 }
 
@@ -91,5 +101,6 @@ export async function rejectAppointment(id: string, reason: string) {
     .eq('id', id)
     .eq('clinic_id', cid)
   if (error) throw new Error(error.message)
+  await notifyPatient(id, 'rejeitada')
   refresh()
 }

@@ -120,6 +120,38 @@ const TOOLS = [
       },
     },
   },
+  // ── O passo 2 de uma marcação, feito por código ──────────────────────────
+  // Estava a ser o modelo a comparar o que ouviu contra a lista de serviços
+  // escrita nas instruções dele, que é dar a comparação de strings à única
+  // parte do sistema que não é de fiar para isso. Alguém pediu um
+  // branqueamento numa clínica que não branqueia e saiu com um branqueamento
+  // marcado: atravessar a cidade para ouvir que ali não é.
+  //
+  // `force_pre_tool_speech` fica a false, ao contrário das outras: isto é
+  // instantâneo e não vale a pena dizer "um momento" para uma comparação de
+  // texto. As outras vão à base de dados e o silêncio nota-se.
+  {
+    name: 'telma_verificar_servico',
+    force_pre_tool_speech: false,
+    description:
+      'Diz-te se a clínica faz aquilo que a pessoa pediu, e como se chama na agenda. Usa isto SEMPRE antes de consultares horas, com as palavras da pessoa tal e qual. Se devolver faz=false, a clínica não faz isso: dizes que aqui não se faz, ofereces o que vier em alternativas, e não abres a agenda. O campo servico é o nome que usas ao falar e ao registar, nunca as palavras da pessoa.',
+    api_schema: {
+      url: `${BASE}/api/service-check`,
+      method: 'GET',
+      request_headers: auth,
+      query_params_schema: {
+        properties: {
+          clinic_id: { type: 'string', dynamic_variable: 'clinic_id' },
+          said: {
+            type: 'string',
+            description:
+              'O que a pessoa disse que queria, nas palavras dela: "o laser", "uma limpeza", "lo de las piernas". Não o traduzas nem o arrumes.',
+          },
+        },
+        required: ['clinic_id', 'said'],
+      },
+    },
+  },
   {
     name: 'telma_reservar_hora',
     force_pre_tool_speech: true,

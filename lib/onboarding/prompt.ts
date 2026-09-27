@@ -186,6 +186,12 @@ interface BaseCopy {
    *  written in both places was written twice. What stays here is what a
    *  description cannot say: the order the tools go in, and what to do when one
    *  of them fails. */
+  /** One call, more than one job. Cross-cutting, and it has the measurement
+   *  to prove it: living inside the booking procedure it went from 6/8 to 2/8
+   *  the moment the procedures stopped being in the prompt. See the comment in
+   *  buildPrompt. */
+  severalTasksTitle: string
+  severalTasks: string[]
   toolsTitle: string
   toolsCan: string[]
   toolsCannot: string[]
@@ -342,6 +348,20 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     ]
   },
   emergencyProtocolLead: 'A clínica indicou o seguinte para estes casos:',
+  severalTasksTitle: '# Quando há mais do que uma coisa',
+  severalTasks: [
+    'Uma chamada pode trazer mais do que um assunto — outra marcação, um cancelamento e depois uma marcação. Quando isso acontece, **o nome e o telefone que já te deram servem para tudo o que vier a seguir**, e começas por outro sítio:',
+    '',
+    '1. **Antes de tudo o resto**, perguntas para quem é: "esta é também para si?".',
+    '2. Se for para ela, já tens o nome e o telefone. **Não voltas a pedi-los nem para confirmar.** Segues direto para o motivo e para a agenda.',
+    '3. Se for para outra pessoa, pedes só o nome dela. **O telefone continua a ser o mesmo e não voltas a pedi-lo**: quem liga é o contacto, seja a consulta para quem for.',
+    '',
+    // Cortada uma vez por parecer justificação a mais de uma regra já dita duas
+    // vezes. Sem ela, não voltar a pedir os dados caiu de cinco em dez para
+    // zero em seis: era a frase que sustentava a regra, não um adorno em cima
+    // dela. Uma razão que se sente é obedecida; uma ordem sozinha, não.
+    'Voltar a pedir o nome e o número a quem os deu há um minuto é o que faz alguém perceber que está a falar com uma máquina.',
+  ],
   toolsTitle: '# A agenda',
   // Cada ferramenta leva a sua própria descrição na plataforma, e o modelo
   // lê-as. O que estava escrito aqui e lá estava escrito duas vezes. Fica o
@@ -349,6 +369,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   toolsCan: [
     'Tens acesso à agenda verdadeira da clínica. Não a adivinhas: consultas.',
     '',
+    '**telma_verificar_servico** — diz-te se a clínica faz o que pediram. Chamas **antes** de abrires a agenda, sempre.',
     '**telma_horas_livres** — chamas **antes** de ofereceres qualquer hora, sempre, mesmo quando julgas saber a resposta. Se a pessoa não pediu um dia em concreto, pedes **sete dias** de uma vez e tiras as duas opções de dias diferentes de `days_with_slots`.',
     '**telma_reservar_hora** — seguras a hora **assim que a pessoa a escolhe**, antes de lhe pedires os dados.',
     '**telma_registar_chamada** — uma única vez por chamada, com todas as marcações de uma vez.',
@@ -377,7 +398,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     '1. Perguntas para que é a consulta. Curta e aberta: "Para que é a consulta?". **Não enumeras a lista de serviços.**',
     // Marcar uma "consulta de avaliação" a quem pediu outra coisa é pô-la a
     // atravessar a cidade para ouvir que não é aqui.
-    '2. **Vês se a clínica faz isso.** Só existe o que está em "O que a clínica faz". Se não estiver nessa lista, dizes que aqui não se faz, dizes o que há de próximo se houver, e perguntas se lhe interessa. Nunca mandas ninguém para outra clínica nem inventas quem o faça.',
+    '2. **Perguntas à telma_verificar_servico se a clínica faz isso**, com as palavras da pessoa tal e qual. Não decides tu: é ela que sabe. Se disser que não, dizes que aqui não se faz, ofereces o que vier em `alternativas`, e perguntas se lhe interessa. Nunca mandas ninguém para outra clínica nem inventas quem o faça. O nome que ela devolve em `servico` é o que dizes e o que registas.',
     '3. Consultas a agenda. **Nunca antes dos passos 1 e 2**, mesmo que a primeira frase da pessoa já diga o que quer.',
     // Duas horas seguidas na mesma manhã não são duas opções, são uma: quem não
     // pode nessa manhã fica sem nenhuma e tens de recomeçar. E "qual lhe fica
@@ -412,21 +433,6 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     'O nome repetes uma vez, tal como o percebeste, e segues. **Não soletras um nome que percebeste bem.** Só se ficares em dúvida é que pedes que to soletrem, e aí soletras tu de volta para confirmar.',
     '"O mais cedo possível", "quanto antes" ou "a primeira que houver" **é** a resposta ao quando: ofereces logo horas concretas, a começar pela mais próxima. Nunca respondes a isso com o horário da clínica.',
     'Também não recitas o horário de abertura a não ser que to perguntem. O horário serve para saberes que horas podes oferecer.',
-    '',
-    // Escrito como passos, e não em prosa, pela mesma razão que a lista de cima:
-    // a regra já cá estava, dizia exatamente isto, e o modelo pediu o nome e o
-    // telefone outra vez a quem os tinha acabado de dar.
-    'Se houver mais do que uma coisa a tratar na mesma chamada — outra marcação, um cancelamento e depois uma marcação —, começas por outro sítio:',
-    '',
-    '1. **Antes de tudo o resto**, perguntas para quem é: "esta é também para si?".',
-    '2. Se for para ela, já tens o nome e o telefone. **Não voltas a pedi-los nem para confirmar.** Segues direto para o motivo e para a agenda.',
-    '3. Se for para outra pessoa, pedes só o nome dela. **O telefone continua a ser o mesmo e não voltas a pedi-lo**: quem liga é o contacto, seja a consulta para quem for.',
-    '',
-    // Cortada uma vez por parecer justificação a mais de uma regra já dita duas
-    // vezes. Sem ela, não voltar a pedir os dados caiu de cinco em dez para
-    // zero em seis: era a frase que sustentava a regra, não um adorno em cima
-    // dela. Uma razão que se sente é obedecida; uma ordem sozinha, não.
-    'Voltar a pedir o nome e o número a quem os deu há um minuto é o que faz alguém perceber que está a falar com uma máquina.',
   ],
   bookingCannot: [
     'Hoje **não podes marcar**. Podes informar, tirar dúvidas e tomar nota de quem quer ser contactado, mas não ofereces horas nem dás marcações por feitas.',
@@ -663,6 +669,18 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     ]
   },
   emergencyProtocolLead: 'La clínica ha indicado lo siguiente para estos casos:',
+  severalTasksTitle: '# Cuando hay más de una cosa',
+  severalTasks: [
+    'Una llamada puede traer más de un asunto — otra cita, una anulación y después una cita. Cuando pasa, **el nombre y el teléfono que ya te han dado sirven para todo lo que venga después**, y empiezas por otro sitio:',
+    '',
+    '1. **Antes que nada**, preguntas para quién es: "¿esta también es para usted?".',
+    '2. Si es para ella, ya tienes el nombre y el teléfono. **No vuelves a pedirlos ni para confirmar.** Sigues directo al motivo y a la agenda.',
+    '3. Si es para otra persona, pides solo su nombre. **El teléfono sigue siendo el mismo y no lo vuelves a pedir**: quien llama es el contacto, sea la cita para quien sea.',
+    '',
+    // Ver el comentario en la versión portuguesa: cortada y repuesta con
+    // medición. Era la frase que sostenía la regla, no un adorno encima.
+    'Volver a pedir el nombre y el número a quien acaba de dártelos es lo que hace que alguien note que habla con una máquina.',
+  ],
   toolsTitle: '# La agenda',
   // Ver el comentario en la versión portuguesa: cada herramienta lleva su
   // propia descripción en la plataforma, y lo que estaba aquí y allí estaba
@@ -670,6 +688,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   toolsCan: [
     'Tienes acceso a la agenda de verdad de la clínica. No la adivinas: la consultas.',
     '',
+    '**telma_verificar_servico** — te dice si la clínica hace lo que han pedido. La llamas **antes** de abrir la agenda, siempre.',
     '**telma_horas_livres** — la llamas **antes** de ofrecer ninguna hora, siempre, aunque creas saber la respuesta. Si la persona no ha pedido un día concreto, pides **siete días** de una vez y sacas las dos opciones de días distintos de `days_with_slots`.',
     '**telma_reservar_hora** — retienes la hora **en cuanto la persona la elige**, antes de pedirle los datos.',
     '**telma_registar_chamada** — una sola vez por llamada, con todas las citas de una vez.',
@@ -694,7 +713,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     '1. Preguntas para qué es la cita. Corta y abierta: "¿Para qué es la cita?". **No enumeras la lista de servicios.**',
     // Dar una "consulta de valoración" a quien ha pedido otra cosa es hacerle
     // cruzar la ciudad para que le digan que allí no es.
-    '2. **Miras si la clínica hace eso.** Solo existe lo que está en "Lo que hace la clínica". Si no está en esa lista, dices que aquí no se hace, dices lo que sí hay de parecido si lo hay, y preguntas si le interesa. Nunca mandas a nadie a otra clínica ni te inventas quién lo hace.',
+    '2. **Le preguntas a telma_verificar_servico si la clínica hace eso**, con las palabras de la persona tal cual. No lo decides tú: lo sabe ella. Si dice que no, dices que aquí no se hace, ofreces lo que venga en `alternativas`, y preguntas si le interesa. Nunca mandas a nadie a otra clínica ni te inventas quién lo hace. El nombre que devuelve en `servico` es el que dices y el que registras.',
     '3. Consultas la agenda. **Nunca antes de los pasos 1 y 2**, aunque la primera frase de la persona ya diga lo que quiere.',
     // Dos horas seguidas de la misma mañana no son dos opciones, son una. Y
     // "cuál le viene mejor" da por hecho que una de las dos sirve, lo que
@@ -725,19 +744,6 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     'El nombre lo repites una vez, tal como lo has entendido, y sigues. **No deletreas un nombre que has entendido bien.** Solo si te quedas con la duda pides que te lo deletreen, y ahí sí lo deletreas tú de vuelta para confirmar.',
     '"Lo antes posible", "cuanto antes" o "la primera que haya" **es** la respuesta a cuándo: ofreces directamente horas concretas, empezando por la más próxima. Nunca respondes a eso con el horario de la clínica.',
     'Tampoco recitas el horario de apertura salvo que te lo pregunten. El horario está para que sepas qué horas puedes ofrecer.',
-    '',
-    // Ver el comentario en la versión portuguesa: escrito como pasos porque la
-    // misma regla, en prosa, no impidió que pidiera el nombre y el teléfono
-    // otra vez a quien acababa de darlos.
-    'Si hay más de una cosa que tratar en la misma llamada — otra cita, una anulación y después una cita —, empiezas por otro sitio:',
-    '',
-    '1. **Antes que nada**, preguntas para quién es: "¿esta también es para usted?".',
-    '2. Si es para ella, ya tienes el nombre y el teléfono. **No vuelves a pedirlos ni para confirmar.** Sigues directo al motivo y a la agenda.',
-    '3. Si es para otra persona, pides solo su nombre. **El teléfono sigue siendo el mismo y no lo vuelves a pedir**: quien llama es el contacto, sea la cita para quien sea.',
-    '',
-    // Ver el comentario en la versión portuguesa: cortada y repuesta con
-    // medición. Era la frase que sostenía la regla, no un adorno encima.
-    'Volver a pedir el nombre y el número a quien acaba de dártelos es lo que hace que alguien note que habla con una máquina.',
   ],
   bookingCannot: [
     'Hoy **no puedes dar citas**. Puedes informar, resolver dudas y tomar nota de quien quiere que le llamen, pero no ofreces horas ni das citas por hechas.',
@@ -1089,6 +1095,22 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     t.safety(t.fallbackShort[v.fallback_policy]),
     '',
     emergency.join('\n'),
+    '',
+    // One call, more than one job -- and in the core, not in the booking.
+    //
+    // It lived inside the booking procedure, which was fine while the whole
+    // sheet went in every prompt and stopped being fine the day the procedures
+    // moved onto the agent. Measured on dupla-gestao, eight runs, the same
+    // model: the rule went from 6/8 to 2/8 the moment it was only present
+    // while the booking procedure was loaded. That scenario is a cancellation
+    // and then a booking, so the second job starts outside the procedure that
+    // holds the rule about not asking twice.
+    //
+    // Which is what the repo already knew and wrote down: a node you have to
+    // reach is a node you can fail to reach. A rule about what carries ACROSS
+    // two jobs cannot live inside one of them.
+    t.severalTasksTitle,
+    ...t.severalTasks,
   ]
 
   const bookingSection = [tools.join('\n'), '', booking.join('\n')]

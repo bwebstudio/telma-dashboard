@@ -397,7 +397,7 @@ test('the diary is named, so that it gets used', () => {
       const { text } = buildPrompt({ ...clinic, can_book: true }, lang)
       const r = RULES[lang]
       assert.ok(text.includes(r.toolsTitle), `${lang}/${name}: no diary section`)
-      for (const tool of ['telma_horas_livres', 'telma_reservar_hora', 'telma_registar_chamada']) {
+      for (const tool of ['telma_verificar_servico', 'telma_horas_livres', 'telma_reservar_hora', 'telma_registar_chamada']) {
         assert.ok(text.includes(tool), `${lang}/${name}: ${tool} never named`)
       }
       assert.ok(text.includes(r.toolsBeforeOffering), `${lang}/${name}: may offer before checking`)
@@ -842,8 +842,8 @@ test('the recording notice is said exactly once', () => {
 // already an hour on the table and taking it back is a different conversation.
 test('a service the clinic does not offer is not booked', () => {
   for (const [lang, rule, order] of [
-    ['pt', '**Vês se a clínica faz isso.**', ['1. Perguntas para que é', '2. **Vês se a clínica faz isso.**', '3. Consultas a agenda.']],
-    ['es', '**Miras si la clínica hace eso.**', ['1. Preguntas para qué es', '2. **Miras si la clínica hace eso.**', '3. Consultas la agenda.']],
+    ['pt', '**Perguntas à telma_verificar_servico se a clínica faz isso**', ['1. Perguntas para que é', '2. **Perguntas à telma_verificar_servico', '3. Consultas a agenda.']],
+    ['es', '**Le preguntas a telma_verificar_servico si la clínica hace eso**', ['1. Preguntas para qué es', '2. **Le preguntas a telma_verificar_servico', '3. Consultas la agenda.']],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(rule), `${lang}: nothing stops her booking what the clinic does not do`)

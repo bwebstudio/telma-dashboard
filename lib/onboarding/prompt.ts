@@ -395,6 +395,14 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   bookingCan: [
     'A ordem de uma marcação é esta, e não a saltas nem a trocas:',
     '',
+    // Este procedimento volta a ser lido a cada assunto novo da chamada, e lido
+    // do princípio faz o modelo correr os passos todos outra vez — incluindo
+    // pedir e confirmar um nome e um telefone que já tinha. Medido: a regra
+    // caiu de 6/8 para 2/8 no dia em que os procedimentos saíram do prompt, e
+    // pô-la no núcleo só a levou a 3/8. A instrução tem de estar aqui, antes da
+    // lista, porque é aqui que o modelo está a olhar quando decide.
+    '**Se já confirmaste um nome e um telefone nesta chamada, os passos 7 e 8 já estão feitos.** Não os repetes: usa os que já tens e salta direto do passo 6 para o 9. Só perguntas o nome se a consulta for para outra pessoa, e mesmo aí o telefone continua a ser o mesmo.',
+    '',
     '1. Perguntas para que é a consulta. Curta e aberta: "Para que é a consulta?". **Não enumeras a lista de serviços.**',
     // Marcar uma "consulta de avaliação" a quem pediu outra coisa é pô-la a
     // atravessar a cidade para ouvir que não é aqui.
@@ -709,6 +717,11 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   // seguidas.
   bookingCan: [
     'El orden de una cita es este, y no te lo saltas ni lo cambias:',
+    '',
+    // Ver el comentario en la versión portuguesa: este procedimiento se vuelve
+    // a leer en cada asunto nuevo, y leído desde el principio hace que el
+    // modelo repita los pasos enteros. Medido, 6/8 -> 2/8.
+    '**Si ya has confirmado un nombre y un teléfono en esta llamada, los pasos 7 y 8 ya están hechos.** No los repites: usas los que ya tienes y saltas directo del paso 6 al 9. Solo preguntas el nombre si la cita es para otra persona, y aun así el teléfono sigue siendo el mismo.',
     '',
     '1. Preguntas para qué es la cita. Corta y abierta: "¿Para qué es la cita?". **No enumeras la lista de servicios.**',
     // Dar una "consulta de valoración" a quien ha pedido otra cosa es hacerle

@@ -32,7 +32,20 @@
 // opening hour into the booking steps, that test fails and this script stops
 // being possible, which is the point of it.
 //
-// ── WHY TEN AND NOT FIVE ────────────────────────────────────────────────────
+// ── WHY BOOKING IS NOT ONE OF THEM ──────────────────────────────────────────
+// It was, for a day. Then a real call was timed: the caller stopped talking at
+// twelve seconds and Telma said her first word at twenty-one, and five of those
+// nine seconds were `start_procedure`. Loading a procedure is itself a tool
+// call, and a tool call is a round trip.
+//
+// Booking is the path of nearly every call. Putting it behind a trigger spends
+// a round trip on the ordinary call to save context on the rare one, and that
+// trade is a bad one: context costs milliseconds of prefill and is cached
+// between turns, a round trip costs seconds that the caller spends in silence
+// wondering whether the line dropped. What stays behind a trigger is what is
+// actually rare.
+//
+// ── WHY SIX AND NOT THREE ───────────────────────────────────────────────────
 // The base is written in the language the clinic greets in, and the agent is
 // shared by Portuguese and Spanish clinics. A procedure holds one text, so each
 // piece is pushed twice and the trigger names the language. Only one of each
@@ -121,14 +134,6 @@ const REFERENCE = {
 // what to load, not spoken to anybody, and the one thing they have to do
 // reliably is tell a Portuguese call from a Spanish one.
 const PIECES = [
-  {
-    node: 'booking',
-    slug: 'marcacoes',
-    trigger: {
-      pt: 'The caller wants to make an appointment, or asks what times are free, in a conversation held in Portuguese.',
-      es: 'The caller wants to make an appointment, or asks what times are free, in a conversation held in Spanish.',
-    },
-  },
   {
     node: 'cancelling',
     slug: 'cancelamentos',

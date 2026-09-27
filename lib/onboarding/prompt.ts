@@ -1240,7 +1240,25 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     text: sections.join('\n').replace(/\n{3,}/g, '\n\n'),
     variables: v,
     nodes: {
-      core: tidy([...core, '', ...professionalsSection, ...coreTail]),
+      // ── A MARCAÇÃO VIVE NO NÚCLEO, E ISSO É UMA CORRECÇÃO ─────────────
+      // Esteve num procedimento durante um dia, e o que se mediu numa chamada
+      // real foi isto: quem ligou calou-se aos doze segundos e a Telma disse a
+      // primeira palavra aos vinte e um. Cinco desses nove segundos foram o
+      // `start_procedure` — carregar um procedimento é também uma chamada a
+      // uma ferramenta, e uma chamada a uma ferramenta é uma volta ao modelo.
+      //
+      // Marcar é o caminho de quase todas as chamadas. Pô-lo atrás de um
+      // gatilho é pagar uma volta ao modelo na chamada normal para poupar
+      // contexto na chamada rara, e a troca é péssima: o contexto paga-se em
+      // milissegundos de prefill, que além disso ficam em cache entre turnos,
+      // e uma volta ao modelo paga-se em segundos que quem liga passa em
+      // silêncio sem saber se a linha caiu.
+      //
+      // A recomendação dos dois mil tokens da ElevenLabs existe para baixar a
+      // latência. Quando medida aqui, aplicá-la a este nó subia-a. O que fica
+      // atrás de um gatilho é o que é raro: cancelar, despedir-se, e a chamada
+      // que não vai a lado nenhum.
+      core: tidy([...core, '', ...professionalsSection, ...bookingSection, ...coreTail]),
       booking: tidy(bookingSection),
       cancelling: tidy(cancellingSection),
       closing: tidy(closingSection),

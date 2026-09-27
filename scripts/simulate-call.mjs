@@ -97,9 +97,9 @@ if (nodes) {
   console.log(`  forma:   como produção — núcleo no prompt, procedimentos no agente`)
   console.log(`  núcleo:  ${tok(n.core)} tokens`)
   console.log(
-    `  procs:   marcar ${tok(n.booking)}, cancelar ${tok(n.cancelling)}, despedir ${tok(n.closing)}, difícil ${tok(n.difficult)}`
+    `  procs:   cancelar ${tok(n.cancelling)}, despedir ${tok(n.closing)}, difícil ${tok(n.difficult)}`
   )
-  console.log(`  numa marcação: ${tok(n.core) + tok(n.booking)} contra ${tok(built.text)} com a folha inteira\n`)
+  console.log(`  numa marcação: ${tok(n.core)} sem voltas a mais, contra ${tok(built.text)} com a folha inteira\n`)
 } else {
   console.log(`  prompt:  ${built.text.length} caracteres, versão ${built.version}\n`)
 }
@@ -200,8 +200,12 @@ const agent = await api('POST', '/v1/convai/agents/create', {
 // agent and is not a module: what has to match between them is the text, and
 // the text comes from buildPrompt in both.
 if (PROCEDURES) {
+  // No booking: since the timing on conv_9301m3jj2s6w it lives in the core,
+  // because `start_procedure` costs a round trip and booking is the common
+  // path. Keep this list the same as the one in elevenlabs-procedures.mjs or
+  // the harness measures a shape nobody runs, which is the mistake 451bff4
+  // exists to stop repeating.
   const pieces = [
-    ['marcacoes', 'booking', 'The caller wants to make an appointment, or asks what times are free.'],
     ['cancelamentos', 'cancelling', 'The caller wants to cancel or move an appointment they already have.'],
     ['despedida', 'closing', 'What the caller rang about has been dealt with and the call is ready to end.'],
     ['dificil', 'difficult', 'The caller has gone quiet, has said they will leave it for another time, or is being abusive.'],

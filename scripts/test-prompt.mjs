@@ -958,19 +958,42 @@ test('the pieces contain the whole base and nothing new', () => {
   }
 })
 
-test('the core is a fraction of the sheet, and the pieces are small', () => {
+test('what is behind a trigger is what is rare', () => {
   const built = buildPrompt({ ...CASES['open-can-book'], can_book: true }, 'es')
-  const { core, booking, cancelling, closing } = built.nodes
-  // The point of the exercise: what is present in every sentence has to be
-  // much less than what used to be. If this ever stops being true the split
-  // has been undone by growth, which is exactly how it happened last time.
-  assert.ok(
-    core.length < built.text.length * 0.62,
-    `the core is ${core.length} of ${built.text.length}, which is not a reduction`
-  )
-  for (const [name, piece] of Object.entries({ booking, cancelling, closing })) {
-    assert.ok(piece.length > 200, `${name} came out empty, which means the split missed it`)
+  const { core, booking, cancelling, closing, difficult } = built.nodes
+
+  // The booking lives in the core, and that is a correction rather than a
+  // default. It was a procedure for a day, and a timed call showed the cost:
+  // nine seconds between the caller finishing and Telma speaking, five of them
+  // `start_procedure`. Loading a procedure is a tool call, a tool call is a
+  // round trip, and booking is the path of nearly every call.
+  //
+  // This fails if somebody moves it back out, which is the point: the reason
+  // is a measurement and measurements are easy to forget.
+  for (const line of booking.split('\n')) {
+    const needle = line.trim()
+    if (needle.length < 12) continue
+    assert.ok(core.includes(needle), `the booking left the core: ${needle.slice(0, 60)}`)
   }
+
+  // And the three that stayed behind a trigger are still real. A procedure
+  // that came out empty means the split missed it, and nothing would say so:
+  // the conversation would simply never be told what to do.
+  for (const [name, piece] of Object.entries({ cancelling, closing, difficult })) {
+    assert.ok(piece.length > 200, `${name} came out empty, which means the split missed it`)
+    for (const line of piece.split('\n')) {
+      const needle = line.trim()
+      if (needle.length < 12) continue
+      assert.ok(!core.includes(needle), `${name} is also in the core, so it is read twice: ${needle.slice(0, 50)}`)
+    }
+  }
+
+  // Something is still outside it. If this ever fails the graph has collapsed
+  // back into one sheet and the procedures are decoration.
+  assert.ok(
+    core.length < built.text.length * 0.92,
+    `the core is ${core.length} of ${built.text.length}, so nothing is behind a trigger any more`
+  )
 })
 
 // The architecture, guarded.

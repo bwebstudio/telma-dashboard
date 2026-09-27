@@ -1285,3 +1285,38 @@ test('the service a booking is filed under speaks the clinic language', async ()
   // Nothing the clinic does not offer is stored at all, in either language.
   assert.equal(canonicalReason({ services, language: 'pt' }, 'implantes'), null)
 })
+
+// The bridge is not one word said forty times.
+//
+// "Com certeza" opened almost every turn of a real call. The rule offered three
+// acknowledgements and never said to move between them, so she picked one and
+// kept it, which reads as a tic rather than as listening.
+test('the acknowledgement varies, and can be nothing', () => {
+  const WORDS = {
+    pt: 'Nunca a mesma duas vezes seguidas',
+    es: 'Nunca la misma dos veces seguidas',
+  }
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(text.includes(WORDS[lang]), `${lang}: nothing stops her repeating one bridge all call`)
+  }
+})
+
+// The number is confirmed once, with the name.
+//
+// Asking for it and confirming it, then confirming it again beside the name,
+// says nine digits twice inside fifteen seconds. Both rules were right on their
+// own and nobody had read them together.
+test('the number is not confirmed twice', () => {
+  const WORDS = {
+    pt: 'não o confirmas ali sozinho',
+    es: 'no lo confirmas ahí por separado',
+  }
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt(
+      { ...CASES['open-can-book'], can_book: true, caller_id: '+351910523903' },
+      lang
+    )
+    assert.ok(text.includes(WORDS[lang]), `${lang}: the number can be confirmed on its own and again`)
+  }
+})

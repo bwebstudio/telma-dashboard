@@ -40,6 +40,20 @@ const RUNS = Math.max(1, Number(process.argv.find((a) => a.startsWith('--runs=')
 // agents run, so an unflagged run still measures the product.
 const LLM = process.argv.find((a) => a.startsWith('--llm='))?.slice(6) || 'gpt-5.4-mini'
 
+// Whether to run the shape that is actually in production.
+//
+// Since 772c0df the live agent carries the booking, the cancellations, the
+// goodbye and the difficult calls as procedures, and /api/voice/init sends only
+// the core. Neither of the two shapes this file could already run is that one:
+// the default sends the whole sheet, and `nodes` builds a workflow graph, which
+// was measured in e5a4f7e and is not what shipped.
+//
+// So every number this harness has produced since then has been about a
+// configuration nobody is running. This flag makes the throwaway agent the same
+// shape as the real one: core in the prompt, the four procedures on the agent,
+// each behind the trigger that decides when it loads.
+const PROCEDURES = process.argv.includes('--procedures')
+
 // The platform stops a simulation at about thirty agent turns and returns what
 // it has, mid-sentence, mid-tool-call, with no flag saying so. Three of twelve
 // runs in one measurement had been cut like that and were scored anyway, and a
@@ -77,6 +91,15 @@ if (nodes) {
   console.log(`  núcleo:  ${n.core.length + n.closing.length} caracteres`)
   console.log(`  nós:     reservar ${n.booking.length}, cancelar ${n.cancelling.length}`)
   console.log(`  a mais:  ${n.core.length + n.closing.length + n.booking.length} numa marcação, contra ${built.text.length} sem nós\n`)
+} else if (PROCEDURES) {
+  const n = built.nodes
+  const tok = (t) => Math.round(t.length / 3.4)
+  console.log(`  forma:   como produção — núcleo no prompt, procedimentos no agente`)
+  console.log(`  núcleo:  ${tok(n.core)} tokens`)
+  console.log(
+    `  procs:   marcar ${tok(n.booking)}, cancelar ${tok(n.cancelling)}, despedir ${tok(n.closing)}, difícil ${tok(n.difficult)}`
+  )
+  console.log(`  numa marcação: ${tok(n.core) + tok(n.booking)} contra ${tok(built.text)} com a folha inteira\n`)
 } else {
   console.log(`  prompt:  ${built.text.length} caracteres, versão ${built.version}\n`)
 }
@@ -145,7 +168,11 @@ const agent = await api('POST', '/v1/convai/agents/create', {
       prompt: {
         // Only the core when running as a graph: the procedures arrive with
         // the node.
-        prompt: nodes ? `${built.nodes.core}\n\n${built.nodes.closing}` : built.text,
+        prompt: PROCEDURES
+          ? built.nodes.core
+          : nodes
+            ? `${built.nodes.core}\n\n${built.nodes.closing}`
+            : built.text,
         llm: LLM,
         max_tokens: 300,
         ...(tools ? { tool_ids: tools } : {}),
@@ -166,6 +193,47 @@ const agent = await api('POST', '/v1/convai/agents/create', {
   ...(guardrails ? { platform_settings: { guardrails } } : {}),
   ...(WORKFLOW ? { workflow: WORKFLOW } : {}),
 })
+
+// The same four pieces the live agent carries, with the same triggers, on a
+// branch of a throwaway agent. Written out here rather than imported from
+// scripts/elevenlabs-procedures.mjs because that script talks to the real
+// agent and is not a module: what has to match between them is the text, and
+// the text comes from buildPrompt in both.
+if (PROCEDURES) {
+  const pieces = [
+    ['marcacoes', 'booking', 'The caller wants to make an appointment, or asks what times are free.'],
+    ['cancelamentos', 'cancelling', 'The caller wants to cancel or move an appointment they already have.'],
+    ['despedida', 'closing', 'What the caller rang about has been dealt with and the call is ready to end.'],
+    ['dificil', 'difficult', 'The caller has gone quiet, has said they will leave it for another time, or is being abusive.'],
+  ]
+  const branch = (await api('GET', `/v1/convai/agents/${agent.agent_id}/branches`)).results.find(
+    (b) => !b.is_archived
+  )
+  for (const [slug, node, trigger] of pieces) {
+    const { procedure_id } = await api(
+      'POST',
+      `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures`,
+      {}
+    )
+    await api(
+      'PATCH',
+      `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures/${procedure_id}/draft`,
+      { name: `telma/${slug}`, type: 'free_form', trigger, content: built.nodes[node] }
+    )
+  }
+  // Out of draft. A procedure left in draft is written and never read, and the
+  // simulation would quietly measure an agent with no booking instructions.
+  await api('PATCH', `/v1/convai/agents/${agent.agent_id}?branch_id=${branch.id}`, {
+    name: agent.name,
+  })
+  const live = (
+    await api('GET', `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures`)
+  ).procedures.filter((x) => !x.has_draft)
+  if (live.length !== pieces.length) {
+    throw new Error(`só ${live.length} de ${pieces.length} procedimentos ficaram publicados`)
+  }
+  console.log(`  ${live.length} procedimentos publicados no agente de ensaio\n`)
+}
 
 try {
   const tally = new Map()

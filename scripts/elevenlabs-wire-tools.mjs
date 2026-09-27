@@ -558,10 +558,12 @@ const AGENT_SPEC = {
       // mano y `randomize_fillers` dan la variedad que se buscaba al
       // encenderlo, sin que haya un idioma que elegir.
       soft_timeout_config: {
-        // Quatro e meio, não três. A três apanhava gerações que não são uma
-        // espera: a frase que anuncia a marcação levava mais do que isso a
-        // sair, e ouvia-se uma muleta antes de uma boa notícia.
-        timeout_seconds: 4.5,
+        // Seis, não três. A três apanhava gerações que não são uma espera: a
+        // frase que anuncia a marcação levava mais do que isso a sair, e
+        // ouvia-se uma muleta antes de uma boa notícia. E agora que a Telma diz
+        // ela própria uma frase inteira antes de consultar a agenda, o silêncio
+        // que isto existe para encher já vem meio cheio.
+        timeout_seconds: 6,
         // "Já lhe digo..." saiu daqui. Promete uma resposta a uma pergunta,
         // e a plataforma di-lo sempre que uma geração demora — incluindo antes
         // de registar a chamada e antes de se despedir, onde não há pergunta

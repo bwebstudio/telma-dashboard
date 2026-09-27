@@ -1386,7 +1386,7 @@ test('what she says before a lookup is not what the platform says during it', ()
     pt: ['deixe ver', 'um momento', 'ora bem', 'pronto'],
     es: ['déjeme ver', 'un momento', 'a ver', 'listo'],
   }
-  const RULE = { pt: 'essas são as que a plataforma mete sozinha', es: 'ésas son las que mete la plataforma sola' }
+  const RULE = { pt: 'são as que a plataforma mete por si', es: 'son las que mete la plataforma sola' }
   for (const lang of ['pt', 'es']) {
     const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(nodes.booking.includes(RULE[lang]), `${lang}: nothing keeps the two vocabularies apart`)
@@ -1430,5 +1430,33 @@ test('the clock says what it is for, where it is', () => {
   for (const lang of ['pt', 'es']) {
     const { nodes } = buildPrompt({ ...CASES['open-can-book'], today: 'hoje' }, lang)
     assert.ok(nodes.core.includes(FOR[lang]), `${lang}: the clock is a fact with no label on it`)
+  }
+})
+
+// Heard side by side with a competitor: "un momento, que se la voy a reservar"
+// against "vou segurar essa hora enquanto confirmamos os seus dados". Both
+// narrate. What differs is where they start and whose words they use.
+test('the wait comes before the reason, and the reason is in the caller\'s words', () => {
+  const ORDER = { pt: '**A espera primeiro, o porquê depois**', es: '**La espera primero, el porqué después**' }
+  const WORDS = { pt: 'em palavras de quem liga, nunca nas nossas', es: 'en palabras de quien llama, nunca en las nuestras' }
+  const OURS = { pt: ['segura uma hora', 'consulta a agenda'], es: ['retiene una hora', 'consulta la agenda'] }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.booking.includes(ORDER[lang]), `${lang}: nothing puts the wait first`)
+    assert.ok(nodes.booking.includes(WORDS[lang]), `${lang}: nothing keeps our vocabulary out of her mouth`)
+    for (const w of OURS[lang]) {
+      assert.ok(nodes.booking.includes(w), `${lang}: "${w}" is not named as ours`)
+    }
+  }
+})
+
+// "Muito bem, senhor Domingos Xavier Pinto Coelho" -- nobody says that. The
+// competitor uses the surname alone, and it is the difference between being
+// addressed and being read out.
+test('she addresses people by one name, not by all of them', () => {
+  const RULE = { pt: 'só com o apelido', es: 'sólo con el apellido' }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.booking.includes(RULE[lang]), `${lang}: she may read the whole name back at somebody`)
   }
 })

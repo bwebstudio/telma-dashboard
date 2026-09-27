@@ -1375,3 +1375,23 @@ test('she hangs up after the goodbye, without cutting anybody off', () => {
     assert.ok(nodes.closing.includes(NOT_OVER[lang]), `${lang}: she may hang up over somebody speaking`)
   }
 })
+
+// "Deixe ver... Com certeza, deixe ver..." -- twice in one breath, on a real
+// call. The platform speaks its own filler while a tool runs, and the base was
+// telling her to say the same words herself just before it. The two vocabularies
+// have to stay apart, and the platform's list lives in elevenlabs-wire-tools.mjs
+// under soft_timeout_config.
+test('what she says before a lookup is not what the platform says during it', () => {
+  const PLATFORM = {
+    pt: ['deixe ver', 'um momento', 'ora bem', 'pronto'],
+    es: ['déjeme ver', 'un momento', 'a ver', 'listo'],
+  }
+  const RULE = { pt: 'essas são as que a plataforma mete sozinha', es: 'ésas son las que mete la plataforma sola' }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.booking.includes(RULE[lang]), `${lang}: nothing keeps the two vocabularies apart`)
+    for (const word of PLATFORM[lang]) {
+      assert.ok(nodes.booking.includes(word), `${lang}: "${word}" is not named as the platform's`)
+    }
+  }
+})

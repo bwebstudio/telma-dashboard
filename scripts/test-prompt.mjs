@@ -649,9 +649,11 @@ test('what goes in the panel is the service, never the words about health', () =
 // He asked to be called back about the price. Nobody was told, because nothing
 // wrote it down. Work that is not written down does not happen.
 test('what the caller asks the clinic to do is recorded', () => {
+  // Checks the instruction and not the sentence that used to follow it: the
+  // aphorism went when step 10 was cut back, and the rule did not.
   for (const [lang, rule] of [
-    ['pt', 'o que não fica escrito não acontece'],
-    ['es', 'lo que no queda escrito no ocurre'],
+    ['pt', 'Se pediu que lhe liguem'],
+    ['es', 'Si pidió que le llamen'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(rule), `${lang}: a request can be lost`)
@@ -1103,8 +1105,8 @@ test('a booking hands over to the closing instead of ending the call', () => {
   // what the booking must no longer do is hang up; filing there is now the
   // point, and it happens before she says the booking is made.
   const WORDS = {
-    pt: { goes: 'Como te despedes', notHere: 'não desligas aqui', files: 'Registas a chamada aqui' },
-    es: { goes: 'Cómo te despides', notHere: 'no cuelgas aquí', files: 'Registras la llamada aquí' },
+    pt: { goes: 'Como te despedes', notHere: 'ão desligas aqui', files: 'Registas a chamada aqui' },
+    es: { goes: 'Cómo te despides', notHere: 'o cuelgas aquí', files: 'Registras la llamada aquí' },
   }
   for (const lang of ['pt', 'es']) {
     const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)

@@ -403,10 +403,20 @@ const AGENT_SPEC = {
     // modelo que se saltaba los pasos, no saber colgar, quedarse escuchando
     // siete segundos después de que el otro terminara. La configuración hecha a
     // mano no se hereda; ésta sí.
+    //
+    // Y hasta hoy tampoco se aplicaba. Este bloque sólo se enviaba con
+    // --create, así que todo lo que hay escrito aquí abajo llegaba a un agente
+    // recién nacido y nunca al que contesta el teléfono: el que contesta tenía
+    // lo que le tocó al nacer, más lo que se tocó a mano en la consola. Ahora
+    // se envía en las dos rutas, y esto vuelve a ser lo que dice ser.
     tts: {
-      // Un agente que no sea inglés exige turbo o flash v2_5: es requisito de la
-      // plataforma, no una preferencia nuestra.
-      model_id: 'eleven_turbo_v2_5',
+      // El agente en vivo está aquí, no en turbo, y la comparación con HeyGen
+      // fue lo que lo decidió: v3 conversational con modo expresivo suena
+      // mejor. Turbo v2_5 era el requisito de la plataforma cuando se escribió
+      // esta línea, y ya no lo es.
+      model_id: 'eleven_v3_conversational',
+      // Lo que v3 añade y turbo no tenía. Sin esto la voz vuelve a ser plana.
+      expressive_mode: true,
       // A voz da língua base do agente. As outras vêm nos presets abaixo, porque
       // mudar de língua a meio e continuar com a mesma voz dá uma espanhola a
       // falar português, que se nota mais do que o sotaque que se queria evitar.
@@ -434,13 +444,23 @@ const AGENT_SPEC = {
       // Long enough to hunt for a calendar, short enough not to fund a dead
       // line. The base asks once whether they are still there before it gets
       // here; this is what happens when nobody is.
+      //
+      // El agente en vivo está en 75, que es donde nació. Esta línea gana:
+      // treinta segundos de línea muerta por llamada abandonada los paga la
+      // clínica, y el argumento de arriba no ha dejado de ser cierto.
       silence_end_call_timeout: 45.0,
       // `eager` cierra el turno en cuanto la frase suena terminada, en vez de
-      // esperar a que el silencio lo confirme. Es la única palanca que queda
-      // contra el ruido de sala: la plataforma no expone un umbral de VAD, solo
-      // el interruptor de voces de fondo, y en una habitación con un bebé eso no
-      // basta. El riesgo es cortar a quien hace una pausa a media frase.
-      turn_eagerness: 'eager',
+      // esperar a que el silencio lo confirme. Sería la única palanca contra el
+      // ruido de sala: la plataforma no expone un umbral de VAD, sólo el
+      // interruptor de voces de fondo, y en una habitación con un bebé eso no
+      // basta.
+      //
+      // Pero el riesgo es cortar a quien hace una pausa a media frase, y el
+      // agente en vivo lleva semanas en `normal` sin que nadie se queje de
+      // ruido. Esta línea decía `eager` y nunca llegó a aplicarse, así que
+      // nunca se midió. Se queda en lo que está probado; cambiarlo es un
+      // experimento con su propia medición, no un valor por defecto.
+      turn_eagerness: 'normal',
       // Apagado: genera antes de que el interlocutor termine y luego continúa, y
       // las dos generaciones se cosen con una costura audible.
       speculative_turn: false,
@@ -567,9 +587,18 @@ if (AGENT && !DRY) {
   // one somebody switched on in the console is not switched off by a run of
   // this.
   const builtIns = { ...(prompt.built_in_tools ?? {}), ...BUILT_IN_TOOLS }
+  const spec = AGENT_SPEC.conversation_config
   await api(`/convai/agents/${AGENT}`, 'PATCH', {
     conversation_config: {
       agent: { prompt: { ...prompt, tool_ids: merged, built_in_tools: builtIns } },
+      // La voz, los turnos y las muletillas, que hasta ahora sólo existían para
+      // un agente recién creado. El prompt de reserva no se toca aquí: vive en
+      // AGENT_SPEC.conversation_config.agent.prompt.prompt y lo pisaría el
+      // spread de arriba, que es el del agente y es el que vale.
+      tts: spec.tts,
+      turn: spec.turn,
+      vad: spec.vad,
+      language_presets: spec.language_presets,
     },
   })
   console.log(`\n  ligadas ao agente ${AGENT}: ${merged.length} ferramentas`)

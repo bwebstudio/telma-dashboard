@@ -4,9 +4,9 @@
 // them.
 //
 //   node scripts/elevenlabs-procedures.mjs                    say what it would do
-//   node scripts/elevenlabs-procedures.mjs --push             write to a side branch
-//   node scripts/elevenlabs-procedures.mjs --push --branch Main   write to the live one
-//   node scripts/elevenlabs-procedures.mjs --prune            remove ours and stop
+//   node scripts/elevenlabs-procedures.mjs --push             write and publish on Main
+//   node scripts/elevenlabs-procedures.mjs --push --branch ensaio   prepare on a branch
+//   node scripts/elevenlabs-procedures.mjs --push --prune      remove ours and stop
 //
 // ── WHY PROCEDURES AND NOT A BIGGER PROMPT ──────────────────────────────────
 // ElevenLabs asks for a system prompt under two thousand tokens. Ours was at
@@ -38,10 +38,22 @@
 // piece is pushed twice and the trigger names the language. Only one of each
 // pair can ever match, so what loads is the same size either way.
 //
-// ── WHY IT DOES NOT WRITE TO MAIN BY DEFAULT ────────────────────────────────
-// Main is answering the telephone. A branch is the platform's own way of
-// preparing a change without serving it, so this makes one, pushes there, and
-// leaves the live agent alone until somebody asks for --branch Main.
+// ── WHERE IT WRITES ─────────────────────────────────────────────────────────
+// Main, which is the branch answering the telephone, because the procedures
+// have to be there before /api/voice/init stops sending them in the prompt and
+// there is no use in a copy nobody hears. `--branch <name>` prepares them
+// somewhere that serves no traffic instead, which is what to do when the text
+// has changed enough to want a rehearsal first.
+//
+// ── HOW A PROCEDURE STOPS BEING A DRAFT ─────────────────────────────────────
+// Not documented, and not obvious. Every write to a procedure lands in a draft:
+// creating one with its whole body still comes back with version_id null and
+// has_draft true, and POST .../procedures/compile only returns a preview of the
+// workflow they would build. What commits them is a PATCH on the AGENT scoped
+// to the branch -- PATCH /v1/convai/agents/{id}?branch_id={branch} -- which
+// cuts a new agent version and takes every pending draft on that branch with
+// it. Found by trying it on a branch serving no traffic and watching the
+// version ids appear.
 
 import { readFileSync } from 'node:fs'
 import { buildPrompt } from '../lib/onboarding/prompt.ts'
@@ -53,7 +65,7 @@ const flag = (n) => {
 }
 const PUSH = args.includes('--push')
 const PRUNE = args.includes('--prune')
-const BRANCH_NAME = flag('branch') ?? 'procedures'
+const BRANCH_NAME = flag('branch') ?? 'Main'
 
 function env(name) {
   if (process.env[name]) return process.env[name].trim()
@@ -225,4 +237,14 @@ for (const p of wanted) {
   console.log(`  ${found ? '~' : '+'} ${p.name.padEnd(28)} ${String(tok(p.content)).padStart(5)} tok`)
 }
 
-console.log(`\n  Na branch "${branch.name ?? BRANCH_NAME}". Ficam em rascunho até serem publicadas na consola.\n`)
+// And out of draft. Without this they are written and inert: a branch can
+// carry a procedure nobody will ever hear, which is the worst of the three
+// possible states because it looks done.
+const { name: agentName } = await call('GET', `/agents/${AGENT}`)
+await call('PATCH', `/agents/${AGENT}?branch_id=${branch.id}`, { name: agentName })
+
+const committed = (await call('GET', `/agents/${AGENT}/branches/${branch.id}/procedures`)).procedures
+const pending = committed.filter((p) => p.name.startsWith(PREFIX) && p.has_draft)
+if (pending.length) fail(`Ficaram ${pending.length} por publicar: ${pending.map((p) => p.name).join(', ')}`)
+
+console.log(`\n  Publicados na branch "${branch.name ?? BRANCH_NAME}": ${committed.filter((p) => p.name.startsWith(PREFIX)).length}\n`)

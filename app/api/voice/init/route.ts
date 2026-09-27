@@ -195,11 +195,19 @@ export async function POST(request: Request) {
   // all for -- ElevenLabs asks for a system prompt under two thousand tokens --
   // does not happen.
   //
-  // Off unless somebody sets it, and deliberately not inferred: this endpoint
-  // cannot see which branch a call arrived on, so guessing would mean a call
-  // routed to a branch without the procedures losing them entirely. Turn it on
-  // in the same change that publishes them.
-  const procedures = process.env.TELMA_PROCEDURES_ON_AGENT === '1'
+  // On by default, now that they are on the agent's Main branch.
+  //
+  // It is a default and not an environment variable somebody has to remember,
+  // because the order of the two changes decides which way a mistake hurts.
+  // Procedures live and this still sending the whole sheet means every call
+  // carries them twice: worse, and working. This flipped while the procedures
+  // were not there yet would mean Telma with no booking, no cancellation and
+  // no goodbye: not working at all. So the procedures went first and this
+  // follows, and the escape hatch goes the safe way round.
+  //
+  // TELMA_PROCEDURES_IN_PROMPT=1 puts the whole sheet back, for an agent or a
+  // branch that does not have them.
+  const procedures = process.env.TELMA_PROCEDURES_IN_PROMPT !== '1'
 
   return NextResponse.json({
     type: 'conversation_initiation_client_data',

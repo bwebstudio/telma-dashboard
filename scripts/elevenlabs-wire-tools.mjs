@@ -65,6 +65,8 @@ function fail(msg) {
   process.exit(1)
 }
 
+// `let`-like on purpose: the block further down may replace the token with
+// the one the live tools already carry. See the comment there.
 const auth = { Authorization: `Bearer ${TOKEN}` }
 
 // The tools ------------------------------------------------------------------
@@ -527,6 +529,32 @@ else console.log('')
 
 const existing = await api('/convai/tools').catch((e) => fail(`Não consegui listar as ferramentas: ${e.message}`))
 const byName = new Map((existing.tools ?? []).map((t) => [t.tool_config?.name ?? t.name, t]))
+
+// ── O token que já lá está ganha ao token que temos à mão ───────────────────
+// Este script reescreve a ferramenta inteira, cabeçalho de autorização
+// incluído. O token não é um só: a demonstração corre no Vercel com o seu, o
+// .env.local de quem desenvolve tem outro, e uma correria deste script a partir
+// de uma máquina qualquer trocava o da demonstração pelo de casa. Nada falhava
+// aqui: falhava depois, em cada chamada, com 401 em todas as ferramentas e a
+// Telma a dizer que não conseguia consultar a agenda.
+//
+// Por isso, quando as ferramentas já existem e trazem um token diferente do
+// nosso, é o delas que vale. Trocá-lo é uma decisão explícita e pede --token.
+{
+  const live = [...byName.entries()]
+    .filter(([name]) => name.startsWith('telma_') && name.endsWith(SUFFIX))
+    .map(([, t]) => (t.tool_config?.api_schema?.request_headers ?? {}).Authorization)
+    .find((v) => typeof v === 'string' && v.startsWith('Bearer '))
+  const liveToken = live?.slice('Bearer '.length).trim()
+  if (liveToken && liveToken !== TOKEN) {
+    if (flag('token')) {
+      console.log('  aviso: o token dado difere do que as ferramentas têm. Vai ser trocado.\n')
+    } else {
+      console.log('  token: mantido o que as ferramentas já tinham (use --token para trocar)\n')
+      auth.Authorization = `Bearer ${liveToken}`
+    }
+  }
+}
 
 const ids = []
 for (const tool of TOOLS) {

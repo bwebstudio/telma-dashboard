@@ -500,7 +500,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     '4. Se disser que não, vês o que ficou por dizer. Se houve **mais do que uma coisa**, dizes como fica **tudo o que se tratou nesta chamada** — as que ficaram, as que se desmarcaram e as que se mudaram, cada uma com o dia e a hora —, e não só a última. **Se houve só uma e já a disseste ao fechá-la, não a repetes**: dizer duas vezes seguidas a mesma marcação soa a gravação.',
     // Desejar um bom dia às dez da noite diz a quem ouve que não sabes que
     // horas são.
-    '5. Despedes-te: agradeces, dizes o nome da clínica e desejas o que a hora pedir. **Olhas para a hora que vem com a data, em "A clínica"**: bom dia de manhã, boa tarde à tarde, boa noite à noite. Se não te deram hora, não desejas nada preso ao momento do dia. E dizes **obrigada**, no feminino.',
+    '5. Despedes-te: agradeces, dizes o nome da clínica e desejas o que a hora pedir. **"A clínica" diz-te se é de manhã, de tarde ou de noite**: não o calculas a partir da hora, está lá escrito. Bom dia de manhã, boa tarde à tarde, boa noite à noite. Se não to disseram, não desejas nada preso ao momento do dia. E dizes **obrigada**, no feminino.',
     // Uma marcação já ficou registada no passo 9 do procedimento de marcação, e
     // registá-la outra vez duplica a chamada e os minutos. Uma pessoa que ligou
     // a perguntar um preço, ou a insultar-te, também é uma chamada que a
@@ -566,7 +566,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   factsTitle: '# A clínica',
   // A regra de não oferecer horas passadas está na agenda e a despedida pela
   // hora está no passo 5 da despedida. Aqui fica o facto, que é o que isto é.
-  todayIs: (d) => `Hoje é ${d}, hora da clínica, e é a esta hora que estás a atender.`,
+  todayIs: (d) => `Hoje é ${d} Hora da clínica, e é a esta hora que estás a atender: a despedida acompanha-a.`,
   address: 'Morada',
   hours: (tz) => `Horário (hora local, ${tz}):`,
   hoursNote:
@@ -830,7 +830,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     '4. Si dice que no, miras qué ha quedado sin decir. Si hubo **más de una cosa**, dices cómo queda **todo lo que se ha tratado en esta llamada** — las que han quedado, las que se han anulado y las que se han cambiado, cada una con su día y su hora —, y no solo la última. **Si hubo una sola y ya la dijiste al cerrarla, no la repites**: decir dos veces seguidas la misma cita suena a grabación.',
     // Desear buenos días a las diez de la noche le dice a quien lo oye que no
     // sabes qué hora es.
-    '5. Te despides: das las gracias, dices el nombre de la clínica y deseas lo que pida la hora. **Miras la hora que viene con la fecha, en "La clínica"**: buenos días por la mañana, buenas tardes por la tarde, buenas noches por la noche. Si no te han dado hora, no deseas nada atado al momento del día. Y hablas de ti **en femenino**.',
+    '5. Te despides: das las gracias, dices el nombre de la clínica y deseas lo que pida la hora. **"La clínica" te dice si es por la mañana, por la tarde o de noche**: no lo calculas a partir de la hora, está escrito. Buenos días por la mañana, buenas tardes por la tarde, buenas noches por la noche. Si no te lo han dicho, no deseas nada atado al momento del día. Y hablas de ti **en femenino**.',
     // Una cita ya quedó registrada en el paso 9 del procedimiento de citas, y
     // registrarla otra vez duplica la llamada y los minutos. Una persona que
     // llamó a preguntar un precio, o a insultarte, también es una llamada que
@@ -887,7 +887,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   },
   factsTitle: '# La clínica',
   // Ver el comentario en la versión portuguesa.
-  todayIs: (d) => `Hoy es ${d}, hora de la clínica, y es a esta hora que estás atendiendo.`,
+  todayIs: (d) => `Hoy es ${d} Hora de la clínica, y es a esta hora que estás atendiendo: la despedida la acompaña.`,
   address: 'Dirección',
   hours: (tz) => `Horario (hora local, ${tz}):`,
   hoursNote:
@@ -1282,7 +1282,7 @@ export function todayInZone(timezone: string, language: BaseLanguage): string {
   // matches the time of day. She did not, and at 22:18 she wished a caller a
   // good morning. This is read at the start of each call, so it is the time she
   // picked up, which is close enough for both.
-  return new Intl.DateTimeFormat(language === 'es' ? 'es-ES' : 'pt-PT', {
+  const parts = new Intl.DateTimeFormat(language === 'es' ? 'es-ES' : 'pt-PT', {
     timeZone: timezone,
     weekday: 'long',
     day: 'numeric',
@@ -1290,5 +1290,22 @@ export function todayInZone(timezone: string, language: BaseLanguage): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date())
+  }).formatToParts(new Date())
+
+  const said = parts.map((p) => p.value).join('')
+
+  // And which part of the day that is, worked out here rather than by the model.
+  //
+  // It had the clock and still wished somebody a good morning at twenty past
+  // six in the evening. Reading "18:24" and concluding "evening" is two steps,
+  // parse the hour and place it in a range, at the end of a call and in the one
+  // sentence nothing else depends on. Here it is one line of arithmetic and it
+  // cannot come out wrong.
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? '0')
+  const period = hour < 12 ? 'morning' : hour < 20 ? 'afternoon' : 'night'
+  const WORD = {
+    pt: { morning: '\u00c9 de manh\u00e3.', afternoon: '\u00c9 de tarde.', night: '\u00c9 de noite.' },
+    es: { morning: 'Es por la ma\u00f1ana.', afternoon: 'Es por la tarde.', night: 'Es de noche.' },
+  }
+  return `${said}. ${WORD[language === 'es' ? 'es' : 'pt'][period]}`
 }

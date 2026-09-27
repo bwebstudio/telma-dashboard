@@ -424,8 +424,8 @@ test('a clinic that cannot book still logs its calls', () => {
 // two hours of every morning.
 test('today is stated, in the clinic timezone, in both languages', () => {
   for (const [lang, expected] of [
-    ['pt', 'Hoje é sábado, 8 de agosto de 2026, hora da clínica,'],
-    ['es', 'Hoy es sábado, 8 de agosto de 2026, hora de la clínica,'],
+    ['pt', 'Hoje é sábado, 8 de agosto de 2026 Hora da clínica,'],
+    ['es', 'Hoy es sábado, 8 de agosto de 2026 Hora de la clínica,'],
   ]) {
     const { text } = buildPrompt(
       { ...CASES['open-can-book'], today: 'sábado, 8 de agosto de 2026' },
@@ -1393,5 +1393,42 @@ test('what she says before a lookup is not what the platform says during it', ()
     for (const word of PLATFORM[lang]) {
       assert.ok(nodes.booking.includes(word), `${lang}: "${word}" is not named as the platform's`)
     }
+  }
+})
+
+// "Desejo-lhe uma boa manhã", at twenty past six in the evening, with the clock
+// sitting in the prompt. Reading 18:24 and concluding "evening" is two steps at
+// the end of a call, and it got them wrong. The part of the day is worked out
+// in code now, so there is nothing left to get wrong.
+test('the part of the day is stated, not left to be worked out', () => {
+  const REAL = new Date()
+  const SAYS = {
+    pt: { morning: 'É de manhã.', afternoon: 'É de tarde.', night: 'É de noite.' },
+    es: { morning: 'Es por la mañana.', afternoon: 'Es por la tarde.', night: 'Es de noche.' },
+  }
+  for (const lang of ['pt', 'es']) {
+    const said = todayInZone('Europe/Lisbon', lang)
+    const hour = Number(
+      new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', hour: '2-digit', hour12: false })
+        .format(REAL)
+    )
+    const want = hour < 12 ? 'morning' : hour < 20 ? 'afternoon' : 'night'
+    assert.ok(said.endsWith(SAYS[lang][want]), `${lang}: ${said} does not end in ${SAYS[lang][want]}`)
+
+    // And it reaches the core, where the goodbye can see it without being sent
+    // to another section to look.
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], today: said }, lang)
+    assert.ok(nodes.core.includes(SAYS[lang][want]), `${lang}: the part of the day never reaches the core`)
+  }
+})
+
+// The label on the fact. It was cut as a repeat of what the goodbye says, and
+// the goodbye is a procedure now, so "look at the hour in A clínica" became a
+// pointer between two pieces of text that are no longer beside each other.
+test('the clock says what it is for, where it is', () => {
+  const FOR = { pt: 'a despedida acompanha-a', es: 'la despedida la acompaña' }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], today: 'hoje' }, lang)
+    assert.ok(nodes.core.includes(FOR[lang]), `${lang}: the clock is a fact with no label on it`)
   }
 })

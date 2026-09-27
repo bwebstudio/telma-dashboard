@@ -180,7 +180,7 @@ const RULES = {
     soonest: 'mais cedo possível',
     soonestNoHours: 'Nunca respondes a isso com o horário da clínica',
     spellName: 'soletras tu de volta',
-    readBackNumber: 'algarismo a algarismo',
+    readBackNumber: '"seis, um, três, zero, sete, um"',
     noTags: 'Não escreves etiquetas de nenhum tipo',
     twoRealOptions: 'horas **diferentes uma da outra**',
     numberOnce: 'uma só vez em toda a chamada',
@@ -224,7 +224,7 @@ const RULES = {
     soonest: 'antes posible',
     soonestNoHours: 'Nunca respondes a eso con el horario de la clínica',
     spellName: 'lo deletreas tú de vuelta',
-    readBackNumber: 'cifra a cifra',
+    readBackNumber: '"seis, uno, tres, cero, siete, uno"',
     noTags: 'No escribes etiquetas de ningún tipo',
     twoRealOptions: 'horas **distintas entre sí**',
     toolsTitle: '# La agenda',
@@ -1437,9 +1437,9 @@ test('the clock says what it is for, where it is', () => {
 // against "vou segurar essa hora enquanto confirmamos os seus dados". Both
 // narrate. What differs is where they start and whose words they use.
 test('the wait comes before the reason, and the reason is in the caller\'s words', () => {
-  const ORDER = { pt: '**A espera primeiro, o porquê depois**', es: '**La espera primero, el porqué después**' }
-  const WORDS = { pt: 'em palavras de quem liga, nunca nas nossas', es: 'en palabras de quien llama, nunca en las nuestras' }
-  const OURS = { pt: ['segura uma hora', 'consulta a agenda'], es: ['retiene una hora', 'consulta la agenda'] }
+  const ORDER = { pt: '**a espera primeiro e o porquê depois**', es: '**la espera primero y el porqué después**' }
+  const WORDS = { pt: 'em palavras de quem liga', es: 'en palabras de quien llama' }
+  const OURS = { pt: ['"segura uma hora"', '"consulta a agenda"'], es: ['"retiene una hora"', '"consulta la agenda"'] }
   for (const lang of ['pt', 'es']) {
     const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(nodes.booking.includes(ORDER[lang]), `${lang}: nothing puts the wait first`)
@@ -1458,5 +1458,33 @@ test('she addresses people by one name, not by all of them', () => {
   for (const lang of ['pt', 'es']) {
     const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(nodes.booking.includes(RULE[lang]), `${lang}: she may read the whole name back at somebody`)
+  }
+})
+
+// She read the instruction out: "pode dizê-lo novamente, algarismo a algarismo".
+// The base said how to read digits AND, separately, never to say that phrase
+// aloud -- and she said it anyway. A phrase that is written down can be read
+// out, so the only fix is for it not to be written. The example teaches the
+// manner without naming it.
+test('the words that are for her are not in her mouth', () => {
+  const OURS = ['algarismo a algarismo', 'cifra a cifra']
+  for (const lang of ['pt', 'es']) {
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    for (const phrase of OURS) {
+      assert.ok(!text.includes(phrase), `${lang}: "${phrase}" is written down, so it can be read out`)
+    }
+    assert.ok(text.includes(RULES[lang].readBackNumber), `${lang}: nothing shows how to say the digits`)
+  }
+})
+
+// Asked in one breath, they come back in one breath and jumbled: a real caller
+// answered both at once and the first digit went in as a six instead of a nine.
+test('the number and the name are asked for one at a time', () => {
+  const ONE = { pt: '**E pedes uma de cada vez**', es: '**Y las pides de una en una**' }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.booking.includes(ONE[lang]), `${lang}: both may be asked in the same question`)
+    // And they are still confirmed together, which is the measured half.
+    assert.ok(nodes.booking.includes(RULES[lang].nameAndNumberTogether), `${lang}: lost the joint confirmation`)
   }
 })

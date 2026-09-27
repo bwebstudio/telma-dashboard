@@ -154,7 +154,11 @@ const TOOLS = [
   },
   {
     name: 'telma_reservar_hora',
-    force_pre_tool_speech: true,
+    // A false, ao contrário da consulta de horas. Segurar uma hora é instantâneo
+    // e invisível, não há espera nenhuma que encher, e obrigá-la a falar antes
+    // foi o que produziu "vou segurar essa hora enquanto confirmamos os seus
+    // dados" — que descreve um mecanismo que quem liga não sabe que existe.
+    force_pre_tool_speech: false,
     description:
       'Segura uma hora concreta durante três minutos, enquanto confirmas o nome e o telefone. Usa isto depois de a pessoa escolher uma hora e antes de lhe pedir os dados, para que outra chamada em simultâneo não fique com a mesma hora.',
     api_schema: {

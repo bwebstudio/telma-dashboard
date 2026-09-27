@@ -101,7 +101,7 @@ const COLLECT = {
   ficou_por_fazer: {
     type: 'boolean',
     description:
-      'Verdadeiro se a chamada acabou com alguma coisa a meio: uma marcação combinada mas não confirmada, um recado pedido, ou um pedido de que a clínica ligue de volta. Falso se a chamada se resolveu inteira.',
+      'Verdadeiro SÓ se a clínica tem de fazer alguma coisa a seguir a esta chamada: ligar de volta, responder a um recado, ou resolver uma coisa que ficou por resolver. Uma marcação normal é FALSO, mesmo ficando sujeita a confirmação pela clínica — isso é como todas as marcações ficam e não é trabalho pendente.',
   },
 }
 

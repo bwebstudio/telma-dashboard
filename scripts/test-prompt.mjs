@@ -1322,3 +1322,33 @@ test('the number is not confirmed twice', () => {
     assert.ok(text.includes(WORDS[lang]), `${lang}: the number can be confirmed on its own and again`)
   }
 })
+
+// Reported from a real call: she read the number out, read the name out, and
+// then asked "is the name right?". The caller said yes, and the nine digits
+// nobody had asked about went into the booking on the strength of it.
+//
+// The question stays at the end, attached to the name -- that was measured and
+// it is what stops a name going in unheard. What changes is what it asks.
+test('the question at the end covers the number too', () => {
+  const COVERS = { pt: 'a cobrir as duas coisas', es: 'cubriendo las dos cosas' }
+  const NEVER = { pt: 'Nunca "o nome está correcto?"', es: 'Nunca "¿el nombre está bien?"' }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.booking.includes(COVERS[lang]), `${lang}: the question may cover only the name`)
+    assert.ok(nodes.booking.includes(NEVER[lang]), `${lang}: the name-only question is not ruled out`)
+  }
+})
+
+// And from the same call: she closed the booking with the day, the hour, the
+// service and the name, the caller said "no, that is all", and she said the
+// whole thing again. Step 4 exists for a call with two jobs in it; with one it
+// is the same sentence twice in ten seconds.
+test('a single booking is not read out twice', () => {
+  const ONCE = { pt: 'já a disseste ao fechá-la, não a repetes', es: 'ya la dijiste al cerrarla, no la repites' }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.closing.includes(ONCE[lang]), `${lang}: the goodbye may repeat what was just said`)
+    // The recap for a call that did have two jobs has to survive.
+    assert.ok(nodes.closing.includes(RULES[lang].closingSaysAll), `${lang}: two jobs lost their recap`)
+  }
+})

@@ -543,9 +543,17 @@ const AGENT_SPEC = {
       // mano y `randomize_fillers` dan la variedad que se buscaba al
       // encenderlo, sin que haya un idioma que elegir.
       soft_timeout_config: {
-        timeout_seconds: 3,
+        // Quatro e meio, não três. A três apanhava gerações que não são uma
+        // espera: a frase que anuncia a marcação levava mais do que isso a
+        // sair, e ouvia-se uma muleta antes de uma boa notícia.
+        timeout_seconds: 4.5,
+        // "Já lhe digo..." saiu daqui. Promete uma resposta a uma pergunta,
+        // e a plataforma di-lo sempre que uma geração demora — incluindo antes
+        // de registar a chamada e antes de se despedir, onde não há pergunta
+        // nenhuma pendente. Numa chamada real saiu três vezes, duas delas sem
+        // sentido. As que ficam são hesitações e não promessas.
         message: 'Deixe ver...',
-        additional_soft_timeout_messages: ['Um momento...', 'Ora bem...', 'Já lhe digo...'],
+        additional_soft_timeout_messages: ['Um momento...', 'Ora bem...', 'Pronto...'],
         use_llm_generated_message: false,
         randomize_fillers: true,
         max_soft_timeouts_per_generation: 4,

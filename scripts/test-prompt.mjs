@@ -159,13 +159,13 @@ const RULES = {
     toneInWords: 'O tom faz-se com as palavras',
     closing: '# Como te despedes',
     closingAsks: '1. Perguntas se há mais alguma coisa em que possas ajudar.',
-    closingWaits: '**Esperas que a pessoa responda à despedida**',
+    closingWaits: '**Acabas a frase da despedida e desligas**',
     closingSaysAll: '**tudo o que se tratou nesta chamada**',
     refusalVaries: '**Nunca recusas duas vezes com a mesma frase**',
     urgencyIsDescribed: 'Urgência é o que a pessoa **descreve**, não a palavra que usa.',
     undoIsANewBooking: 'isso **é uma marcação nova**',
     everyTaskKeepsDetails: '**Antes de pedires qualquer uma delas, passas em revista o que já te disseram nesta chamada**',
-    closingNoHangup: 'nem enquanto a outra pessoa ainda fala',
+    closingNoHangup: 'nunca desligas enquanto a outra pessoa ainda fala',
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
     neverRecitesAll: '**Nunca recitas uma lista.**',
@@ -203,13 +203,13 @@ const RULES = {
     toneInWords: 'El tono se hace con las palabras',
     closing: '# Cómo te despides',
     closingAsks: '1. Preguntas si hay algo más en lo que puedas ayudar.',
-    closingWaits: '**Esperas a que la persona responda a la despedida**',
+    closingWaits: '**Terminas la frase de la despedida y cuelgas**',
     closingSaysAll: '**todo lo que se ha tratado en esta llamada**',
     refusalVaries: '**Nunca te niegas dos veces con la misma frase**',
     urgencyIsDescribed: 'Urgencia es lo que la persona **describe**, no la palabra que usa.',
     undoIsANewBooking: 'eso **es una cita nueva**',
     everyTaskKeepsDetails: '**Antes de pedir cualquiera de ellas, repasas lo que ya te han dicho en esta llamada**',
-    closingNoHangup: 'ni mientras la otra persona sigue hablando',
+    closingNoHangup: 'nunca cuelgas mientras la otra persona sigue hablando',
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
     neverRecitesAll: '**Nunca recitas una lista.**',
@@ -291,7 +291,7 @@ test('the call is closed properly, in both languages', () => {
       // feature of booking, it is how a call ends.
       assert.ok(text.includes(RULES[lang].closing), `${lang}/${name}: no closing block`)
       assert.ok(text.includes(RULES[lang].closingAsks), `${lang}/${name}: does not ask "anything else"`)
-      assert.ok(text.includes(RULES[lang].closingWaits), `${lang}/${name}: does not wait for a reply`)
+      assert.ok(text.includes(RULES[lang].closingWaits), `${lang}/${name}: leaves the line open after the goodbye`)
       assert.ok(
         text.includes(RULES[lang].closingNoHangup),
         `${lang}/${name}: may hang up over the caller`
@@ -1350,5 +1350,28 @@ test('a single booking is not read out twice', () => {
     assert.ok(nodes.closing.includes(ONCE[lang]), `${lang}: the goodbye may repeat what was just said`)
     // The recap for a call that did have two jobs has to survive.
     assert.ok(nodes.closing.includes(RULES[lang].closingSaysAll), `${lang}: two jobs lost their recap`)
+  }
+})
+
+// A caller who has said "no, nothing else" has nothing left to answer, and the
+// line stayed open while she asked whether they were still there. Forty-five
+// seconds of it are billed to the clinic before silence_end_call_timeout cuts
+// in, which is a backstop and not a plan.
+//
+// Both halves are guarded, because the reason the wait was there in the first
+// place is real: hanging up over somebody is the last thing they remember.
+test('she hangs up after the goodbye, without cutting anybody off', () => {
+  const HANGS = {
+    pt: '**Acabas a frase da despedida e desligas**',
+    es: '**Terminas la frase de la despedida y cuelgas**',
+  }
+  const NOT_OVER = {
+    pt: '**nunca desligas enquanto a outra pessoa ainda fala**',
+    es: '**nunca cuelgas mientras la otra persona sigue hablando**',
+  }
+  for (const lang of ['pt', 'es']) {
+    const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
+    assert.ok(nodes.closing.includes(HANGS[lang]), `${lang}: the line can stay open after the goodbye`)
+    assert.ok(nodes.closing.includes(NOT_OVER[lang]), `${lang}: she may hang up over somebody speaking`)
   }
 })

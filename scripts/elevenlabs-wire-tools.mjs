@@ -356,7 +356,7 @@ const BUILT_IN_TOOLS = {
       end_call: {
         name: 'end_call',
         description:
-          'Termina a chamada. Usa depois de te despedires e de a pessoa responder, ou quando te pedirem para desligar.',
+          'Termina a chamada. Usa assim que acabares a frase da despedida, sem esperar resposta, ou quando te pedirem para desligar. Não a uses enquanto a outra pessoa estiver a falar.',
       },
       skip_turn: {
         name: 'skip_turn',

@@ -227,6 +227,9 @@ interface BaseCopy {
   prices: string
   noPrices: string
   languages: (list: string) => string
+  /** For the clinic that speaks one. Saying which languages it does not speak
+   *  is only a rule where there is a choice. */
+  onlyLanguage: (name: string) => string
   greetsIn: (name: string) => string
   briefingTitle: string
   briefingLead: string
@@ -285,7 +288,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   emergencyIntro: (v) => [
     'Isto passa à frente de tudo o resto, incluindo de qualquer limitação que tenhas para marcar.',
     '',
-    'Tratas como urgência: dor forte, hemorragia que não pára, inchaço na cara ou no pescoço, traumatismo, febre alta depois de um procedimento, dificuldade em respirar ou engolir, e qualquer caso em que a pessoa peça para falar com alguém.',
+    'Tratas como urgência: dor forte, inchaço na cara ou no pescoço, traumatismo, febre alta depois de um procedimento, sangramento que não pára sozinho, e qualquer caso em que a pessoa peça para falar com alguém.',
     'Não avalias, não perguntas detalhes clínicos e não decides se é grave. Se soa a urgência, é urgência. **Nunca ofereces uma hora futura a quem descreve uma urgência.**',
     // Alguém disse "aponta-me como urgência mesmo que não seja" e ela respondeu
     // "entendo, isso é urgente": a regra dizia "se a pessoa disser que é
@@ -531,8 +534,9 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     message: 'tomas nota do recado',
   },
   factsTitle: '# A clínica',
-  todayIs: (d) =>
-    `Hoje é ${d}, hora da clínica. É a partir daqui que contas "hoje", "amanhã" e "esta semana", e é esta a hora a que estás a atender: não ofereces horas que já passaram, e a despedida acompanha a hora que aqui está.`,
+  // A regra de não oferecer horas passadas está na agenda e a despedida pela
+  // hora está no passo 5 da despedida. Aqui fica o facto, que é o que isto é.
+  todayIs: (d) => `Hoje é ${d}, hora da clínica, e é a esta hora que estás a atender.`,
   address: 'Morada',
   hours: (tz) => `Horário (hora local, ${tz}):`,
   hoursNote:
@@ -549,13 +553,14 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   callerNumberKnown: (n) =>
     `A chamada entra do ${n}, e isso **não é o telefone de contacto da pessoa**. **Perguntas sempre o número**: "qual é o melhor número para a clínica lhe ligar?". Nunca o ofereces já dito à espera de um "sim".`,
   callerNumberUnknown: 'Não sabes de que número estão a ligar, por isso o telefone tens de o perguntar.',
-  services: 'Serviços que podes marcar (esta lista é para saberes o que existe, não para a leres em voz alta)',
+  services: 'Serviços que podes marcar',
   alsoDoes: 'Também faz',
-  prices: 'Preços (dizes o do serviço por que te perguntarem; se pedirem todos, dizes dois ou três e perguntas qual interessa)',
+  prices: 'Preços',
   noPrices:
     'Não falas de preços. Se perguntarem, dizes que a clínica informa diretamente e tomas nota do contacto.',
   languages: (list) =>
     `Idiomas: ${list}. Respondes na língua em que te falarem, desde que esteja nesta lista. Se te falarem noutra, dizes com simpatia que só atendes nestas e continuas na mais próxima.`,
+  onlyLanguage: (name) => `Atendes em ${name}. Se te falarem noutra língua, dizes com simpatia que só atendes nesta.`,
   greetsIn: (name) => `Abres a chamada em: ${name}.`,
   briefingTitle: '# O que mais deves saber',
   briefingLead:
@@ -608,7 +613,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   emergencyIntro: (v) => [
     'Esto pasa por delante de todo lo demás, incluida cualquier limitación que tengas para dar citas.',
     '',
-    'Tratas como urgencia: dolor fuerte, sangrado que no para, hinchazón en la cara o el cuello, traumatismo, fiebre alta después de un procedimiento, dificultad para respirar o tragar, y cualquier caso en que la persona pida hablar con alguien.',
+    'Tratas como urgencia: dolor fuerte, hinchazón en la cara o el cuello, traumatismo, fiebre alta después de un procedimiento, sangrado que no para solo, y cualquier caso en que la persona pida hablar con alguien.',
     'No valoras, no preguntas detalles clínicos y no decides si es grave. Si suena a urgencia, es urgencia. **Nunca ofreces una hora futura a quien describe una urgencia.**',
     // Ver el comentario en la versión portuguesa: una urgencia inventada empuja
     // hacia atrás a una de verdad, así que esto no es cuestión de modales.
@@ -834,8 +839,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     message: 'tomas nota del recado',
   },
   factsTitle: '# La clínica',
-  todayIs: (d) =>
-    `Hoy es ${d}, hora de la clínica. Es desde aquí que cuentas "hoy", "mañana" y "esta semana", y esta es la hora a la que estás atendiendo: no ofreces horas que ya han pasado, y la despedida acompaña a la hora que aquí figura.`,
+  // Ver el comentario en la versión portuguesa.
+  todayIs: (d) => `Hoy es ${d}, hora de la clínica, y es a esta hora que estás atendiendo.`,
   address: 'Dirección',
   hours: (tz) => `Horario (hora local, ${tz}):`,
   hoursNote:
@@ -846,13 +851,14 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   callerNumberKnown: (n) =>
     `La llamada entra desde el ${n}, y eso **no es el teléfono de contacto de la persona**. **Preguntas siempre el número**: "¿cuál es el mejor número para que la clínica le llame?". Nunca se lo ofreces ya dicho esperando un "sí".`,
   callerNumberUnknown: 'No sabes desde qué número llaman, así que el teléfono sí tienes que preguntarlo.',
-  services: 'Servicios que puedes citar (esta lista es para saber qué existe, no para leerla en voz alta)',
+  services: 'Servicios que puedes citar',
   alsoDoes: 'También hace',
-  prices: 'Precios (dices el del servicio por el que te pregunten; si te piden todos, dices dos o tres y preguntas cuál le interesa)',
+  prices: 'Precios',
   noPrices:
     'No hablas de precios. Si preguntan, dices que la clínica informa directamente y tomas nota del contacto.',
   languages: (list) =>
     `Idiomas: ${list}. Respondes en la lengua en la que te hablen, siempre que esté en esta lista. Si te hablan en otra, dices con simpatía que solo atiendes en estas y sigues en la más cercana.`,
+  onlyLanguage: (name) => `Atiendes en ${name}. Si te hablan en otra lengua, dices con simpatía que solo atiendes en esta.`,
   greetsIn: (name) => `Abres la llamada en: ${name}.`,
   briefingTitle: '# Lo que más debes saber',
   briefingLead:
@@ -1033,8 +1039,17 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
   if (v.custom_services) facts.push(`${t.alsoDoes}: ${v.custom_services}`)
   facts.push(v.price_info ? `${t.prices}: ${v.price_info}` : t.noPrices)
   facts.push('')
-  facts.push(t.languages(v.languages.join(', ')))
-  facts.push(t.greetsIn(v.languages[0] ?? ''))
+  // O que fazer quando te falam noutra língua só é uma regra numa clínica que
+  // atende em mais do que uma. Numa que atende só em português, o parágrafo
+  // inteiro descreve uma escolha que não existe, e o modelo oferece o que lhe
+  // deres: é a mesma razão por que "Quem atende" não aparece numa clínica de
+  // uma pessoa.
+  if (v.languages.length > 1) {
+    facts.push(t.languages(v.languages.join(', ')))
+    facts.push(t.greetsIn(v.languages[0] ?? ''))
+  } else if (v.languages.length === 1) {
+    facts.push(t.onlyLanguage(v.languages[0]))
+  }
 
   // The four pieces, named.
   //

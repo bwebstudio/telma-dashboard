@@ -424,8 +424,8 @@ test('a clinic that cannot book still logs its calls', () => {
 // two hours of every morning.
 test('today is stated, in the clinic timezone, in both languages', () => {
   for (const [lang, expected] of [
-    ['pt', 'Hoje é sábado, 8 de agosto de 2026, hora da clínica.'],
-    ['es', 'Hoy es sábado, 8 de agosto de 2026, hora de la clínica.'],
+    ['pt', 'Hoje é sábado, 8 de agosto de 2026, hora da clínica,'],
+    ['es', 'Hoy es sábado, 8 de agosto de 2026, hora de la clínica,'],
   ]) {
     const { text } = buildPrompt(
       { ...CASES['open-can-book'], today: 'sábado, 8 de agosto de 2026' },

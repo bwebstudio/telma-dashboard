@@ -20,6 +20,7 @@
 // part of the call path.
 
 import { readFileSync } from 'node:fs'
+import { SERVICES, serviceLabel } from '../lib/onboarding/catalog.ts'
 
 const args = process.argv.slice(2)
 const flag = (name) => {
@@ -275,6 +276,38 @@ const TOOLS = [
 // answers about someone's appointment. So the box holds a fallback that is
 // honest about not knowing anything, takes a message, and books nothing.
 
+// ── LAS PALABRAS QUE EL TRANSCRIPTOR NO CONOCE ──────────────────────────────
+// `asr.keywords` inclina el reconocimiento hacia una lista de términos, y
+// estaba vacía. Importa porque el vocabulario de una clínica no es vocabulario
+// corriente: "destartarização" y "criolipólise" no están en el habla de la que
+// aprende un transcriptor, y una cita pedida con esa palabra llega escrita como
+// otra cosa. Esto es lo que hace que el paso 2 —mirar si la clínica hace eso—
+// compare contra lo que la persona dijo de verdad.
+//
+// Sale del catálogo y no de una lista a mano, para que añadir un servicio en
+// lib/onboarding/catalog.ts lo añada también aquí. El corte por longitud es
+// tosco a propósito: deja fuera "consulta", "limpeza", "banho", "geral", que el
+// transcriptor ya acierta y que sólo diluirían las que importan.
+// Palabras corrientes que llegan hasta aquí por ser largas y que el
+// transcriptor ya acierta. Cada una que se quede diluye a las que no.
+const ASR_ORDINARY = new Set([
+  'consulta', 'primeira', 'primera', 'limpieza', 'implantes', 'urgencia', 'urgência',
+  'tratamento', 'tratamiento', 'seguimento', 'seguimiento', 'cirurgia', 'análises',
+])
+const ASR_KEYWORDS = [
+  ...new Map(
+    Object.values(SERVICES)
+      .flat()
+      .flatMap((service) => ['pt', 'es'].map((locale) => serviceLabel(service.id, locale)))
+      .flatMap((label) => label.split(/[\s/(),.]+/))
+      .map((word) => word.trim())
+      .filter((word) => word.length >= 8 && !ASR_ORDINARY.has(word.toLowerCase()))
+      // Por clave en minúsculas: "Avaliação" y "avaliação" son la misma palabra
+      // para quien transcribe, y dos entradas por término gastan la lista.
+      .map((word) => [word.toLowerCase(), word])
+  ).values(),
+]
+
 // The platform's own tools. Configuration of the agent rather than tools we
 // host, so they are not in TOOLS above.
 //
@@ -489,6 +522,7 @@ const AGENT_SPEC = {
     // Distingue la voz de quien llama de la tele, de un bebé o de alguien más
     // en la sala.
     vad: { background_voice_detection: true },
+    asr: { keywords: ASR_KEYWORDS },
     // El catalán no está en la lista que acepta ElevenLabs, aunque lo ofrezcamos
     // en el alta. Ver a memória do projecto.
     language_presets: {
@@ -626,6 +660,7 @@ if (AGENT && !DRY) {
       tts: spec.tts,
       turn: spec.turn,
       vad: spec.vad,
+      asr: { ...(agent?.conversation_config?.asr ?? {}), ...spec.asr },
       language_presets: spec.language_presets,
     },
   })

@@ -47,22 +47,24 @@ update clinics c
    and p.max_minutes_per_month is not null
    and c.minute_limit is distinct from p.max_minutes_per_month;
 
--- ── EL PACK DE MINUTOS ─────────────────────────────────────────────────────
--- 250 minutos por 79 € salían a 0,316 €/min contra un coste de 0,222: un 30 %
--- de margen, por debajo de todo lo demás. A 89 € son 0,356 €/min y un 38 %, que
--- es donde está el resto.
+-- ── EL PACK DE MINUTOS: SE QUEDA COMO ESTÁ ────────────────────────────────
+-- Estuvo a punto de subir a 89 €, y habría sido un error que se ve de un
+-- vistazo: 250 minutos sueltos cuestan 87,50 €, así que un pack de 89 € es más
+-- caro que no comprarlo. Un producto cuya única razón de ser es salir más
+-- barato, y que sale más caro, es un producto que sobra.
 --
--- Se sube el precio en vez de bajar los minutos porque un pack es una compra de
--- impulso desde el panel: 250 es un número redondo que se entiende de un
--- vistazo, y 200 sólo se entendería comparándolo con el que había antes.
+-- El error de fondo era de comparación. El pack parecía el más flojo de todo el
+-- catálogo, 30 % contra el 34-39 % de los planes, pero esos porcentajes no son
+-- comparables: el de los planes carga los 9,70 € fijos de cada clínica y el del
+-- pack no, porque esa clínica ya paga su número y su parte de plataforma con el
+-- plan. Lo comparable es el pack contra el minuto suelto, los dos marginales:
+-- 30 % contra 37 %. Siete puntos de descuento por pagar por adelantado, que es
+-- exactamente para lo que existe un pack.
 --
--- `unit_price_eur` no cambia: es el precio del minuto suelto, 0,35 €, y está
--- aquí para que el panel pueda enseñar que el pack sale más barato. Con 89 € la
--- diferencia se estrecha, y sigue existiendo.
-update minute_packs
-   set name = 'Pack de 250 minutos',
-       price_eur = 89
- where id = 'pack_250';
+-- Así que no se toca. Se deja escrito aquí para que nadie vuelva a "arreglarlo"
+-- mirando el porcentaje equivocado.
+
+
 
 -- ── Y LOS AVISOS, QUE SÍ GASTAN ─────────────────────────────────────────────
 -- Las confirmaciones no pueden desbocarse: sólo sale una cuando la clínica

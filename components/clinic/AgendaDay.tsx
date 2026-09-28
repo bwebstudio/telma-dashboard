@@ -65,7 +65,10 @@ export function AgendaDay({
   return (
     <ol className="card divide-y divide-line overflow-hidden">
       {rows.map((appt) => (
-        <li key={appt.id}>
+        // Named, so the week can send somebody to one booking rather than to a
+        // day with twelve rows in it. `scroll-mt` keeps the row clear of the
+        // header it would otherwise land under.
+        <li key={appt.id} id={`a-${appt.id}`} className="scroll-mt-24 target:bg-brand-wash">
           <Row appt={appt} clinic={clinic} dict={dict} locale={locale} tz={tz} readOnly={readOnly} />
         </li>
       ))}

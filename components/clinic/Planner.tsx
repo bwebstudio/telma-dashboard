@@ -294,11 +294,21 @@ export function Planner({
   // apart.
   const key = new Map<string, { index: number | null; label: string }>()
   let uncategorised = 0
+  // The two marks that are not colours. Listed only when the week contains one,
+  // for the same reason the colours are: a key naming things that are not on
+  // screen is a key nobody reads.
+  let hasPending = false
+  let hasCancelled = false
   for (const date of days) {
     for (const a of dayState(date).appts) {
+      const shown = SHOWN_AS[a.status]
+      if (shown === 'pendente') hasPending = true
       // A cancelled booking is drawn without a colour, so it must not put one
       // in the key either.
-      if (SHOWN_AS[a.status] === 'cancelada') continue
+      if (shown === 'cancelada') {
+        hasCancelled = true
+        continue
+      }
       const cat = categoryOf(a)
       if (!cat) {
         uncategorised++
@@ -346,7 +356,7 @@ export function Planner({
                     anything. The same component the day view draws, so the two
                     zooms cannot phrase one fact two ways. */}
                 <div className="mt-2">
-                  <DayLoad facts={d.facts} dict={dict} />
+                  <DayLoad facts={d.facts} dict={dict} href={`/hoje?d=${d.key}`} />
                 </div>
 
                 <ul className="mt-2 flex min-w-0 flex-col gap-1">
@@ -355,43 +365,54 @@ export function Planner({
                     const shown = SHOWN_AS[a.status]
                     const off = shown === 'cancelada'
                     return (
-                      <li
-                        key={a.id}
-                        title={[
-                          timeIn(a.scheduled_at, locale, tz),
-                          a.patient_name,
-                          a.reason,
-                          dict.status.appointment[shown],
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                        // A cancelled booking keeps its place and loses its
-                        // colour: the hour is the information now, not what it
-                        // was going to be for.
-                        style={off ? undefined : { backgroundColor: categoryBackground(cat?.index ?? null) }}
-                        className={`flex min-w-0 items-baseline gap-1.5 rounded-lg px-1.5 py-1 text-sm ${
-                          off
-                            ? 'text-ink-mute line-through'
-                            : shown === 'pendente'
-                              ? // Waiting for an answer. A ring rather than
-                                // another colour, because the colours are
-                                // already spoken for by the services.
-                                'text-ink ring-1 ring-inset ring-warn'
-                              : 'text-ink'
-                        }`}
-                      >
-                        <span className="shrink-0 tabular-nums font-medium">
-                          {timeIn(a.scheduled_at, locale, tz)}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate">{a.patient_name}</span>
-                        {shown === 'pendente' && (
+                      <li key={a.id} className="min-w-0">
+                        {/* ── EVERY CHIP IS A WAY IN ───────────────────────
+                            Only the date at the top of the card used to be, so
+                            a week of names was a week of things you could read
+                            and not touch: the one booking asking to be
+                            confirmed was drawn here and answered two clicks
+                            away, with no sign that the two were connected.
+
+                            It lands on the booking itself rather than on the
+                            day, because a day with twelve rows opens above the
+                            one that was pressed. */}
+                        <Link
+                          href={`/hoje?d=${d.key}#a-${a.id}`}
+                          title={[
+                            timeIn(a.scheduled_at, locale, tz),
+                            a.patient_name,
+                            a.reason,
+                            dict.status.appointment[shown],
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                          // A cancelled booking keeps its place and loses its
+                          // colour: the hour is the information now, not what
+                          // it was going to be for.
+                          style={off ? undefined : { backgroundColor: categoryBackground(cat?.index ?? null) }}
+                          className={`flex min-w-0 items-baseline gap-1.5 rounded-lg px-1.5 py-1 text-sm transition-shadow duration-fast hover:shadow-sm ${
+                            off
+                              ? 'text-ink-mute line-through'
+                              : shown === 'pendente'
+                                ? // Waiting for an answer. A ring and an amber
+                                  // hour, because the fills are already spoken
+                                  // for by the services. The question mark that
+                                  // was here said nothing to anybody who had not
+                                  // been told what it meant; amber is the one
+                                  // thing this panel uses for "you".
+                                  'text-ink ring-1 ring-inset ring-warn'
+                                : 'text-ink'
+                          }`}
+                        >
                           <span
-                            aria-label={dict.status.appointment.pendente}
-                            className="shrink-0 text-warn"
+                            className={`shrink-0 tabular-nums font-medium ${
+                              shown === 'pendente' ? 'text-warn' : ''
+                            }`}
                           >
-                            ?
+                            {timeIn(a.scheduled_at, locale, tz)}
                           </span>
-                        )}
+                          <span className="min-w-0 flex-1 truncate">{a.patient_name}</span>
+                        </Link>
                       </li>
                     )
                   })}
@@ -403,8 +424,36 @@ export function Planner({
       })}
     </ol>
 
-    {(key.size > 0 || uncategorised > 0) && (
+    {(key.size > 0 || uncategorised > 0 || hasPending || hasCancelled) && (
       <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-ink-soft">
+        {/* ── WHAT THE MARKS MEAN, BEFORE WHAT THE COLOURS MEAN ───────────
+            The colours tell one treatment from another, which is an aid. The
+            ring and the strike say a booking is waiting for the clinic or has
+            been called off, which is work. Work comes first, and it is drawn
+            as the thing itself rather than described: the sample is a chip. */}
+        {hasPending && (
+          <li className="flex min-w-0 items-center gap-1.5">
+            <span
+              aria-hidden
+              className="h-3 w-5 shrink-0 rounded ring-1 ring-inset ring-warn"
+            />
+            <span className="truncate font-medium text-warn">
+              {dict.status.appointment.pendente}
+            </span>
+          </li>
+        )}
+        {hasCancelled && (
+          <li className="flex min-w-0 items-center gap-1.5">
+            <span
+              aria-hidden
+              className="h-3 w-5 shrink-0 rounded bg-surface-sunken"
+              style={{ backgroundImage: 'linear-gradient(to bottom, transparent 45%, rgb(var(--ink-mute)) 45%, rgb(var(--ink-mute)) 55%, transparent 55%)' }}
+            />
+            <span className="truncate line-through">
+              {dict.status.appointment.cancelada}
+            </span>
+          </li>
+        )}
         {[...key.values()].map((c) => (
           <li key={c.label} className="flex min-w-0 items-center gap-1.5">
             <span

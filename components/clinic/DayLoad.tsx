@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { Dictionary } from '@/content'
 import { fill } from '@/lib/fill'
 import { needsAnswer, type DayFacts } from '@/lib/agenda-facts'
@@ -21,10 +22,16 @@ export function DayLoad({
   /** Bigger type for the day view, where this is a heading rather than a line
    *  inside a card. */
   large = false,
+  /** Where to go to do something about it. Given by the week, where the line is
+   *  the only thing on a card that says work is waiting and there is nowhere on
+   *  that card to do the work. Omitted by the day view, which is already there.
+   */
+  href,
 }: {
   facts: DayFacts
   dict: Dictionary
   large?: boolean
+  href?: string
 }) {
   if (facts.blocked || facts.closed) return null
 

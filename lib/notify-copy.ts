@@ -22,6 +22,41 @@ export interface NotifiableClinic {
   name: string
   timezone: string
   language?: string | null
+  /** The line the patient should ring. Only written into the message when the
+   *  sender is a name rather than a number — see `withPhone`. */
+  assigned_phone?: string | null
+}
+
+/**
+ * The clinic's name as a sender, when its own number cannot carry an SMS.
+ *
+ * Portuguese voice numbers mostly cannot: Twilio answered "'From' number
+ * +351300602615 is not SMS-capable". An alphanumeric sender is the way round
+ * it and Portugal takes one without registering it first.
+ *
+ * Eleven characters, at least one letter, and no accents -- Twilio's rules, not
+ * ours. The generic half of a clinic's name is dropped because "Clínica De" is
+ * not a sender anybody recognises and "Sorriso" is.
+ */
+const GENERIC = new Set([
+  'clinica', 'clinicas', 'centro', 'consultorio', 'dental', 'dentaria', 'dentario',
+  'medico', 'medica', 'veterinaria', 'veterinario', 'estetica', 'de', 'da', 'do', 'y', 'e',
+])
+
+export function senderIdFor(name: string): string {
+  const words = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+  const distinctive = words.filter((w) => !GENERIC.has(w.toLowerCase()))
+  // Joined rather than just the first word: "Dra Ruiz" is a sender and "Dra"
+  // is not. Spaces are allowed, and eleven characters is the ceiling.
+  const pick = (distinctive.length ? distinctive : words).join(' ').slice(0, 11).trim()
+  if (!pick) return 'Clinica'
+  // Twilio refuses a sender made only of digits.
+  return /[A-Za-z]/.test(pick) ? pick : `C${pick}`.slice(0, 11)
 }
 
 const COPY = {
@@ -65,12 +100,25 @@ export function messageFor(
   kind: NotifyKind,
   clinic: NotifiableClinic,
   scheduledAt: string,
-  rejectReason: string | null
+  rejectReason: string | null,
+  /**
+   * Put the clinic's number in the text.
+   *
+   * Only when the sender is a name. Every one of these ends by telling the
+   * patient to ring the clinic, and when the message comes from the clinic's
+   * own number that is one tap away; from an alphanumeric sender it is
+   * one-way, nothing can be replied to, and "ligue-nos" with no number to ring
+   * is an instruction that cannot be followed.
+   */
+  withPhone = false
 ): string {
   const locale = clinic.language === 'es' ? 'es' : 'pt'
   const when = whenIn(scheduledAt, clinic.timezone, locale)
   const t = COPY[locale]
-  return kind === 'rejeitada'
-    ? t.rejeitada(clinic.name, when, rejectReason)
-    : t[kind](clinic.name, when)
+  const said =
+    kind === 'rejeitada'
+      ? t.rejeitada(clinic.name, when, rejectReason)
+      : t[kind](clinic.name, when)
+  const phone = clinic.assigned_phone?.trim()
+  return withPhone && phone ? `${said} ${phone}` : said
 }

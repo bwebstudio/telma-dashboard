@@ -11,10 +11,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-const { messageFor } = await import('../lib/notify-copy.ts')
+const { messageFor, senderIdFor } = await import('../lib/notify-copy.ts')
 
-const SORRISO = { name: 'Clínica Dentária Sorriso', timezone: 'Europe/Lisbon', language: 'pt' }
-const SONRISA = { name: 'Clínica Dental Sonrisa', timezone: 'Europe/Madrid', language: 'es' }
+const SORRISO = { name: 'Clínica Dentária Sorriso', timezone: 'Europe/Lisbon', language: 'pt', assigned_phone: '+351300602615' }
+const SONRISA = { name: 'Clínica Dental Sonrisa', timezone: 'Europe/Madrid', language: 'es', assigned_phone: '+34910000001' }
 // 16:00 UTC. 17:00 in Lisbon, 18:00 in Madrid, and neither of them 16:00.
 const AT = '2026-10-08T16:00:00.000Z'
 
@@ -69,4 +69,40 @@ test('an unknown language falls back rather than breaking', () => {
   const said = messageFor('confirmada', odd, AT, null)
   assert.ok(said.startsWith('Clinic'))
   assert.match(said, /\d{1,2}:\d{2}/)
+})
+
+// Portuguese voice numbers mostly cannot carry an SMS -- Twilio answered
+// "'From' number +351300602615 is not SMS-capable" on the first real attempt.
+// The clinic's name goes in the From field instead, and Twilio's rules for that
+// are eleven characters, at least one letter, and no accents.
+test('the clinic can be its own sender, inside Twilio\'s rules', () => {
+  const cases = [
+    ['Clínica Dentária Sorriso', 'Sorriso'],
+    ['Clínica Dental Sonrisa', 'Sonrisa'],
+    ['Consultório da Dra. Ruiz', 'Dra Ruiz'],
+  ]
+  for (const [name, want] of cases) {
+    assert.equal(senderIdFor(name), want, `${name} came out wrong`)
+  }
+  // The rules, on anything that can be thrown at it.
+  for (const name of ['Clínica', 'Centro Médico 24', '24', 'A'.repeat(40), 'Ção Ãé', '']) {
+    const id = senderIdFor(name)
+    assert.ok(id.length >= 1 && id.length <= 11, `${name}: ${id.length} characters`)
+    assert.match(id, /[A-Za-z]/, `${name}: a sender of only digits is refused`)
+    assert.match(id, /^[A-Za-z0-9 ]+$/, `${name}: "${id}" has characters Twilio does not take`)
+  }
+})
+
+// An alphanumeric sender is one-way: nothing can be replied to and there is no
+// number in the phone to ring back. "Call us" with no number to call is an
+// instruction that cannot be followed.
+test('a message from a name carries the number to ring', () => {
+  for (const clinic of [SORRISO, SONRISA]) {
+    const fromName = messageFor('confirmada', clinic, AT, null, true)
+    const fromNumber = messageFor('confirmada', clinic, AT, null, false)
+    assert.ok(fromName.includes(clinic.assigned_phone), 'no number to ring in a one-way message')
+    // And not when it comes from the number itself, which is already in the
+    // phone the patient is holding.
+    assert.ok(!fromNumber.includes(clinic.assigned_phone), 'the number is repeated for nothing')
+  }
 })

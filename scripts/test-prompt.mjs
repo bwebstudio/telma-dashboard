@@ -1556,3 +1556,28 @@ test('a known number saves a question and never volunteers a name', () => {
     assert.ok(stranger.text.includes(ASKS_NUMBER[lang]), `${lang}: stopped asking for the number`)
   }
 })
+
+// ── AND THE REST OF THE RECORD NEVER LEAVES THE DATABASE ────────────────────
+// The panel tells a clinic, in as many words, that Telma never reads the note on
+// a patient's record. It is the field where "the husband handles the money" and
+// "asked about the lump on her neck" end up however it is labelled, and a
+// receptionist deciding whether to write something there is relying on that
+// sentence being true.
+//
+// It is true because of one line: the lookup selects the name and nothing else.
+// A test of the built prompt cannot see that -- the note never gets as far as a
+// variable -- so this reads the route instead, which is crude and is the only
+// place the guarantee actually lives.
+test('the agent is told a name and nothing else about a known patient', () => {
+  const route = readFileSync(
+    join(here, '..', 'app', 'api', 'voice', 'init', 'route.ts'),
+    'utf8'
+  )
+  const lookup = route.match(/\.from\('patients'\)\s*\n\s*\.select\('([^']*)'\)/)
+  assert.ok(lookup, 'the patient lookup has moved, and this guarantee moved with it')
+  assert.equal(
+    lookup[1].trim(),
+    'name',
+    'the patient lookup selects more than the name, and the panel promises it does not'
+  )
+})

@@ -82,6 +82,14 @@ export async function POST(request: Request) {
   const minutesFor = (a: Record<string, unknown>) =>
     resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
 
+  // Which of the clinic's own services it was, from the same match. Stored, not
+  // re-derived later: the panel worked it out at render time from `reason`, and
+  // `reason` is cleared at ninety days, so anything that has to know after that
+  // — a reminder six months out — had nothing to read. It is cleared itself at
+  // the same ninety days by purge_recalls(); the reminder keeps its own copy.
+  const serviceFor = (a: Record<string, unknown>) =>
+    resolveDuration(clinicLengths, (a.reason as string) ?? null).service_id
+
   // Which diary this belongs to.
   //
   // Named, when the caller asked for somebody. Otherwise the diary that was
@@ -231,6 +239,7 @@ export async function POST(request: Request) {
           patient_name: a.patient_name ?? null,
           patient_phone: phoneForAppointment(a.patient_phone, body.from_phone),
           reason: canonicalReason(clinicLengths, (a.reason as string) ?? null),
+          service_id: serviceFor(a),
           scheduled_at: a.scheduled_at,
           origin: 'telefone',
           summary: (a.note as string) ?? null,
@@ -263,6 +272,19 @@ export async function POST(request: Request) {
   // record_call, which would have created a second call row for a single
   // conversation and doubled the minutes.
   const callId = (data as { call_id?: string } | null)?.call_id
+
+  // The first booking's service, set here because record_call does not take it.
+  // Teaching it would mean copying its whole body into a new migration to add
+  // one column, and then 0036 is the file somebody edits while the copy quietly
+  // wins. One update instead.
+  const firstId = (data as { appointment_id?: string } | null)?.appointment_id
+  if (firstId && usable) {
+    const service = serviceFor(usable)
+    if (service) {
+      await admin.from('appointments').update({ service_id: service }).eq('id', firstId)
+    }
+  }
+
   if (callId && extras.length) {
     const usableExtras = extras
       .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
@@ -275,6 +297,7 @@ export async function POST(request: Request) {
         patient_name: a.patient_name ?? null,
         patient_phone: phoneForAppointment(a.patient_phone, body.from_phone),
         reason: canonicalReason(clinicLengths, (a.reason as string) ?? null),
+        service_id: serviceFor(a),
         scheduled_at: a.scheduled_at,
         origin: 'telefone',
         // Its own note, not the call's. Until now these carried nothing at all,

@@ -1,7 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { activeAddons } from '@/lib/clinic-utils'
 import type { Clinic } from '@/lib/types'
-import { messageFor, senderIdFor, type NotifyKind } from '@/lib/notify-copy'
+import { messageFor, type NotifyKind } from '@/lib/notify-copy'
+// The sender, the fallback to the clinic's name and the WhatsApp template rule
+// all live in one place now, because the reminders in lib/recalls.ts need the
+// same three and the alternative was a second copy of them.
+import { sendToPatient } from '@/lib/sms'
 
 export type { NotifyKind }
 
@@ -40,22 +44,6 @@ export type { NotifyKind }
  * written to the row so the panel can say the patient never heard.
  */
 
-const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID?.trim()
-const AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN?.trim()
-
-/** The number the message comes from: the clinic's own line, so a patient who
- *  replies or rings back reaches the clinic and not us. */
-function senderFor(clinic: Clinic): string | null {
-  return clinic.assigned_phone?.trim() || null
-}
-
-/**
- * Sends it, and records what happened either way.
- *
- * Never throws. The caller is a server action that has already written the
- * clinic's decision, and there is no version of "the SMS failed" that should
- * undo that.
- */
 export async function notifyPatient(appointmentId: string, kind: NotifyKind): Promise<void> {
   const admin = createAdminClient()
   try {
@@ -87,8 +75,6 @@ export async function notifyPatient(appointmentId: string, kind: NotifyKind): Pr
     const clinic = clinicRow as Clinic | null
     if (!clinic) return
 
-    const from = senderFor(clinic)
-    const to = appt.patient_phone?.trim()
     // One content sid per kind, because the three say different things and
     // Meta approves each on its own. Set them and WhatsApp starts carrying the
     // clinics that pay for it; leave them unset and everybody gets an SMS.
@@ -96,71 +82,18 @@ export async function notifyPatient(appointmentId: string, kind: NotifyKind): Pr
     const wantsWhatsapp = activeAddons(clinic).includes('whatsapp')
     const channel = wantsWhatsapp && template ? 'whatsapp' : 'sms'
 
-    if (!ACCOUNT_SID || !AUTH_TOKEN || !from || !to) {
-      await record(admin, appointmentId, kind, channel, 'por_configurar')
-      return
-    }
-
-    const send = async (sender: string, withPhone: boolean) => {
-      const said = messageFor(kind, clinic, appt.scheduled_at, appt.reject_reason, withPhone)
-      const body = new URLSearchParams(
-        channel === 'whatsapp'
-          ? {
-              To: `whatsapp:${to}`,
-              From: `whatsapp:${sender}`,
-              // The approved template, with the one sentence as its single
-              // variable. Meta approves the shape, not the words inside it.
-              ContentSid: template as string,
-              ContentVariables: JSON.stringify({ '1': said }),
-            }
-          : { To: to, From: sender, Body: said }
-      )
-      const r = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: 'Basic ' + Buffer.from(`${ACCOUNT_SID}:${AUTH_TOKEN}`).toString('base64'),
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body,
-          cache: 'no-store',
-        }
-      )
-      return { ok: r.ok, status: r.status, payload: (await r.json().catch(() => ({}))) as { message?: string } }
-    }
-
-    // The clinic's own number first, so a patient can ring back from the
-    // message they are holding.
-    let res = await send(from, false)
-
-    // ── AND THE CLINIC'S NAME WHEN THAT NUMBER CANNOT CARRY AN SMS ──────────
-    // Portuguese voice numbers mostly cannot, and there is no way to know
-    // which without asking: Twilio answered "'From' number +351300602615 is
-    // not SMS-capable" on the first real attempt. An alphanumeric sender works
-    // there and Portugal takes one without registering it first.
-    //
-    // Retried here rather than configured per clinic, because a clinic cannot
-    // be asked whether its number is SMS-capable and neither can we, before
-    // trying. The cost of being wrong is one refused request.
-    //
-    // It is one-way, so nothing can be replied to, and that is why the message
-    // carries the clinic's number in its text when it goes this way.
-    const notSmsCapable = /not SMS-capable|is not a valid.*SMS/i.test(res.payload.message ?? '')
-    if (!res.ok && notSmsCapable && channel === 'sms') {
-      res = await send(senderIdFor(clinic.name), true)
-    }
-    const payload = res.payload
-    // Twilio's own words, not a status code: "unverified number", "not a mobile
-    // number", "out of funds" are all things a clinic can act on and "failed"
-    // is not.
-    await record(
-      admin,
-      appointmentId,
-      kind,
+    const res = await sendToPatient({
+      clinic,
+      to: appt.patient_phone,
       channel,
-      res.ok ? null : payload.message || `HTTP ${res.status}`
-    )
+      template,
+      // The clinic's number goes into the text only when the sender is a name,
+      // because then there is nothing to reply to. lib/sms.ts decides which.
+      text: (withPhone) =>
+        messageFor(kind, clinic, appt.scheduled_at, appt.reject_reason, withPhone),
+    })
+
+    await record(admin, appointmentId, kind, channel, res.error)
   } catch (e) {
     // Including a database that is down. The decision stands either way.
     await record(admin, appointmentId, kind, null, e instanceof Error ? e.message : 'erro').catch(

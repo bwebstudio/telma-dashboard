@@ -21,6 +21,19 @@ export function formatDate(iso: string, l: Locale): string {
   })
 }
 
+/**
+ * A day, from a date with no time on it.
+ *
+ * Midday and not midnight. `new Date('2027-07-15')` is midnight UTC, and read
+ * back in a timezone behind UTC that is the fourteenth: a reminder due on
+ * Thursday shown as Wednesday. Neither country this serves is behind UTC, which
+ * is exactly the kind of reason that stops being true the day somebody opens the
+ * panel from a holiday.
+ */
+export function formatDay(dateOnly: string, l: Locale): string {
+  return formatDate(`${dateOnly.slice(0, 10)}T12:00:00.000Z`, l)
+}
+
 export function formatDateTime(iso: string, l: Locale): string {
   return `${formatDate(iso, l)}, ${formatTime(iso, l)}`
 }

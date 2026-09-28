@@ -68,9 +68,9 @@ funcionalidade que tenhamos de vos pedir para construir. O que fica do vosso lad
 o acesso ao ambiente de qualidade com a sessão de formação que o Vinícius
 propôs.
 
-Se isto estiver certo, o esforço de desenvolvimento é todo nosso. As três
-questões da secção 9 são as que podem mudar esta conclusão, e são perguntas, não
-pedidos.
+Se isto estiver certo, o esforço de desenvolvimento é todo nosso. As questões da
+secção 9 são as que podem mudar esta conclusão, e são perguntas, não pedidos. A
+primeira é a única que muda o que o piloto consegue provar.
 
 ---
 
@@ -83,6 +83,7 @@ em cada passo.
 |---|---|---|---|
 | 1 | A chamada chega | Saber de que clínica se trata | (nosso: o número marcado) |
 | 2 | "Boa tarde, era para marcar" | Quem está a ligar | `patientByPhone`, e `patientsByPhone` quando o número é de mais do que uma pessoa |
+| 2b | "Não encontro esse número" | Um segundo identificador | `patientByVatNumber`, `patientsByVatNumber` |
 | 3 | "Para uma limpeza" | O que esta clínica marca | `bookableSpecialties`, `bookableProfessionals` |
 | 4 | "Tenho quinta às 10h ou sexta às 15h" | As horas realmente livres | `openSlots` |
 | 5 | "Sim, quinta às 10h" | Confirmar que ainda está livre | `validateSlot` |
@@ -91,6 +92,34 @@ em cada passo.
 | 8 | "Era para mudar para outro dia" | Mover a marcação | `rescheduleAppointment` |
 | 9 | As regras da clínica | Antecedências e horizonte | `appointmentPolicy` |
 | 10 | "Confirmo, lá estarei" | Registar a confirmação | `confirmAppointment`, e ver a nota abaixo |
+
+### Identificar quem liga, e é o passo que decide a chamada toda
+
+A vossa colecção deixa o caminho claro, e é o que vamos implementar:
+
+1. `patientByPhone`. `null` significa que não é utente, e a Telma não inventa
+   registo nenhum.
+2. `matchCount > 1` significa um telemóvel de família. `patientsByPhone`, e a
+   Telma pergunta pelo primeiro nome: *"é para a Maria ou para o João?"*
+3. Sem correspondência pelo número, pede-se o NIF. Nunca o anunciamos para a
+   pessoa confirmar, pela mesma razão que já aplicamos ao nome: é ela que o dá.
+
+Os sete campos que devolvem — `entityId`, `number`, `firstName`, `name`,
+`birthDate`, `isPatient`, `matchCount` — são exactamente o que a Telma precisa e
+nada mais. Registámos a vossa nota sobre a `birthDate` poder vir a `null` e não
+servir como validação obrigatória de identidade; não a vamos usar para isso.
+
+### O historial fica convosco, e agora sabemos que o conseguimos ler
+
+`patientAppointments` com `includeTreatments: true` devolve também as sessões de
+tratamento, em leitura, e o `status` distingue quem chegou (`A`) de quem faltou
+(`F`).
+
+Isto resolve uma pergunta nossa, interna, que não é vossa: uma clínica quer ver o
+historial da pessoa no painel, e nós não o queremos guardar. Com isto não
+precisamos: o painel da Telma pode mostrá-lo lendo a vossa API no momento em que
+alguém abre a ficha, sem que nada disso passe a viver na nossa base. A secção 8
+continua verdadeira palavra por palavra, e é assim que a queremos manter.
 
 ### Sobre os lembretes, e é uma lacuna nossa
 
@@ -198,7 +227,25 @@ A cadeia, como a entendemos, e é a mesma que o Vinícius descreveu na reunião:
 **O que a Telma trataria dos vossos dados.** Só o que precisa para a frase
 seguinte: se aquele número corresponde a um utente, o primeiro nome para o
 tratar por ele, as vagas livres e as marcações daquele número. Nada clínico.
-Notámos, e agradecemos, que a vossa API já limita a resposta a isso mesmo.
+Notámos, e agradecemos, que a vossa API já limita a resposta a isso mesmo, e que
+o diz por escrito: *"nada de dados clínicos ou de contacto: isto vai para um
+canal externo"*.
+
+**E o que não guardamos, agora que o conseguíamos guardar.** O
+`patientAppointments` com `includeTreatments: true` devolve o historial, sessões
+de tratamento incluídas, e o `status` diz quem faltou. É informação que uma
+clínica gosta de ver no painel e é informação que não vamos escrever na nossa
+base: lemos no momento em que alguém abre a ficha e mostramos, e quando a janela
+se fecha não fica cá nada. A distinção é a que interessa a um encarregado de
+proteção de dados, e é a razão pela qual o parágrafo anterior continua verdadeiro
+depois desta integração.
+
+**Uma pergunta sobre o `obs`.** O vosso exemplo mostra `obs: "Marcação via
+WhatsApp — dores lombares"`, ou seja, o motivo nas palavras do utente, escrito na
+ficha. Do nosso lado a regra é a inversa e é deliberada: guardamos o serviço da
+agenda, nunca a descrição do sintoma. Num campo vosso, na base da clínica, a
+decisão é da clínica e não nossa. Digam-nos o que preferem que lá ponhamos, e
+por omissão poremos o serviço e o canal, sem sintomas.
 
 **O que guardamos.** A gravação e a transcrição da chamada vivem **sete dias** na
 camada de voz e são apagadas. Na nossa base ficam a duração, o
@@ -237,8 +284,10 @@ custo do nosso lado, não é um obstáculo técnico.
 
 ## 9. O que precisamos de perguntar
 
-Por ordem de importância. A primeira muda o desenho da conversa toda, as outras
-quatro são detalhes de implementação.
+Por ordem de importância. A primeira muda o desenho da conversa toda; as outras
+duas são detalhes de implementação. Duas das cinco que tínhamos deixaram de ser
+perguntas com a colecção de Postman que nos enviaram, e ficam abaixo como
+decisões tomadas.
 
 **1. `allowsUnknownPatients` está a `false`, e a API não cria utentes.**
 
@@ -255,25 +304,37 @@ A pergunta concreta: é uma configuração por instalação que a clínica pilot
 abrir, ou é uma decisão de produto vossa que se mantém fechada? Se for a
 primeira, o que é que a clínica tem de garantir para a abrir?
 
-**2. O `limit` do `openSlots` e a janela de sete dias.** Com o máximo de 50 vagas
-por resposta, uma consulta de uma semana a uma agenda cheia trunca. Truncar
-por onde: pelas primeiras 50 no tempo, ou distribuídas? Se for pelas primeiras,
-a Telma passa a pedir dia a dia, e são mais pedidos por chamada.
+**2. O `limit` do `openSlots`: trunca por onde?** A documentação diz que a janela
+é limitada ao horizonte e as vagas ao máximo configurado, 50 por omissão. O que
+não diz é por onde corta: pelas primeiras 50 no tempo, ou distribuídas pelos
+dias pedidos? A Telma pede tipicamente uma semana de uma vez para poder oferecer
+horas em dias diferentes sem fazer sete pedidos. Se for pelas primeiras, uma
+agenda cheia devolve só segunda-feira e passamos a pedir dia a dia, que são mais
+pedidos por chamada.
 
 **3. A janela real do `SLOT_TAKEN`.** Percebemos que não há reserva temporária e
 que o `validateSlot` antes de confirmar não é opcional. Entre o `validateSlot` e o
 "sim, confirmo" da pessoa passam alguns segundos de conversa. Têm alguma medida
 da frequência com que uma vaga foge nesse intervalo, em clínicas com volume?
 
-**4. O mapeamento de serviço.** O nosso catálogo por clínica ("limpeza",
-"destartarização", "consulta de avaliação") contra o vosso `specialtyId` mais
-`eventType` (F, O, E). Quem mantém essa tabela quando a clínica acrescenta um
-serviço, e existe alguma forma de a ler da vossa API em vez de a manter à mão?
+### Duas que já não são perguntas
 
-**5. Usar o `code` em vez do `message`.** Como escrevemos na secção 4, a Telma vai
-dizer a recusa por palavras dela a partir do `code`, porque os vossos `message`
-estão escritos para ser lidos e não ditos. Compromete alguma coisa do vosso lado,
-contratual ou de suporte, se o texto literal não for reproduzido?
+**O mapeamento de serviço resolve-se sozinho.** Perguntávamos quem mantinha a
+tabela entre o nosso catálogo e o vosso `specialtyId`. A resposta está no
+`bookableSpecialties`: devolve `specialtyId`, `description`, `category` e
+`professionalCount`, por isso lemos a lista da clínica em vez de a manter à mão.
+O que fica do nosso lado é o mapa entre o que a pessoa diz em voz alta ("uma
+limpeza") e a `description` que vier, e esse é trabalho nosso.
+
+**Vamos usar o vosso `message`.** Perguntávamos se podíamos dizer as recusas por
+palavras nossas a partir do `code`. A vossa documentação responde antes de
+perguntarmos: *"usa-o em vez de escreveres o teu próprio texto, assim as regras da
+clínica e o que o utente lê nunca divergem"*. Concordamos com a razão e ficamos
+com uma ressalva pequena, que é de canal e não de discordância: um `message`
+escrito para um ecrã lê-se mal em voz alta. A Telma vai dizer o vosso texto, e
+quando a frase não couber numa conversa falada — pontuação de formulário, uma
+lista dentro de uma frase — dizemo-la pelas nossas palavras a partir do `code` e
+avisamos aqui quais são, para que possam ver a lista. Não passa de meia dúzia.
 
 **E uma que não é pergunta, é um comentário.** A lista de espera que o João
 mencionou é o destino natural de quem não encontra hora, e é onde uma

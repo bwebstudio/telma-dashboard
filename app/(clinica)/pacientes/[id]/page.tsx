@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PatientRecord } from '@/components/clinic/PatientRecord'
-import type { Appointment, Patient, PatientRecall } from '@/lib/types'
+import type { Appointment, Call, Patient, PatientRecall } from '@/lib/types'
 
 /**
  * One person, as this clinic knows them.
@@ -34,7 +34,18 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
   const patient = data as Patient | null
   if (!patient) notFound()
 
-  const [{ data: appts }, { data: recalls }] = await Promise.all([
+  // ── AND THE CALLS ─────────────────────────────────────────────────────────
+  // Matched on the last nine digits of the number, at read time, rather than by
+  // a column joining the call to the record. The column would be tidier and it
+  // would undo the thing it is tidying: `calls.from_phone` is cleared at ninety
+  // days precisely so that an old call identifies nobody, and a patient_id
+  // pointing at it afterwards would put the person straight back.
+  //
+  // So old calls fall off this record as their numbers are cleared, which is
+  // the retention working rather than the join failing, and the screen says so.
+  const digits = patient.phone.replace(/\D/g, '').slice(-9)
+
+  const [{ data: appts }, { data: recalls }, { data: calls }] = await Promise.all([
     supabase
       .from('appointments')
       .select('*')
@@ -49,6 +60,15 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
       .eq('patient_id', id)
       .order('due_on', { ascending: false })
       .limit(30),
+    digits.length === 9
+      ? supabase
+          .from('calls')
+          .select('*')
+          .eq('clinic_id', clinicId)
+          .ilike('from_phone', `%${digits}`)
+          .order('created_at', { ascending: false })
+          .limit(30)
+      : Promise.resolve({ data: [] }),
   ])
 
   return (
@@ -63,6 +83,7 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
         patient={patient}
         appointments={(appts ?? []) as Appointment[]}
         recalls={(recalls ?? []) as PatientRecall[]}
+        calls={(calls ?? []) as Call[]}
         clinic={{
           name: clinic?.name ?? '',
           language: clinic?.language ?? locale,

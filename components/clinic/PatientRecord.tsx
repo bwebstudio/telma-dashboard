@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
-import type { Appointment, Patient, PatientRecall, RecallState } from '@/lib/types'
-import { formatDay, formatDate, formatWeekdayDate, formatTime } from '@/lib/format'
+import Link from 'next/link'
+import type { Appointment, Call, Patient, PatientRecall, RecallState } from '@/lib/types'
+import { formatDay, formatDate, formatDateTime, formatDuration, formatWeekdayDate, formatTime } from '@/lib/format'
 import { recallMessage, defaultBody, segmentsFor, BODY_LIMIT } from '@/lib/recall-copy'
 import { fill } from '@/lib/fill'
-import { Badge, SectionTitle, APPOINTMENT_TONE } from '@/components/ui'
+import { Badge, SectionTitle, APPOINTMENT_TONE, CALL_TONE } from '@/components/ui'
 import {
   savePatientNotes,
   setReminders,
@@ -51,6 +52,7 @@ export function PatientRecord({
   patient,
   appointments,
   recalls,
+  calls,
   clinic,
   dict,
   locale,
@@ -59,6 +61,9 @@ export function PatientRecord({
   patient: Patient
   appointments: Appointment[]
   recalls: PatientRecall[]
+  /** Matched by telephone number, so they fall off as the numbers are cleared
+   *  at ninety days. See the note on the page that fetches them. */
+  calls: Call[]
   clinic: ClinicBits
   dict: Dictionary
   locale: Locale
@@ -97,6 +102,11 @@ export function PatientRecord({
           <span className="text-base text-ink-mute">
             {visits === 1 ? t.visitsOne : fill(t.visits, { n: visits })}
           </span>
+          {/* Since when this clinic has known them. The one fact about a person
+              that a receptionist uses before they have read anything else. */}
+          <span className="text-base text-ink-mute">
+            {fill(t.since, { when: formatDate(patient.created_at, locale) })}
+          </span>
           {patient.reminders_opt_out_at && <Badge tone="neutral">{t.optedOut}</Badge>}
         </p>
       </header>
@@ -122,6 +132,52 @@ export function PatientRecord({
         pending={pending}
         readOnly={readOnly}
       />
+
+      <section>
+        <SectionTitle>{t.calls}</SectionTitle>
+        {calls.length === 0 ? (
+          <p className="text-base text-ink-mute">{t.callsEmpty}</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {calls.map((c) => (
+              <li key={c.id} className="card p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span>
+                    <span className="block text-base text-ink">
+                      {formatDateTime(c.created_at, locale)}
+                    </span>
+                    <span className="block text-sm text-ink-mute">
+                      {dict.status.channel[c.channel]}
+                      {c.duration_seconds > 0 &&
+                        ` \u00b7 ${formatDuration(c.duration_seconds, locale)}`}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {c.result && (
+                      <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>
+                    )}
+                    <Link
+                      href={`/conversas?c=${c.id}`}
+                      className="text-sm text-brand-accent hover:text-brand-hover"
+                    >
+                      {dict.agenda.openConversation}
+                    </Link>
+                  </span>
+                </div>
+                {/* Cleared at ninety days with the number, so an old call is a
+                    date and a duration and nothing else. */}
+                {c.summary && (
+                  <p className="mt-2 text-base leading-relaxed text-ink-soft">{c.summary}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {/* Why this list is shorter than the person's history. A record that
+            quietly loses its oldest calls is one somebody will accuse of having
+            lost them. */}
+        <p className="mt-3 text-sm text-ink-mute">{t.callsGone}</p>
+      </section>
 
       <section>
         <SectionTitle>{t.history}</SectionTitle>

@@ -277,6 +277,11 @@ export interface Dictionary {
     notes: string
     notesHint: string
     history: string
+    /** The calls, matched to this person by their number. */
+    calls: string
+    callsEmpty: string
+    callsGone: string
+    since: string
     historyEmpty: string
     visits: string
     visitsOne: string

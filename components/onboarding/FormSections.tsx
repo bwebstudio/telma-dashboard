@@ -725,7 +725,10 @@ function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { 
               <span className="label-caps w-28 text-right">{t.detailsDuration}</span>
               <span className="label-caps w-28 text-right">{t.detailsPrice}</span>
               {inPanel && recallsOn && (
-                <span className="label-caps w-28 text-right">{t.recallsColumn}</span>
+                // Wider than the other two. "nunca" does not fit where "30"
+                // does, and a placeholder cut to "nur" is worse than none: it
+                // reads as a word nobody knows rather than as the answer.
+                <span className="label-caps w-36 text-right">{t.recallsColumn}</span>
               )}
             </div>
 
@@ -769,7 +772,7 @@ function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { 
                   <span className="text-sm text-ink-mute">€</span>
                 </span>
                 {inPanel && recallsOn && (
-                  <span className="flex w-28 items-center gap-1.5">
+                  <span className="flex w-36 items-center gap-1.5">
                     <input
                       aria-label={`${serviceLabel(id, locale)} ${t.recallsColumn}`}
                       type="number"

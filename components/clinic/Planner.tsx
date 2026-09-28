@@ -394,19 +394,19 @@ export function Planner({
                             off
                               ? 'text-ink-mute line-through'
                               : shown === 'pendente'
-                                ? // Waiting for an answer. A ring and an amber
-                                  // hour, because the fills are already spoken
-                                  // for by the services. The question mark that
-                                  // was here said nothing to anybody who had not
-                                  // been told what it meant; amber is the one
-                                  // thing this panel uses for "you".
-                                  'text-ink ring-1 ring-inset ring-warn'
+                                ? // Waiting for an answer: a ring, because the
+                                  // fills are already spoken for by the
+                                  // services. Green rather than amber, the same
+                                  // as the card in Marcações, because a booking
+                                  // that has just come in is not the same kind
+                                  // of news as one that has just been lost.
+                                  'text-ink ring-1 ring-inset ring-ok'
                                 : 'text-ink'
                           }`}
                         >
                           <span
                             className={`shrink-0 tabular-nums font-medium ${
-                              shown === 'pendente' ? 'text-warn' : ''
+                              shown === 'pendente' ? 'text-ok' : ''
                             }`}
                           >
                             {timeIn(a.scheduled_at, locale, tz)}
@@ -435,9 +435,9 @@ export function Planner({
           <li className="flex min-w-0 items-center gap-1.5">
             <span
               aria-hidden
-              className="h-3 w-5 shrink-0 rounded ring-1 ring-inset ring-warn"
+              className="h-3 w-5 shrink-0 rounded ring-1 ring-inset ring-ok"
             />
-            <span className="truncate font-medium text-warn">
+            <span className="truncate font-medium text-ok">
               {dict.status.appointment.pendente}
             </span>
           </li>

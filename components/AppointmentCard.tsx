@@ -76,33 +76,40 @@ export function AppointmentCard({
   // ── THE STATE, BEFORE ANYBODY READS A WORD ────────────────────────────────
   // Twenty cards in a two column grid, each carrying its state in a badge in the
   // top right corner, is twenty badges to read before the screen means anything.
-  // The edge says it from across the room.
+  // The edge and the tint say it from across the room.
   //
-  // The colours are not new and are not this screen's to choose: amber is
-  // waiting or called off, green is settled, red is the clinic's own refusal,
-  // grey is an hour that lapsed. The same four the agenda uses, defined once in
-  // APPOINTMENT_TONE with the reasoning beside them.
+  // ── AND WAITING IS NOT THE SAME KIND OF NEWS AS CALLED OFF ────────────────
+  // Both used to be amber, because amber is what this panel uses for "this is
+  // yours", and both carried a faint wash of it. Side by side they were one
+  // colour: a booking that had just come in looked like a booking that had just
+  // been lost, and the only thing telling them apart was a word in the corner.
   //
-  // Only the ones asking for something get a wash as well as an edge. Pending
-  // and cancelled share the amber, and the wash is what separates "this needs
-  // you" from "this happened". A screen where everything is tinted has said
-  // nothing.
+  // So the hue says what kind of news it is and the tint says whether it needs
+  // an answer:
+  //
+  //   green + tint    a booking arrived and is waiting on you
+  //   green, no tint  settled, it needs nothing
+  //   amber + tint    an hour came back and nobody has said they saw it
+  //   amber, no tint  the same, already acknowledged
+  //   red             the clinic refused it, which is the one thing red means
+  //   grey            the hour lapsed
+  //
+  // The badge stays amber on a green card and that is not a contradiction: the
+  // green says a booking came in, the badge says it still wants an answer.
   const shown = SHOWN_AS[appt.status]
   const edge =
-    shown === 'confirmada'
+    shown === 'pendente' || shown === 'confirmada'
       ? 'border-l-ok'
-      : shown === 'cancelada'
-        ? appt.status === 'rejeitada'
-          ? 'border-l-danger'
-          : appt.status === 'expirada'
-            ? 'border-l-line-strong'
-            : 'border-l-warn'
-        : 'border-l-warn'
+      : appt.status === 'rejeitada'
+        ? 'border-l-danger'
+        : appt.status === 'expirada'
+          ? 'border-l-line-strong'
+          : 'border-l-warn'
   const wash =
     appt.status === 'pendente'
-      ? 'bg-warn-soft/30'
+      ? 'bg-ok-soft/50'
       : appt.status === 'cancelada' && !appt.cancel_seen_at
-        ? 'bg-warn-soft/20'
+        ? 'bg-warn-soft/50'
         : ''
 
   return (

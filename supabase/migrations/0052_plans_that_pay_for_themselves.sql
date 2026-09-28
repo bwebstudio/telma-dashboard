@@ -138,3 +138,24 @@ update addons
                      'remarca e desmarca. As confirmações já vão incluídas no plano; com '
                      'o add-on chegam por WhatsApp. Até 1000 mensagens/mês'
  where id = 'whatsapp';
+
+-- ── EL MINUTO SUELTO, Y POR QUÉ SUBE ────────────────────────────────────────
+-- Este número no es sólo lo que cuesta un minuto de más. Es el que decide si
+-- alguien sube de plan alguna vez, y eso no se ve hasta que se escribe:
+--
+--   subir de plan compensa sólo cuando los minutos que añade
+--   valen más que el precio que añade, a este precio por minuto.
+--
+--   Essencial a Clínica  +150 €  necesita un salto de más de 150/0,45 = 333 min
+--   Clínica a Rede       +350 €  necesita un salto de más de 350/0,45 = 778 min
+--
+-- Los saltos de esta migración son 400 y 950, así que los dos se cumplen. A
+-- 0,35 € habrían hecho falta 429 y 1000, y con 400 y 950 una clínica que
+-- hablase mil minutos al mes habría pagado menos quedándose en Essencial y
+-- comprando extras, para siempre. Subir esto es lo que hace que los escalones
+-- signifiquen algo.
+--
+-- `unit_price_eur` del pack es ese mismo precio, guardado para que el panel
+-- pueda enseñar cuánto se ahorra comprándolo: a 0,45 el pack de 79 € pasa a ser
+-- un 30 % más barato en vez de un 10 %, que es lo que un pack debe ser.
+update minute_packs set unit_price_eur = 0.45 where id = 'pack_250';

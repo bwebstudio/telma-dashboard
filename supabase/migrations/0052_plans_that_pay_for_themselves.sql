@@ -5,17 +5,19 @@
 -- escalera salía al revés de lo que parecía.
 --
 -- ── DE DÓNDE SALE ───────────────────────────────────────────────────────────
--- La factura de ElevenLabs de agosto (JENSIDK0-0002) da 0,151 € el minuto
--- hablado. Con Twilio y los SMS de confirmación dentro, un minuto de Telma nos
--- cuesta unos 0,22 €, y ese coste es idéntico en los tres planes: los mensajes
--- crecen con las llamadas y las llamadas con los minutos.
+-- Del consumo medido en la API de ElevenLabs, no de dividir la factura: 834
+-- créditos por minuto entre la conversación y su modelo, a 22 $ los 121.000 de
+-- Creator, son 0,137 € el minuto. Con Twilio, las transferencias y los SMS de
+-- confirmación dentro, un minuto de Telma cuesta unos 0,209 €, y ese coste es
+-- idéntico en los tres planes: los mensajes crecen con las llamadas y las
+-- llamadas con los minutos. La cuenta entera está en lib/plans.ts.
 --
 -- Lo único que cambiaba entre planes era lo que cobramos por ese minuto, y así
 -- quedaba, contando también los 9,70 € fijos de cada clínica:
 --
---   Essencial   99 € / 250 min    0,396 €/min    34 % de margen
---   Clínica    249 € / 750 min    0,332 €/min    29 %
---   Rede       599 € / 2000 min   0,299 €/min    24 %
+--   Essencial   99 € / 250 min    0,396 €/min    38 % de margen
+--   Clínica    249 € / 750 min    0,332 €/min    33 %
+--   Rede       599 € / 2000 min   0,299 €/min    29 %
 --
 -- El plan que se le vende a quien más gasta era el que menos dejaba. Bajar sólo
 -- Rede no lo arregla: lo pone en cabeza y deja a Clínica en último lugar. Así

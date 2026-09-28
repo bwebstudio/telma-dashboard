@@ -60,35 +60,42 @@ export const EXTRA_MINUTE_PRICE = 0.45
 /**
  * What one minute of conversation costs us, in euros.
  *
- * It said 0.12 with a comment telling somebody to adjust it to the real
- * invoices, and nobody did, so every margin the consumption view has ever shown
- * was a third too generous.
+ * ── MEDIDO, DESPUÉS DE DOS INTENTOS EQUIVOCADOS ────────────────────────────
+ * Decía 0,120 con un comentario pidiendo que se ajustara a las facturas.
+ * Ajustarlo salió mal dos veces, y las dos merecen quedar escritas para que no
+ * se repitan:
  *
- * ── HOW 0.151 WAS ARRIVED AT, SO THE NEXT PERSON CAN REDO IT ───────────────
- * ElevenLabs invoice JENSIDK0-0002, 31 July to 31 August 2026: the Creator
- * plan, 22 $ for 100,000 credits, with `PAYG Credit Usage` at zero — nothing was
- * billed beyond the subscription. That period consumed 47,872 credits, and the
- * agent's own conversation log for the same month totals 63.2 minutes.
+ *   0,171  se dividió el total de créditos de la factura entre los minutos
+ *          hablados. Ese total incluye las pruebas de voz del panel, que no
+ *          son conversación, y se supuso que Creator traía 100.000 créditos.
+ *          Trae 121.000.
+ *   0,109  se tomó la tarifa publicada de ElevenAgents, 0,080 $ el minuto.
+ *          Es la de sus planes de Agents; en un plan normal el uso sale del
+ *          mismo saco de créditos, y sale más caro.
  *
- *   47,872 credits / 63.2 min       = 757 credits a minute
- *   22 $ / 100,000 credits          = 0.000220 $ a credit
- *   757 x 0.000220 x 0.9068 EUR/USD = 0.151 EUR a minute
+ * Lo que hay debajo está medido, no supuesto. `/v1/usage/character-stats` con
+ * `breakdown_type=product_type` separa el consumo:
  *
- * It is a ceiling rather than a floor: those credits also paid for voice
- * previews and tests that are not conversation, so the true figure is that or
- * less.
+ *   Conversational AI        84.356 créditos   699 por minuto
+ *   Conversational AI - LLM  16.170 créditos   134 por minuto
+ *   TTS                       3.999 créditos   pruebas, no cuentan
  *
- * ── AND IT FALLS AS WE GROW, WHICH IS WHY IT IS ONE NUMBER AND NOT A TABLE ──
- * The credit gets cheaper on ElevenLabs' higher tiers, so this belongs to the
- * tier we are on and has to be redone when we leave it. Creator covers about
- * 132 minutes a month, which is less than one clinic on Essencial: the first
- * paying customer forces the move.
+ * sobre los 120,6 minutos que el registro del agente tiene en ese período. Son
+ * 834 créditos por minuto. Creator cuesta 22 $ por 121.000, o sea 0,00018182 $
+ * el crédito, y al cambio de la propia factura, 0,9068:
  *
- * The rest is Twilio's inbound minute plus the occasional transfer to a real
- * person, still the old estimate, still unverified. It is the only part of this
- * number that is a guess now.
+ *   834 x 0,00018182 x 0,9068 = 0,137 € el minuto de ElevenLabs
+ *
+ * Lo demás sigue siendo estimación: el minuto entrante de Twilio y las
+ * transferencias a una persona, los dos del comentario original.
+ *
+ * ── Y BAJA SI SE PASA A UN PLAN DE AGENTS ──────────────────────────────────
+ * Su tarifa de ElevenAgents es 0,080 $ el minuto, unos 0,073 €, la mitad de lo
+ * que pagamos ahora por el mismo minuto saliendo de créditos. Vale la pena
+ * mirarlo antes de firmar la primera clínica, porque es la palanca más grande
+ * que hay sobre este número.
  */
-export const VOICE_COST_PER_MINUTE = 0.151 + 0.02
+export const VOICE_COST_PER_MINUTE = 0.137 + 0.016 + 0.004
 
 /**
  * What one message to a patient costs us.

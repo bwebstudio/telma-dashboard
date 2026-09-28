@@ -236,7 +236,6 @@ export default async function AgendaPage({
         dict={dict}
         locale={locale}
         tz={tz}
-        isToday={isToday}
         readOnly={readOnly}
       />
 

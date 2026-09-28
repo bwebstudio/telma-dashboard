@@ -55,7 +55,6 @@ export function AgendaDay({
   dict,
   locale,
   tz,
-  isToday,
   readOnly = false,
 }: {
   appointments: Appointment[]
@@ -63,7 +62,6 @@ export function AgendaDay({
   locale: Locale
   /** The clinic's zone. The hours on screen are the clinic's hours. */
   tz: string
-  isToday: boolean
   /** False for the clinic, true for an administrator visiting. */
   readOnly?: boolean
 }) {
@@ -76,53 +74,17 @@ export function AgendaDay({
     return <div className="card px-6 py-12 text-center text-lg text-ink-mute">{t.emptyDay}</div>
   }
 
-  const now = Date.now()
-  // The index the "now" line goes before. Only meaningful on today.
-  const nowAt = isToday
-    ? rows.findIndex((a) => +new Date(a.scheduled_at) > now)
-    : -1
-  const allPast = isToday && nowAt === -1
-
   return (
     <ol className="card divide-y divide-line overflow-hidden">
-      {rows.map((appt, i) => (
+      {rows.map((appt) => (
         <li key={appt.id}>
-          {nowAt === i && <NowLine time={timeIn(new Date().toISOString(), locale, tz)} />}
           <Row appt={appt} dict={dict} locale={locale} tz={tz} readOnly={readOnly} />
         </li>
       ))}
-      {allPast && (
-        <li>
-          <NowLine time={timeIn(new Date().toISOString(), locale, tz)} />
-        </li>
-      )}
     </ol>
   )
 }
 
-/**
- * Where the clock is, drawn as a position and not as a heading.
- *
- * It was the word AGORA in small caps on a tinted band, which is the same
- * shape this panel uses for section titles — so it cut the day in two and read
- * as "here begins another list", a few centimetres under a date that already
- * said what day it was. Two markers of now, and the louder one meant the wrong
- * thing.
- *
- * A hairline with the hour on it. The hour is the useful part: it says where
- * you are without naming a section, and it matches the column of hours it sits
- * in.
- */
-function NowLine({ time }: { time: string }) {
-  return (
-    <div className="flex items-center gap-3 px-4 sm:px-5" aria-hidden>
-      <span className="w-14 shrink-0 text-sm font-semibold tabular-nums text-brand-accent sm:w-16">
-        {time}
-      </span>
-      <span className="h-px flex-1 bg-brand-accent/50" />
-    </div>
-  )
-}
 
 function Row({
   appt,

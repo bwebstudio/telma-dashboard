@@ -6,16 +6,20 @@
  * worth reading in a test, and a test that needs a database in order to check a
  * sentence is a test nobody runs. Everything touching Twilio lives in lib/sms.ts.
  *
- * ── IT NEVER SAYS WHAT THE TREATMENT WAS ───────────────────────────────────
- * The row knows. The clinic's screen says it. The message does not, and this is
- * the single most important thing in this file.
- *
+ * ── IT SHOULD NEVER SAY WHAT THE TREATMENT WAS ─────────────────────────────
  * An SMS arrives on a lock screen. It is read on a kitchen table, by whoever
  * picked the telephone up, and months after the appointment it is about. "Está
  * na hora da sua revisão de implantes" tells a son what was done to his mother,
  * a flatmate what somebody is being treated for, and an ex-partner who still
  * knows the passcode everything. The patient loses nothing by not being told:
  * they know what they came for, and the clinic will say it when they ring.
+ *
+ * Which is why the default below says none of it. The clinic can rewrite it, and
+ * that is right — it is their message, their patient and their responsibility in
+ * law — but the words it starts from are the safe ones, the screen says so next
+ * to the box, and the exact sentence is shown before anything is scheduled. A
+ * default nobody can change is not a safeguard, it is a guess about somebody
+ * else's clinic.
  *
  * ── HOW TO STOP IT ─────────────────────────────────────────────────────────
  * In every message, and it cannot be "responda BAIXA". In Portugal these go out
@@ -48,13 +52,13 @@ export interface RecallClinic {
 
 const COPY = {
   pt: {
-    aviso: (c: string) => `${c}: é hora de marcar a sua consulta.`,
+    aviso: 'é hora de marcar a sua consulta.',
     call: 'Ligue-nos:',
     callNoNumber: 'Ligue-nos para marcar.',
     stop: 'Se não quiser avisos, diga-nos.',
   },
   es: {
-    aviso: (c: string) => `${c}: le toca pedir su próxima cita.`,
+    aviso: 'le toca pedir su próxima cita.',
     call: 'Llámenos:',
     callNoNumber: 'Llámenos para pedir hora.',
     stop: 'Si no quiere avisos, dígalo.',
@@ -65,21 +69,25 @@ const COPY = {
  *  segments once the clinic's name, the number and the opt-out are added. */
 export const BODY_LIMIT = 200
 
+/** The sentence a reminder starts from, before the clinic touches it. Shown in
+ *  the box on the record so it can be edited rather than only obeyed. */
+export function defaultBody(language: string | null | undefined, kind: RecallKind): string {
+  if (kind === 'campanha') return ''
+  return COPY[language === 'es' ? 'es' : 'pt'].aviso
+}
+
 export function recallMessage(
   clinic: RecallClinic,
   kind: RecallKind,
-  /** The clinic's own sentence. Required for a campanha, ignored for an aviso:
-   *  the care reminder is fixed copy, versioned with the application and
-   *  tested, because a clinic writing its own each time is a clinic writing the
-   *  wrong one once. */
+  /** The clinic's own sentence. Empty falls back to the default above, which is
+   *  what an untouched box sends. */
   body?: string | null
 ): string {
   const locale = clinic.language === 'es' ? 'es' : 'pt'
   const t = COPY[locale]
   const phone = clinic.assigned_phone?.trim()
 
-  const written = kind === 'campanha' ? signed(clinic.name, body) : null
-  const said = written ?? t.aviso(clinic.name)
+  const said = signed(clinic.name, body) ?? signed(clinic.name, t.aviso) ?? ''
 
   return [said, phone ? `${t.call} ${phone}.` : t.callNoNumber, t.stop]
     .join(' ')

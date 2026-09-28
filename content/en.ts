@@ -259,6 +259,7 @@ export const en: Dictionary = {
     marketingSource: 'Where they said yes',
     marketingSourcePlaceholder: 'at the desk, 12/03',
     marketingSourceRequired: 'Write down where they said yes.',
+    marketingSourceMandatory: 'Required before offers can be switched on.',
 
     recalls: 'Reminders',
     recallsEmpty: 'Nothing scheduled.',
@@ -271,6 +272,7 @@ export const en: Dictionary = {
     addKindCampanha: 'Offer or news',
     addBody: 'What to say',
     addBodyHint: 'The clinic\'s name and number are added for you.',
+    addBodyWarn: 'Do not name the treatment: the message is read by whoever is holding the telephone.',
     preview: 'They receive:',
     previewSegments: 'Counts as {n} SMS.',
 

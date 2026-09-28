@@ -259,6 +259,7 @@ export const es: Dictionary = {
     marketingSource: 'Dónde dio el sí',
     marketingSourcePlaceholder: 'en mostrador, 12/03',
     marketingSourceRequired: 'Escriba dónde dio el sí la persona.',
+    marketingSourceMandatory: 'Obligatorio para activar las promociones.',
 
     recalls: 'Avisos',
     recallsEmpty: 'Nada programado.',
@@ -271,6 +272,7 @@ export const es: Dictionary = {
     addKindCampanha: 'Promoción o novedad',
     addBody: 'Qué decir',
     addBodyHint: 'El nombre de la clínica y el teléfono entran solos.',
+    addBodyWarn: 'No escriba el tratamiento: el mensaje lo lee quien tenga el móvil en la mano.',
     preview: 'La persona recibe:',
     previewSegments: 'Cuenta como {n} SMS.',
 

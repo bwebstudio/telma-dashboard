@@ -285,6 +285,7 @@ export interface Dictionary {
     marketingSource: string
     marketingSourcePlaceholder: string
     marketingSourceRequired: string
+    marketingSourceMandatory: string
 
     recalls: string
     recallsEmpty: string
@@ -297,6 +298,8 @@ export interface Dictionary {
     addKindCampanha: string
     addBody: string
     addBodyHint: string
+    /** Said next to the box, because the box can now be edited. */
+    addBodyWarn: string
     /** The exact text the person will get, shown before anything is scheduled.
      *  The only honest way to promise a message never names the treatment. */
     preview: string

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment, Patient, PatientRecall, RecallState } from '@/lib/types'
 import { formatDay, formatDate, formatWeekdayDate, formatTime } from '@/lib/format'
-import { recallMessage, segmentsFor, BODY_LIMIT } from '@/lib/recall-copy'
+import { recallMessage, defaultBody, segmentsFor, BODY_LIMIT } from '@/lib/recall-copy'
 import { fill } from '@/lib/fill'
 import { Badge, SectionTitle, APPOINTMENT_TONE } from '@/components/ui'
 import {
@@ -220,6 +220,19 @@ function Consent({
 }) {
   const consented = Boolean(patient.marketing_consent_at)
   const [source, setSource] = useState(patient.marketing_consent_source ?? '')
+  const [missing, setMissing] = useState(false)
+
+  // Refused here rather than in the action, so the answer appears under the box
+  // it is about. The action still refuses it too: this is the message, that is
+  // the rule.
+  const turnOn = (wanted: boolean) => {
+    if (wanted && !source.trim()) {
+      setMissing(true)
+      return
+    }
+    setMissing(false)
+    run(() => setMarketing(patient.id, wanted, source))
+  }
 
   return (
     <section>
@@ -245,7 +258,7 @@ function Consent({
               type="checkbox"
               checked={consented}
               disabled={readOnly || pending}
-              onChange={(e) => run(() => setMarketing(patient.id, e.target.checked, source))}
+              onChange={(e) => turnOn(e.target.checked)}
               className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
             />
             <span>
@@ -265,9 +278,25 @@ function Consent({
               value={source}
               disabled={readOnly || consented}
               placeholder={t.marketingSourcePlaceholder}
-              onChange={(e) => setSource(e.target.value)}
-              className="field-input max-w-sm"
+              aria-invalid={missing || undefined}
+              aria-describedby="consent-source-note"
+              onChange={(e) => {
+                setSource(e.target.value)
+                if (e.target.value.trim()) setMissing(false)
+              }}
+              className={`field-input max-w-sm ${missing ? 'border-danger' : ''}`}
             />
+            {/* Said before it is needed, not only after it is refused: a
+                checkbox that does nothing and explains itself somewhere else on
+                the page is a checkbox that looks broken. */}
+            {!consented && (
+              <p
+                id="consent-source-note"
+                className={`mt-1 text-sm ${missing ? 'font-medium text-danger' : 'text-ink-mute'}`}
+              >
+                {missing ? t.marketingSourceRequired : t.marketingSourceMandatory}
+              </p>
+            )}
             {consented && patient.marketing_consent_at && (
               <p className="mt-1 text-sm text-ink-mute">
                 {formatDate(patient.marketing_consent_at, locale)}
@@ -305,7 +334,16 @@ function Reminders({
   const [when, setWhen] = useState('')
   const [kind, setKind] = useState<'aviso' | 'campanha'>('aviso')
   const [note, setNote] = useState('')
-  const [body, setBody] = useState('')
+  const [body, setBody] = useState(defaultBody(clinic.language, 'aviso'))
+
+  // Switching kind swaps the starting sentence, unless somebody has written
+  // their own by then. Overwriting what they typed to be helpful is worse than
+  // leaving a sentence that does not fit.
+  const switchKind = (next: 'aviso' | 'campanha') => {
+    setKind(next)
+    const untouched = !body.trim() || body === defaultBody(clinic.language, kind)
+    if (untouched) setBody(defaultBody(clinic.language, next))
+  }
 
   const today = new Date().toISOString().slice(0, 10)
   const preview = recallMessage(clinic, kind, body)
@@ -387,7 +425,7 @@ function Reminders({
               <select
                 id="recall-kind"
                 value={kind}
-                onChange={(e) => setKind(e.target.value as 'aviso' | 'campanha')}
+                onChange={(e) => switchKind(e.target.value as 'aviso' | 'campanha')}
                 className="field-input"
               >
                 <option value="aviso">{t.addKindAviso}</option>
@@ -409,22 +447,28 @@ function Reminders({
             <p className="mt-1 text-sm text-ink-mute">{t.addNoteHint}</p>
           </div>
 
-          {kind === 'campanha' && (
-            <div className="mt-3">
-              <label className="field-label" htmlFor="recall-body">
-                {t.addBody}
-              </label>
-              <textarea
-                id="recall-body"
-                rows={2}
-                maxLength={BODY_LIMIT}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="field-input py-2"
-              />
-              <p className="mt-1 text-sm text-ink-mute">{t.addBodyHint}</p>
-            </div>
-          )}
+          {/* Editable whichever kind it is. The reminder starts from the
+              default sentence rather than being stuck with it: it is the
+              clinic's message, to the clinic's patient, and a default nobody
+              can change is a guess about somebody else's clinic. What the
+              screen does instead is say what not to write, and show the exact
+              result below. */}
+          <div className="mt-3">
+            <label className="field-label" htmlFor="recall-body">
+              {t.addBody}
+            </label>
+            <textarea
+              id="recall-body"
+              rows={2}
+              maxLength={BODY_LIMIT}
+              value={body}
+              placeholder={defaultBody(clinic.language, kind)}
+              onChange={(e) => setBody(e.target.value)}
+              className="field-input py-2"
+            />
+            <p className="mt-1 text-sm text-ink-mute">{t.addBodyHint}</p>
+            <p className="mt-1 text-sm text-warn">{t.addBodyWarn}</p>
+          </div>
 
           <div className="mt-4 rounded-xl bg-surface px-4 py-3">
             <span className="label-caps mb-1 block">{t.preview}</span>
@@ -444,7 +488,8 @@ function Reminders({
                   setOpen(false)
                   setWhen('')
                   setNote('')
-                  setBody('')
+                  setBody(defaultBody(clinic.language, 'aviso'))
+                  setKind('aviso')
                 })
               }
             >

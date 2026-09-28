@@ -15,7 +15,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-const { recallMessage, segmentsFor, BODY_LIMIT } = await import('../lib/recall-copy.ts')
+const { recallMessage, defaultBody, segmentsFor, BODY_LIMIT } = await import('../lib/recall-copy.ts')
 const { SERVICES, serviceLabel } = await import('../lib/onboarding/catalog.ts')
 
 const SORRISO = { name: 'Clínica Dentária Sorriso', language: 'pt', assigned_phone: '+351300602615' }
@@ -91,10 +91,37 @@ test('a clinic with no number still tells the patient to ring', () => {
   assert.doesNotMatch(said, /:\s*(Se|$)/)
 })
 
-test('a campanha with nothing written falls back to the fixed reminder', () => {
-  // Rather than sending the clinic's name followed by nothing at all. The server
-  // action refuses an empty body before it gets here; this is the floor under it.
-  assert.equal(recallMessage(SORRISO, 'campanha', '   '), recallMessage(SORRISO, 'aviso'))
+test('an empty box sends the default, whichever kind it is', () => {
+  // Rather than the clinic's name followed by nothing at all. The server action
+  // refuses an empty campanha before it gets here; this is the floor under it.
+  for (const kind of ['aviso', 'campanha']) {
+    assert.equal(recallMessage(SORRISO, kind, '   '), recallMessage(SORRISO, 'aviso'))
+  }
+})
+
+// The box on the record opens with this in it, so what it opens with has to be
+// what an untouched reminder sends. Otherwise the clinic edits a sentence that
+// was never going to be the one delivered.
+test('the box opens with exactly what an untouched reminder sends', () => {
+  for (const clinic of CLINICS) {
+    assert.equal(
+      recallMessage(clinic, 'aviso', defaultBody(clinic.language, 'aviso')),
+      recallMessage(clinic, 'aviso')
+    )
+    // And a campaign opens empty: there is no safe guess at what a clinic wants
+    // to say about itself.
+    assert.equal(defaultBody(clinic.language, 'campanha'), '')
+  }
+})
+
+test('a rewritten reminder is the clinic\'s words, signed and stoppable', () => {
+  const said = recallMessage(SORRISO, 'aviso', 'já passaram seis meses, ligue quando quiser.')
+  assert.ok(said.startsWith(SORRISO.name))
+  assert.ok(said.includes('já passaram seis meses'))
+  assert.ok(said.includes(SORRISO.assigned_phone))
+  assert.match(said, /não quiser avisos/)
+  // The default is gone: the clinic replaced it, not added to it.
+  assert.doesNotMatch(said, /hora de marcar/)
 })
 
 test('a clinic that signs its own message is not made to say its name twice', () => {

@@ -105,9 +105,13 @@ export async function createRecall(
   const user = await getAppUser()
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dueOn)) throw new Error('date_required')
   // A commercial message with nothing written in it would go out as a care
-  // reminder's fixed copy under a consent given for something else.
+  // reminder's default sentence under a consent given for something else.
   const written = body.trim().slice(0, BODY_LIMIT)
   if (kind === 'campanha' && !written) throw new Error('body_required')
+  // An untouched box is stored as nothing, so the reminder keeps taking the
+  // versioned default rather than freezing today's wording into a row that goes
+  // out in March.
+  const sentence = written || null
 
   const admin = createAdminClient()
   const { error } = await admin.rpc('schedule_recall', {
@@ -116,7 +120,7 @@ export async function createRecall(
     p_due_on: dueOn,
     p_kind: kind,
     p_note: note.trim().slice(0, 300) || null,
-    p_body: kind === 'campanha' ? written : null,
+    p_body: sentence,
     p_actor: user?.id ?? null,
   })
   if (error) throw new Error(error.message)

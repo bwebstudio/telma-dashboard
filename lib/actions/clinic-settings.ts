@@ -254,12 +254,12 @@ export async function updateClinicProfile(
   const errors: Record<string, string> = {}
   const clean: Record<string, unknown> = {}
 
-  for (const step of [2, 4, 5] as const) {
+  for (const step of [2, 'services', 'telma'] as const) {
     const shape = schemas[step]
     // Languages stay as they are: they are edited on the account page, and
     // sending the current ones back through keeps step 5 satisfiable here.
     const input =
-      step === 5
+      step === 'telma'
         ? {
             ...values,
             selected_languages: current.selected_languages ?? [current.language],

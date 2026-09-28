@@ -8,6 +8,8 @@ import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
 import { DayTally } from '@/components/clinic/DayTally'
+import { SetupGate } from '@/components/clinic/SetupGate'
+import { setupSteps } from '@/lib/clinic-setup'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
 import { PlannerSection } from '@/components/clinic/PlannerSection'
 import { ViewSwitcher } from '@/components/clinic/ViewSwitcher'
@@ -146,9 +148,34 @@ export default async function AgendaPage({
       locale={locale}
     />
   ) : null
+  // ── A CLINIC THAT HAS NOT BEEN SET UP GETS THE SETUP, NOT THE DAY ────────
+  // It has a number and no hours and no services, so the agenda would be an
+  // empty list under a screen of counters reading zero: a product that looks
+  // broken rather than one that has not been started. This is the whole screen
+  // until it is done, and then it is never seen again.
+  const awaitingSetup = clinic?.status === 'por_configurar'
+  const { count: openDays } = awaitingSetup
+    ? await supabase
+        .from('availability_slots')
+        .select('*', { count: 'exact', head: true })
+        .eq('clinic_id', clinicId)
+    : { count: 0 }
+  const steps = setupSteps(clinic ?? null, openDays ?? 0)
+
   const minutesUrgent = billing
     ? billing.minutes.exhausted || percentUsed(billing.minutes.used, billing.minutes.allowance) >= 80
     : false
+
+  if (awaitingSetup) {
+    return (
+      <>
+        <div className="mb-6">
+          <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
+        </div>
+        <SetupGate steps={steps} dict={dict} />
+      </>
+    )
+  }
 
   return (
     <>

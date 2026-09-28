@@ -1,0 +1,22 @@
+-- A clinic that has never been configured is not a clinic that was paused.
+--
+-- The sign-up used to ask for everything Telma needs and switch her on at the
+-- end. It now asks who the clinic is and buys it a number, and the clinic
+-- configures Telma in its own panel and turns her on there. Between those two
+-- moments the row needs a state of its own.
+--
+-- 'pausada' was the nearest thing and it is not the same thing: paused is a
+-- clinic that was answering and was stopped, by us or by a failed payment, and
+-- the panel has to tell a first morning apart from a suspension. One says
+-- "finish setting up"; the other says "something is wrong".
+--
+-- Everything that already refuses to work unless the status is 'ativa' keeps
+-- refusing, unchanged: /api/availability blocks on it, /api/voice/init hands
+-- the agent `can_book: false`. Telma answers a call to a clinic in this state,
+-- takes a message and promises nothing -- which is the honest behaviour for a
+-- number that exists and a diary that does not.
+--
+-- Postgres will not add an enum value inside a transaction block, so this runs
+-- on its own.
+
+alter type clinic_status add value if not exists 'por_configurar';

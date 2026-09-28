@@ -195,11 +195,8 @@ export interface Copy {
 const pt: Copy = {
   steps: [
     { n: 1, short: 'Plano', title: 'O plano', help: 'Sem permanência. Pode mudar de plano ou cancelar quando quiser.' },
-    { n: 2, short: 'Clínica', title: 'A sua clínica', help: 'O essencial, e a morada, que é a pergunta que mais fazem ao telefone.' },
-    { n: 3, short: 'Horários', title: 'Quando está aberta', help: 'A Telma só oferece horas dentro deste horário. Pode ajustar tudo depois, no painel.' },
-    { n: 4, short: 'Serviços', title: 'O que a Telma pode marcar', help: 'Escolha só o que a clínica faz. A Telma nunca marca nada fora desta lista.' },
-    { n: 5, short: 'A Telma', title: 'Formar a sua rececionista', help: 'A parte que faz a diferença: como fala, em que idiomas, e o que faz quando não sabe.' },
-    { n: 6, short: 'Número', title: 'O número e o arranque', help: 'Pode manter o número que já divulgou, ou receber um novo da sua região.' },
+    { n: 2, short: 'Clínica', title: 'A sua clínica', help: 'Quem é e onde está. A Telma aprende o resto no seu painel.' },
+    { n: 3, short: 'Número', title: 'O número e o pagamento', help: 'O número que a Telma vai atender. Fica pronta a configurar logo a seguir.' },
   ],
 
   pageTitle: 'Inscrição',
@@ -388,11 +385,8 @@ const pt: Copy = {
 const es: Copy = {
   steps: [
     { n: 1, short: 'Plan', title: 'El plan', help: 'Sin permanencia. Puede cambiar de plan o cancelar cuando quiera.' },
-    { n: 2, short: 'Clínica', title: 'Su clínica', help: 'Lo esencial, y la dirección, que es la pregunta que más hacen por teléfono.' },
-    { n: 3, short: 'Horarios', title: 'Cuándo está abierta', help: 'Telma solo ofrece horas dentro de este horario. Puede ajustarlo todo después, en el panel.' },
-    { n: 4, short: 'Servicios', title: 'Qué puede citar Telma', help: 'Elija solo lo que hace la clínica. Telma nunca cita nada fuera de esta lista.' },
-    { n: 5, short: 'Telma', title: 'Formar a su recepcionista', help: 'La parte que marca la diferencia: cómo habla, en qué idiomas, y qué hace cuando no sabe.' },
-    { n: 6, short: 'Número', title: 'El número y el arranque', help: 'Puede conservar el número que ya ha publicado, o recibir uno nuevo de su zona.' },
+    { n: 2, short: 'Clínica', title: 'Su clínica', help: 'Quién es y dónde está. Telma aprende el resto en su panel.' },
+    { n: 3, short: 'Número', title: 'El número y el pago', help: 'El número que Telma va a atender. Queda lista para configurar justo después.' },
   ],
 
   pageTitle: 'Alta',

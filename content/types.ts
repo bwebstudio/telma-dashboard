@@ -61,7 +61,7 @@ export interface Dictionary {
       'pendente' | 'confirmada' | 'rejeitada' | 'copiada' | 'cancelada' | 'expirada',
       string
     >
-    clinic: Record<'ativa' | 'pausada' | 'cancelada', string>
+    clinic: Record<'ativa' | 'por_configurar' | 'pausada' | 'cancelada', string>
     call: Record<'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida', string>
     origin: Record<'telefone' | 'whatsapp', string>
     channel: Record<'telefone' | 'whatsapp', string>
@@ -139,6 +139,17 @@ export interface Dictionary {
     guarantees: string[]
   }
   // The clinic's home screen: the day, and what needs an answer before it.
+  setup: {
+    eyebrow: string
+    title: string
+    lead: string
+    go: string
+    activate: string
+    activating: string
+    notYet: string
+    failed: string
+    steps: { hours: string; services: string }
+  }
   agenda: {
     title: string
     elsewhereOnePending: string

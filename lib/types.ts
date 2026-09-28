@@ -1,5 +1,8 @@
 export type PlanType = 'essencial' | 'clinica' | 'rede' | 'personalizado'
-export type ClinicStatus = 'ativa' | 'pausada' | 'cancelada'
+/** 'por_configurar' is a clinic that has signed up and not yet been set up:
+ *  it has a number and no opening hours. Distinct from 'pausada', which is a
+ *  clinic that was answering and was stopped. See migration 0044. */
+export type ClinicStatus = 'ativa' | 'por_configurar' | 'pausada' | 'cancelada'
 // 'interno' is the Bweb Studio team (full reach, including the CRM admin
 // views). 'comercial' is a sales rep: internal, but scoped to their own
 // prospects. 'clinica' is a paying client.

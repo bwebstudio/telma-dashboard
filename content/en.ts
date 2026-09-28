@@ -46,7 +46,7 @@ export const en: Dictionary = {
       cancelada: 'Cancelled',
       expirada: 'Expired',
     },
-    clinic: { ativa: 'Active', pausada: 'Paused', cancelada: 'Cancelled' },
+    clinic: { ativa: 'Active', por_configurar: 'Awaiting setup', pausada: 'Paused', cancelada: 'Cancelled' },
     call: {
       marcacao: 'Booking',
       transferida: 'Transferred',
@@ -123,6 +123,17 @@ export const en: Dictionary = {
       'She never gives or confirms another patient\u2019s details, even to somebody claiming to be family.',
       'An emergency interrupts everything else, even with the plan out of minutes.',
     ],
+  },
+  setup: {
+    eyebrow: 'Almost there',
+    title: 'Telma is ready to learn your clinic',
+    lead: 'She is not answering yet. Answer these two things in your panel and turn her on when you want — the number is already yours.',
+    go: 'Set up',
+    activate: 'Turn Telma on',
+    activating: 'Turning on...',
+    notYet: 'Finish both steps to turn her on.',
+    failed: 'Could not turn her on. Try again.',
+    steps: { hours: 'Say when the clinic is open', services: 'Say what the clinic does' },
   },
   agenda: {
     title: 'Agenda',

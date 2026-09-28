@@ -46,7 +46,7 @@ export const pt: Dictionary = {
       cancelada: 'Cancelada',
       expirada: 'Expirada',
     },
-    clinic: { ativa: 'Ativa', pausada: 'Pausada', cancelada: 'Cancelada' },
+    clinic: { ativa: 'Ativa', por_configurar: 'Por configurar', pausada: 'Pausada', cancelada: 'Cancelada' },
     call: {
       marcacao: 'Marcação',
       transferida: 'Transferida',
@@ -125,6 +125,17 @@ export const pt: Dictionary = {
       'Nunca dá nem confirma dados de outro paciente, mesmo que quem liga diga ser da família.',
       'Uma urgência interrompe tudo o resto, mesmo com o plano sem minutos.',
     ],
+  },
+  setup: {
+    eyebrow: 'Falta pouco',
+    title: 'A Telma está pronta a aprender a sua clínica',
+    lead: 'Ainda não atende. Responda a estas duas coisas no seu painel e active-a quando quiser — o número já é seu.',
+    go: 'Configurar',
+    activate: 'Activar a Telma',
+    activating: 'A activar...',
+    notYet: 'Complete os dois passos para poder activar.',
+    failed: 'Não foi possível activar. Tente novamente.',
+    steps: { hours: 'Diga quando a clínica está aberta', services: 'Diga o que a clínica faz' },
   },
   agenda: {
     title: 'Agenda',

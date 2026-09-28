@@ -265,7 +265,20 @@ export async function completeOnboarding(
         phone: wizard.phone,
         plan,
         minute_limit: PLAN_MINUTES[plan] ?? 250,
-        status: pendingPayment ? 'pausada' : 'ativa',
+        // ── A CLINIC IS BORN UNCONFIGURED ────────────────────────────────
+        // Not 'ativa'. The sign-up identifies the clinic and buys it a number;
+        // it does not know the opening hours, what the clinic does, or how
+        // Telma should answer, because it no longer asks. Turning her on at
+        // this point would put a receptionist on the telephone who cannot say
+        // when the clinic opens.
+        //
+        // 'por_configurar' rather than 'pausada': paused is a clinic that was
+        // running and was stopped, and the panel has to tell a first morning
+        // apart from a suspension. Everything downstream already refuses to
+        // book unless the status is 'ativa' -- /api/availability blocks on it
+        // and /api/voice/init hands `can_book: false` -- so Telma answers,
+        // takes a message and promises nothing.
+        status: pendingPayment ? 'pausada' : 'por_configurar',
         billing_cycle: wizard.billing_cycle,
         // What was bought on top of the plan. Every language beyond the first
         // is one of these, sold exactly like WhatsApp.
@@ -276,7 +289,7 @@ export async function completeOnboarding(
         addon_whatsapp: Boolean(wizard.addon_whatsapp),
         specialty: wizard.specialty,
         region: wizard.region,
-        services: wizard.services,
+        services: wizard.services ?? [],
         // Free text from step 3. The only place a business outside the four
         // specialties gets to say what it does, so it goes to the agent prompt.
         custom_services: wizard.custom_services || null,

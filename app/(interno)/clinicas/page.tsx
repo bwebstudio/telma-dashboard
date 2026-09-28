@@ -10,6 +10,8 @@ export const dynamic = 'force-dynamic'
 
 const statusTone: Record<ClinicStatus, 'ok' | 'warn' | 'danger'> = {
   ativa: 'ok',
+  // Signed up, not set up. A first morning, not a problem.
+  por_configurar: 'warn',
   pausada: 'warn',
   cancelada: 'danger',
 }

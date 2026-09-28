@@ -14,11 +14,8 @@ import { StepIndicator } from './StepIndicator'
 import { Done } from './Done'
 import {
   ClinicStep,
-  HoursStep,
   NumberStep,
   PlanStep,
-  ServicesStep,
-  TelmaStep,
   type SignupPlan,
   type Values,
 } from './FormSections'
@@ -53,13 +50,16 @@ const STORAGE_KEY = 'telma_onboarding_v1'
 const FIELD_STEP: Record<string, number> = {
   plan_id: 1, billing_cycle: 1, addon_whatsapp: 1,
   clinic_name: 2, email: 2, phone: 2, address: 2, specialty: 2, region: 2, locale: 2,
+  // Not asked any more, and kept mapped so that a draft from before the
+  // change, or a partner posting the lot, still lands the reader somewhere
+  // real instead of on a step that does not exist.
   weekdays: 3, saturday: 3, sunday: 3, pause: 3,
   appointment_duration_minutes: 3, min_interval_minutes: 3,
-  services: 4, custom_services: 4, price_info: 4,
-  selected_languages: 5, greeting_language: 5, formality: 5,
-  fallback_policy: 5, fallback_number: 5, briefing: 5,
-  emergency_number: 5, emergency_protocol: 5,
-  phone_option: 6, current_number: 6, operator: 6, area_region: 6, terms: 6,
+  services: 3, custom_services: 3, price_info: 3,
+  selected_languages: 3, greeting_language: 3, formality: 3,
+  fallback_policy: 3, fallback_number: 3, briefing: 3,
+  emergency_number: 3, emergency_protocol: 3,
+  phone_option: 3, current_number: 3, operator: 3, area_region: 3, terms: 3,
 }
 
 /** The earliest step carrying an error, so the reader lands on the first thing
@@ -341,19 +341,12 @@ export function WizardForm({
           <PlanStep values={values} set={set} errors={errors} locale={locale} plans={plans} />
         )}
         {step === 2 && <ClinicStep values={values} set={set} errors={errors} locale={locale} />}
-        {step === 3 && <HoursStep values={values} set={set} errors={errors} locale={locale} />}
-        {step === 4 && <ServicesStep values={values} set={set} errors={errors} locale={locale} />}
-        {step === 5 && (
-          <TelmaStep
-            values={values}
-            set={set}
-            errors={errors}
-            locale={locale}
-            languages={languages}
-            maxLanguages={planMaxLanguages}
-          />
-        )}
-        {step === 6 && (
+        {/* Three steps, and the third is the number. The hours, the services
+            and everything about how Telma answers left the sign-up: they are
+            configured in the panel, which is where they were also configured
+            before, and asking in both places is what made a clinic wonder
+            which of the two it was supposed to go back to. */}
+        {step === 3 && (
           <NumberStep values={values} set={set} errors={errors} locale={locale} demo={demo} />
         )}
 

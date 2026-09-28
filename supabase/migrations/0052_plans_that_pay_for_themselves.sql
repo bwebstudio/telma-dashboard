@@ -120,3 +120,19 @@ revoke execute on function charge_recall_minute(uuid) from anon, authenticated;
 comment on function charge_recall_minute is
   'Cobra un minuto del plan por cada aviso programado que sale. Devuelve false '
   'cuando no queda sitio, y entonces el aviso espera en vez de enviarse.';
+
+-- ── Y LO QUE EL ADD-ON DE WHATSAPP DICE QUE ES ──────────────────────────────
+-- Decía "Confirmações e recordatórios automáticos", que era verdad cuando las
+-- confirmaciones sólo existían si se pagaba por ellas. Desde hoy van incluidas
+-- en todos los planes, así que esa frase vende por 49 € algo que la clínica ya
+-- tiene, y calla lo único que el add-on hace de verdad: que la Telma atienda en
+-- WhatsApp igual que atiende al teléfono.
+--
+-- Es la frase que lee quien está con el dedo encima del botón de comprar, así
+-- que importa más que la de la landing.
+update addons
+   set name = 'Telma no WhatsApp',
+       description = 'A Telma atende também no WhatsApp: o paciente escreve e ela marca, '
+                     'remarca e desmarca. As confirmações já vão incluídas no plano; com '
+                     'o add-on chegam por WhatsApp. Até 1000 mensagens/mês'
+ where id = 'whatsapp';

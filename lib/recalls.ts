@@ -18,6 +18,7 @@ import { sendToPatient } from '@/lib/sms'
  *   the clinic is paused or has left       it is not their patient any more
  *   the patient asked us to stop           an aviso needs no yes, but it obeys a no
  *   nobody ever asked the patient          a campanha needs a yes, and null is no
+ *   the plan has no minutes left           a reminder costs one, see 0052
  *
  * The last two are closed rather than skipped. A row left waiting would be
  * looked at again tomorrow, and the day after, for ever, which is a queue that
@@ -133,6 +134,25 @@ export async function sendDueRecalls(): Promise<RecallReport> {
 
     const used = sentToday.get(clinic.id) ?? 0
     if (used >= DAILY_CAP) {
+      report.held++
+      continue
+    }
+
+    // ── UN MINUTO DEL PLAN, ANTES DE ENVIAR ──────────────────────────────
+    // Un aviso lo escribe una persona y puede apuntar a la lista entera de
+    // pacientes, que es el único gasto de mensajes que no tiene techo. Las
+    // confirmaciones sí lo tienen: sólo sale una cuando se decide una cita, y
+    // las citas entran por llamada.
+    //
+    // Cobrado antes del envío y no después, porque el que falla después es el
+    // mensaje, no el minuto: si Twilio lo rechaza ya hemos intentado enviarlo y
+    // la clínica ha gastado su intento. Y si no queda sitio, el aviso espera en
+    // vez de cancelarse: la clínica compra un pack o llega el mes siguiente, y
+    // en ninguno de los dos casos pierde lo que había programado.
+    const { data: paid } = await admin.rpc('charge_recall_minute', {
+      p_clinic_id: clinic.id,
+    })
+    if (paid !== true) {
       report.held++
       continue
     }

@@ -316,6 +316,9 @@ export interface Dictionary {
     addWhen: string
     addNote: string
     addNoteHint: string
+    /** Said where the reminder is scheduled and nowhere else: it is the one
+     *  moment the cost is about to be incurred and the one reader it concerns. */
+    addCosts: string
     addKind: string
     addKindAviso: string
     addKindCampanha: string

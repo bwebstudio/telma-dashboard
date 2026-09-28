@@ -624,6 +624,11 @@ function Reminders({
             <p className="mt-1 text-sm text-warn">{t.addBodyWarn}</p>
           </div>
 
+          {/* Lo que cuesta, dicho donde está el botón y en ninguna otra parte.
+              Es el momento en que va a gastarse y la única persona a quien le
+              importa. */}
+          <p className="mt-3 text-sm text-ink-mute">{t.addCosts}</p>
+
           <div className="mt-4 rounded-xl bg-surface px-4 py-3">
             <span className="label-caps mb-1 block">{t.preview}</span>
             <p className="text-base text-ink">{preview}</p>

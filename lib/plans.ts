@@ -7,9 +7,9 @@ import type { PlanType } from './types'
 // next to it ("about 300 calls") is an illustration, not the limit.
 export const PLAN_MINUTES: Record<PlanType, number> = {
   essencial: 250,
-  clinica: 750,
-  rede: 2000,
-  personalizado: 2000,
+  clinica: 650,
+  rede: 1600,
+  personalizado: 1600,
 }
 
 export const PLAN_PRICE: Record<PlanType, number | null> = {
@@ -21,8 +21,13 @@ export const PLAN_PRICE: Record<PlanType, number | null> = {
 
 // What one location beyond the three included in Rede costs, and the minutes it
 // adds. Rede is billed per group, not per location.
+//
+// 400 and not 500: at 500 the extra site sold the minute at 0.298 EUR against a
+// cost of 0.222, the same 26% that Rede itself had before 0052. An add-on
+// bought by the customers who use it most is the last place to leave a thin
+// margin.
 export const EXTRA_SITE_PRICE = 149
-export const EXTRA_SITE_MINUTES = 500
+export const EXTRA_SITE_MINUTES = 400
 
 // Charged to the clinic for each minute beyond the plan allowance.
 export const EXTRA_MINUTE_PRICE = 0.35

@@ -283,6 +283,7 @@ export const en: Dictionary = {
     addWhen: 'When',
     addNote: 'What for',
     addNoteHint: 'Only the clinic sees this. The message never names the treatment.',
+    addCosts: 'Counts as one minute of your plan. Booking confirmations do not: those are included.',
     addKind: 'What it is',
     addKindAviso: 'Reminder to come back',
     addKindCampanha: 'Offer or news',

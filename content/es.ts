@@ -283,6 +283,7 @@ export const es: Dictionary = {
     addWhen: 'Cuándo',
     addNote: 'Para qué',
     addNoteHint: 'Esto solo lo ve la clínica. El mensaje nunca dice el tratamiento.',
+    addCosts: 'Cuenta como un minuto de su plan. Las confirmaciones de cita no cuentan: esas van incluidas.',
     addKind: 'Qué es',
     addKindAviso: 'Aviso para volver',
     addKindCampanha: 'Promoción o novedad',

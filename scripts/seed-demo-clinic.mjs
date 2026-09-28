@@ -369,22 +369,31 @@ const appts = [
 
 await api('/rest/v1/appointments', { method: 'POST', body: JSON.stringify(appts) })
 
-// --- One patient record, and the reminders on it -------------------------------
+// --- Patient records, and the reminders on one of them -------------------------
 //
-// One, and not fourteen, and the reason is three screens up: every appointment
-// in this seed carries the same telephone number on purpose, so that pressing
-// Confirmar in a demo sends a real SMS to the telephone on the table instead of
-// to whoever owns an invented number. A record is keyed on (clinic, number).
-// Fourteen names on one number is one person.
-//
-// So the record is Ana Martins, who already has two of the bookings above, and
-// those two are pointed at it. The rest stay unlinked, which is what the panel
-// already expects: it only says "third booking" when there is a before.
+// One per name, not one per number. Every appointment in this seed carries the
+// same telephone on purpose — so that pressing Confirmar in a demo sends a real
+// SMS to the handset on the table rather than to whoever owns an invented
+// number — and until 0049 that meant fourteen names collapsing into one record,
+// each call renaming the last. A household shares a handset; this is what that
+// looks like, and it is now what the panel shows.
+const names = [...new Set(appts.map((a) => a.patient_name))]
+const byName = {}
+for (const name of names) {
+  byName[name] = await api('/rest/v1/rpc/remember_patient', {
+    method: 'POST',
+    body: JSON.stringify({ p_clinic_id: CLINIC, p_name: name, p_phone: DEMO_PHONE }),
+  })
+  await api(
+    `/rest/v1/appointments?clinic_id=eq.${CLINIC}&patient_name=eq.${encodeURIComponent(name)}`,
+    { method: 'PATCH', body: JSON.stringify({ patient_id: byName[name] }) }
+  )
+}
+
+// One of them carries a note and two reminders, so the record has something on
+// it beyond a name and a number.
 const RECORD_NAME = 'Ana Martins'
-const patient = await api('/rest/v1/rpc/remember_patient', {
-  method: 'POST',
-  body: JSON.stringify({ p_clinic_id: CLINIC, p_name: RECORD_NAME, p_phone: DEMO_PHONE }),
-})
+const patient = byName[RECORD_NAME]
 
 await api(`/rest/v1/patients?id=eq.${patient}`, {
   method: 'PATCH',
@@ -392,11 +401,6 @@ await api(`/rest/v1/patients?id=eq.${patient}`, {
     notes: 'Prefere sempre a primeira hora da manhã. Vem de autocarro, por isso avisa se se atrasar.',
   }),
 })
-
-await api(
-  `/rest/v1/appointments?clinic_id=eq.${CLINIC}&patient_name=eq.${encodeURIComponent(RECORD_NAME)}`,
-  { method: 'PATCH', body: JSON.stringify({ patient_id: patient }) }
-)
 
 // One waiting, one already sent. Twelve days out and not today: a demo should
 // show the queue, not put a message on somebody's telephone because a script
@@ -439,6 +443,6 @@ Pronto.
   login      ${EMAIL}
   password   ${PASSWORD}
   marcações  ${appts.length}
-  ficha      ${RECORD_NAME}, com dois avisos
+  fichas     ${names.length}, uma delas com dois avisos
   conversas  ${calls.length}  (${calls.filter((c) => c.channel === 'whatsapp').length} de WhatsApp)
 `)

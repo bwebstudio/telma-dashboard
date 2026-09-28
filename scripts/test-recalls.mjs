@@ -221,4 +221,52 @@ test('a record nobody has heard from in three years is forgotten', async () => {
   assert.deepEqual(left.rows.map((r) => r.id).sort(), [recent, stale].sort())
 })
 
+// ── A NUMBER IS NOT A PERSON ────────────────────────────────────────────────
+// 0046 keyed the record on (clinic, number) and the second person to ring from a
+// household handset renamed the first. These are the three cases that decide
+// whether a record belongs to who it says it does.
+
+test('two people on one handset are two records', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const ana = await patient(CLINIC, 'Ana Torres', '+351910523903')
+  const joao = await patient(CLINIC, 'João Torres', '+351910523903')
+  assert.notEqual(ana, joao, 'the second caller overwrote the first')
+
+  const { rows } = await db.query(
+    `select name from patients where clinic_id = $1 order by name`, [CLINIC]
+  )
+  assert.deepEqual(rows.map((r) => r.name), ['Ana Torres', 'João Torres'])
+})
+
+test('the same person said two ways is one record, and keeps the longer name', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const first = await patient(CLINIC, 'Ana', '+351910523903')
+  const again = await patient(CLINIC, 'Ana Torres', '+351910523903')
+  assert.equal(again, first, 'Ana and Ana Torres came out as two people')
+
+  const { rows } = await db.query(`select name from patients where id = $1`, [first])
+  assert.equal(rows[0].name, 'Ana Torres')
+
+  // And it does not shrink back on the call where she gives only her first name.
+  await patient(CLINIC, 'ana', '+351910523903')
+  const after = await db.query(`select name, count(*) over () as n from patients where clinic_id = $1`, [CLINIC])
+  assert.equal(after.rows[0].name, 'Ana Torres')
+  assert.equal(Number(after.rows[0].n), 1)
+})
+
+test('a name is not a prefix of an unrelated name', async () => {
+  // "Ana" matches "Ana Torres" because the space makes it a whole first name.
+  // "Ana" must not match "Anabela", which is somebody else entirely.
+  await wipe()
+  await clinic(CLINIC)
+  await patient(CLINIC, 'Ana', '+351910523903')
+  await patient(CLINIC, 'Anabela', '+351910523903')
+  const { rows } = await db.query(
+    `select count(*)::int as n from patients where clinic_id = $1`, [CLINIC]
+  )
+  assert.equal(rows[0].n, 2)
+})
+
 test.after(() => db.close())

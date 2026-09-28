@@ -293,7 +293,9 @@ export async function completeOnboarding(
         // How finely the day is cut. The sign-up already asks this as "how
         // often can an appointment start"; it just had nowhere to live before,
         // because the generator baked it into the rows it wrote.
-        slot_minutes: wizard.min_interval_minutes ?? 30,
+        // La rejilla de la agenda sale de la duración, porque es lo que vale
+        // para casi todas las clínicas y es una pregunta menos en el alta.
+        slot_minutes: wizard.min_interval_minutes ?? wizard.appointment_duration_minutes ?? 30,
         address: wizard.address || null,
         price_info: wizard.price_info || null,
         formality: wizard.formality,
@@ -309,7 +311,7 @@ export async function completeOnboarding(
         emergency_protocol: wizard.emergency_protocol || null,
         language: chosenLanguages.includes(clinicLanguage) ? clinicLanguage : chosenLanguages[0],
         appointment_duration_minutes: wizard.appointment_duration_minutes,
-        min_interval_minutes: wizard.min_interval_minutes,
+        min_interval_minutes: wizard.min_interval_minutes ?? wizard.appointment_duration_minutes ?? 30,
         assigned_phone: assignedPhone,
         phone_source: wizard.phone_option === 'new' ? 'provisioned' : 'ported',
         phone_provider_ref: provisioned?.sid ?? null,

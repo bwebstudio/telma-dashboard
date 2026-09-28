@@ -196,11 +196,18 @@ function build(m: Messages) {
         .int()
         .min(5, { error: m.durationMin })
         .max(240, { error: m.durationMax }),
+      // Ya no se pregunta. Era un segundo número, en el mismo paso, que para
+      // casi cualquier clínica vale lo mismo que la duración: si una consulta
+      // dura treinta minutos, las horas empiezan cada treinta. Quien necesite
+      // otra rejilla la cambia en el panel, donde ya existe ese mando
+      // (lib/actions/availability.ts), y donde además ve la agenda mientras lo
+      // toca. Sigue aceptándose por si alguien lo manda, pero nadie lo pide.
       min_interval_minutes: z.coerce
         .number()
         .int()
         .min(5, { error: m.intervalMin })
-        .max(240, { error: m.intervalMax }),
+        .max(240, { error: m.intervalMax })
+        .optional(),
     })
     .refine((s) => !s.weekdays.closed || !s.saturday.closed || !s.sunday.closed, {
       error: m.neverOpen,
@@ -233,6 +240,12 @@ function build(m: Messages) {
       .default({}),
     // Empty means Telma does not discuss prices, which is a real answer and the
     // prompt says so out loud rather than staying silent about it.
+    // Fuera del alta. Convivía con la tabla de precios por servicio de arriba,
+    // hasta el punto de que su propia ayuda decía "los precios de cada
+    // servicio se ponen arriba": dos sitios para lo mismo, y el de abajo era el
+    // peor de los dos porque no queda junto a lo que cobra. El campo sigue
+    // existiendo y se edita en el panel, para las frases que una tabla no
+    // aguanta ("el láser varía con la zona").
     price_info: z.string().trim().max(1000, { error: m.priceTooLong }).optional().default(''),
   })
 

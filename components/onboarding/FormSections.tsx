@@ -583,7 +583,16 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      {/* One number, not two.
+          Beside it there used to be "interval between appointments", which is
+          the grid the hours sit on: with a thirty minute appointment and a
+          fifteen minute grid, times start at nine, quarter past, half past. A
+          real distinction, and one that almost every clinic answers with the
+          same number as the duration -- so it was a second question, on the
+          same screen, whose right answer was the one just given. It comes from
+          the duration now, and a clinic that wants a different grid changes it
+          in the panel, where the diary is on screen while they do it. */}
+      <div className="max-w-xs">
         <Select
           name="appointment_duration_minutes"
           label={t.duration}
@@ -593,21 +602,6 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
           onChange={(v) => set({ appointment_duration_minutes: Number(v) })}
         >
           {[15, 20, 30, 45, 60, 90].map((m) => (
-            <option key={m} value={m}>
-              {m} {t.minutes}
-            </option>
-          ))}
-        </Select>
-
-        <Select
-          name="min_interval_minutes"
-          label={t.interval}
-          hint={t.intervalHelp}
-          error={errors.min_interval_minutes}
-          value={String(values.min_interval_minutes ?? 30)}
-          onChange={(v) => set({ min_interval_minutes: Number(v) })}
-        >
-          {[15, 20, 30, 45, 60].map((m) => (
             <option key={m} value={m}>
               {m} {t.minutes}
             </option>
@@ -851,6 +845,23 @@ export function TelmaStep({
 }) {
   const t = copyFor(locale)
   const chosen: string[] = values.selected_languages ?? []
+
+  // The emergency number, prefilled from the one they just gave for transfers.
+  //
+  // A clinic whose answer to "when Telma cannot help" is "put the call
+  // through" has already typed the number a call goes to. The emergency box
+  // sits a few centimetres below asking for a number a call goes to. For most
+  // clinics it is the same line, and typing it twice is the sort of thing that
+  // makes a sign-up feel like paperwork. It is prefilled and editable, not
+  // merged: an emergency and a general enquiry can legitimately ring different
+  // phones, and the ones where that matters are exactly the ones where getting
+  // it wrong matters.
+  useEffect(() => {
+    if (!values.emergency_number && values.fallback_policy === 'transfer' && values.fallback_number) {
+      set({ emergency_number: values.fallback_number })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.fallback_number, values.fallback_policy])
   const atMax = maxLanguages !== null && chosen.length >= maxLanguages
   const greeting: string = values.greeting_language ?? chosen[0] ?? ''
   const fallback: string = values.fallback_policy ?? 'message'

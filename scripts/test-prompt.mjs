@@ -1532,10 +1532,24 @@ test('the number and the name are asked for one at a time', () => {
 // the caller's own -- so whoever picked up may not be who is on the record, and
 // greeting them by that name tells a stranger who else lives in the house.
 test('a known number saves a question and never volunteers a name', () => {
-  const SAVES = { pt: '**Não voltas a pedir o telefone**', es: '**No vuelves a pedir el teléfono**' }
+  // Not "don't ask for the telephone", which is what it used to say and what
+  // was wrong: a handset can be a household, and the person booking may not be
+  // the one whose number it is. What is saved is the nine digits, not the
+  // question of whose number to write down.
+  const SAVES = {
+    pt: '**Não pedes os nove algarismos outra vez**',
+    es: '**No pides los nueve dígitos otra vez**',
+  }
   const SILENT = {
     pt: '**Nunca dizes tu o nome que tens em ficha**',
     es: '**Nunca dices tú el nombre que tienes en ficha**',
+  }
+  // And it still has to ask whose number to write down, because that is the
+  // whole correction: a booking filed under the handset's owner sends the
+  // confirmation to the wrong telephone.
+  const ASKS_WHOSE = {
+    pt: 'se o contacto para esta marcação é este mesmo número',
+    es: 'si el contacto para esta cita es este mismo número',
   }
   for (const lang of ['pt', 'es']) {
     const known = buildPrompt(
@@ -1543,6 +1557,10 @@ test('a known number saves a question and never volunteers a name', () => {
       lang
     )
     assert.ok(known.text.includes(SAVES[lang]), `${lang}: asks again for a number it has`)
+    assert.ok(
+      known.text.includes(ASKS_WHOSE[lang]),
+      `${lang}: assumes the handset's number is the caller's`
+    )
     assert.ok(known.text.includes(SILENT[lang]), `${lang}: may read a name off the record`)
     // The name itself must never reach the sheet. Nothing can say what is not
     // written down.

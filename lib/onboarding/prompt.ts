@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-09-27.2'
+export const PROMPT_VERSION = '2026-09-28.1'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -602,7 +602,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     `A chamada entra do ${n}, e isso **não é o telefone de contacto da pessoa**. **Perguntas sempre o número**: "qual é o melhor número para a clínica lhe ligar?". Nunca o ofereces já dito à espera de um "sim".`,
   callerNumberUnknown: 'Não sabes de que número estão a ligar, por isso o telefone tens de o perguntar.',
   knownPatient:
-    'Este número já é de um paciente desta clínica, e o contacto dele é este mesmo. **Não voltas a pedir o telefone**: já o tens. Pedes só o nome, para confirmares para quem é a consulta — pode ser para outra pessoa da casa. **Nunca dizes tu o nome que tens em ficha**, nem para confirmar: quem atende o telefone pode não ser quem lá está guardado, e dizê-lo é contar a um estranho quem mais vive naquela casa.',
+    'Este número já é de um paciente desta clínica. **Não pedes os nove algarismos outra vez**: perguntas só se o contacto para esta marcação é este mesmo número, e se disserem que não, apontas o que derem. Numa casa há mais do que uma pessoa e a consulta pode ser para quem tem outro telemóvel. Pedes sempre o nome. **Nunca dizes tu o nome que tens em ficha**, nem para confirmar: quem atende o telefone pode não ser quem lá está guardado, e dizê-lo é contar a um estranho quem mais vive naquela casa.',
   services: 'Serviços que podes marcar',
   alsoDoes: 'Também faz',
   prices: 'Preços',
@@ -922,7 +922,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     `La llamada entra desde el ${n}, y eso **no es el teléfono de contacto de la persona**. **Preguntas siempre el número**: "¿cuál es el mejor número para que la clínica le llame?". Nunca se lo ofreces ya dicho esperando un "sí".`,
   callerNumberUnknown: 'No sabes desde qué número llaman, así que el teléfono sí tienes que preguntarlo.',
   knownPatient:
-    'Este número ya es de un paciente de esta clínica, y su contacto es este mismo. **No vuelves a pedir el teléfono**: ya lo tienes. Pides sólo el nombre, para confirmar para quién es la cita — puede ser para otra persona de la casa. **Nunca dices tú el nombre que tienes en ficha**, ni para confirmar: quien coge el teléfono puede no ser quien está guardado, y decirlo es contarle a un desconocido quién más vive en esa casa.',
+    'Este número ya es de un paciente de esta clínica. **No pides los nueve dígitos otra vez**: preguntas sólo si el contacto para esta cita es este mismo número, y si dicen que no, apuntas el que den. En una casa hay más de una persona y la cita puede ser para quien tiene otro móvil. Pides siempre el nombre. **Nunca dices tú el nombre que tienes en ficha**, ni para confirmar: quien coge el teléfono puede no ser quien está guardado, y decirlo es contarle a un desconocido quién más vive en esa casa.',
   services: 'Servicios que puedes citar',
   alsoDoes: 'También hace',
   prices: 'Precios',

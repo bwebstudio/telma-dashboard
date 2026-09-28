@@ -99,7 +99,9 @@ export const es: Dictionary = {
     exitView: 'Salir de esta vista',
   },
   clinicNav: {
-    hoje: 'Hoy',
+    // Ver el comentario en pt.ts: el menú y el título de la página decían
+    // cosas distintas del mismo sitio.
+    hoje: 'Agenda',
     marcacoes: 'Citas',
     horarios: 'Horarios',
     chamadas: 'Conversaciones',
@@ -124,6 +126,7 @@ export const es: Dictionary = {
   },
   agenda: {
     title: 'Agenda',
+    viewDay: 'Día',
     greeting: 'El día de tu clínica, siempre al día.',
     live: 'En directo',
     liveLost: 'Sin conexión — reconectando',

@@ -9,6 +9,8 @@ import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
+import { PlannerSection } from '@/components/clinic/PlannerSection'
+import { ViewSwitcher } from '@/components/clinic/ViewSwitcher'
 import { getClinicWithPlan, getMinutePackOffer } from '@/lib/clinic-utils'
 import { percentUsed } from '@/lib/purchase-utils'
 import { IconPhone, IconWhatsApp, IconBookings, IconClose, IconCheck } from '@/components/icons'
@@ -28,15 +30,27 @@ export const dynamic = 'force-dynamic'
 export default async function AgendaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ d?: string }>
+  searchParams: Promise<{ d?: string; v?: string; p?: string }>
 }) {
-  const { d } = await searchParams
+  const { d, v, p } = await searchParams
   const { locale, dict } = await getDict()
   const { clinicId, clinic, readOnly } = await requireClinicContext()
   const supabase = await createClient()
 
   const tz = clinic?.timezone || 'Europe/Lisbon'
   const now = new Date()
+
+  // ── ONE SCREEN, THREE ZOOMS ───────────────────────────────────────────────
+  // The day, the week and the month are the same diary looked at from
+  // different distances, and they were in two different places: the day here,
+  // the other two inside Horários, under Configuração. Somebody wanting to
+  // know what Thursday looks like was being sent to a settings page.
+  //
+  // The day stays the default, because it is what the clinic opens the panel
+  // for every morning. The counters, the minutes and the band belong to it and
+  // not to the others: "what Telma did today" does not become a different
+  // question because somebody is looking at November.
+  const view = v === 'semana' ? 'semana' : v === 'mes' ? 'mes' : 'dia'
   const day = (d && fromDayKey(d)) || now
   const dayStart = startOfDayIn(tz, day)
   const dayEnd = endOfDayIn(tz, day)
@@ -145,6 +159,16 @@ export default async function AgendaPage({
         <div>
           <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
           <p className="mt-1 text-lg text-ink-soft">{t.greeting}</p>
+          <div className="mt-4">
+            <ViewSwitcher
+              current={view}
+              labels={{
+                dia: t.viewDay,
+                semana: dict.horarios.viewWeek,
+                mes: dict.horarios.viewMonth,
+              }}
+            />
+          </div>
         </div>
         <LiveBar
           clinicId={clinicId}
@@ -157,6 +181,23 @@ export default async function AgendaPage({
         />
       </div>
 
+      {/* Week and month: the same diary, further away. Everything between here
+          and the day list is about today, so none of it is drawn. */}
+      {view !== 'dia' && (
+        <PlannerSection
+          clinicId={clinicId}
+          clinic={clinic ?? {}}
+          view={view}
+          pointer={(p && fromDayKey(p)) || now}
+          tz={tz}
+          dict={dict}
+          locale={locale}
+          base="/hoje"
+        />
+      )}
+
+      {view === 'dia' && (
+        <>
       {minutesUrgent && <div className="mb-8">{minutesCard}</div>}
 
       {/* The order here is deliberate and it is not "most urgent first".
@@ -234,6 +275,8 @@ export default async function AgendaPage({
         isToday={isToday}
         readOnly={readOnly}
       />
+        </>
+      )}
     </>
   )
 }

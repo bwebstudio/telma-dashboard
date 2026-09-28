@@ -99,7 +99,9 @@ export const en: Dictionary = {
     exitView: 'Leave this view',
   },
   clinicNav: {
-    hoje: 'Today',
+    // See the comment in pt.ts: the nav and the page title named the same
+    // screen two different things.
+    hoje: 'Agenda',
     marcacoes: 'Bookings',
     horarios: 'Hours',
     chamadas: 'Conversations',
@@ -124,6 +126,7 @@ export const en: Dictionary = {
   },
   agenda: {
     title: 'Agenda',
+    viewDay: 'Day',
     greeting: 'Your clinic day, always up to date.',
     live: 'Live',
     liveLost: 'Connection lost — reconnecting',

@@ -14,6 +14,7 @@ export function PlannerNav({
   prevKey,
   nextKey,
   todayHref,
+  base,
   label,
   labels,
 }: {
@@ -21,6 +22,10 @@ export function PlannerNav({
   prevKey: string
   nextKey: string
   todayHref: string
+  /** The route this is being drawn on. It was hardcoded to /horarios, which
+   *  was true while the planner lived there and stopped being true when the
+   *  calendar moved to the agenda. */
+  base: string
   /** The week or month currently on screen, already formatted. */
   label: string
   labels: {
@@ -33,7 +38,7 @@ export function PlannerNav({
 }) {
   const tab = (value: PlannerView, text: string) => (
     <Link
-      href={`/horarios?v=${value}`}
+      href={`${base}?v=${value}`}
       aria-current={view === value ? 'page' : undefined}
       className={`inline-flex min-h-[2.5rem] items-center rounded-pill px-4 text-base font-medium transition-colors ${
         view === value ? 'bg-ink text-white' : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
@@ -45,7 +50,7 @@ export function PlannerNav({
 
   const step = (key: string, text: string, back?: boolean) => (
     <Link
-      href={`/horarios?v=${view}&p=${key}`}
+      href={`${base}?v=${view}&p=${key}`}
       aria-label={text}
       className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line-strong text-ink-soft hover:border-ink hover:text-ink"
     >

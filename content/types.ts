@@ -141,6 +141,7 @@ export interface Dictionary {
   // The clinic's home screen: the day, and what needs an answer before it.
   agenda: {
     title: string
+    viewDay: string
     greeting: string
     live: string
     liveLost: string

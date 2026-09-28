@@ -99,7 +99,11 @@ export const pt: Dictionary = {
     exitView: 'Sair desta vista',
   },
   clinicNav: {
-    hoje: 'Hoje',
+    // 'Agenda', não 'Hoje'. O menu dizia uma coisa e o título da
+    // página dizia outra, para o mesmo ecrã, e quem o lia tinha de descobrir
+    // que eram o mesmo sítio. E a página mostra ontem e amanhã, por isso
+    // 'Agenda' é a que é verdade das duas.
+    hoje: 'Agenda',
     marcacoes: 'Marcações',
     horarios: 'Horários',
     chamadas: 'Conversas',
@@ -124,6 +128,7 @@ export const pt: Dictionary = {
   },
   agenda: {
     title: 'Agenda',
+    viewDay: 'Dia',
     greeting: 'O dia da sua clínica, sempre a par.',
     live: 'Ao vivo',
     liveLost: 'Sem ligação — a reconectar',

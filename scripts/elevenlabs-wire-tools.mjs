@@ -529,17 +529,26 @@ const AGENT_SPEC = {
       // mano y `randomize_fillers` dan la variedad que se buscaba al
       // encenderlo, sin que haya un idioma que elegir.
       soft_timeout_config: {
-        // Três segundos. Esteve em 3, subiu a 4.5 e a 6 para não sobrepor a
-        // frase da própria Telma, e volta porque o problema é outro: quem liga
-        // não sabe que há uma espera. Nove segundos de silêncio antes da
-        // primeira palavra fazem uma pessoa normal falar por cima, e a seguir
-        // são dois a falar ao mesmo tempo.
+        // Cinco segundos, e o número deixa de andar de um lado para o outro
+        // porque o princípio passa a estar escrito: **isto só existe para uma
+        // espera que quem liga não consegue explicar.**
         //
-        // A sobreposição que fez subir isto já está resolvida do outro lado: a
-        // base diz-lhe, por palavras, que não comece por "deixe ver", "um
-        // momento", "ora bem" nem "pronto", que são precisamente as quatro
-        // desta lista. As duas vozes deixaram de partilhar vocabulário.
-        timeout_seconds: 3,
+        // Esteve em 3, subiu a 4.5 e a 6 para não pisar a frase da Telma,
+        // desceu outra vez a 3 quando havia nove segundos de silêncio antes da
+        // primeira palavra. Esses nove segundos eram o `start_procedure`, e
+        // desapareceram quando a marcação e a despedida voltaram ao núcleo
+        // (f72894f). O silêncio que isto tapava já não existe.
+        //
+        // As esperas que restam anuncia-as ela própria: `force_pre_tool_speech`
+        // está ligado na agenda e na reserva, e é ela quem diz "só um momento,
+        // que vou ver a disponibilidade". O registo da chamada não o tem, de
+        // propósito, porque é invisível — e foi aí que a três segundos saiu um
+        // "Deixe ver..." colado à frente de uma boa notícia.
+        //
+        // Cinco é mais longo do que qualquer geração normal e mais curto do que
+        // uma avaria. Se voltar a aparecer onde não faz falta, o que está
+        // errado é a ferramenta que a provoca, não este número.
+        timeout_seconds: 5,
         // "Já lhe digo..." saiu daqui. Promete uma resposta a uma pergunta,
         // e a plataforma di-lo sempre que uma geração demora — incluindo antes
         // de registar a chamada e antes de se despedir, onde não há pergunta

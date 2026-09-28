@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
@@ -8,12 +7,12 @@ import { AttentionBand } from '@/components/clinic/AttentionBand'
 import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
+import { DayTally } from '@/components/clinic/DayTally'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
 import { PlannerSection } from '@/components/clinic/PlannerSection'
 import { ViewSwitcher } from '@/components/clinic/ViewSwitcher'
 import { getClinicWithPlan, getMinutePackOffer } from '@/lib/clinic-utils'
 import { percentUsed } from '@/lib/purchase-utils'
-import { IconPhone, IconWhatsApp, IconBookings, IconClose, IconCheck } from '@/components/icons'
 import {
   dayKeyIn,
   dayIn,
@@ -198,58 +197,23 @@ export default async function AgendaPage({
 
       {view === 'dia' && (
         <>
+      {/* ── THE ORDER, AND WHY IT CHANGED ────────────────────────────────────
+          It used to be: what Telma handled, then what needs an answer, then
+          the day. The reasoning was that opening onto a stack of problems
+          reads badly at eight in the morning, and that is true. What it cost
+          was that the day — the thing this screen exists for — started below
+          the fold, under five counter cards, a billing card and a band.
+
+          The reassurance is kept and the cost is not: the tally is one line
+          instead of five cards, and it sits under the day rather than over it.
+          Somebody arriving still meets a calm line before a list of work; they
+          just meet the list on the same screen.
+
+          So: which day, the day itself, then what is going on elsewhere, then
+          the money. Subject first, annotations after. */}
       {minutesUrgent && <div className="mb-8">{minutesCard}</div>}
 
-      {/* The order here is deliberate and it is not "most urgent first".
-          Opening onto a stack of things that need answering reads as a list of
-          problems, and a receptionist arriving at eight in the morning bounces
-          off it. So: what Telma already handled, then what needs an answer,
-          then the day itself. Reassurance, then work, then the plan. */}
-      <section className="mb-10">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-ink">{t.doneTitle}</h2>
-          <Link href="/conversas" className="text-base text-brand-accent hover:text-brand-hover">
-            {t.seeConversations}
-          </Link>
-        </div>
-        <dl className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
-          <Tally icon={<IconPhone className="h-5 w-5" />} label={t.doneCalls} value={counts.calls} />
-          {clinic?.addon_whatsapp && (
-            <Tally
-              icon={<IconWhatsApp className="h-5 w-5" />}
-              label={t.doneWhatsapp}
-              value={counts.whatsapp}
-            />
-          )}
-          <Tally
-            icon={<IconBookings className="h-5 w-5" />}
-            label={t.doneBookings}
-            value={counts.bookings}
-          />
-          <Tally icon={<IconCheck className="h-5 w-5" />} label={t.doneInfo} value={counts.info} />
-          <Tally
-            icon={<IconClose className="h-5 w-5" />}
-            label={t.doneCancelled}
-            value={counts.cancelled}
-            tone={counts.cancelled > 0 ? 'warn' : undefined}
-          />
-        </dl>
-
-        {!minutesUrgent && minutesCard && <div className="mt-4">{minutesCard}</div>}
-      </section>
-
-      <AttentionBand
-        pending={pending}
-        cancelled={cancelled}
-        dict={dict}
-        locale={locale}
-        tz={tz}
-        readOnly={readOnly}
-        serverNow={now.toISOString()}
-        visibleDay={dayKey}
-      />
-
-      <div className="mb-4 mt-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h2 className="text-xl font-semibold text-ink">
           {weekdayDateIn(day.toISOString(), locale, tz)}
         </h2>
@@ -275,39 +239,29 @@ export default async function AgendaPage({
         isToday={isToday}
         readOnly={readOnly}
       />
+
+      {/* Only ever the days that are not on screen, so it reads as "and
+          elsewhere" rather than as a second copy of the list above it. */}
+      <div className="mt-8">
+        <AttentionBand
+          pending={pending}
+          cancelled={cancelled}
+          dict={dict}
+          locale={locale}
+          tz={tz}
+          readOnly={readOnly}
+          serverNow={now.toISOString()}
+          visibleDay={dayKey}
+        />
+      </div>
+
+      {isToday && <DayTally counts={counts} whatsapp={Boolean(clinic?.addon_whatsapp)} dict={dict} />}
+
+      {/* The money, last and quiet. It shouts for itself when it has to: past
+          eighty per cent it moves to the top of the screen, above everything. */}
+      {!minutesUrgent && minutesCard && <div className="mt-8">{minutesCard}</div>}
         </>
       )}
     </>
-  )
-}
-
-function Tally({
-  icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  tone?: 'warn'
-}) {
-  return (
-    // On a phone the label and the figure sit on one line. Stacked, five of
-    // these filled three rows and pushed the day off the screen — which is the
-    // opposite of what a summary is for.
-    <div className="card flex items-center justify-between gap-3 p-3 sm:block sm:p-4">
-      <div className={`flex items-center gap-2 ${tone === 'warn' ? 'text-warn' : 'text-ink-mute'}`}>
-        {icon}
-        <dt className="label-caps text-inherit">{label}</dt>
-      </div>
-      <dd
-        className={`shrink-0 text-2xl font-semibold tabular-nums sm:mt-1 sm:text-3xl ${
-          tone === 'warn' ? 'text-warn' : 'text-ink'
-        }`}
-      >
-        {value}
-      </dd>
-    </div>
   )
 }

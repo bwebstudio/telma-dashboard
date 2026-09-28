@@ -276,6 +276,14 @@ export interface Dictionary {
 
     notes: string
     notesHint: string
+    /** The identifier a receptionist types and Telma never asks for. */
+    taxId: string
+    taxIdHint: string
+    /** Two records that look like one person. */
+    maybeSame: string
+    maybeSameHint: string
+    merge: string
+    mergeWarn: string
     history: string
     /** The calls, matched to this person by their number. */
     calls: string

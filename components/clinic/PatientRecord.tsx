@@ -10,6 +10,8 @@ import { fill } from '@/lib/fill'
 import { Badge, SectionTitle, APPOINTMENT_TONE, CALL_TONE } from '@/components/ui'
 import {
   savePatientNotes,
+  savePatientTaxId,
+  mergePatients,
   setReminders,
   setMarketing,
   createRecall,
@@ -53,6 +55,7 @@ export function PatientRecord({
   appointments,
   recalls,
   calls,
+  twins,
   clinic,
   dict,
   locale,
@@ -64,6 +67,9 @@ export function PatientRecord({
   /** Matched by telephone number, so they fall off as the numbers are cleared
    *  at ninety days. See the note on the page that fetches them. */
   calls: Call[]
+  /** Other records in this clinic that look like the same person: same name, or
+   *  same tax number. Candidates only — a person decides. */
+  twins: Patient[]
   clinic: ClinicBits
   dict: Dictionary
   locale: Locale
@@ -117,7 +123,52 @@ export function PatientRecord({
         </p>
       )}
 
+      {/* ── TWO RECORDS THAT MAY BE ONE PERSON ──────────────────────────────
+          Above everything, because somebody who opens a record and works on it
+          for a minute before noticing there is a second one has done the minute
+          twice. Never merged automatically: a matching name is weak evidence,
+          the tax number is the clinic's own, and the merge cannot be undone. */}
+      {!readOnly && twins.length > 0 && (
+        <section className="rounded-card border border-warn/40 bg-warn-soft/40 p-4">
+          <p className="text-base font-medium text-warn">{t.maybeSame}</p>
+          <p className="mt-1 text-sm text-ink-soft">{t.maybeSameHint}</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {twins.map((other) => (
+              <li
+                key={other.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3"
+              >
+                <span className="min-w-0">
+                  <Link
+                    href={`/pacientes/${other.id}`}
+                    className="text-base font-medium text-ink underline decoration-line-strong underline-offset-4"
+                  >
+                    {other.name}
+                  </Link>
+                  <span className="ml-2 text-base text-ink-soft">{other.phone}</span>
+                  {other.tax_id && (
+                    <span className="ml-2 text-sm text-ink-mute">{other.tax_id}</span>
+                  )}
+                </span>
+                <span className="flex items-center gap-3">
+                  <span className="text-sm text-ink-mute">{t.mergeWarn}</span>
+                  <button
+                    className="btn-secondary"
+                    disabled={pending}
+                    onClick={() => run(() => mergePatients(patient.id, other.id))}
+                  >
+                    {t.merge}
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <Notes patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
+
+      <TaxId patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
 
       <Consent patient={patient} t={t} locale={locale} run={run} pending={pending} readOnly={readOnly} />
 
@@ -242,6 +293,53 @@ function Notes({
           className="btn-primary mt-3"
           disabled={pending}
           onClick={() => run(() => savePatientNotes(patient.id, value))}
+        >
+          {dict.common.save}
+        </button>
+      )}
+    </section>
+  )
+}
+
+/**
+ * The tax number, and the one line on this screen explaining why Telma does not
+ * ask for it: a receptionist types it with the person in front of them. Reading
+ * an identifier out to somebody for them to agree with is the thing neither we
+ * nor the clinic software we integrate with will do.
+ */
+function TaxId({
+  patient,
+  t,
+  dict,
+  run,
+  pending,
+  readOnly,
+}: {
+  patient: Patient
+  t: Copy
+  dict: Dictionary
+  run: Run
+  pending: boolean
+  readOnly: boolean
+}) {
+  const [value, setValue] = useState(patient.tax_id ?? '')
+  const dirty = value.trim() !== (patient.tax_id ?? '')
+  return (
+    <section>
+      <SectionTitle>{t.taxId}</SectionTitle>
+      <p className="mb-3 text-sm text-ink-mute">{t.taxIdHint}</p>
+      <input
+        value={value}
+        disabled={readOnly}
+        aria-label={t.taxId}
+        onChange={(e) => setValue(e.target.value)}
+        className="field-input max-w-xs"
+      />
+      {!readOnly && dirty && (
+        <button
+          className="btn-primary mt-3 block"
+          disabled={pending}
+          onClick={() => run(() => savePatientTaxId(patient.id, value))}
         >
           {dict.common.save}
         </button>

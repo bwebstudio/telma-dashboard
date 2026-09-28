@@ -209,3 +209,50 @@ export async function createPatient(name: string, phone: string): Promise<string
   refresh()
   return (data as string | null) ?? null
 }
+
+/**
+ * The NIF, typed at the desk.
+ *
+ * Telma never asks for it, and this is the only door it comes through. The
+ * clinic software we integrate with has the rule in one line — "é o utente que
+ * o fornece, não o contrário" — and it is the same rule we already apply to the
+ * name: you do not read an identifier out to somebody for them to agree with.
+ *
+ * Its whole purpose is the function below: two records carrying the same one
+ * are the same person, said by the clinic rather than guessed by us.
+ */
+export async function savePatientTaxId(patientId: string, taxId: string) {
+  const cid = await writableClinicId()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('patients')
+    .update({ tax_id: taxId.trim().slice(0, 32) || null })
+    .eq('id', patientId)
+    .eq('clinic_id', cid)
+  if (error) throw new Error(error.message)
+  refresh(patientId)
+}
+
+/**
+ * Two records into one.
+ *
+ * The decision is the clinic's and it is not reversible, which is why nothing
+ * guesses it: a matching NIF or a matching name puts two records next to each
+ * other on screen, and a person presses the button.
+ *
+ * Through the admin client, like the other two: `merge_patients` is security
+ * definer and revoked from every logged-in role, and the clinic it acts for is
+ * the one this session belongs to and never a value from a browser.
+ */
+export async function mergePatients(keepId: string, dropId: string) {
+  const cid = await writableClinicId()
+  const admin = createAdminClient()
+  const { error } = await admin.rpc('merge_patients', {
+    p_clinic_id: cid,
+    p_keep: keepId,
+    p_drop: dropId,
+  })
+  if (error) throw new Error(error.message)
+  refresh(keepId)
+  revalidatePath(`/pacientes/${dropId}`)
+}

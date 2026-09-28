@@ -44,6 +44,10 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
   // So old calls fall off this record as their numbers are cleared, which is
   // the retention working rather than the join failing, and the screen says so.
   const digits = patient.phone.replace(/\D/g, '').slice(-9)
+  // Every number this person has rung from, the main one and any kept by a
+  // merge. A merged record whose calls only matched the first number would look
+  // emptier after the merge than before it.
+  const allDigits = [digits, ...(patient.other_digits ?? [])].filter((d) => d.length === 9)
 
   const [{ data: appts }, { data: recalls }, { data: calls }] = await Promise.all([
     supabase
@@ -60,16 +64,36 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
       .eq('patient_id', id)
       .order('due_on', { ascending: false })
       .limit(30),
-    digits.length === 9
+    allDigits.length
       ? supabase
           .from('calls')
           .select('*')
           .eq('clinic_id', clinicId)
-          .ilike('from_phone', `%${digits}`)
+          .or(allDigits.map((d) => `from_phone.ilike.%${d}`).join(','))
           .order('created_at', { ascending: false })
           .limit(30)
       : Promise.resolve({ data: [] }),
   ])
+
+  // ── IS THERE A SECOND RECORD FOR THIS PERSON? ─────────────────────────────
+  // The error 0049 leaves standing: one person, two telephones, two records.
+  // Nothing in the data can close it, so this only puts the candidates next to
+  // each other and a person decides. Matched on the tax number when the clinic
+  // has typed one, and otherwise on the name, which is weaker and is why the
+  // screen says "may be" rather than "is".
+  const sameAs: string[] = []
+  if (patient.tax_key) sameAs.push(`tax_key.eq.${patient.tax_key}`)
+  if (patient.name_key) sameAs.push(`name_key.eq.${patient.name_key}`)
+  const { data: twins } = sameAs.length
+    ? await supabase
+        .from('patients')
+        .select('*')
+        .eq('clinic_id', clinicId)
+        .neq('id', id)
+        .or(sameAs.join(','))
+        .order('last_seen_at', { ascending: false })
+        .limit(5)
+    : { data: [] }
 
   return (
     <>
@@ -84,6 +108,7 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
         appointments={(appts ?? []) as Appointment[]}
         recalls={(recalls ?? []) as PatientRecall[]}
         calls={(calls ?? []) as Call[]}
+        twins={(twins ?? []) as Patient[]}
         clinic={{
           name: clinic?.name ?? '',
           language: clinic?.language ?? locale,

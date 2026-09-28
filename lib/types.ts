@@ -400,6 +400,18 @@ export interface Patient {
   clinic_id: string
   name: string
   phone: string
+  /** The last nine digits of every other number this person has rung from,
+   *  gathered when two records were merged. Without it a merge lasts until the
+   *  next call from the other telephone. */
+  other_digits?: string[] | null
+  /** Optional, and never asked for by Telma: a receptionist types it with the
+   *  person in front of them. Its purpose is to say that two records are one
+   *  person, which no telephone number can. */
+  tax_id?: string | null
+  /** The comparable form of it: uppercased, letters and digits only. */
+  tax_key?: string | null
+  /** The comparable form of the name, for spotting a second record. */
+  name_key?: string | null
   /** The clinic's own note. Not clinical history: that belongs in the clinic's
    *  software, and this field is the one thing on the record Telma is never
    *  given, so nothing written here can be read out to whoever rings. */

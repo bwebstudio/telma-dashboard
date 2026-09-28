@@ -66,9 +66,15 @@ export default async function PacientesPage({
     // The name as typed, or the digits of the number. A receptionist holding a
     // telephone has the number and not the spelling.
     const digits = term.replace(/\D/g, '')
-    list = digits.length >= 3
-      ? list.ilike('phone', `%${digits}%`)
-      : list.ilike('name', `%${term}%`)
+    // Nine digits can be a number a merge kept, so those are looked for in both
+    // places. Fewer than nine is a fragment somebody is typing, and a fragment
+    // only matches the main number.
+    list =
+      digits.length >= 9
+        ? list.or(`phone.ilike.%${digits.slice(-9)}%,other_digits.cs.{${digits.slice(-9)}}`)
+        : digits.length >= 3
+          ? list.ilike('phone', `%${digits}%`)
+          : list.ilike('name', `%${term}%`)
   }
 
   const [{ data, error }, { count: total }, { data: queue }] = await Promise.all([

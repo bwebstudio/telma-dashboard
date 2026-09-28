@@ -142,7 +142,10 @@ export async function POST(request: Request) {
       .from('patients')
       .select('name')
       .eq('clinic_id', clinicId)
-      .eq('phone_digits', callerDigits)
+      // Their main number, or one they have rung from before and that survived
+      // a merge. Missing the second kind would undo every merge on the next
+      // call from the other telephone.
+      .or(`phone_digits.eq.${callerDigits},other_digits.cs.{${callerDigits}}`)
       .order('last_seen_at', { ascending: false })
       .limit(1)
     knownPatient = (found as Array<{ name: string }> | null)?.[0]?.name ?? null

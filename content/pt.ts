@@ -250,6 +250,12 @@ export const pt: Dictionary = {
 
     notes: 'Notas',
     notesHint: 'O que ajuda a atender esta pessoa: "prefere manhãs", "vem com a filha". O histórico clínico fica no software da clínica. A Telma nunca lê este campo.',
+    taxId: 'NIF',
+    taxIdHint: 'Opcional, e a Telma nunca o pergunta: escreve-o quem está ao balcão com a pessoa à frente. Serve para saber que duas fichas são a mesma pessoa.',
+    maybeSame: 'Pode ser a mesma pessoa',
+    maybeSameHint: 'Mesmo nome ou mesmo NIF, noutro número. Juntar traz as marcações, os avisos e as notas para aqui, e guarda também o outro telefone.',
+    merge: 'Juntar nesta ficha',
+    mergeWarn: 'Não se pode desfazer.',
     history: 'Marcações',
     calls: 'Conversas',
     callsEmpty: 'Sem conversas guardadas.',

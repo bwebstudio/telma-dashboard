@@ -269,4 +269,120 @@ test('a name is not a prefix of an unrelated name', async () => {
   assert.equal(rows[0].n, 2)
 })
 
+// ── TWO RECORDS, ONE PERSON ─────────────────────────────────────────────────
+// The error 0049 leaves standing: somebody who rings from their mobile on Monday
+// and the house telephone on Thursday. Nothing in the data can close it, so a
+// person does, and the test that matters is that the merge does not quietly
+// lose what it was merging.
+
+async function merge(keep, drop) {
+  const { rows } = await db.query(`select merge_patients($1, $2, $3) as r`, [CLINIC, keep, drop])
+  return rows[0].r
+}
+
+test('a merge keeps the number it was split by', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const mobile = await patient(CLINIC, 'Domingos Coelho', '+351910523903')
+  const landline = await patient(CLINIC, 'Domingos Coelho', '+351220000111')
+  assert.notEqual(mobile, landline)
+
+  const r = await merge(mobile, landline)
+  assert.equal(r.phone_kept, '220000111')
+
+  // And the next call from the landline finds the merged record rather than
+  // opening a third one, which is the whole point.
+  const again = await patient(CLINIC, 'Domingos Coelho', '+351220000111')
+  assert.equal(again, mobile)
+  const { rows } = await db.query(`select count(*)::int as n from patients where clinic_id = $1`, [CLINIC])
+  assert.equal(rows[0].n, 1)
+})
+
+test('a merge moves the bookings and the reminders, and drops neither note', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const keep = await patient(CLINIC, 'Domingos Coelho', '+351910523903')
+  const drop = await patient(CLINIC, 'Domingos Coelho', '+351220000111')
+  await db.query(`update patients set notes = 'Prefere manhãs' where id = $1`, [keep])
+  await db.query(`update patients set notes = 'Vem com a mãe' where id = $1`, [drop])
+  await db.query(
+    `insert into appointments (clinic_id, patient_id, patient_name, patient_phone, scheduled_at, status)
+     values ($1, $2, 'Domingos Coelho', '+351220000111', now() + interval '3 days', 'confirmada')`,
+    [CLINIC, drop]
+  )
+  await schedule(CLINIC, drop, '2027-07-15')
+
+  const r = await merge(keep, drop)
+  assert.equal(r.appointments_moved, 1)
+  assert.equal(r.recalls_moved, 1)
+
+  const { rows } = await db.query(`select notes from patients where id = $1`, [keep])
+  assert.match(rows[0].notes, /Prefere manhãs/)
+  assert.match(rows[0].notes, /Vem com a mãe/, 'the other record\'s note was thrown away')
+
+  const left = await db.query(
+    `select count(*)::int as n from patient_recalls where patient_id = $1`, [keep]
+  )
+  assert.equal(left.rows[0].n, 1)
+})
+
+test('a no on either record survives the merge, and so does a yes', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const keep = await patient(CLINIC, 'Domingos Coelho', '+351910523903')
+  const drop = await patient(CLINIC, 'Domingos Coelho', '+351220000111')
+  // The one being dropped is the one carrying both answers.
+  await db.query(
+    `update patients set reminders_opt_out_at = now(),
+                         marketing_consent_at = now(),
+                         marketing_consent_source = 'no balcão, 12/03'
+      where id = $1`,
+    [drop]
+  )
+
+  await merge(keep, drop)
+  const { rows } = await db.query(
+    `select reminders_opt_out_at, marketing_consent_at, marketing_consent_source
+       from patients where id = $1`,
+    [keep]
+  )
+  assert.ok(rows[0].reminders_opt_out_at, 'somebody who said stop was asked again')
+  assert.ok(rows[0].marketing_consent_at, 'a consent the person gave was thrown away')
+  assert.equal(rows[0].marketing_consent_source, 'no balcão, 12/03')
+})
+
+test('a merge never invents a consent', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const keep = await patient(CLINIC, 'Domingos Coelho', '+351910523903')
+  const drop = await patient(CLINIC, 'Domingos Coelho', '+351220000111')
+  await merge(keep, drop)
+  const { rows } = await db.query(
+    `select marketing_consent_at from patients where id = $1`, [keep]
+  )
+  assert.equal(rows[0].marketing_consent_at, null)
+})
+
+test('a clinic cannot merge another clinic\'s records', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  await clinic(OTHER)
+  const mine = await patient(CLINIC, 'Domingos Coelho', '+351910523903')
+  const theirs = await patient(OTHER, 'Domingos Coelho', '+351220000111')
+  await assert.rejects(() => merge(mine, theirs))
+})
+
+test('erasing reaches a merged record by either of its numbers', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const keep = await patient(CLINIC, 'Domingos Coelho', '+351910523903')
+  const drop = await patient(CLINIC, 'Domingos Coelho', '+351220000111')
+  await merge(keep, drop)
+
+  // The number they usually ring from is now the secondary one.
+  await db.query(`select erase_patient($1, $2)`, [CLINIC, '220000111'])
+  const { rows } = await db.query(`select count(*)::int as n from patients where clinic_id = $1`, [CLINIC])
+  assert.equal(rows[0].n, 0, 'somebody who asked to be forgotten was told there was nothing here')
+})
+
 test.after(() => db.close())

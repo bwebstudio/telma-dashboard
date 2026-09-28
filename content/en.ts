@@ -248,6 +248,12 @@ export const en: Dictionary = {
 
     notes: 'Notes',
     notesHint: 'Whatever helps in answering to this person: "prefers mornings", "comes with her daughter". Clinical history stays in the clinic\'s own software. Telma never reads this field.',
+    taxId: 'Tax number',
+    taxIdHint: 'Optional, and Telma never asks for it: somebody at the desk types it with the person in front of them. It is what says two records are one person.',
+    maybeSame: 'This may be the same person',
+    maybeSameHint: 'Same name or same tax number, on another number. Merging brings the bookings, the reminders and the notes here, and keeps the other telephone too.',
+    merge: 'Merge into this record',
+    mergeWarn: 'This cannot be undone.',
     history: 'Bookings',
     calls: 'Conversations',
     callsEmpty: 'No conversations kept.',

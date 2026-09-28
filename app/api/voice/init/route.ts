@@ -123,6 +123,18 @@ export async function POST(request: Request) {
   // matches a telephone is. The answer only ever removes a question: a clinic
   // that already has this person's contact number does not have to be given it
   // again. The name is read but never spoken -- see `knownPatient` in the base.
+  //
+  // ── AND A NUMBER CAN NOW BE SEVERAL PEOPLE ────────────────────────────────
+  // Since 0049 a household shares a record per person on one handset. This asked
+  // for a single row and got an error instead of an answer the moment there were
+  // two, so a family was silently demoted to a stranger and asked for the number
+  // it had already given. Most recently heard from, limit one.
+  //
+  // Which of them it is does not matter here, and that is the point: the only
+  // thing the prompt does with this is decide whether to ask for the number. The
+  // name never reaches it, and who is actually speaking is a question Telma
+  // still asks out loud, because with a household on one handset it is the
+  // question that matters.
   const callerDigits = (body.caller_id ?? '').replace(/\D/g, '').slice(-9)
   let knownPatient: string | null = null
   if (callerDigits.length === 9) {
@@ -131,8 +143,9 @@ export async function POST(request: Request) {
       .select('name')
       .eq('clinic_id', clinicId)
       .eq('phone_digits', callerDigits)
-      .maybeSingle()
-    knownPatient = (found as { name?: string } | null)?.name ?? null
+      .order('last_seen_at', { ascending: false })
+      .limit(1)
+    knownPatient = (found as Array<{ name: string }> | null)?.[0]?.name ?? null
   }
 
   const variables: PromptVariables = {

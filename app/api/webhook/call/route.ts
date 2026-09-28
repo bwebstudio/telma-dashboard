@@ -305,13 +305,18 @@ export async function POST(request: Request) {
   // which is what step 8 of the booking procedure exists to do. A name heard
   // and not confirmed is a name that goes into the record wrong.
   try {
+    // Keyed on the number AND the name, not the number alone. One call can book
+    // for two people in the same household — a mother ringing for herself and
+    // her son — and keying on the number meant the second one was skipped and
+    // then given the first one's record.
     const seen = new Set<string>()
     for (const a of [...(usable ? [usable] : []), ...extras]) {
       const name = typeof a?.patient_name === 'string' ? a.patient_name.trim() : ''
       const phone = phoneForAppointment(a?.patient_phone, body.from_phone)
       const digits = String(phone ?? '').replace(/\D/g, '').slice(-9)
-      if (!name || digits.length < 9 || seen.has(digits)) continue
-      seen.add(digits)
+      const who = `${digits}|${name.toLowerCase()}`
+      if (!name || digits.length < 9 || seen.has(who)) continue
+      seen.add(who)
       const { data: patientId } = await admin.rpc('remember_patient', {
         p_clinic_id: clinicId,
         p_name: name,
@@ -327,6 +332,10 @@ export async function POST(request: Request) {
           .eq('clinic_id', clinicId)
           .eq('call_id', callId)
           .eq('patient_phone', phone)
+          // And the name, for the same reason: two bookings on one number in one
+          // call are two people, and without this both would point at whichever
+          // record was written first.
+          .eq('patient_name', name)
       }
     }
   } catch (e) {

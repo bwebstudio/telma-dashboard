@@ -21,6 +21,7 @@
 
 import { readFileSync } from 'node:fs'
 import { SERVICES, serviceLabel } from '../lib/onboarding/catalog.ts'
+import { AGENT_TTS } from '../lib/onboarding/voice-settings.ts'
 
 const args = process.argv.slice(2)
 const flag = (name) => {
@@ -449,38 +450,16 @@ const AGENT_SPEC = {
     // lo que le tocó al nacer, más lo que se tocó a mano en la consola. Ahora
     // se envía en las dos rutas, y esto vuelve a ser lo que dice ser.
     tts: {
-      // El agente en vivo está aquí, no en turbo, y la comparación con HeyGen
-      // fue lo que lo decidió: v3 conversational con modo expresivo suena
-      // mejor. Turbo v2_5 era el requisito de la plataforma cuando se escribió
-      // esta línea, y ya no lo es.
-      model_id: 'eleven_v3_conversational',
-      // Lo que v3 añade y turbo no tenía. Sin esto la voz vuelve a ser plana.
-      expressive_mode: true,
-      // A voz da língua base do agente. As outras vêm nos presets abaixo, porque
-      // mudar de língua a meio e continuar com a mesma voz dá uma espanhola a
-      // falar português, que se nota mais do que o sotaque que se queria evitar.
+      // Todo lo que suena vive en lib/onboarding/voice-settings.ts, para que el
+      // "Ouvir" del panel y el teléfono no puedan discrepar. Discreparon: el
+      // alta estaba en turbo_v2_5 con stability 0.5 y el teléfono en v3
+      // conversational con 0.7 y modo expresivo.
+      ...AGENT_TTS,
+      // La voz de la lengua base del agente. Las otras van en los presets de
+      // abajo, porque cambiar de lengua a media llamada y seguir con la misma
+      // voz da una española hablando portugués, que se nota más que el acento
+      // que se quería evitar.
       voice_id: env('ELEVENLABS_VOICE_ID_PT') ?? undefined,
-      // 0 y no 3: el troceado agresivo arranca una entonación nueva por trozo, y
-      // eso es lo que se oye como voz de máquina.
-      optimize_streaming_latency: 0,
-      // 0.7. Estuvo en 0.8 durante una tarde y volvió.
-      //
-      // Subió porque el modo expresivo de v3 deriva de acento, y se eligió 0.8
-      // escuchando tres muestras de cuarenta segundos. Al ponerlo en una
-      // llamada real dijo "fica hoje, segunda-feira segunda-feira, às nove" —
-      // y la transcripción demuestra que el modelo escribió el día UNA vez. Lo
-      // repitió la voz.
-      //
-      // Que es exactamente lo que este comentario avisaba desde antes de que yo
-      // lo tocara: por encima de 0.8 arrastra y repite sílabas. 0.8 no estaba
-      // dentro de la ventana, era el borde, y el borde se nota.
-      //
-      // Repetir el día de una cita es peor que un acento que se va: el acento
-      // es incómodo, el día repetido es la información que importa dicha mal.
-      // Si el acento vuelve a molestar, 0.75 es lo siguiente que probar, y se
-      // prueba llamando: una muestra se genera de una vez y no enseña esto.
-      stability: 0.7,
-      similarity_boost: 0.75,
     },
     turn: {
       // Cuatro segundos, no siete. Siete es una eternidad al teléfono: quien ha

@@ -1,3 +1,4 @@
+import { AGENT_TTS } from './voice-settings'
 import { DEFAULT_ONBOARDING_LOCALE, type OnboardingLocale } from './locale'
 
 /**
@@ -264,16 +265,20 @@ export async function speak(voiceId: string, text: string): Promise<SpeakResult>
       headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text,
-        // The same family the agent runs on, or the preview is a lie: a clinic
-        // that hears multilingual_v2 in the sign-up and gets v3 on the line has
-        // been shown a voice it will not have. Set ELEVENLABS_MODEL_ID to
-        // whatever is selected in the agent's "TTS model family".
+        // Exactly what the telephone runs, from the one place that says so.
         //
-        // The default is deliberate. Carolina Ruiz's peninsular accent and
-        // Benedita's European Portuguese are verified on the v2 family and not
-        // on v3, so the safe default is the one whose accent is guaranteed.
-        model_id: process.env.ELEVENLABS_MODEL_ID?.trim() || 'eleven_multilingual_v2',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+        // This used to read ELEVENLABS_MODEL_ID with a default of its own, and
+        // the comment here said why that mattered -- a clinic that hears one
+        // voice in the sign-up and gets another on the line has been shown a
+        // voice it will not have. It then drifted anyway, three settings at
+        // once, because a warning in a comment is not a mechanism. The
+        // environment variable is gone: there is nowhere left for the two to
+        // disagree.
+        model_id: AGENT_TTS.model_id,
+        voice_settings: {
+          stability: AGENT_TTS.stability,
+          similarity_boost: AGENT_TTS.similarity_boost,
+        },
       }),
       cache: 'no-store',
     })

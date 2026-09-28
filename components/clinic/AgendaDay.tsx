@@ -87,26 +87,39 @@ export function AgendaDay({
     <ol className="card divide-y divide-line overflow-hidden">
       {rows.map((appt, i) => (
         <li key={appt.id}>
-          {nowAt === i && <NowLine label={t.now} />}
+          {nowAt === i && <NowLine time={timeIn(new Date().toISOString(), locale, tz)} />}
           <Row appt={appt} dict={dict} locale={locale} tz={tz} readOnly={readOnly} />
         </li>
       ))}
       {allPast && (
         <li>
-          <NowLine label={t.now} />
+          <NowLine time={timeIn(new Date().toISOString(), locale, tz)} />
         </li>
       )}
     </ol>
   )
 }
 
-function NowLine({ label }: { label: string }) {
+/**
+ * Where the clock is, drawn as a position and not as a heading.
+ *
+ * It was the word AGORA in small caps on a tinted band, which is the same
+ * shape this panel uses for section titles — so it cut the day in two and read
+ * as "here begins another list", a few centimetres under a date that already
+ * said what day it was. Two markers of now, and the louder one meant the wrong
+ * thing.
+ *
+ * A hairline with the hour on it. The hour is the useful part: it says where
+ * you are without naming a section, and it matches the column of hours it sits
+ * in.
+ */
+function NowLine({ time }: { time: string }) {
   return (
-    <div className="flex items-center gap-3 bg-brand-wash px-4 py-1.5 sm:px-5" aria-hidden>
-      <span className="text-xs font-semibold uppercase tracking-label text-brand-accent">
-        {label}
+    <div className="flex items-center gap-3 px-4 sm:px-5" aria-hidden>
+      <span className="w-14 shrink-0 text-sm font-semibold tabular-nums text-brand-accent sm:w-16">
+        {time}
       </span>
-      <span className="h-px flex-1 bg-brand-accent/40" />
+      <span className="h-px flex-1 bg-brand-accent/50" />
     </div>
   )
 }

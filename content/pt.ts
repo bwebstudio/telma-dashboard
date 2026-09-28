@@ -128,6 +128,11 @@ export const pt: Dictionary = {
   },
   agenda: {
     title: 'Agenda',
+    elsewhereOnePending: '1 marcação por confirmar noutro dia.',
+    elsewherePending: '{n} marcações por confirmar noutros dias.',
+    elsewhereOneCancelled: '1 cancelamento por ler.',
+    elsewhereCancelled: '{n} cancelamentos por ler.',
+    elsewhereGo: 'Ver em Marcações',
     viewDay: 'Dia',
     greeting: 'O dia da sua clínica, sempre a par.',
     live: 'Ao vivo',

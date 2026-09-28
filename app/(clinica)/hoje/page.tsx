@@ -3,7 +3,7 @@ import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { AgendaDay } from '@/components/clinic/AgendaDay'
 import { AgendaLive } from '@/components/clinic/AgendaLive'
-import { AttentionBand } from '@/components/clinic/AttentionBand'
+import { ElsewhereNote } from '@/components/clinic/ElsewhereNote'
 import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
@@ -240,20 +240,15 @@ export default async function AgendaPage({
         readOnly={readOnly}
       />
 
-      {/* Only ever the days that are not on screen, so it reads as "and
-          elsewhere" rather than as a second copy of the list above it. */}
-      <div className="mt-8">
-        <AttentionBand
-          pending={pending}
-          cancelled={cancelled}
-          dict={dict}
-          locale={locale}
-          tz={tz}
-          readOnly={readOnly}
-          serverNow={now.toISOString()}
-          visibleDay={dayKey}
-        />
-      </div>
+      {/* Not the bookings themselves: confirming lives in one place per
+          context, and for anything not on this day that place is Marcações. */}
+      <ElsewhereNote
+        pending={pending.filter((a) => dayKeyIn(tz, new Date(a.scheduled_at)) !== dayKey).length}
+        cancelled={
+          cancelled.filter((a) => dayKeyIn(tz, new Date(a.scheduled_at)) !== dayKey).length
+        }
+        dict={dict}
+      />
 
       {isToday && <DayTally counts={counts} whatsapp={Boolean(clinic?.addon_whatsapp)} dict={dict} />}
 

@@ -130,7 +130,7 @@ export const pt: Dictionary = {
   setup: {
     eyebrow: 'Falta pouco',
     title: 'A Telma está pronta a aprender a sua clínica',
-    lead: 'Ainda não atende. Responda a estas duas coisas no seu painel e active-a quando quiser — o número já é seu.',
+    lead: 'Ainda não atende. Responda a estas duas coisas no seu painel e active-a quando quiser. O número já é seu.',
     go: 'Configurar',
     activate: 'Activar a Telma',
     activating: 'A activar...',
@@ -148,7 +148,7 @@ export const pt: Dictionary = {
     viewDay: 'Dia',
     greeting: 'O dia da sua clínica, sempre a par.',
     live: 'Ao vivo',
-    liveLost: 'Sem ligação — a reconectar',
+    liveLost: 'Sem ligação, a reconectar',
     liveRetry: 'Atualizar agora',
     updated: 'Atualizado às',
     attention: 'A precisar de si',

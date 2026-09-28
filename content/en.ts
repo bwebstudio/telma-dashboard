@@ -128,7 +128,7 @@ export const en: Dictionary = {
   setup: {
     eyebrow: 'Almost there',
     title: 'Telma is ready to learn your clinic',
-    lead: 'She is not answering yet. Answer these two things in your panel and turn her on when you want — the number is already yours.',
+    lead: 'She is not answering yet. Answer these two things in your panel and turn her on when you want. The number is already yours.',
     go: 'Set up',
     activate: 'Turn Telma on',
     activating: 'Turning on...',
@@ -146,7 +146,7 @@ export const en: Dictionary = {
     viewDay: 'Day',
     greeting: 'Your clinic day, always up to date.',
     live: 'Live',
-    liveLost: 'Connection lost — reconnecting',
+    liveLost: 'Connection lost, reconnecting',
     liveRetry: 'Refresh now',
     updated: 'Updated at',
     attention: 'Waiting for you',

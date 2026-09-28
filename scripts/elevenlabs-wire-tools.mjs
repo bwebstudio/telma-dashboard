@@ -231,7 +231,7 @@ const TOOLS = [
           summary: {
             type: 'string',
             description:
-              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça — que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém — porque isso é trabalho para alguém e perde-se se não ficar escrito.',
+              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça: que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém, porque isso é trabalho para alguém e perde-se se não ficar escrito.',
           },
           appointments: {
             type: 'array',
@@ -245,7 +245,7 @@ const TOOLS = [
               reason: {
                 type: 'string',
                 description:
-                  'O serviço da agenda desta clínica, escolhido da lista que ela oferece: "Consulta de avaliação", "Limpeza". **Nunca as palavras da pessoa nem nada sobre a saúde dela.** Se ela disse "lifting", escreves o serviço da lista a que isso corresponde — e **se não corresponder a nenhum, esta clínica não faz isso e não devia haver marcação nenhuma**. Isto fica numa base de dados durante meses e não é sítio para o que alguém contou ao telefone sobre o seu corpo.',
+                  'O serviço da agenda desta clínica, escolhido da lista que ela oferece: "Consulta de avaliação", "Limpeza". **Nunca as palavras da pessoa nem nada sobre a saúde dela.** Se ela disse "lifting", escreves o serviço da lista a que isso corresponde, e **se não corresponder a nenhum, esta clínica não faz isso e não devia haver marcação nenhuma**. Isto fica numa base de dados durante meses e não é sítio para o que alguém contou ao telefone sobre o seu corpo.',
               },
               scheduled_at: { type: 'string', description: 'O identificador slot_start da hora marcada, copiado tal e qual. Não é a hora que disseste em voz alta.' },
               professional: {
@@ -256,7 +256,7 @@ const TOOLS = [
               note: {
                 type: 'string',
                 description:
-                  'O que a clínica precisa de saber sobre ESTA marcação e mais nenhuma. Uma ou duas frases: o que a pessoa pediu para esta consulta e o que alguém tem de fazer antes dela — por exemplo que pediu que lhe liguem por causa do preço. Não descrevas aqui as outras marcações da chamada: cada uma leva a sua, e quem lê esta no dia só quer saber desta.',
+                  'O que a clínica precisa de saber sobre ESTA marcação e mais nenhuma. Uma ou duas frases: o que a pessoa pediu para esta consulta e o que alguém tem de fazer antes dela, por exemplo que pediu que lhe liguem por causa do preço. Não descrevas aqui as outras marcações da chamada: cada uma leva a sua, e quem lê esta no dia só quer saber desta.',
               },
               },
             },

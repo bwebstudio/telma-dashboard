@@ -6,6 +6,7 @@ import type { Appointment } from '@/lib/types'
 import { formatWeekdayDate, formatTime } from '@/lib/format'
 import { fill } from '@/lib/fill'
 import { Badge, APPOINTMENT_TONE } from './ui'
+import { SHOWN_AS } from '@/lib/agenda-facts'
 import { IconCopy, IconCheck, IconClose } from './icons'
 import {
   confirmAppointment,
@@ -72,8 +73,40 @@ export function AppointmentCard({
     }
   }
 
+  // ── THE STATE, BEFORE ANYBODY READS A WORD ────────────────────────────────
+  // Twenty cards in a two column grid, each carrying its state in a badge in the
+  // top right corner, is twenty badges to read before the screen means anything.
+  // The edge says it from across the room.
+  //
+  // The colours are not new and are not this screen's to choose: amber is
+  // waiting or called off, green is settled, red is the clinic's own refusal,
+  // grey is an hour that lapsed. The same four the agenda uses, defined once in
+  // APPOINTMENT_TONE with the reasoning beside them.
+  //
+  // Only the ones asking for something get a wash as well as an edge. Pending
+  // and cancelled share the amber, and the wash is what separates "this needs
+  // you" from "this happened". A screen where everything is tinted has said
+  // nothing.
+  const shown = SHOWN_AS[appt.status]
+  const edge =
+    shown === 'confirmada'
+      ? 'border-l-ok'
+      : shown === 'cancelada'
+        ? appt.status === 'rejeitada'
+          ? 'border-l-danger'
+          : appt.status === 'expirada'
+            ? 'border-l-line-strong'
+            : 'border-l-warn'
+        : 'border-l-warn'
+  const wash =
+    appt.status === 'pendente'
+      ? 'bg-warn-soft/30'
+      : appt.status === 'cancelada' && !appt.cancel_seen_at
+        ? 'bg-warn-soft/20'
+        : ''
+
   return (
-    <article className="card p-5">
+    <article className={`card border-l-4 p-5 ${edge} ${wash}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-xl font-semibold text-ink">

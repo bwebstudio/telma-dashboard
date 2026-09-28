@@ -230,6 +230,10 @@ export const es: Dictionary = {
     filterAll: 'Recientes',
     filterCancelled: 'Canceladas',
     filterPending: 'Por confirmar',
+    groupPending: 'Sin responder ({n})',
+    groupAnswered: 'Ya respondidas ({n})',
+    orderPending: 'La cita más próxima primero.',
+    orderAnswered: 'La última que respondió primero.',
   },
   pacientes: {
     title: 'Pacientes',

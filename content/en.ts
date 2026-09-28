@@ -230,6 +230,10 @@ export const en: Dictionary = {
     filterAll: 'Recent',
     filterCancelled: 'Cancelled',
     filterPending: 'To confirm',
+    groupPending: 'Unanswered ({n})',
+    groupAnswered: 'Answered ({n})',
+    orderPending: 'Soonest appointment first.',
+    orderAnswered: 'Most recently answered first.',
   },
   pacientes: {
     title: 'Patients',

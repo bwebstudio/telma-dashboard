@@ -249,6 +249,12 @@ export interface Dictionary {
     /** A filter's own label. It used to borrow the singular status badge. */
     filterCancelled: string
     filterPending: string
+    /** The two groups the default view is split into, each with its count, so
+     *  the order is visible instead of being something you work out. */
+    groupPending: string
+    groupAnswered: string
+    orderPending: string
+    orderAnswered: string
   }
   /**
    * The patient record, and the reminders hanging off it.

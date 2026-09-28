@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
-import { PageHeader, EmptyState, ErrorState } from '@/components/ui'
+import { PageHeader, EmptyState, ErrorState, SectionTitle } from '@/components/ui'
 import { AppointmentCard } from '@/components/AppointmentCard'
 import { AgendaLive } from '@/components/clinic/AgendaLive'
 import { fill } from '@/lib/fill'
@@ -81,14 +81,33 @@ export default async function MarcacoesPage({
       if (row.patient_id) visits.set(row.patient_id, (visits.get(row.patient_id) ?? 0) + 1)
     }
   }
-  // Pending first, then the rest by most recent.
-  appts.sort((a, b) => {
-    if (a.status === 'pendente' && b.status !== 'pendente') return -1
-    if (a.status !== 'pendente' && b.status === 'pendente') return 1
-    return a.status === 'pendente'
-      ? +new Date(a.scheduled_at) - +new Date(b.scheduled_at)
-      : +new Date(b.created_at) - +new Date(a.created_at)
-  })
+  // ── TWO GROUPS, EACH WITH ITS OWN ORDER AND ITS OWN HEADING ───────────────
+  // The order was right and invisible: unanswered first by appointment date,
+  // then everything else. In a two column grid with no headings, twenty cards
+  // read as one undifferentiated pile, and a booking taken five minutes ago for
+  // a fortnight away lands near the bottom of the first group with nothing
+  // saying it is in a group at all.
+  //
+  // So the groups are drawn, counted and captioned with the rule they are
+  // sorted by. The order does not change; it stops being something you have to
+  // work out.
+  const pending = appts
+    .filter((a) => a.status === 'pendente')
+    // The soonest appointment, because that is the one that stops being
+    // answerable first.
+    .sort((a, b) => +new Date(a.scheduled_at) - +new Date(b.scheduled_at))
+
+  const answered = appts
+    .filter((a) => a.status !== 'pendente')
+    // What was answered most recently, because "did I confirm that one?" is a
+    // question about the last few minutes. `decided_at` is null on a booking the
+    // patient cancelled, which nobody decided, so it falls back to when it
+    // arrived.
+    .sort(
+      (a, b) =>
+        +new Date(b.decided_at ?? b.cancelled_at ?? b.created_at) -
+        +new Date(a.decided_at ?? a.cancelled_at ?? a.created_at)
+    )
 
   // ── THE FIRST TAB IS NOT "ALL" ────────────────────────────────────────────
   // It said "Todas" and showed what is above: everything unanswered, and
@@ -144,21 +163,38 @@ export default async function MarcacoesPage({
       ) : appts.length === 0 ? (
         <EmptyState>{dict.marcacoes.empty}</EmptyState>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {appts.map((appt) => (
-            <AppointmentCard
-              key={appt.id}
-              appt={appt}
-              // Only when there is a before. "First visit" on every card is
-              // noise on the days when it is true and wrong on the days the
-              // record simply has not caught up.
-              visits={appt.patient_id ? (visits.get(appt.patient_id) ?? 0) : 0}
-              dict={dict}
-              locale={locale}
-              readOnly={readOnly}
-            />
-          ))}
-        </div>
+        <>
+          {[
+            { rows: pending, title: dict.marcacoes.groupPending, order: dict.marcacoes.orderPending },
+            { rows: answered, title: dict.marcacoes.groupAnswered, order: dict.marcacoes.orderAnswered },
+          ]
+            .filter((g) => g.rows.length > 0)
+            .map((g) => (
+              <section key={g.title} className="mb-10 last:mb-0">
+                <div className="mb-4">
+                  <SectionTitle>{fill(g.title, { n: g.rows.length })}</SectionTitle>
+                  {/* The rule, said once per group. A list whose order nobody
+                      can name is a list people scroll instead of read. */}
+                  <p className="-mt-3 text-sm text-ink-mute">{g.order}</p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  {g.rows.map((appt) => (
+                    <AppointmentCard
+                      key={appt.id}
+                      appt={appt}
+                      // Only when there is a before. "First visit" on every card
+                      // is noise on the days when it is true and wrong on the
+                      // days the record simply has not caught up.
+                      visits={appt.patient_id ? (visits.get(appt.patient_id) ?? 0) : 0}
+                      dict={dict}
+                      locale={locale}
+                      readOnly={readOnly}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+        </>
       )}
     </>
   )

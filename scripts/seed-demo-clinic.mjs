@@ -125,7 +125,6 @@ const PRESENTATION = {
   plan: 'clinica',
   addon_whatsapp: true,
   status: 'ativa',
-  minute_limit: 750,
   timezone: TZ,
   accent: 'brand',
 }
@@ -149,6 +148,38 @@ if (already.length) {
   })
   console.log('clínica: criada de raiz')
 }
+
+// --- Minutos: el plan, y un mes casi gastado -----------------------------------
+//
+// ── POR QUÉ NO ESTÁ ESCRITO A MANO ─────────────────────────────────────────
+// `minute_limit` decía 750 aquí dentro, así que cada vez que se sembraba volvía
+// a poner el número viejo por encima del que dice el plan, y el panel enseñaba
+// una cifra que no era la que se vende. Se lee del plan y se acabó.
+//
+// ── Y POR QUÉ CASI GASTADO ─────────────────────────────────────────────────
+// En una demostración hay que poder enseñar lo que pasa cuando los minutos se
+// acaban: el aviso, y el botón de comprar un pack ahí mismo. Al 94 % la barra
+// ya está en ámbar (salta al 80) y quedan unos cuarenta minutos, que aguantan
+// las llamadas que se hagan en la propia demostración sin agotarse a mitad.
+const [plano] = await api(`/rest/v1/plans?id=eq.${PRESENTATION.plan}&select=max_minutes_per_month`)
+const limite = plano?.max_minutes_per_month ?? 700
+const gastados = Math.round(limite * 0.94)
+
+await api(`/rest/v1/clinics?id=eq.${CLINIC}`, {
+  method: 'PATCH',
+  body: JSON.stringify({
+    minute_limit: limite,
+    // Lo que el panel lee de verdad para la barra de minutos: esta columna, no
+    // la tabla `usage`, que es la del panel interno.
+    usage_this_month: {
+      minutes_used: gastados,
+      extra_minutes_used: 0,
+      extra_minutes_purchased: 0,
+      whatsapp_messages: 0,
+      api_calls: 0,
+    },
+  }),
+})
 
 await api('/rest/v1/users', {
   method: 'POST',
@@ -450,9 +481,18 @@ await api('/rest/v1/patient_recalls', {
 
 // --- Usage and activity --------------------------------------------------------
 const month = `${parts[0]}-${String(parts[1]).padStart(2, '0')}-01`
+// Las mismas cifras en la tabla `usage`, que es la que mira el panel interno.
+// Dos sitios con el mismo número es peor que uno, y es lo que hay: la columna
+// de la clínica la escribe `record_call` en caliente y esta tabla es el
+// histórico por meses.
 await api('/rest/v1/usage', {
   method: 'POST',
-  body: JSON.stringify({ clinic_id: CLINIC, month, calls_count: 205, minutes: 520.5 }),
+  body: JSON.stringify({
+    clinic_id: CLINIC,
+    month,
+    calls_count: Math.round(gastados / 2.54),
+    minutes: gastados,
+  }),
 })
 await api('/rest/v1/activity_log', {
   method: 'POST',
@@ -471,5 +511,6 @@ Pronto.
   marcações  ${appts.length}
   fichas     ${names.length}, cada uma com o seu número, nenhum marcável
   SMS        só com uma chamada a sério: nenhuma destas fichas tem telemóvel
+  minutos    ${gastados} de ${limite} (${Math.round(gastados/limite*100)} %), a punto de acabarse
   conversas  ${calls.length}  (${calls.filter((c) => c.channel === 'whatsapp').length} de WhatsApp)
 `)

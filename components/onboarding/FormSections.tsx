@@ -644,8 +644,6 @@ function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { 
   const chosen: string[] = values.services ?? []
   const durations: Record<string, number> = values.service_durations ?? {}
   const prices: Record<string, number> = values.service_prices ?? {}
-  const recalls: Record<string, number> = values.recall_months ?? {}
-  const recallsOn = values.recalls_enabled === true
   const fallback = Number(values.appointment_duration_minutes) || 30
 
   // Typed lines become rows too, trimmed and de-duplicated. They are keyed by
@@ -658,18 +656,14 @@ function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { 
     .filter(Boolean)
   const rows = [...chosen, ...custom.filter((c) => !chosen.includes(c))]
 
-  const write = (
-    field: 'service_durations' | 'service_prices' | 'recall_months',
-    id: string,
-    raw: string
-  ) => {
+  const write = (field: 'service_durations' | 'service_prices', id: string, raw: string) => {
     const current: Record<string, number> = { ...(values[field] ?? {}) }
     const n = Number(raw.replace(',', '.'))
     // An emptied box means "not set", not zero. Deleting the key is what makes
     // the clinic's default keep applying, and what makes "no price" readable as
     // no price rather than as free.
     if (!raw.trim() || !Number.isFinite(n) || n < 0) delete current[id]
-    else current[id] = field === 'service_prices' ? n : Math.round(n)
+    else current[id] = field === 'service_durations' ? Math.round(n) : n
     set({ [field]: current })
   }
 
@@ -695,41 +689,11 @@ function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { 
         <div className={`p-4 ${inPanel ? '' : 'border-t border-line'}`}>
           <p className="text-sm text-ink-mute">{t.durationsHelp}</p>
 
-          {/* ── FOLLOWING THE PATIENT UP ──────────────────────────────────
-              Panel only, and switched off until somebody switches it on. Every
-              clinic on this platform has patients in it, so a default of "on"
-              would have written to all of them.
-
-              Here, next to the lengths and the prices, because it is the third
-              thing a clinic knows about its own services and splitting it onto
-              a screen of its own is how the same decision ends up being made in
-              two places. */}
-          {inPanel && (
-            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-card border border-line bg-surface p-3.5">
-              <input
-                type="checkbox"
-                checked={recallsOn}
-                onChange={(e) => set({ recalls_enabled: e.target.checked })}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
-              />
-              <span>
-                <span className="block text-base text-ink">{t.recallsToggle}</span>
-                <span className="mt-1 block text-sm text-ink-mute">{t.recallsHelp}</span>
-              </span>
-            </label>
-          )}
-
           <div className="mt-4 flex flex-col gap-2.5">
             <div className="hidden gap-3 sm:flex">
               <span className="label-caps flex-1">{t.detailsService}</span>
               <span className="label-caps w-28 text-right">{t.detailsDuration}</span>
               <span className="label-caps w-28 text-right">{t.detailsPrice}</span>
-              {inPanel && recallsOn && (
-                // Wider than the other two. "nunca" does not fit where "30"
-                // does, and a placeholder cut to "nur" is worse than none: it
-                // reads as a word nobody knows rather than as the answer.
-                <span className="label-caps w-36 text-right">{t.recallsColumn}</span>
-              )}
             </div>
 
             {rows.map((id) => (
@@ -771,24 +735,6 @@ function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { 
                   />
                   <span className="text-sm text-ink-mute">€</span>
                 </span>
-                {inPanel && recallsOn && (
-                  <span className="flex w-36 items-center gap-1.5">
-                    <input
-                      aria-label={`${serviceLabel(id, locale)} ${t.recallsColumn}`}
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
-                      max={60}
-                      step={1}
-                      placeholder={t.recallsNever}
-                      value={recalls[id] ?? ''}
-                      onChange={(e) => write('recall_months', id, e.target.value)}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      className="w-full rounded-card border border-line bg-surface px-2.5 py-2 text-right text-base text-ink"
-                    />
-                    <span className="text-sm text-ink-mute">{t.recallsUnit}</span>
-                  </span>
-                )}
               </div>
             ))}
           </div>

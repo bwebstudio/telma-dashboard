@@ -12,10 +12,9 @@ import { sendToPatient } from '@/lib/sms'
  * actually goes out lives here, because every one of these checks is a reason
  * not to send and the database cannot see most of them.
  *
- * ── THE FOUR REASONS NOT TO SEND ────────────────────────────────────────────
- * The reminder was scheduled months ago and the world has moved:
+ * ── THE THREE REASONS NOT TO SEND ───────────────────────────────────────────
+ * The reminder was somebody's decision, months ago, and the world has moved:
  *
- *   the clinic turned the feature off      silence is what off means
  *   the clinic is paused or has left       it is not their patient any more
  *   the patient asked us to stop           an aviso needs no yes, but it obeys a no
  *   nobody ever asked the patient          a campanha needs a yes, and null is no
@@ -26,10 +25,11 @@ import { sendToPatient } from '@/lib/sms'
  *
  * ── THE CAP ─────────────────────────────────────────────────────────────────
  * Thirty a day per clinic, and it is not a rate limit for Twilio's sake. It is
- * the blast radius of a mistake: a clinic that types 1 instead of 12 into a
- * reminder interval, or imports two thousand old appointments, finds out on the
- * day it happens with thirty messages sent instead of two thousand. Whatever is
- * over the cap stays waiting and goes tomorrow.
+ * the blast radius of a mistake. Every one of these is typed by a person, so
+ * thirty is already far more than a day's work at the desk; a number well above
+ * it, arriving at once, means something went wrong upstream and the cap is what
+ * makes that a thing somebody notices instead of a thing patients receive.
+ * Whatever is over stays waiting and goes tomorrow.
  */
 
 const DAILY_CAP = 30
@@ -107,10 +107,10 @@ export async function sendDueRecalls(): Promise<RecallReport> {
       continue
     }
 
-    // Switched off, paused, gone. Left waiting rather than closed: a clinic that
-    // turns it back on next month should find its diary intact, and the sixty
-    // day sweep in purge_recalls() throws away whatever has gone stale.
-    if (!clinic.recalls_enabled || clinic.status !== 'ativa') {
+    // Paused, or gone. Left waiting rather than closed: a clinic that comes
+    // back next month should find its diary intact, and the sixty day sweep in
+    // purge_recalls() throws away whatever has gone stale.
+    if (clinic.status !== 'ativa') {
       report.held++
       continue
     }

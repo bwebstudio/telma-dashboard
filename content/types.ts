@@ -288,8 +288,6 @@ export interface Dictionary {
 
     recalls: string
     recallsEmpty: string
-    recallsOff: string
-    recallsOffGo: string
     add: string
     addWhen: string
     addNote: string

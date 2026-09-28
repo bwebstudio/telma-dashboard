@@ -67,7 +67,6 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
           name: clinic?.name ?? '',
           language: clinic?.language ?? locale,
           assigned_phone: clinic?.assigned_phone ?? null,
-          recalls_enabled: clinic?.recalls_enabled === true,
         }}
         dict={dict}
         locale={locale}

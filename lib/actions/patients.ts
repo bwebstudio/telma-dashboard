@@ -115,12 +115,9 @@ export async function createRecall(
     p_patient_id: patientId,
     p_due_on: dueOn,
     p_kind: kind,
-    p_service_id: null,
     p_note: note.trim().slice(0, 300) || null,
     p_body: kind === 'campanha' ? written : null,
-    p_source: 'manual',
     p_actor: user?.id ?? null,
-    p_appointment_id: null,
   })
   if (error) throw new Error(error.message)
   refresh(patientId)

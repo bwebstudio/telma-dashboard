@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment, Patient, PatientRecall, RecallState } from '@/lib/types'
 import { formatDay, formatDate, formatWeekdayDate, formatTime } from '@/lib/format'
-import { serviceLabel } from '@/lib/onboarding/catalog'
 import { recallMessage, segmentsFor, BODY_LIMIT } from '@/lib/recall-copy'
 import { fill } from '@/lib/fill'
 import { Badge, SectionTitle, APPOINTMENT_TONE } from '@/components/ui'
@@ -39,7 +38,6 @@ interface ClinicBits {
   name: string
   language: string
   assigned_phone: string | null
-  recalls_enabled: boolean
 }
 
 const STATE_TONE = {
@@ -137,14 +135,9 @@ export function PatientRecord({
                   <span className="block text-base text-ink">
                     {formatWeekdayDate(a.scheduled_at, locale)}, {formatTime(a.scheduled_at, locale)}
                   </span>
-                  {/* The reason while it is still there, the service after the
-                      reason has been cleared at ninety days, and nothing when
-                      both have gone. */}
-                  {(a.reason || a.service_id) && (
-                    <span className="block text-sm text-ink-soft">
-                      {a.reason ?? serviceLabel(a.service_id as string, locale)}
-                    </span>
-                  )}
+                  {/* Cleared at ninety days, and then this says nothing, which
+                      is what it is meant to say. */}
+                  {a.reason && <span className="block text-sm text-ink-soft">{a.reason}</span>}
                 </span>
                 <Badge tone={APPOINTMENT_TONE[a.status]}>{dict.status.appointment[a.status]}</Badge>
               </li>
@@ -341,13 +334,10 @@ function Reminders({
                     ? fill(t.sentOn, { when: formatDate(r.sent_at, locale) })
                     : fill(t.dueOn, { when: formatDay(r.due_on, locale) })}
                 </span>
-                {/* What it is for, and why it never went if it never went.
-                    The service as the clinic named it, or whatever somebody
-                    wrote when they set it by hand: neither reaches the SMS. */}
+                {/* Why somebody set it, and why it never went if it never
+                    went. Neither reaches the SMS. */}
                 <span className="block text-sm text-ink-soft">
-                  {[r.service_id ? serviceLabel(r.service_id, locale) : r.note, why(r.error ?? null)]
-                    .filter(Boolean)
-                    .join(' \u00b7 ')}
+                  {[r.note, why(r.error ?? null)].filter(Boolean).join(' \u00b7 ')}
                 </span>
               </span>
               <span className="flex items-center gap-3">
@@ -368,7 +358,7 @@ function Reminders({
         </ul>
       )}
 
-      {!readOnly && clinic.recalls_enabled && !open && (
+      {!readOnly && !open && (
         <button className="btn-secondary mt-4" onClick={() => setOpen(true)}>
           {t.add}
         </button>

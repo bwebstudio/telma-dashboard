@@ -23,8 +23,6 @@ export function clinicProfileValues(clinic: Clinic): Record<string, unknown> {
     // boxes that would quietly wipe them on the next save.
     service_durations: clinic.service_durations ?? {},
     service_prices: clinic.service_prices ?? {},
-    recalls_enabled: clinic.recalls_enabled === true,
-    recall_months: clinic.recall_months ?? {},
     custom_services: clinic.custom_services ?? '',
     price_info: clinic.price_info ?? '',
     appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,

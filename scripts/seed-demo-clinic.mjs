@@ -108,12 +108,6 @@ const PRESENTATION = {
   contact_email: 'geral@sorriso.pt',
   plan: 'clinica',
   addon_whatsapp: true,
-  // On, so the Pacientes screen shows the queue rather than the note explaining
-  // why there is no queue. The intervals per service are NOT written here: they
-  // are keyed to the services the clinic offers, this script deliberately does
-  // not own that list, and writing months against services it has not got would
-  // be wiped by the first save in the panel.
-  recalls_enabled: true,
   status: 'ativa',
   minute_limit: 750,
   timezone: TZ,
@@ -413,13 +407,13 @@ await api('/rest/v1/patient_recalls', {
   body: JSON.stringify([
     {
       clinic_id: CLINIC, patient_id: patient, kind: 'aviso', due_on: day(12),
-      note: 'Limpeza dos seis meses', source: 'manual', state: 'agendado',
-      body: null, service_id: null, sent_at: null, channel: null, error: null,
+      note: 'Limpeza dos seis meses', state: 'agendado',
+      body: null, sent_at: null, channel: null, error: null,
     },
     {
       clinic_id: CLINIC, patient_id: patient, kind: 'aviso', due_on: day(-45),
-      note: 'Revisão anual', source: 'manual', state: 'enviado',
-      body: null, service_id: null, sent_at: at(-45, 9, 2), channel: 'sms', error: null,
+      note: 'Revisão anual', state: 'enviado',
+      body: null, sent_at: at(-45, 9, 2), channel: 'sms', error: null,
     },
   ]),
 })

@@ -309,15 +309,6 @@ export async function updateClinicProfile(
       clean.services as string[] | undefined,
       clean.custom_services as string | undefined
     ),
-    recalls_enabled: clean.recalls_enabled === true,
-    // Pruned the same way, and for a sharper reason than the lengths: an
-    // interval left behind on a service the clinic no longer offers would go on
-    // scheduling messages about a treatment that is not on the list.
-    recall_months: keepChosen(
-      clean.recall_months as Record<string, number> | undefined,
-      clean.services as string[] | undefined,
-      clean.custom_services as string | undefined
-    ),
     price_info: clean.price_info || null,
     appointment_duration_minutes: clean.appointment_duration_minutes,
     formality: clean.formality,

@@ -95,36 +95,21 @@ export default async function PacientesPage({
     <>
       <PageHeader eyebrow={dict.clinicNav.pacientes} title={t.title} subtitle={t.lead} />
 
-      {/* Switched off is a fact about this screen, said once, at the top. Every
-          reminder below would sit there for ever without it, and nothing else on
-          the page would explain why. */}
-      {!clinic?.recalls_enabled && (
-        <p className="mb-6 rounded-card border border-line bg-surface-sunken px-4 py-3 text-base text-ink-soft">
-          {t.recallsOff}{' '}
-          <Link href="/telma" className="text-brand-accent hover:text-brand-hover">
-            {t.recallsOffGo}
-          </Link>
-        </p>
-      )}
-
-      {clinic?.recalls_enabled && (
-        <RecallQueue
-          rows={rows.map((r) => ({
-            id: r.id,
-            patientId: r.patients?.id ?? r.patient_id,
-            patientName: r.patients?.name ?? '',
-            dueOn: r.due_on,
-            state: r.state,
-            kind: r.kind,
-            serviceId: r.service_id ?? null,
-            note: r.note ?? null,
-            error: r.error ?? null,
-          }))}
-          dict={dict}
-          locale={locale}
-          readOnly={readOnly}
-        />
-      )}
+      <RecallQueue
+        rows={rows.map((r) => ({
+          id: r.id,
+          patientId: r.patients?.id ?? r.patient_id,
+          patientName: r.patients?.name ?? '',
+          dueOn: r.due_on,
+          state: r.state,
+          kind: r.kind,
+          note: r.note ?? null,
+          error: r.error ?? null,
+        }))}
+        dict={dict}
+        locale={locale}
+        readOnly={readOnly}
+      />
 
       {/* Finding somebody and opening a record for somebody are the same job at
           the same moment: the person is in front of you and either they are on

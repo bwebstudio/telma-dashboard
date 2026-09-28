@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { RecallState } from '@/lib/types'
-import { serviceLabel } from '@/lib/onboarding/catalog'
 import { formatDay } from '@/lib/format'
 import { Badge, SectionTitle } from '@/components/ui'
 import { cancelRecall, retryRecall } from '@/lib/actions/patients'
@@ -13,14 +12,15 @@ import { cancelRecall, retryRecall } from '@/lib/actions/patients'
  * What is going out in the next fortnight, and what did not go out at all.
  *
  * ── THE ONLY REASON THIS EXISTS ─────────────────────────────────────────────
- * A clinic types "6" into a box and a message leaves six months later, by which
- * time nobody remembers typing it. This is the window in between: the mistake is
- * visible for a fortnight before it reaches a patient, and cancelling one is a
- * single click with no confirmation, because there is nothing to undo.
+ * Somebody sets a reminder for March and it leaves in March, by which time they
+ * have forgotten setting it and may not be the one at the desk that morning.
+ * This is the window in between: it is visible for a fortnight before it reaches
+ * a patient, and cancelling one is a single click with no confirmation, because
+ * there is nothing to undo.
  *
  * Nothing here has to be approved. A queue that needed signing off would be
- * abandoned in the third week and the whole feature with it, which is the thing
- * the clinic asked for in the first place. This is a veto, not a gate.
+ * abandoned in the third week and the whole feature with it. This is a veto, not
+ * a gate.
  *
  * ── THE FAILURES COME FIRST ─────────────────────────────────────────────────
  * Because they are the only rows anybody has to do anything about, and because
@@ -35,7 +35,6 @@ export interface QueueItem {
   dueOn: string
   state: RecallState
   kind: 'aviso' | 'campanha'
-  serviceId: string | null
   note: string | null
   error: string | null
 }
@@ -123,12 +122,9 @@ export function RecallQueue({
                 >
                   {r.patientName}
                 </Link>
-                {/* What it is for, which is on this screen and never in the
-                    message. The service as the clinic named it, or whatever
-                    somebody wrote when they set it by hand. */}
-                <span className="ml-2 text-base text-ink-soft">
-                  {r.serviceId ? serviceLabel(r.serviceId, locale) : r.note}
-                </span>
+                {/* Why somebody set it, which is on this screen and never in
+                    the message. */}
+                <span className="ml-2 text-base text-ink-soft">{r.note}</span>
               </span>
               <span className="flex items-center gap-3">
                 {r.kind === 'campanha' && <Badge tone="info">{t.addKindCampanha}</Badge>}

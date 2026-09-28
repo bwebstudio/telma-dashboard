@@ -124,16 +124,6 @@ export interface Clinic {
   service_durations?: Record<string, number> | null
   /** { "<service id>": euros }. Absent means no price is quoted for it. */
   service_prices?: Record<string, number> | null
-  /**
-   * Whether this clinic follows its patients up at all. False on every clinic
-   * that has not asked, and the reason it is not optional in this type is that
-   * reading it as undefined somewhere would read as "not off".
-   */
-  recalls_enabled?: boolean | null
-  /** { "<service id>": months }. When an appointment for that service is
-   *  accepted, a reminder is scheduled that many months out. Absent means the
-   *  service gets no reminder, which is right for most of them. */
-  recall_months?: Record<string, number> | null
   min_interval_minutes?: number | null
   // The receptionist's briefing: the variables half of the prompt. The other
   // half is the personality, which lives in lib/onboarding/prompt.ts.
@@ -340,10 +330,6 @@ export interface Appointment {
   /** The record this booking belongs to, when one was matched. Null on
    *  everything written before migration 0046. */
   patient_id?: string | null
-  /** Which of the clinic's own services it was, matched from what the caller
-   *  said. Cleared at ninety days with the reason, because by then it is the
-   *  same information about the same person. */
-  service_id?: string | null
   reason: string | null
   scheduled_at: string
   status: AppointmentStatus
@@ -430,7 +416,14 @@ export interface Patient {
 
 export type RecallState = 'agendado' | 'enviado' | 'cancelado' | 'falhou'
 
-/** One reminder waiting to go out, or the record that one did. */
+/**
+ * One reminder waiting to go out, or the record that one did.
+ *
+ * Always somebody's decision about somebody. Nothing schedules these by itself:
+ * 0047 did, from intervals per service, and 0048 took it out because the message
+ * never names the treatment, so a patient on two cycles got the same sentence
+ * twice with nothing to tell them apart.
+ */
 export interface PatientRecall {
   id: string
   clinic_id: string
@@ -438,16 +431,12 @@ export interface PatientRecall {
   kind: 'aviso' | 'campanha'
   /** A date, not an instant: a reminder is a day in the diary. */
   due_on: string
-  /** What it is about, for the clinic's eyes. Never in the message that is
-   *  sent, because an SMS is read on a lock screen by whoever is holding the
-   *  telephone. */
-  service_id?: string | null
+  /** Why it exists, in the clinic's own words: "revisão 3 meses após a
+   *  cirurgia". For the clinic's eyes, never in the message that is sent. */
   note?: string | null
   /** The clinic's own sentence, for a campanha. An aviso uses fixed copy. */
   body?: string | null
   state: RecallState
-  source: 'automatico' | 'manual'
-  appointment_id?: string | null
   sent_at?: string | null
   channel?: string | null
   /** Twilio's own words when it refused, or why it was closed without sending:

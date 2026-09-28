@@ -83,14 +83,6 @@ export interface Copy {
   detailsDuration: string
   detailsPrice: string
   detailsNotes: string
-  /** The follow-up column, and the switch above it. Panel only: the sign-up
-   *  asks for what it takes to open an account, and nothing a clinic can
-   *  decide later. */
-  recallsToggle: string
-  recallsHelp: string
-  recallsColumn: string
-  recallsUnit: string
-  recallsNever: string
 
   address: string
   addressHelp: string
@@ -270,12 +262,6 @@ const pt: Copy = {
   detailsDuration: 'Duração',
   detailsPrice: 'Preço',
   detailsNotes: 'Alguma coisa sobre preços que não caiba num número',
-  recallsToggle: 'Avisar o paciente quando for hora de voltar',
-  recallsHelp:
-    'Escreva de quantos em quantos meses se volta a este serviço e a Telma agenda o aviso sozinha quando confirmar a marcação. A mensagem diz que é hora de marcar, o nome da clínica e o telefone. Nunca diz o tratamento: uma mensagem lê-se no ecrã de quem tiver o telemóvel na mão.',
-  recallsColumn: 'Avisar em',
-  recallsUnit: 'meses',
-  recallsNever: 'nunca',
 
   address: 'Morada',
   addressHelp: 'A pergunta que mais fazem ao telefone. A Telma dá-a tal como a escrever aqui.',
@@ -466,12 +452,6 @@ const es: Copy = {
   detailsDuration: 'Duración',
   detailsPrice: 'Precio',
   detailsNotes: 'Algo sobre precios que no quepa en un número',
-  recallsToggle: 'Avisar al paciente cuando le toque volver',
-  recallsHelp:
-    'Escriba cada cuántos meses se vuelve a este servicio y Telma agenda el aviso sola al confirmar la cita. El mensaje dice que le toca pedir hora, el nombre de la clínica y el teléfono. Nunca dice el tratamiento: un mensaje lo lee quien tenga el móvil en la mano.',
-  recallsColumn: 'Avisar en',
-  recallsUnit: 'meses',
-  recallsNever: 'nunca',
 
   address: 'Dirección',
   addressHelp: 'La pregunta que más hacen por teléfono. Telma la da tal como la escriba aquí.',

@@ -147,6 +147,30 @@ export function WizardForm({
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [token, setToken] = useState<string | null>(null)
+
+  /**
+   * Back to an empty form.
+   *
+   * Both copies, or it comes back: the browser's, which is what refills the
+   * fields, and the token, which is what the server would keep merging into.
+   * The confirm is not ceremony -- this is the one button on the page that
+   * destroys work, and the work it destroys is invisible from where it sits.
+   */
+  function startOver() {
+    if (!window.confirm(t.startOverConfirm)) return
+    try {
+      window.localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // A browser with storage blocked never had a draft to clear.
+    }
+    setToken(null)
+    // INITIAL and not {}: the defaults are answers, chosen to be right for
+    // most clinics, and an empty form is slower to fill than a wrong one is to
+    // correct. Starting over means starting where a first visitor starts.
+    setValues({ ...INITIAL, locale })
+    setErrors({})
+    setStep(1)
+  }
   const [result, setResult] = useState<OnboardingResult | null>(null)
   const [pending, startTransition] = useTransition()
   // Until this is true nothing is written back to localStorage, so the first
@@ -351,6 +375,21 @@ export function WizardForm({
           )}
 
           <span className="text-sm text-ink-mute">{t.savedNotice}</span>
+          {/* ── AND A WAY OUT OF THEM ────────────────────────────────────
+              The draft surviving a closed browser is the point of the line
+              beside this one, and there was no way to be rid of it. Somebody
+              who started a sign-up for one clinic and came back for another,
+              or filled half of it in to see what it asked, met their own old
+              answers with no way to clear them short of the developer console.
+              A promise to remember is only comfortable next to a way to
+              forget. */}
+          <button
+            type="button"
+            onClick={startOver}
+            className="text-sm text-ink-mute underline underline-offset-2 hover:text-ink"
+          >
+            {t.startOver}
+          </button>
         </div>
       </form>
     </div>

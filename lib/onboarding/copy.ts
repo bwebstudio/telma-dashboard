@@ -27,6 +27,8 @@ export interface Copy {
   intro: string
   introLead: string
   savedNotice: string
+  startOver: string
+  startOverConfirm: string
   languageLabel: string
 
   next: string
@@ -205,6 +207,8 @@ const pt: Copy = {
   introLead:
     'Seis perguntas e a sua clínica passa a ter quem atenda todas as chamadas, marque consultas na agenda e responda ao que os pacientes perguntam sempre.',
   savedNotice: 'As suas respostas ficam guardadas. Pode fechar e voltar mais tarde.',
+  startOver: 'Começar de novo',
+  startOverConfirm: 'Isto apaga o que já preencheu e volta ao primeiro passo. Continuar?',
   languageLabel: 'Idioma',
 
   next: 'Continuar',
@@ -396,6 +400,8 @@ const es: Copy = {
   introLead:
     'Seis preguntas y su clínica pasa a tener quien conteste todas las llamadas, dé cita en la agenda y responda lo que los pacientes preguntan siempre.',
   savedNotice: 'Sus respuestas quedan guardadas. Puede cerrar y volver más tarde.',
+  startOver: 'Empezar de nuevo',
+  startOverConfirm: 'Esto borra lo que ya ha rellenado y vuelve al primer paso. ¿Continuar?',
   languageLabel: 'Idioma',
 
   next: 'Continuar',

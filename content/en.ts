@@ -152,6 +152,8 @@ export const en: Dictionary = {
     attention: 'Waiting for you',
     attentionNone: 'Nothing waiting. The agenda is up to date.',
     needsAnswer: 'To confirm',
+    pendingCount: '{n} to confirm',
+    cancelledCount: '{n} cancelled',
     justCancelled: 'Cancelled',
     cancelledBy: 'Cancelled by the patient',
     slotFreed: 'Slot free',

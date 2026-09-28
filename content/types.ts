@@ -167,6 +167,10 @@ export interface Dictionary {
     attention: string
     attentionNone: string
     needsAnswer: string
+    /** Said the same way by the day, the week and the month: one fact, one
+     *  sentence, so nobody has to learn it twice. Both carry {n}. */
+    pendingCount: string
+    cancelledCount: string
     justCancelled: string
     cancelledBy: string
     slotFreed: string

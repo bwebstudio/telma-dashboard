@@ -1,31 +1,14 @@
 import Link from 'next/link'
 import type { Dictionary, Locale } from '@/content'
-import type { Appointment, AppointmentStatus } from '@/lib/types'
+import type { Appointment } from '@/lib/types'
 import { timeIn } from '@/lib/time'
+import { SHOWN_AS } from '@/lib/agenda-facts'
+import { bookingCategory, categoryBackground } from '@/lib/service-colour'
+import { resolveDuration, type DurationSource } from '@/lib/service-duration'
 import { Badge, APPOINTMENT_TONE } from '@/components/ui'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
 import { ConfirmButton } from './ConfirmButton'
 import { SeenButton } from './SeenButton'
-
-/**
- * The agenda speaks three words: confirmed, to confirm, cancelled.
- *
- * The database keeps more — "copiada" means the booking reached the clinic's
- * own software, "rejeitada" means the clinic turned it down rather than the
- * patient calling off. Both are worth recording and neither changes what the
- * day looks like: the appointment is either happening, waiting for an answer,
- * or not happening. Five labels down a column taught the reader to stop and
- * work out the difference, which is the opposite of what a day view is for.
- * The full state is still on the booking's own card in Marcações.
- */
-const SHOWN_AS: Record<AppointmentStatus, 'confirmada' | 'pendente' | 'cancelada'> = {
-  confirmada: 'confirmada',
-  copiada: 'confirmada',
-  pendente: 'pendente',
-  cancelada: 'cancelada',
-  rejeitada: 'cancelada',
-  expirada: 'cancelada',
-}
 
 /**
  * The day, in the order it happens.
@@ -52,12 +35,17 @@ const SHOWN_AS: Record<AppointmentStatus, 'confirmada' | 'pendente' | 'cancelada
  */
 export function AgendaDay({
   appointments,
+  clinic,
   dict,
   locale,
   tz,
   readOnly = false,
 }: {
   appointments: Appointment[]
+  /** What the clinic offers, to colour a booking by what it is for. The week
+   *  has had this since it existed and the day had not, so the same booking
+   *  was a coloured chip on Tuesday's card and a plain row on Tuesday. */
+  clinic: DurationSource
   dict: Dictionary
   locale: Locale
   /** The clinic's zone. The hours on screen are the clinic's hours. */
@@ -78,7 +66,7 @@ export function AgendaDay({
     <ol className="card divide-y divide-line overflow-hidden">
       {rows.map((appt) => (
         <li key={appt.id}>
-          <Row appt={appt} dict={dict} locale={locale} tz={tz} readOnly={readOnly} />
+          <Row appt={appt} clinic={clinic} dict={dict} locale={locale} tz={tz} readOnly={readOnly} />
         </li>
       ))}
     </ol>
@@ -88,12 +76,14 @@ export function AgendaDay({
 
 function Row({
   appt,
+  clinic,
   dict,
   locale,
   tz,
   readOnly,
 }: {
   appt: Appointment
+  clinic: DurationSource
   dict: Dictionary
   locale: Locale
   tz: string
@@ -106,12 +96,26 @@ function Row({
   const refused = appt.status === 'rejeitada'
   const off = cancelled || refused
 
+  // The same colour the week gives it, from the same two lines. A booking that
+  // is not happening gets none: the hour is the information now, not what it
+  // was going to be for.
+  const colour = off
+    ? null
+    : bookingCategory(resolveDuration(clinic, appt.reason ?? null).service_id, appt.reason)
+
   return (
     <div
       className={`flex items-start gap-3 px-4 py-3.5 sm:gap-5 sm:px-5 ${
         cancelled ? 'bg-warn-soft/50' : ''
       }`}
     >
+      {/* A bar and not a dot: down a list of twelve it is the left edge the eye
+          runs along, and a dot beside the hour competes with the hour. */}
+      <span
+        aria-hidden
+        className="-my-3.5 w-1 shrink-0 self-stretch rounded-full"
+        style={{ backgroundColor: colour ? categoryBackground(colour.index) : 'transparent' }}
+      />
       {/* The hour carries the whole scan, so it is the biggest thing in the
           row and it never wraps. */}
       <span

@@ -8,6 +8,7 @@ import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
 import { DayTally } from '@/components/clinic/DayTally'
+import { DayLoad } from '@/components/clinic/DayLoad'
 import { SetupGate } from '@/components/clinic/SetupGate'
 import { setupSteps } from '@/lib/clinic-setup'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
@@ -23,8 +24,11 @@ import {
   endOfDayIn,
   isSameDayIn,
   weekdayDateIn,
+  weekdayIn,
 } from '@/lib/time'
-import type { Appointment, Call } from '@/lib/types'
+import { dayFacts } from '@/lib/agenda-facts'
+import { startsIn } from '@/lib/slots'
+import type { Appointment, AvailabilitySlot, BlockedDay, Call } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,7 +67,8 @@ export default async function AgendaPage({
   const todayStart = startOfDayIn(tz, now)
   const todayEnd = endOfDayIn(tz, now)
 
-  const [dayRes, pendingRes, cancelledRes, cancelledTodayRes, callsRes] = await Promise.all([
+  const [dayRes, pendingRes, cancelledRes, cancelledTodayRes, callsRes, slotsRes, blockedRes] =
+    await Promise.all([
     // The day on screen.
     supabase
       .from('appointments')
@@ -109,6 +114,17 @@ export default async function AgendaPage({
       .eq('clinic_id', clinicId)
       .gte('created_at', todayStart.toISOString())
       .lte('created_at', todayEnd.toISOString()),
+    // ── HOW MANY HOURS THIS DAY HAS TO GIVE ──────────────────────────────
+    // The week has said "3 de 8 ocupadas" since it existed and the day could
+    // not: the screen a clinic opens every morning was the one that could not
+    // say how full the morning was. It needs the same two rows the planner
+    // reads, for this one day.
+    supabase.from('availability_slots').select('*').eq('clinic_id', clinicId),
+    supabase
+      .from('blocked_days')
+      .select('*')
+      .eq('clinic_id', clinicId)
+      .eq('day', dayKeyIn(tz, day)),
   ])
 
   const dayAppointments = (dayRes.data ?? []) as Appointment[]
@@ -126,6 +142,22 @@ export default async function AgendaPage({
   }
 
   const dayKey = dayKeyIn(tz, day)
+
+  // The same arithmetic the planner does, for one day: the windows the clinic
+  // opens on this weekday, cut into bookable starts.
+  const windows = ((slotsRes.data ?? []) as AvailabilitySlot[]).filter(
+    (s) => s.active && s.weekday === weekdayIn(tz, day)
+  )
+  const openStarts = startsIn(
+    windows,
+    clinic?.slot_minutes ?? 60,
+    clinic?.appointment_duration_minutes ?? 30
+  ).length
+  const facts = dayFacts(
+    dayAppointments,
+    openStarts,
+    ((blockedRes.data ?? []) as BlockedDay[]).length > 0
+  )
 
   // The minutes, and whether they are worth interrupting the day over.
   //
@@ -258,8 +290,16 @@ export default async function AgendaPage({
         />
       </div>
 
+      {/* How full it is, and whether it is asking for anything. The same
+          component each card in the week draws, so one fact is not phrased two
+          ways at two zooms. */}
+      <div className="mb-4">
+        <DayLoad facts={facts} dict={dict} large />
+      </div>
+
       <AgendaDay
         appointments={dayAppointments}
+        clinic={clinic ?? {}}
         dict={dict}
         locale={locale}
         tz={tz}

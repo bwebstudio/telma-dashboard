@@ -108,7 +108,10 @@ export function TelmaSettingsForm({
       </Section>
 
       <Section title={t.services}>
-        <ServicesStep {...stepProps} />
+        {/* Las frases sobre precios que no caben en un número viven aquí y no
+            en el alta: nadie las necesita para empezar, y el panel es donde se
+            afina lo que la Telma dice. */}
+        <ServicesStep {...stepProps} showPriceNotes />
       </Section>
 
       <Section title={t.telma}>

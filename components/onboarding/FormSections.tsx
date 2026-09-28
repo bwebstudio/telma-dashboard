@@ -634,7 +634,7 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
  * Nothing is required. An empty duration means the clinic's usual appointment,
  * an empty price means Telma quotes none for that service and says so.
  */
-function ServiceDetails({ values, set, locale }: StepProps) {
+function ServiceDetails({ values, set, errors, locale, showPriceNotes }: StepProps & { showPriceNotes?: boolean }) {
   const t = copyFor(locale)
   const [open, setOpen] = useState(false)
   const chosen: string[] = values.services ?? []
@@ -731,6 +731,40 @@ function ServiceDetails({ values, set, locale }: StepProps) {
             ))}
           </div>
 
+          {/* ── WHAT A TABLE CANNOT HOLD ──────────────────────────────────
+              "The laser varies with the area." "The first estimate is free."
+              "From 60 euros." Sentences, not numbers, and the prompt has read
+              this field for as long as it has existed.
+
+              It rendered on no screen. Not here, not in the panel. The table
+              above replaced the old free text box for the prices that ARE
+              numbers, which was right, and the box went with it -- taking the
+              sentences that are not numbers along with it. A clinic could not
+              say "the first estimate is free" anywhere, while Telma was ready
+              to say it.
+
+              In the panel only, and after the table, so it reads as the
+              exception to what is above rather than an alternative to it. It
+              is not in the sign-up: nobody needs it to start, and a sign-up
+              with fewer boxes is a sign-up more people finish. */}
+          {showPriceNotes && (
+            <Field
+              label={t.detailsNotes}
+              htmlFor="price_info"
+              hint={t.priceInfoHelp}
+              error={errors.price_info}
+            >
+              <textarea
+                id="price_info"
+                name="price_info"
+                rows={3}
+                placeholder={t.priceInfoPlaceholder}
+                value={values.price_info ?? ''}
+                onChange={(e) => set({ price_info: e.target.value })}
+                className={`${inputClass(errors.price_info)} py-2.5`}
+              />
+            </Field>
+          )}
         </div>
       )}
     </div>
@@ -739,7 +773,12 @@ function ServiceDetails({ values, set, locale }: StepProps) {
 
 // Step 3: services -----------------------------------------------------------
 
-export function ServicesStep({ values, set, errors, locale }: StepProps) {
+export function ServicesStep({ values, set, errors, locale, showPriceNotes = false }: StepProps & {
+  /** True in the panel. The sentences about prices that are not numbers live
+   *  beside the numbers, and a sign-up with fewer boxes is one more people
+   *  finish. */
+  showPriceNotes?: boolean
+}) {
   const t = copyFor(locale)
   const specialty = (values.specialty as Specialty) || 'outra'
   const options = servicesFor(specialty, locale)
@@ -801,7 +840,7 @@ export function ServicesStep({ values, set, errors, locale }: StepProps) {
         />
       </Field>
 
-      <ServiceDetails {...{ values, set, errors, locale }} />
+      <ServiceDetails {...{ values, set, errors, locale, showPriceNotes }} />
 
     </div>
   )

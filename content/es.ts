@@ -221,6 +221,8 @@ export const es: Dictionary = {
     rejectReason: 'Motivo (opcional)',
     rejectReasonHint: 'Queda registrado, el paciente no recibe aviso automático.',
     confirmConfirm: 'Marcar como confirmada',
+    olderHint: 'Hay {n} citas decididas hace más de {days} días. Se quedan en la agenda, en su día.',
+    olderGo: 'Ir a la agenda',
     filterAll: 'Todas',
     filterCancelled: 'Canceladas',
     filterPending: 'Por confirmar',

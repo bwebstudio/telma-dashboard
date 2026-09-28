@@ -237,6 +237,8 @@ export interface Dictionary {
     rejectReason: string
     rejectReasonHint: string
     confirmConfirm: string
+    olderHint: string
+    olderGo: string
     filterAll: string
     /** A filter's own label. It used to borrow the singular status badge. */
     filterCancelled: string

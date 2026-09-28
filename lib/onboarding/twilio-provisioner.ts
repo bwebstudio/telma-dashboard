@@ -21,6 +21,11 @@ export interface ProvisionedNumber {
   /** True when no number was actually bought. The clinic is created either way;
    *  this is what tells the internal team the line is not live yet. */
   demo: boolean
+  /** Why it is a demo number when Twilio was configured and should have sold
+   *  one. Null when there was nothing to buy with, which is the ordinary case
+   *  before the account is funded. Kept so "the line is not live" comes with
+   *  the reason attached instead of somebody going to look for it. */
+  unavailable?: string
 }
 
 export class ProvisioningError extends Error {
@@ -82,12 +87,12 @@ export async function provisionTwilioNumber(region: string): Promise<Provisioned
   // in Madrid is not a small mistake: it is the number on their door.
   const country = countryOfRegion(region)
 
-  if (!twilioConfigured()) {
-    // A number shaped exactly like the real thing, so nothing downstream can
-    // tell the difference and then break the day the real one arrives: the
-    // country's dial code, then its national digit count, of which the first
-    // two or three are the region's. The uuid in the sid is what keeps two demo
-    // sign-ups from colliding on the unique index over `phone_provider_ref`.
+  // A number shaped exactly like the real thing, so nothing downstream can tell
+  // the difference and then break the day the real one arrives: the country's
+  // dial code, then its national digit count, of which the first two or three
+  // are the region's. The uuid in the sid is what keeps two demo sign-ups from
+  // colliding on the unique index over `phone_provider_ref`.
+  const placeholder = (unavailable?: string): ProvisionedNumber => {
     const subscriber = Array.from(
       { length: NATIONAL_DIGITS[country] - areaCode.length },
       () => Math.floor(Math.random() * 10)
@@ -96,16 +101,36 @@ export async function provisionTwilioNumber(region: string): Promise<Provisioned
       number: `${DIAL_CODE[country]}${areaCode}${subscriber}`,
       sid: `PNdemo${crypto.randomUUID().replace(/-/g, '').slice(0, 26)}`,
       demo: true,
+      ...(unavailable ? { unavailable } : {}),
     }
   }
 
-  const search = (await twilio(
-    `/AvailablePhoneNumbers/${country}/Local.json?AreaCode=${areaCode}&VoiceEnabled=true&PageSize=1`
-  )) as { available_phone_numbers?: Array<{ phone_number: string }> }
+  if (!twilioConfigured()) return placeholder()
 
-  const candidate = search.available_phone_numbers?.[0]?.phone_number
+  // ── A SIGN-UP DOES NOT FAIL OVER SOMETHING THE CLINIC DID NOT CHOOSE ──────
+  // Asking Twilio for a Portuguese local number on this account answers "The
+  // requested resource /AvailablePhoneNumbers/PT/Local.json was not found" --
+  // there is no such inventory to sell. That used to reach the applicant as
+  // "Não foi possível concluir a inscrição", at the end, after six steps, and
+  // there is nothing they could have answered differently.
+  //
+  // Whether Twilio has stock in a country is our problem and not theirs, so it
+  // is not their sign-up that breaks. The clinic is created with a placeholder,
+  // the row says the line is not live and why, and somebody here sorts the
+  // number out. The only thing that must never happen is a clinic believing it
+  // has a number that rings.
+  let candidate: string | undefined
+  try {
+    const search = (await twilio(
+      `/AvailablePhoneNumbers/${country}/Local.json?AreaCode=${areaCode}&VoiceEnabled=true&PageSize=1`
+    )) as { available_phone_numbers?: Array<{ phone_number: string }> }
+    candidate = search.available_phone_numbers?.[0]?.phone_number
+  } catch (e) {
+    return placeholder(e instanceof Error ? e.message : 'A Twilio não respondeu à procura.')
+  }
+
   if (!candidate) {
-    throw new ProvisioningError(
+    return placeholder(
       `Sem números disponíveis com o indicativo ${areaCode} em ${regionLabel(region)} (${country}).`
     )
   }
@@ -118,13 +143,20 @@ export async function provisionTwilioNumber(region: string): Promise<Provisioned
     body.set('VoiceMethod', 'POST')
   }
 
-  const bought = (await twilio('/IncomingPhoneNumbers.json', body)) as {
-    phone_number?: string
-    sid?: string
+  // Buying can fail for reasons that are also ours: no funds, an unverified
+  // account, a number taken between the search and the purchase.
+  let bought: { phone_number?: string; sid?: string }
+  try {
+    bought = (await twilio('/IncomingPhoneNumbers.json', body)) as {
+      phone_number?: string
+      sid?: string
+    }
+  } catch (e) {
+    return placeholder(e instanceof Error ? e.message : 'A Twilio recusou a compra.')
   }
 
   if (!bought.phone_number || !bought.sid) {
-    throw new ProvisioningError('A Twilio aceitou a compra mas não devolveu o número.')
+    return placeholder('A Twilio aceitou a compra mas não devolveu o número.')
   }
 
   return { number: bought.phone_number, sid: bought.sid, demo: false }

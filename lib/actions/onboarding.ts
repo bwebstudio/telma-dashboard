@@ -457,7 +457,15 @@ export async function completeOnboarding(
             {
               clinic_id: cid,
               type: 'needs_attention',
-              message: `O número ${provisioned.number} é fictício: a Twilio não está configurada.`,
+              // Two different situations wearing the same flag, and the
+              // difference decides who has to do something. No Twilio at all
+              // is how this runs before the account is funded and nobody is
+              // surprised by it. Twilio configured and refusing is a clinic
+              // that signed up believing it has a line, and somebody here has
+              // to find it a number before that number is on a door.
+              message: provisioned.unavailable
+                ? `O número ${provisioned.number} é fictício: a Twilio não deu número. ${provisioned.unavailable}`
+                : `O número ${provisioned.number} é fictício: a Twilio não está configurada.`,
             },
           ]
         : []),

@@ -223,6 +223,7 @@ export const pt: Dictionary = {
     rejectReason: 'Motivo (opcional)',
     rejectReasonHint: 'Fica registado, o paciente não é avisado automaticamente.',
     confirmConfirm: 'Marcar como confirmada',
+    visits: '{n}.ª marcação nesta clínica',
     olderHint: 'Há {n} marcações decididas há mais de {days} dias. Ficam na agenda, no seu dia.',
     olderGo: 'Ir à agenda',
     filterAll: 'Todas',

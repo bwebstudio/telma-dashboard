@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment } from '@/lib/types'
 import { formatWeekdayDate, formatTime } from '@/lib/format'
+import { fill } from '@/lib/fill'
 import { Badge, APPOINTMENT_TONE } from './ui'
 import { IconCopy, IconCheck, IconClose } from './icons'
 import {
@@ -15,11 +16,15 @@ import {
 
 export function AppointmentCard({
   appt,
+  visits = 0,
   dict,
   locale,
   readOnly = false,
 }: {
   appt: Appointment
+  /** How many bookings this clinic has for this person, this one included.
+   *  Zero when nobody has been matched to a record yet. */
+  visits?: number
   dict: Dictionary
   locale: Locale
   /**
@@ -74,6 +79,14 @@ export function AppointmentCard({
           <h3 className="text-xl font-semibold text-ink">
             {appt.patient_name}
           </h3>
+          {/* Whether this clinic has seen them before. It changes how somebody
+              answers the telephone to them, and until now the screen could not
+              say. Drawn only when there is a before: "first visit" on every
+              card is noise on the days it is true and a lie on the days the
+              record has simply not caught up. */}
+          {visits > 1 && (
+            <p className="text-sm text-ink-mute">{fill(dict.marcacoes.visits, { n: visits })}</p>
+          )}
           <a
             href={`tel:${appt.patient_phone}`}
             className="text-base text-ink-soft underline decoration-line-strong underline-offset-4"

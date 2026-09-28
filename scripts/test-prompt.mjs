@@ -146,6 +146,13 @@ for (const [name, variables] of Object.entries(CASES)) {
 // they survive somebody running --update without reading the diff.
 // The rules, per language. This is what replaced having a single base: a
 // language that loses a rule fails here rather than shipping quietly.
+// The rule that a caller id is not a contact number, which is the reason a
+// known patient is handled the way it is.
+const ASKS_NUMBER = {
+  pt: 'Perguntas sempre o número',
+  es: 'Preguntas siempre el número',
+}
+
 const RULES = {
   pt: {
     clinical: 'Nunca dás informação clínica',
@@ -1514,5 +1521,38 @@ test('the number and the name are asked for one at a time', () => {
     assert.ok(nodes.booking.includes(ONE[lang]), `${lang}: both may be asked in the same question`)
     // And they are still confirmed together, which is the measured half.
     assert.ok(nodes.booking.includes(RULES[lang].nameAndNumberTogether), `${lang}: lost the joint confirmation`)
+  }
+})
+
+// A telephone is not a person.
+//
+// A clinic that already has this number gets one thing from it: it does not
+// ask for the contact number again. It does NOT get to say the name back. The
+// base spends a whole rule explaining that the number a call arrives on is not
+// the caller's own -- so whoever picked up may not be who is on the record, and
+// greeting them by that name tells a stranger who else lives in the house.
+test('a known number saves a question and never volunteers a name', () => {
+  const SAVES = { pt: '**Não voltas a pedir o telefone**', es: '**No vuelves a pedir el teléfono**' }
+  const SILENT = {
+    pt: '**Nunca dizes tu o nome que tens em ficha**',
+    es: '**Nunca dices tú el nombre que tienes en ficha**',
+  }
+  for (const lang of ['pt', 'es']) {
+    const known = buildPrompt(
+      { ...CASES['open-can-book'], caller_id: '+351910523903', known_patient: 'Domingos Coelho' },
+      lang
+    )
+    assert.ok(known.text.includes(SAVES[lang]), `${lang}: asks again for a number it has`)
+    assert.ok(known.text.includes(SILENT[lang]), `${lang}: may read a name off the record`)
+    // The name itself must never reach the sheet. Nothing can say what is not
+    // written down.
+    assert.ok(!known.text.includes('Domingos Coelho'), `${lang}: the name is in the prompt`)
+
+    // And an unknown number still gets the rule that made all this necessary.
+    const stranger = buildPrompt(
+      { ...CASES['open-can-book'], caller_id: '+351910523903', known_patient: null },
+      lang
+    )
+    assert.ok(stranger.text.includes(ASKS_NUMBER[lang]), `${lang}: stopped asking for the number`)
   }
 })

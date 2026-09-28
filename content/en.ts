@@ -221,6 +221,7 @@ export const en: Dictionary = {
     rejectReason: 'Reason (optional)',
     rejectReasonHint: 'Kept for the record, the patient is not told automatically.',
     confirmConfirm: 'Mark as confirmed',
+    visits: '{n} bookings at this clinic',
     olderHint: '{n} bookings were decided more than {days} days ago. They stay in the agenda, on their day.',
     olderGo: 'Go to the agenda',
     filterAll: 'All',

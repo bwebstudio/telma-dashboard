@@ -53,6 +53,17 @@ export interface PromptVariables {
   /** IANA zone. Every hour Telma says is in it, and she says so: a caller from
    *  abroad hearing "quarter past four" needs to know whose quarter past four. */
   timezone: string
+  /** The name this clinic already has for the number the call came in on.
+   *
+   *  Null when nobody has rung from it before, which is most calls.
+   *
+   *  It is deliberately never said out loud unprompted. A telephone is not a
+   *  person -- the base spends a whole rule explaining that the number a call
+   *  arrives on is not the caller's own -- so greeting the holder of a phone by
+   *  the name of whoever last used it is a way of telling a stranger who else
+   *  lives in the house. What it is for is the opposite: not asking again for
+   *  a contact number the clinic already has. */
+  known_patient?: string | null
   /** The number the person is calling from, when the network gives one.
    *
    *  Turns the most-repeated question in the whole call into one that is never
@@ -227,6 +238,8 @@ interface BaseCopy {
   hoursNote: string
   eachAppointmentTakes: (minutes: number) => string
   callerNumberKnown: (number: string) => string
+  /** Somebody this clinic has a record for, ringing from the same number. */
+  knownPatient: string
   callerNumberUnknown: string
   services: string
   alsoDoes: string
@@ -588,6 +601,8 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   callerNumberKnown: (n) =>
     `A chamada entra do ${n}, e isso **não é o telefone de contacto da pessoa**. **Perguntas sempre o número**: "qual é o melhor número para a clínica lhe ligar?". Nunca o ofereces já dito à espera de um "sim".`,
   callerNumberUnknown: 'Não sabes de que número estão a ligar, por isso o telefone tens de o perguntar.',
+  knownPatient:
+    'Este número já é de um paciente desta clínica, e o contacto dele é este mesmo. **Não voltas a pedir o telefone**: já o tens. Pedes só o nome, para confirmares para quem é a consulta — pode ser para outra pessoa da casa. **Nunca dizes tu o nome que tens em ficha**, nem para confirmar: quem atende o telefone pode não ser quem lá está guardado, e dizê-lo é contar a um estranho quem mais vive naquela casa.',
   services: 'Serviços que podes marcar',
   alsoDoes: 'Também faz',
   prices: 'Preços',
@@ -906,6 +921,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   callerNumberKnown: (n) =>
     `La llamada entra desde el ${n}, y eso **no es el teléfono de contacto de la persona**. **Preguntas siempre el número**: "¿cuál es el mejor número para que la clínica le llame?". Nunca se lo ofreces ya dicho esperando un "sí".`,
   callerNumberUnknown: 'No sabes desde qué número llaman, así que el teléfono sí tienes que preguntarlo.',
+  knownPatient:
+    'Este número ya es de un paciente de esta clínica, y su contacto es este mismo. **No vuelves a pedir el teléfono**: ya lo tienes. Pides sólo el nombre, para confirmar para quién es la cita — puede ser para otra persona de la casa. **Nunca dices tú el nombre que tienes en ficha**, ni para confirmar: quien coge el teléfono puede no ser quien está guardado, y decirlo es contarle a un desconocido quién más vive en esa casa.',
   services: 'Servicios que puedes citar',
   alsoDoes: 'También hace',
   prices: 'Precios',
@@ -1088,7 +1105,15 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
   // a clínica, o que impedia que esse procedimento vivesse no agente partilhado
   // como um nó. Aqui não impedem nada: "A clínica" é a única parte que já se
   // gera por chamada e por clínica.
-  facts.push(v.caller_id ? t.callerNumberKnown(spokenNumber(v.caller_id)) : t.callerNumberUnknown)
+  // A number this clinic already knows changes one thing and only one: it does
+  // not have to be asked for again. It never changes what she says first.
+  facts.push(
+    v.known_patient
+      ? t.knownPatient
+      : v.caller_id
+        ? t.callerNumberKnown(spokenNumber(v.caller_id))
+        : t.callerNumberUnknown
+  )
   facts.push('')
   if (v.services.length) facts.push(`${t.services}: ${v.services.join(', ')}.`)
   if (v.custom_services) facts.push(`${t.alsoDoes}: ${v.custom_services}`)

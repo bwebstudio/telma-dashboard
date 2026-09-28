@@ -293,6 +293,46 @@ export async function POST(request: Request) {
     }
   }
 
+  // ── AND WHO THEY WERE ─────────────────────────────────────────────────────
+  // After the bookings are written, never before, and never in a way that can
+  // fail the call: a patient record is a convenience for the next call, and
+  // the booking is the thing somebody is waiting on.
+  //
+  // Here rather than inside record_call because it is the only moment both the
+  // name and the contact number have been said out loud and confirmed back —
+  // which is what step 8 of the booking procedure exists to do. A name heard
+  // and not confirmed is a name that goes into the record wrong.
+  try {
+    const seen = new Set<string>()
+    for (const a of [...(usable ? [usable] : []), ...extras]) {
+      const name = typeof a?.patient_name === 'string' ? a.patient_name.trim() : ''
+      const phone = phoneForAppointment(a?.patient_phone, body.from_phone)
+      const digits = String(phone ?? '').replace(/\D/g, '').slice(-9)
+      if (!name || digits.length < 9 || seen.has(digits)) continue
+      seen.add(digits)
+      const { data: patientId } = await admin.rpc('remember_patient', {
+        p_clinic_id: clinicId,
+        p_name: name,
+        p_phone: phone,
+      })
+      // And the bookings of this call point at it. Without this the table is a
+      // list nobody joins to: the panel could not show that somebody has been
+      // here before, which is the whole reason it exists.
+      if (patientId && callId) {
+        await admin
+          .from('appointments')
+          .update({ patient_id: patientId })
+          .eq('clinic_id', clinicId)
+          .eq('call_id', callId)
+          .eq('patient_phone', phone)
+      }
+    }
+  } catch (e) {
+    // Never fatal. The clinic has its booking either way, and the only thing
+    // lost is that Telma asks this person their name again next time.
+    console.error('[call] remember_patient', e instanceof Error ? e.message : e)
+  }
+
   if (rejected) {
     return NextResponse.json(
       {

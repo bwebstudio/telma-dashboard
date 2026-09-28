@@ -327,6 +327,9 @@ export interface Appointment {
   call_id: string | null
   patient_name: string
   patient_phone: string
+  /** The record this booking belongs to, when one was matched. Null on
+   *  everything written before migration 0046. */
+  patient_id?: string | null
   reason: string | null
   scheduled_at: string
   status: AppointmentStatus

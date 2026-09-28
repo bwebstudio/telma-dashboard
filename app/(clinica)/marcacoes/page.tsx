@@ -63,6 +63,24 @@ export default async function MarcacoesPage({
       .lt('decided_at', since),
   ])
   const appts = (data ?? []) as Appointment[]
+
+  // ── HAS THIS PERSON BEEN HERE BEFORE? ─────────────────────────────────────
+  // The question a clinic asks itself while looking at a booking, and until
+  // now nothing on the screen could answer it. One query for everybody on the
+  // page rather than one per card: twenty cards would otherwise be twenty
+  // round trips to say "second visit".
+  const patientIds = [...new Set(appts.map((a) => a.patient_id).filter(Boolean))] as string[]
+  const visits = new Map<string, number>()
+  if (patientIds.length) {
+    const { data: history } = await supabase
+      .from('appointments')
+      .select('patient_id')
+      .eq('clinic_id', clinicId)
+      .in('patient_id', patientIds)
+    for (const row of (history ?? []) as Array<{ patient_id: string | null }>) {
+      if (row.patient_id) visits.set(row.patient_id, (visits.get(row.patient_id) ?? 0) + 1)
+    }
+  }
   // Pending first, then the rest by most recent.
   appts.sort((a, b) => {
     if (a.status === 'pendente' && b.status !== 'pendente') return -1
@@ -120,6 +138,10 @@ export default async function MarcacoesPage({
             <AppointmentCard
               key={appt.id}
               appt={appt}
+              // Only when there is a before. "First visit" on every card is
+              // noise on the days when it is true and wrong on the days the
+              // record simply has not caught up.
+              visits={appt.patient_id ? (visits.get(appt.patient_id) ?? 0) : 0}
               dict={dict}
               locale={locale}
               readOnly={readOnly}

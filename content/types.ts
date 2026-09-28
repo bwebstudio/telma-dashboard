@@ -237,6 +237,7 @@ export interface Dictionary {
     rejectReason: string
     rejectReasonHint: string
     confirmConfirm: string
+    visits: string
     olderHint: string
     olderGo: string
     filterAll: string

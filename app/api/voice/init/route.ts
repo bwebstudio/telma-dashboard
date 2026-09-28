@@ -118,6 +118,23 @@ export async function POST(request: Request) {
     .order('sort')
     .order('created_at')
 
+  // ── DOES THIS CLINIC ALREADY KNOW THIS NUMBER? ────────────────────────────
+  // One query, keyed on the last nine digits the same way everything else that
+  // matches a telephone is. The answer only ever removes a question: a clinic
+  // that already has this person's contact number does not have to be given it
+  // again. The name is read but never spoken -- see `knownPatient` in the base.
+  const callerDigits = (body.caller_id ?? '').replace(/\D/g, '').slice(-9)
+  let knownPatient: string | null = null
+  if (callerDigits.length === 9) {
+    const { data: found } = await createAdminClient()
+      .from('patients')
+      .select('name')
+      .eq('clinic_id', clinicId)
+      .eq('phone_digits', callerDigits)
+      .maybeSingle()
+    knownPatient = (found as { name?: string } | null)?.name ?? null
+  }
+
   const variables: PromptVariables = {
     clinic_name: clinic.name,
     // Only when there is more than one. A clinic with a single diary carries
@@ -126,6 +143,7 @@ export async function POST(request: Request) {
     professionals: ((diaries ?? []) as Array<{ name: string }>).map((r) => r.name),
     // Where an emergency goes, and the only thing about a clinic that changes it.
     caller_id: body.caller_id?.trim() || null,
+    known_patient: knownPatient,
     veterinary: clinic.specialty === 'veterinaria',
     specialty: clinic.specialty ? specialtyLabel(clinic.specialty as Specialty, promptLocale) : null,
     address: clinic.address ?? null,

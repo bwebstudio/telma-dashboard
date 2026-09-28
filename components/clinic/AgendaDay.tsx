@@ -4,6 +4,8 @@ import type { Appointment, AppointmentStatus } from '@/lib/types'
 import { timeIn } from '@/lib/time'
 import { Badge, APPOINTMENT_TONE } from '@/components/ui'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
+import { ConfirmButton } from './ConfirmButton'
+import { SeenButton } from './SeenButton'
 
 /**
  * The agenda speaks three words: confirmed, to confirm, cancelled.
@@ -36,6 +38,17 @@ const SHOWN_AS: Record<AppointmentStatus, 'confirmada' | 'pendente' | 'cancelada
  * A cancelled slot stays in place rather than disappearing. The hour is still
  * information — it is now free, and the person reading is the one who can fill
  * it. Removing the row would hide exactly the thing worth knowing.
+ *
+ * ── AND THE ANSWER IS ON THE ROW ───────────────────────────────────────────
+ * Confirming and acknowledging used to live only in the band above, which
+ * meant every appointment waiting for an answer was drawn twice on one screen:
+ * once up there with a button, once down here in its hour. The same four
+ * names, the same cancellation note, read twice on the way down. Reported as
+ * confusing, and it is: a reader cannot tell whether the two lists are the
+ * same thing or two different things until they compare them.
+ *
+ * The answer belongs where the appointment is, beside the hour it is at and
+ * the reason it is for. The band keeps only what is not on this day.
  */
 export function AgendaDay({
   appointments,
@@ -43,6 +56,7 @@ export function AgendaDay({
   locale,
   tz,
   isToday,
+  readOnly = false,
 }: {
   appointments: Appointment[]
   dict: Dictionary
@@ -50,6 +64,8 @@ export function AgendaDay({
   /** The clinic's zone. The hours on screen are the clinic's hours. */
   tz: string
   isToday: boolean
+  /** False for the clinic, true for an administrator visiting. */
+  readOnly?: boolean
 }) {
   const t = dict.agenda
   const rows = [...appointments].sort(
@@ -72,7 +88,7 @@ export function AgendaDay({
       {rows.map((appt, i) => (
         <li key={appt.id}>
           {nowAt === i && <NowLine label={t.now} />}
-          <Row appt={appt} dict={dict} locale={locale} tz={tz} />
+          <Row appt={appt} dict={dict} locale={locale} tz={tz} readOnly={readOnly} />
         </li>
       ))}
       {allPast && (
@@ -100,11 +116,16 @@ function Row({
   dict,
   locale,
   tz,
+  readOnly,
 }: {
   appt: Appointment
   dict: Dictionary
   locale: Locale
   tz: string
+  /** True while an administrator is visiting. Answering for a clinic is the
+   *  clinic's to do, so the buttons are not drawn at all rather than drawn and
+   *  refused. */
+  readOnly: boolean
 }) {
   const cancelled = appt.status === 'cancelada'
   const refused = appt.status === 'rejeitada'
@@ -181,6 +202,23 @@ function Row({
         <Badge tone={APPOINTMENT_TONE[SHOWN_AS[appt.status]]}>
           {dict.status.appointment[SHOWN_AS[appt.status]]}
         </Badge>
+
+        {/* The answer, beside the thing being answered. A booking waiting on
+            the clinic is the only row on the day that asks for something, and
+            what it asks for is one click. */}
+        {!readOnly && appt.status === 'pendente' && (
+          <div className="mt-1">
+            <ConfirmButton id={appt.id} label={dict.marcacoes.confirm} />
+          </div>
+        )}
+        {/* A cancellation asks for nothing except to be read, and stays in the
+            warm tint until somebody says so. */}
+        {!readOnly && cancelled && !appt.cancel_seen_at && (
+          <div className="mt-1">
+            <SeenButton id={appt.id} label={dict.agenda.seen} />
+          </div>
+        )}
+
         {appt.call_id && (
           <Link
             href={`/conversas?c=${appt.call_id}`}

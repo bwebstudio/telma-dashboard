@@ -4,7 +4,7 @@ import type { Appointment } from '@/lib/types'
 import { ConfirmButton } from './ConfirmButton'
 import { SeenButton } from './SeenButton'
 import { PreAppointmentCountdown } from './PreAppointmentCountdown'
-import { smartStamp } from '@/lib/time'
+import { smartStamp, dayKeyIn } from '@/lib/time'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
 
 /**
@@ -28,6 +28,21 @@ import { IconPhone, IconWhatsApp } from '@/components/icons'
  * answer given nine times out of ten, and the full record is one tap away for
  * the tenth.
  *
+ * ── AND NOTHING THAT IS ALREADY ON SCREEN ──────────────────────────────────
+ * It used to show every unanswered booking, including the ones in the day
+ * drawn directly underneath it. The same four names, the same cancellation
+ * note, twice on one screen on the way down — and a reader cannot tell whether
+ * two lists are the same thing or two different things until they have
+ * compared them, which is work nobody should be doing on the screen they open
+ * every morning.
+ *
+ * So: the answer lives on the row, in the day, beside the hour it is at. This
+ * carries what the day on screen does not show — a booking for tomorrow while
+ * today is open, a cancellation from last week — and when there is nothing
+ * left to carry it draws nothing at all. Not the all-clear: saying "nothing
+ * needs you" above four things that need you would be worse than repeating
+ * them.
+ *
  * When it is empty it says so, in a sentence. An empty state that renders as
  * nothing looks like a page that failed to load — and the whole point of this
  * band is that its silence has to be trustworthy.
@@ -40,6 +55,7 @@ export function AttentionBand({
   tz,
   readOnly,
   serverNow,
+  visibleDay,
 }: {
   pending: Appointment[]
   cancelled: Appointment[]
@@ -49,9 +65,24 @@ export function AttentionBand({
   readOnly: boolean
   /** When the server drew this. The zero the countdowns count from. */
   serverNow: string
+  /** The day the agenda underneath is showing, as YYYY-MM-DD in the clinic's
+   *  zone. Everything falling on it is dropped from here: it is on screen
+   *  below, with its own buttons. */
+  visibleDay: string
 }) {
   const t = dict.agenda
-  const total = pending.length + cancelled.length
+
+  const onVisibleDay = (iso: string | null | undefined) =>
+    Boolean(iso) && dayKeyIn(tz, new Date(iso as string)) === visibleDay
+
+  const elsewherePending = pending.filter((a) => !onVisibleDay(a.scheduled_at))
+  const elsewhereCancelled = cancelled.filter((a) => !onVisibleDay(a.scheduled_at))
+  const total = elsewherePending.length + elsewhereCancelled.length
+
+  // Something needs answering and all of it is in the day below. Nothing is
+  // drawn: the day is about to say it, better, in the hour it happens.
+  const allBelow = total === 0 && pending.length + cancelled.length > 0
+  if (allBelow) return null
 
   if (total === 0) {
     return (
@@ -70,7 +101,7 @@ export function AttentionBand({
       </div>
 
       <ul className="divide-y divide-line">
-        {cancelled.map((appt) => (
+        {elsewhereCancelled.map((appt) => (
           <li
             key={appt.id}
             className="bg-warn-soft/60 px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-5"
@@ -98,7 +129,7 @@ export function AttentionBand({
         {/* On a phone the answer sits under what it is answering, not beside
             it: a badge, a name and two controls on one line leaves the name
             wrapping around the badge and nothing reads in order. */}
-        {pending.map((appt) => (
+        {elsewherePending.map((appt) => (
           <li
             key={appt.id}
             className="px-4 py-3 sm:flex sm:items-start sm:justify-between sm:gap-4 sm:px-5"

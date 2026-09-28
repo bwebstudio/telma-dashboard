@@ -205,6 +205,7 @@ export default async function AgendaPage({
         tz={tz}
         readOnly={readOnly}
         serverNow={now.toISOString()}
+        visibleDay={dayKey}
       />
 
       <div className="mb-4 mt-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
@@ -231,6 +232,7 @@ export default async function AgendaPage({
         locale={locale}
         tz={tz}
         isToday={isToday}
+        readOnly={readOnly}
       />
     </>
   )

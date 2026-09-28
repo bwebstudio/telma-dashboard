@@ -385,4 +385,62 @@ test('erasing reaches a merged record by either of its numbers', async () => {
   assert.equal(rows[0].n, 0, 'somebody who asked to be forgotten was told there was nothing here')
 })
 
+// ── WHAT SURVIVES A PURGE ───────────────────────────────────────────────────
+// 0045 took the name off a cancelled appointment at ninety days. A cancellation
+// is a record of something the patient did, and the clinic reads the next
+// booking against it.
+
+test('a cancellation keeps its name for ever, and loses what was said', async () => {
+  await wipe()
+  await clinic(CLINIC)
+  const p = await patient(CLINIC, 'Ana Torres', '+351910523903')
+  await db.query(
+    `insert into appointments
+       (clinic_id, patient_id, patient_name, patient_phone, scheduled_at, status,
+        cancelled_by, cancel_reason, reason, summary)
+     values ($1, $2, 'Ana Torres', '+351910523903', now() - interval '200 days', 'cancelada',
+             'paciente', 'Ficou retida no trabalho', 'Limpeza', 'Pediu para remarcar')`,
+    [CLINIC, p]
+  )
+
+  const { rows: report } = await db.query(`select purge_appointments() as r`)
+  assert.equal(report[0].r.reasons_cleared, 1)
+  assert.equal(report[0].r.summaries_cleared, 1)
+
+  const { rows } = await db.query(
+    `select patient_name, patient_phone, status, cancelled_by, cancel_reason, reason, summary
+       from appointments where clinic_id = $1`,
+    [CLINIC]
+  )
+  const a = rows[0]
+  // Who, when, what happened and who called it off: the clinic's own record.
+  assert.equal(a.patient_name, 'Ana Torres', 'the name was taken off a cancellation')
+  assert.equal(a.patient_phone, '+351910523903')
+  assert.equal(a.status, 'cancelada')
+  assert.equal(a.cancelled_by, 'paciente')
+  assert.equal(a.cancel_reason, 'Ficou retida no trabalho')
+  // What she said about her health: gone at ninety days, like everywhere else.
+  assert.equal(a.reason, null)
+  assert.equal(a.summary, null)
+})
+
+test('an appointment that happened loses its note at the same age', async () => {
+  // The hole 0051 closes: `calls.summary` has had a ninety day deadline since
+  // 0039 and the appointment's copy of the same sentences had none.
+  await wipe()
+  await clinic(CLINIC)
+  const p = await patient(CLINIC, 'Ana Torres', '+351910523903')
+  await db.query(
+    `insert into appointments (clinic_id, patient_id, patient_name, patient_phone, scheduled_at, status, summary)
+     values ($1, $2, 'Ana Torres', '+351910523903', now() - interval '200 days', 'copiada', 'Dor do lado direito')`,
+    [CLINIC, p]
+  )
+  await db.query(`select purge_appointments()`)
+  const { rows } = await db.query(
+    `select patient_name, summary from appointments where clinic_id = $1`, [CLINIC]
+  )
+  assert.equal(rows[0].patient_name, 'Ana Torres')
+  assert.equal(rows[0].summary, null)
+})
+
 test.after(() => db.close())

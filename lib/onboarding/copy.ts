@@ -341,7 +341,7 @@ const pt: Copy = {
   locations: 'sedes incluídas',
   addonWhatsapp: 'Adicionar a Telma no WhatsApp',
   addonWhatsappHelp: 'A Telma atende também no WhatsApp: o paciente escreve e ela marca. 49 €/mês.',
-  needMore: 'Mais de 5 sedes ou mais de 1600 minutos?',
+  needMore: 'Mais de 5 sedes ou mais de 1750 minutos?',
   needMoreLink: 'Fale connosco',
   terms: 'Li e aceito os termos de serviço e a política de privacidade.',
   paymentNote:
@@ -531,7 +531,7 @@ const es: Copy = {
   locations: 'sedes incluidas',
   addonWhatsapp: 'Añadir Telma en WhatsApp',
   addonWhatsappHelp: 'Telma atiende también en WhatsApp: el paciente escribe y ella da cita. 49 €/mes.',
-  needMore: '¿Más de 5 sedes o más de 1600 minutos?',
+  needMore: '¿Más de 5 sedes o más de 1750 minutos?',
   needMoreLink: 'Hable con nosotros',
   terms: 'He leído y acepto los términos del servicio y la política de privacidad.',
   paymentNote:

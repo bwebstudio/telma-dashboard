@@ -161,3 +161,29 @@ update addons
 -- pueda enseñar cuánto se ahorra comprándolo: a 0,45 el pack de 79 € pasa a ser
 -- un 30 % más barato en vez de un 10 %, que es lo que un pack debe ser.
 update minute_packs set unit_price_eur = 0.45 where id = 'pack_250';
+
+-- ── Y LA MISMA PRUEBA CONTRA EL BONO, QUE ES LA QUE MUERDE ──────────────────
+-- Comparar el salto contra el minuto suelto no basta, y por poco se queda una
+-- escalera que nadie habría subido nunca. Nadie recarga al precio suelto
+-- teniendo un bono más barato, así que el escalón tiene que ganarle al bono.
+--
+-- Con el bono a 79 € (0,316 el minuto) y los planes en 650 y 1600, cubrir los
+-- 950 minutos que separan Clínica de Rede costaba 300 € en bonos contra 350 €
+-- de subir de plan. Los bonos ganaban, y para siempre.
+--
+-- Con los planes en 700 y 1750 y el bono a 89 € (0,356) los dos saltos ganan
+-- contra las dos formas de comprar minutos, y el bono sigue siendo un 21 % más
+-- barato que el suelto, que es para lo que existe.
+update plans set max_minutes_per_month = 700 where id = 'clinica';
+update plans set max_minutes_per_month = 1750 where id = 'rede';
+update plans set description = 'Para mais de 5 sedes ou mais de 1750 minutos. Sob consulta'
+ where id = 'personalizado';
+
+update clinics c
+   set minute_limit = p.max_minutes_per_month
+  from plans p
+ where p.id = c.plan::text
+   and p.max_minutes_per_month is not null
+   and c.minute_limit is distinct from p.max_minutes_per_month;
+
+update minute_packs set price_eur = 89 where id = 'pack_250';

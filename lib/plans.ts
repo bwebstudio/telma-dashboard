@@ -7,9 +7,9 @@ import type { PlanType } from './types'
 // next to it ("about 300 calls") is an illustration, not the limit.
 export const PLAN_MINUTES: Record<PlanType, number> = {
   essencial: 250,
-  clinica: 650,
-  rede: 1600,
-  personalizado: 1600,
+  clinica: 700,
+  rede: 1750,
+  personalizado: 1750,
 }
 
 export const PLAN_PRICE: Record<PlanType, number | null> = {
@@ -43,14 +43,18 @@ export const EXTRA_SITE_MINUTES = 400
  *   Essencial to Clínica  +150 €  needs a gap of more than 150/0.45 = 333 min
  *   Clínica to Rede       +350 €  needs a gap of more than 350/0.45 = 778 min
  *
- * The gaps are 400 and 950, so both hold. At 0.35 the same gaps would have had
- * to be 429 and 1000, and the ladder set by 0052 gives 400 and 950: a clinic
- * talking a thousand minutes a month would have paid less by staying on
- * Essencial and buying extras, for ever. Raising this is what makes the rungs
- * mean something.
+ * ── AND THE SAME TEST AGAINST THE PACK, WHICH IS THE ONE THAT BITES ────────
+ * That test is not enough on its own, and missing it nearly shipped a ladder
+ * nobody would ever climb. Nobody tops up at the loose price when a pack is
+ * cheaper, so the rung has to beat the pack, not the loose minute:
  *
- * It also gives the minute pack its reason to exist again: 79 € for 250 minutes
- * is 0.316, which is 30% under this rather than 10%.
+ *   Essencial to Clínica  +150 €  needs a gap of more than 150/0.356 = 421 min
+ *   Clínica to Rede       +350 €  needs a gap of more than 350/0.356 = 983 min
+ *
+ * The gaps are 450 and 1050, so both hold, against both prices. With the pack
+ * at 79 € (0.316 a minute) they would have had to be 475 and 1108, and a
+ * Clínica needing Rede's minutes would have bought packs for ever: 300 € of
+ * packs against 350 € of upgrade.
  *
  * Margin here is 51% against a variable cost of 0.2225, better than any plan's,
  * which is right: an extra minute carries none of the fixed cost a plan does.

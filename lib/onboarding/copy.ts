@@ -87,6 +87,14 @@ export interface Copy {
   priceInfo: string
   priceInfoHelp: string
   priceInfoPlaceholder: string
+  groupVoice: string
+  groupVoiceLead: string
+  groupStuck: string
+  groupStuckLead: string
+  groupUrgent: string
+  groupUrgentLead: string
+  groupExtra: string
+  groupExtraLead: string
   greetingLanguage: string
   greetingLanguageHelp: string
   formality: string
@@ -259,6 +267,14 @@ const pt: Copy = {
   priceInfo: 'Preços',
   priceInfoHelp: 'Opcional, e só para o que não cabe num número: "o laser varia com a zona", "o primeiro orçamento é gratuito". Os preços de cada serviço põem-se em cima.',
   priceInfoPlaceholder: 'Primeira consulta 40 €. Limpeza a partir de 60 €.',
+  groupVoice: 'Como fala',
+  groupVoiceLead: 'Em que língua abre a chamada e como trata quem liga.',
+  groupStuck: 'Quando não consegue ajudar',
+  groupStuckLead: 'Vai acontecer. O que decide aqui é o que ela faz nesse momento.',
+  groupUrgent: 'Urgências e fora de horas',
+  groupUrgentLead: 'As duas situações em que uma marcação não serve de nada.',
+  groupExtra: 'O resto',
+  groupExtraLead: 'O que nenhuma pergunta acima previu.',
   greetingLanguage: 'Idioma com que atende',
   greetingLanguageHelp:
     'O primeiro que se ouve, antes de quem liga dizer nada. Se a clínica atende em mais línguas, a saudação diz como pedi-las, e a partir daí a Telma não muda de língua durante a chamada.',
@@ -442,6 +458,14 @@ const es: Copy = {
   priceInfo: 'Precios',
   priceInfoHelp: 'Opcional, y solo para lo que no cabe en un número: "el láser varía según la zona", "el primer presupuesto es gratis". Los precios de cada servicio se ponen arriba.',
   priceInfoPlaceholder: 'Primera visita 40 €. Limpieza desde 60 €.',
+  groupVoice: 'Cómo habla',
+  groupVoiceLead: 'En qué lengua abre la llamada y cómo trata a quien llama.',
+  groupStuck: 'Cuando no puede ayudar',
+  groupStuckLead: 'Va a pasar. Lo que decide aquí es qué hace en ese momento.',
+  groupUrgent: 'Urgencias y fuera de horario',
+  groupUrgentLead: 'Las dos situaciones en las que una cita no sirve de nada.',
+  groupExtra: 'Lo demás',
+  groupExtraLead: 'Lo que ninguna pregunta de arriba ha previsto.',
   greetingLanguage: 'Idioma con el que descuelga',
   greetingLanguageHelp:
     'Lo primero que se oye, antes de que quien llama diga nada. Si la clínica atiende en más idiomas, el saludo dice cómo pedirlos, y a partir de ahí Telma no cambia de idioma en toda la llamada.',

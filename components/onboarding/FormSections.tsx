@@ -275,6 +275,40 @@ function Checkbox({
 
 // Step 1: the clinic ---------------------------------------------------------
 
+/**
+ * A heading over a handful of questions that belong together.
+ *
+ * Step five had twelve fields in a flat list: the languages, how she addresses
+ * people, what she does when she cannot help, three different numbers to send a
+ * call to, what happens at three in the morning, and a free text box. Every one
+ * of them earns its place and together they read as a wall, which is the
+ * difference between a form that looks thorough and a form that looks long.
+ *
+ * Four groups, because there are four questions underneath: how she speaks,
+ * what she does when she is stuck, what happens in an emergency, and anything
+ * else. The panel's Telma screen already groups its sections this way; the
+ * sign-up is where the same clinic meets the same questions first.
+ */
+function Group({
+  title,
+  lead,
+  children,
+}: {
+  title: string
+  lead?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="flex flex-col gap-5 border-t border-line pt-7 first:border-t-0 first:pt-0">
+      <div>
+        <h3 className="text-lg font-semibold text-ink">{title}</h3>
+        {lead && <p className="mt-1 text-sm text-ink-mute">{lead}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 export function ClinicStep({
   values,
   set,
@@ -846,6 +880,7 @@ export function TelmaStep({
 
   return (
     <div className="flex flex-col gap-8">
+      <Group title={t.groupVoice} lead={t.groupVoiceLead}>
       {showLanguages && (
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -957,12 +992,11 @@ export function TelmaStep({
         </div>
       </div>
 
+      </Group>
+
       {/* What happens when Telma cannot help. Three honest answers. */}
+      <Group title={t.groupStuck} lead={t.groupStuckLead}>
       <div className="flex flex-col gap-2.5">
-        <div>
-          <p className="field-label">{t.fallback}</p>
-          <p className="text-sm text-ink-mute">{t.fallbackHelp}</p>
-        </div>
         {(['transfer', 'message', 'callback'] as const).map((p) => (
           <OptionCard
             key={p}
@@ -1007,6 +1041,9 @@ export function TelmaStep({
           wear. Red on a settings screen means something is wrong with what you
           typed; this is the strongest guarantee on the page, and an owner
           being shown the product read it as a warning. */}
+      </Group>
+
+      <Group title={t.groupUrgent} lead={t.groupUrgentLead}>
       <div className="rounded-card border border-brand-accent/30 bg-brand-wash p-4">
         <p className="field-label">{t.emergency}</p>
         <p className="mb-4 text-sm text-ink-soft">{t.emergencyHelp}</p>
@@ -1098,10 +1135,13 @@ export function TelmaStep({
         </div>
       </div>
 
+      </Group>
+
       {/* The catch-all. Parking, which insurers are accepted, the entrance
           being round the back, the dentist away on Thursdays. Read into the
           prompt verbatim, which is why the placeholder shows the shape rather
           than describing it. */}
+      <Group title={t.groupExtra} lead={t.groupExtraLead}>
       <Field
         label={t.briefing}
         htmlFor="briefing"
@@ -1118,6 +1158,7 @@ export function TelmaStep({
           className={`${inputClass(errors.briefing)} py-2.5`}
         />
       </Field>
+      </Group>
 
       {/* Last, and not first, in the sign-up: everything above is a question
           and this is the answer. The panel asks for it at the top instead,
@@ -1144,6 +1185,11 @@ export function NumberStep({
   // no area. Fill it once, so what the select shows is what it holds.
   useEffect(() => {
     if (!values.area_region && values.region) set({ area_region: values.region })
+    // And the number itself, which step 2 already asked for as "the clinic's
+    // number, so we can talk to you". Asking again four steps later under a
+    // different label is the same question twice, and the second time the
+    // reader has to go back and check which one they typed.
+    if (!values.current_number && values.phone) set({ current_number: values.phone })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values.region])
   const country = countryOf(values, locale)

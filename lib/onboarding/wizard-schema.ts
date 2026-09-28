@@ -238,6 +238,17 @@ function build(m: Messages) {
       .record(z.string(), z.coerce.number().int().min(5, { error: m.durationMin }).max(480, { error: m.durationMax }))
       .optional()
       .default({}),
+    // Following the patient up. Panel only, like `price_info` below: nothing a
+    // clinic decides after it has patients belongs in the way in.
+    //
+    // A ceiling of sixty months rather than none, because the number is typed by
+    // hand into a box that schedules a message: "600" is a typo and a reminder in
+    // fifty years is not a reminder.
+    recalls_enabled: z.boolean().optional().default(false),
+    recall_months: z
+      .record(z.string(), z.coerce.number().int().min(1).max(60))
+      .optional()
+      .default({}),
     // Empty means Telma does not discuss prices, which is a real answer and the
     // prompt says so out loud rather than staying silent about it.
     // Fuera del alta. Convivía con la tabla de precios por servicio de arriba,

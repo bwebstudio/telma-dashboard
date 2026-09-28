@@ -111,6 +111,7 @@ export interface Dictionary {
   clinicNav: {
     hoje: string
     marcacoes: string
+    pacientes: string
     horarios: string
     chamadas: string
     conta: string
@@ -244,6 +245,80 @@ export interface Dictionary {
     /** A filter's own label. It used to borrow the singular status badge. */
     filterCancelled: string
     filterPending: string
+  }
+  /**
+   * The patient record, and the reminders hanging off it.
+   *
+   * One screen and not two: a reminder is about a person, so it lives on that
+   * person's record, and the only thing the list adds is what is going out this
+   * week. Anything else would be the same decision in two places, which is how
+   * the calendar words went wrong before.
+   */
+  pacientes: {
+    title: string
+    lead: string
+    search: string
+    searchGo: string
+    empty: string
+    none: string
+    more: string
+    optedOut: string
+    back: string
+    /** A record opened by hand, for somebody standing at the desk. */
+    addPatient: string
+    addName: string
+    addPhone: string
+    addPhoneHint: string
+
+    notes: string
+    notesHint: string
+    history: string
+    historyEmpty: string
+    visits: string
+    visitsOne: string
+
+    messages: string
+    reminders: string
+    remindersHint: string
+    marketing: string
+    marketingHint: string
+    marketingSource: string
+    marketingSourcePlaceholder: string
+    marketingSourceRequired: string
+
+    recalls: string
+    recallsEmpty: string
+    recallsOff: string
+    recallsOffGo: string
+    add: string
+    addWhen: string
+    addNote: string
+    addNoteHint: string
+    addKind: string
+    addKindAviso: string
+    addKindCampanha: string
+    addBody: string
+    addBodyHint: string
+    /** The exact text the person will get, shown before anything is scheduled.
+     *  The only honest way to promise a message never names the treatment. */
+    preview: string
+    previewSegments: string
+
+    stateAgendado: string
+    stateEnviado: string
+    stateFalhou: string
+    stateCancelado: string
+    cancelRecall: string
+    retryRecall: string
+    sentOn: string
+    dueOn: string
+
+    queue: string
+    queueEmpty: string
+    failed: string
+    whyBaixa: string
+    whySemConsentimento: string
+    whySemNumero: string
   }
   /** A patient asking to be forgotten, answered by the clinic itself. */
   erasure: {

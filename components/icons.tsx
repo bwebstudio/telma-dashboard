@@ -28,6 +28,17 @@ export function IconBookings({ className }: P) {
     </svg>
   )
 }
+// A person, not a folder. The screen is called Pacientes and the icon says the
+// same word; a filing cabinet would say "records", which is the jargon this
+// panel spends its whole time avoiding.
+export function IconPatients({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c0-3.5 3.1-5.5 7-5.5s7 2 7 5.5" />
+    </svg>
+  )
+}
 export function IconHours({ className }: P) {
   return (
     <svg {...base} className={className}>

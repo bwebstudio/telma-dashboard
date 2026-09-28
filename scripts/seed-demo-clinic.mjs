@@ -82,7 +82,9 @@ if (found) {
 }
 
 // --- Wipe anything this seed wrote before ------------------------------------
-for (const t of ['appointments', 'calls', 'usage', 'activity_log', 'availability_slots', 'blocked_days']) {
+// `patients` takes `patient_recalls` with it by cascade, and it goes after the
+// appointments because those point at it.
+for (const t of ['appointments', 'calls', 'usage', 'activity_log', 'availability_slots', 'blocked_days', 'patients']) {
   await api(`/rest/v1/${t}?clinic_id=eq.${CLINIC}`, { method: 'DELETE' })
 }
 await api(`/rest/v1/users?id=eq.${userId}`, { method: 'DELETE' })
@@ -106,6 +108,12 @@ const PRESENTATION = {
   contact_email: 'geral@sorriso.pt',
   plan: 'clinica',
   addon_whatsapp: true,
+  // On, so the Pacientes screen shows the queue rather than the note explaining
+  // why there is no queue. The intervals per service are NOT written here: they
+  // are keyed to the services the clinic offers, this script deliberately does
+  // not own that list, and writing months against services it has not got would
+  // be wiped by the first save in the panel.
+  recalls_enabled: true,
   status: 'ativa',
   minute_limit: 750,
   timezone: TZ,
@@ -367,6 +375,55 @@ const appts = [
 
 await api('/rest/v1/appointments', { method: 'POST', body: JSON.stringify(appts) })
 
+// --- One patient record, and the reminders on it -------------------------------
+//
+// One, and not fourteen, and the reason is three screens up: every appointment
+// in this seed carries the same telephone number on purpose, so that pressing
+// Confirmar in a demo sends a real SMS to the telephone on the table instead of
+// to whoever owns an invented number. A record is keyed on (clinic, number).
+// Fourteen names on one number is one person.
+//
+// So the record is Ana Martins, who already has two of the bookings above, and
+// those two are pointed at it. The rest stay unlinked, which is what the panel
+// already expects: it only says "third booking" when there is a before.
+const RECORD_NAME = 'Ana Martins'
+const patient = await api('/rest/v1/rpc/remember_patient', {
+  method: 'POST',
+  body: JSON.stringify({ p_clinic_id: CLINIC, p_name: RECORD_NAME, p_phone: DEMO_PHONE }),
+})
+
+await api(`/rest/v1/patients?id=eq.${patient}`, {
+  method: 'PATCH',
+  body: JSON.stringify({
+    notes: 'Prefere sempre a primeira hora da manhã. Vem de autocarro, por isso avisa se se atrasar.',
+  }),
+})
+
+await api(
+  `/rest/v1/appointments?clinic_id=eq.${CLINIC}&patient_name=eq.${encodeURIComponent(RECORD_NAME)}`,
+  { method: 'PATCH', body: JSON.stringify({ patient_id: patient }) }
+)
+
+// One waiting, one already sent. Twelve days out and not today: a demo should
+// show the queue, not put a message on somebody's telephone because a script
+// ran.
+const day = (n) => at(n, 12).slice(0, 10)
+await api('/rest/v1/patient_recalls', {
+  method: 'POST',
+  body: JSON.stringify([
+    {
+      clinic_id: CLINIC, patient_id: patient, kind: 'aviso', due_on: day(12),
+      note: 'Limpeza dos seis meses', source: 'manual', state: 'agendado',
+      body: null, service_id: null, sent_at: null, channel: null, error: null,
+    },
+    {
+      clinic_id: CLINIC, patient_id: patient, kind: 'aviso', due_on: day(-45),
+      note: 'Revisão anual', source: 'manual', state: 'enviado',
+      body: null, service_id: null, sent_at: at(-45, 9, 2), channel: 'sms', error: null,
+    },
+  ]),
+})
+
 // --- Usage and activity --------------------------------------------------------
 const month = `${parts[0]}-${String(parts[1]).padStart(2, '0')}-01`
 await api('/rest/v1/usage', {
@@ -388,5 +445,6 @@ Pronto.
   login      ${EMAIL}
   password   ${PASSWORD}
   marcações  ${appts.length}
+  ficha      ${RECORD_NAME}, com dois avisos
   conversas  ${calls.length}  (${calls.filter((c) => c.channel === 'whatsapp').length} de WhatsApp)
 `)

@@ -634,12 +634,18 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
  * Nothing is required. An empty duration means the clinic's usual appointment,
  * an empty price means Telma quotes none for that service and says so.
  */
-function ServiceDetails({ values, set, errors, locale, showPriceNotes }: StepProps & { showPriceNotes?: boolean }) {
+function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { inPanel?: boolean }) {
   const t = copyFor(locale)
-  const [open, setOpen] = useState(false)
+  // Folded on the way in, open in the panel. The fold is a sign-up measure and
+  // the comment above says why; the panel is where somebody has come on purpose
+  // to change these numbers, and a table behind a plus sign there is a feature
+  // nobody finds.
+  const [open, setOpen] = useState(Boolean(inPanel))
   const chosen: string[] = values.services ?? []
   const durations: Record<string, number> = values.service_durations ?? {}
   const prices: Record<string, number> = values.service_prices ?? {}
+  const recalls: Record<string, number> = values.recall_months ?? {}
+  const recallsOn = values.recalls_enabled === true
   const fallback = Number(values.appointment_duration_minutes) || 30
 
   // Typed lines become rows too, trimmed and de-duplicated. They are keyed by
@@ -652,14 +658,18 @@ function ServiceDetails({ values, set, errors, locale, showPriceNotes }: StepPro
     .filter(Boolean)
   const rows = [...chosen, ...custom.filter((c) => !chosen.includes(c))]
 
-  const write = (field: 'service_durations' | 'service_prices', id: string, raw: string) => {
+  const write = (
+    field: 'service_durations' | 'service_prices' | 'recall_months',
+    id: string,
+    raw: string
+  ) => {
     const current: Record<string, number> = { ...(values[field] ?? {}) }
     const n = Number(raw.replace(',', '.'))
     // An emptied box means "not set", not zero. Deleting the key is what makes
     // the clinic's default keep applying, and what makes "no price" readable as
     // no price rather than as free.
     if (!raw.trim() || !Number.isFinite(n) || n < 0) delete current[id]
-    else current[id] = field === 'service_durations' ? Math.round(n) : n
+    else current[id] = field === 'service_prices' ? n : Math.round(n)
     set({ [field]: current })
   }
 
@@ -667,25 +677,56 @@ function ServiceDetails({ values, set, errors, locale, showPriceNotes }: StepPro
 
   return (
     <div className="rounded-card border border-line bg-surface-sunken">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left"
-      >
-        <span className="text-base font-medium text-ink">{t.durationsToggle}</span>
-        <span aria-hidden className="text-ink-mute">{open ? '\u2212' : '+'}</span>
-      </button>
+      {inPanel ? (
+        <p className="p-4 pb-0 text-base font-medium text-ink">{t.durationsToggle}</p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          className="flex w-full items-center justify-between gap-3 p-4 text-left"
+        >
+          <span className="text-base font-medium text-ink">{t.durationsToggle}</span>
+          <span aria-hidden className="text-ink-mute">{open ? '\u2212' : '+'}</span>
+        </button>
+      )}
 
       {open && (
-        <div className="border-t border-line p-4">
+        <div className={`p-4 ${inPanel ? '' : 'border-t border-line'}`}>
           <p className="text-sm text-ink-mute">{t.durationsHelp}</p>
+
+          {/* ── FOLLOWING THE PATIENT UP ──────────────────────────────────
+              Panel only, and switched off until somebody switches it on. Every
+              clinic on this platform has patients in it, so a default of "on"
+              would have written to all of them.
+
+              Here, next to the lengths and the prices, because it is the third
+              thing a clinic knows about its own services and splitting it onto
+              a screen of its own is how the same decision ends up being made in
+              two places. */}
+          {inPanel && (
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-card border border-line bg-surface p-3.5">
+              <input
+                type="checkbox"
+                checked={recallsOn}
+                onChange={(e) => set({ recalls_enabled: e.target.checked })}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
+              />
+              <span>
+                <span className="block text-base text-ink">{t.recallsToggle}</span>
+                <span className="mt-1 block text-sm text-ink-mute">{t.recallsHelp}</span>
+              </span>
+            </label>
+          )}
 
           <div className="mt-4 flex flex-col gap-2.5">
             <div className="hidden gap-3 sm:flex">
               <span className="label-caps flex-1">{t.detailsService}</span>
               <span className="label-caps w-28 text-right">{t.detailsDuration}</span>
               <span className="label-caps w-28 text-right">{t.detailsPrice}</span>
+              {inPanel && recallsOn && (
+                <span className="label-caps w-28 text-right">{t.recallsColumn}</span>
+              )}
             </div>
 
             {rows.map((id) => (
@@ -727,6 +768,24 @@ function ServiceDetails({ values, set, errors, locale, showPriceNotes }: StepPro
                   />
                   <span className="text-sm text-ink-mute">€</span>
                 </span>
+                {inPanel && recallsOn && (
+                  <span className="flex w-28 items-center gap-1.5">
+                    <input
+                      aria-label={`${serviceLabel(id, locale)} ${t.recallsColumn}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={60}
+                      step={1}
+                      placeholder={t.recallsNever}
+                      value={recalls[id] ?? ''}
+                      onChange={(e) => write('recall_months', id, e.target.value)}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="w-full rounded-card border border-line bg-surface px-2.5 py-2 text-right text-base text-ink"
+                    />
+                    <span className="text-sm text-ink-mute">{t.recallsUnit}</span>
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -747,7 +806,7 @@ function ServiceDetails({ values, set, errors, locale, showPriceNotes }: StepPro
               exception to what is above rather than an alternative to it. It
               is not in the sign-up: nobody needs it to start, and a sign-up
               with fewer boxes is a sign-up more people finish. */}
-          {showPriceNotes && (
+          {inPanel && (
             <Field
               label={t.detailsNotes}
               htmlFor="price_info"
@@ -773,11 +832,11 @@ function ServiceDetails({ values, set, errors, locale, showPriceNotes }: StepPro
 
 // Step 3: services -----------------------------------------------------------
 
-export function ServicesStep({ values, set, errors, locale, showPriceNotes = false }: StepProps & {
+export function ServicesStep({ values, set, errors, locale, inPanel = false }: StepProps & {
   /** True in the panel. The sentences about prices that are not numbers live
    *  beside the numbers, and a sign-up with fewer boxes is one more people
    *  finish. */
-  showPriceNotes?: boolean
+  inPanel?: boolean
 }) {
   const t = copyFor(locale)
   const specialty = (values.specialty as Specialty) || 'outra'
@@ -840,7 +899,7 @@ export function ServicesStep({ values, set, errors, locale, showPriceNotes = fal
         />
       </Field>
 
-      <ServiceDetails {...{ values, set, errors, locale, showPriceNotes }} />
+      <ServiceDetails {...{ values, set, errors, locale, inPanel }} />
 
     </div>
   )

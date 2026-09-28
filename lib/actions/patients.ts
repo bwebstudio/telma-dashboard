@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAppUser } from '@/lib/auth'
@@ -255,4 +256,37 @@ export async function mergePatients(keepId: string, dropId: string) {
   if (error) throw new Error(error.message)
   refresh(keepId)
   revalidatePath(`/pacientes/${dropId}`)
+}
+
+/**
+ * Borrar una ficha.
+ *
+ * ── NO ES LO MISMO QUE EL DERECHO AL OLVIDO, Y LA DIFERENCIA IMPORTA ───────
+ * Esto es limpieza: una ficha duplicada, una que se abrió con un nombre mal
+ * entendido, una de alguien que nunca fue paciente. Se va la ficha y se van sus
+ * avisos, que no tienen sentido sin ella.
+ *
+ * Lo que NO hace es tocar las citas. Cada una lleva su propia copia del nombre y
+ * del teléfono desde que se escribió, y esa copia es el registro de la clínica
+ * de una hora que trabajó. Se quedan, y pierden el vínculo con la ficha porque
+ * la clave es `on delete set null`.
+ *
+ * Cuando lo que se pide es el derecho al olvido, esto no vale: ahí hay que
+ * vaciar también las citas, las llamadas y el registro de actividad, y dejar
+ * constancia de que se hizo. Eso es `erase_patient`, y vive en su propia
+ * pantalla con su propio recibo. La pantalla lo dice donde está el botón.
+ */
+export async function deletePatient(patientId: string) {
+  const cid = await writableClinicId()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('patients')
+    .delete()
+    .eq('id', patientId)
+    .eq('clinic_id', cid)
+  if (error) throw new Error(error.message)
+  revalidatePath('/pacientes')
+  // La ficha ya no existe, así que quedarse en ella sería enseñar un 404 con
+  // forma de error nuestro.
+  redirect('/pacientes')
 }

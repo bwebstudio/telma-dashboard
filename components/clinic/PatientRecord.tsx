@@ -17,6 +17,7 @@ import {
   createRecall,
   cancelRecall,
   retryRecall,
+  deletePatient,
 } from '@/lib/actions/patients'
 
 /**
@@ -252,6 +253,63 @@ export function PatientRecord({
           </ul>
         )}
       </section>
+
+      {/* ── BORRAR, AL FINAL Y SIN ADORNO ────────────────────────────────────
+          Abajo del todo porque nadie viene a esta pantalla a borrar, y sin
+          tarjeta ni color de alerta porque un botón que grita se acaba pulsando
+          por costumbre. Lo que hace falta no es un susto, es saber qué se va y
+          qué se queda, y que esto no es el derecho al olvido. */}
+      {!readOnly && <DeleteRecord patient={patient} t={t} dict={dict} />}
+    </div>
+  )
+}
+
+/**
+ * Borrar una ficha: dos pulsaciones, y entre las dos lo que va a pasar.
+ *
+ * Sin diálogo modal. Un modal tapa la ficha justo cuando lo que hace falta es
+ * mirarla otra vez para comprobar que es la que sobra.
+ */
+function DeleteRecord({
+  patient,
+  t,
+  dict,
+}: {
+  patient: Patient
+  t: Copy
+  dict: Dictionary
+}) {
+  const [armed, setArmed] = useState(false)
+  const [pending, start] = useTransition()
+
+  if (!armed) {
+    return (
+      <div className="border-t border-line pt-6">
+        <button className="btn-ghost text-danger" onClick={() => setArmed(true)}>
+          {t.deleteRecord}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-t border-line pt-6">
+      <div className="rounded-card border border-danger-soft bg-danger-soft/40 p-4">
+        <p className="text-base text-ink">{t.deleteWhatGoes}</p>
+        <p className="mt-2 text-sm text-ink-soft">{t.deleteVsErasure}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            className="btn-danger"
+            disabled={pending}
+            onClick={() => start(() => deletePatient(patient.id).catch(() => setArmed(false)))}
+          >
+            {t.deleteConfirm}
+          </button>
+          <button className="btn-ghost" onClick={() => setArmed(false)}>
+            {dict.common.cancel}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

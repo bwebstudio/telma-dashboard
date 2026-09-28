@@ -274,6 +274,11 @@ export interface Dictionary {
     more: string
     optedOut: string
     back: string
+    /** Housekeeping, not the right to be forgotten. The screen says which. */
+    deleteRecord: string
+    deleteWhatGoes: string
+    deleteVsErasure: string
+    deleteConfirm: string
     /** A record opened by hand, for somebody standing at the desk. */
     addPatient: string
     addName: string

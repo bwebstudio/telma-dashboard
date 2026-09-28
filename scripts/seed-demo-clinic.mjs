@@ -10,16 +10,32 @@ const URL_ = pick('NEXT_PUBLIC_SUPABASE_URL')
 const KEY = pick('SUPABASE_SERVICE_ROLE_KEY')
 
 const CLINIC = '11111111-1111-1111-1111-111111111111'
-// ── TODO TELEFONE DE PACIENTE É O MESMO, E É DE PROPÓSITO ───────────────────
-// Esta é a base de demonstração, e confirmar uma marcação no painel manda um
-// SMS de verdade ao número que estiver na linha. Com números inventados isso
-// é uma mensagem de uma clínica desconhecida para quem calhe ter esse número:
-// +351 912 345 678 não é um número falso, é o número de alguém.
+// ── UM NÚMERO POR PESSOA, E NENHUM DELES EXISTE ────────────────────────────
+// Esta é a base de demonstração, e confirmar uma marcação no painel manda um SMS
+// a sério para o número que estiver na linha. Durante meses todos os pacientes
+// deste seed tinham o mesmo número, o de quem faz as demonstrações, para que a
+// mensagem chegasse ao telemóvel que está em cima da mesa. Resolvia o risco e
+// criava outro: desde a 0049 uma ficha é (clínica, número, nome), por isso
+// catorze nomes num número são catorze fichas com o mesmo contacto, e uma
+// confirmação feita à pressa numa demonstração sai para esse telemóvel em nome
+// de quem não é.
 //
-// Um só, o de quem faz as demonstrações, para que a mensagem chegue ao
-// telemóvel que está na mesa. Os nomes continuam variados, que é o que se vê
-// no painel; o número não se vê em lado nenhum a não ser ao carregar no botão.
-const DEMO_PHONE = '+351910523903'
+// Agora cada um tem o seu, e nenhum é marcável: em Portugal um número de
+// abonado começa por 9 (móvel) ou 2 (fixo), e o 1 está reservado para serviços.
+// Um +351 1xx xxx xxx não chega a lado nenhum, por engano nenhum. Passa na
+// validação de nove algarismos, por isso o seed escreve-o na mesma e as fichas
+// ficam como ficariam com números verdadeiros.
+//
+// A prova do SMS faz-se com uma chamada a sério: liga-se ao número da demo, a
+// Telma abre a ficha com o número de quem ligou, e é essa — uma só — que tem um
+// telemóvel por trás.
+const fakePhone = (name) => {
+  // Estável: o mesmo nome dá sempre o mesmo número, para que voltar a semear
+  // não troque as fichas todas.
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
+  return `+3511${String(h % 100000000).padStart(8, '0')}`
+}
 const EMAIL = 'demo@bwebstudio.com'
 const PASSWORD = process.env.DEMO_PASSWORD || 'TelmaDemo2026!'
 const TZ = 'Europe/Lisbon'
@@ -191,7 +207,7 @@ const id = {}
 for (const k of ['y1', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']) id[k] = randomUUID()
 
 const calls = [
-  { id: id.y1, channel: 'telefone', from_phone: DEMO_PHONE, patient_name: 'Ana Martins',
+  { id: id.y1, channel: 'telefone', from_phone: null, patient_name: 'Ana Martins',
     duration_seconds: 108, result: 'marcacao', created_at: at(-1, 14, 55),
     summary: 'Limpeza para hoje às 9h. A Ana pediu de manhã, como sempre.',
     transcript: turns(
@@ -204,7 +220,7 @@ const calls = [
       ['telma', 'Marcado para amanhã às nove. A receção confirma e, se houver algum problema, ligamos.'],
       ['paciente', 'Obrigada.']) },
 
-  { id: id.c1, channel: 'telefone', from_phone: DEMO_PHONE, patient_name: null,
+  { id: id.c1, channel: 'telefone', from_phone: null, patient_name: null,
     duration_seconds: 34, result: 'informacao', created_at: at(0, 8, 22),
     summary: 'Perguntou o horário de sábado e se há estacionamento. Respondido, sem marcação.',
     transcript: turns(
@@ -215,7 +231,7 @@ const calls = [
       ['telma', 'Há o parque da Rua das Flores, a cinquenta metros da porta.'],
       ['paciente', 'Está bem, obrigado. Depois ligo para marcar.']) },
 
-  { id: id.c3, channel: 'whatsapp', from_phone: DEMO_PHONE, patient_name: 'Sofia Ramos',
+  { id: id.c3, channel: 'whatsapp', from_phone: null, patient_name: 'Sofia Ramos',
     duration_seconds: 0, result: 'marcacao', created_at: at(0, 8, 2),
     summary: 'Dor num molar desde sábado. Encaixada hoje às 10h.',
     transcript: turns(
@@ -227,7 +243,7 @@ const calls = [
       ['telma', 'Marcado, Sofia, hoje às 10h. Se a dor piorar antes disso, ligue para a clínica.'],
       ['paciente', 'Obrigada!']) },
 
-  { id: id.c2, channel: 'telefone', from_phone: DEMO_PHONE, patient_name: 'Rui Almeida',
+  { id: id.c2, channel: 'telefone', from_phone: null, patient_name: 'Rui Almeida',
     duration_seconds: 71, result: 'transferida', created_at: at(0, 9, 44),
     summary: 'Urgência: partiu um incisivo. A Telma passou a chamada à receção, que encaixou às 16h.',
     transcript: turns(
@@ -236,7 +252,7 @@ const calls = [
       ['paciente', 'Rui Almeida.'],
       ['telma', 'Obrigada, Rui. Não desligue, estou a passar a chamada.']) },
 
-  { id: id.c6, channel: 'telefone', from_phone: DEMO_PHONE, patient_name: 'Hélder Braga',
+  { id: id.c6, channel: 'telefone', from_phone: null, patient_name: 'Hélder Braga',
     duration_seconds: 42, result: 'marcacao', created_at: at(0, 10, 12),
     summary: 'Cancelou a destartarização das 11h de hoje. Quer remarcar para a próxima semana.',
     transcript: turns(
@@ -247,7 +263,7 @@ const calls = [
       ['paciente', 'Sim, para a próxima semana se puder ser.'],
       ['telma', 'Fica registado. A receção liga-lhe para combinar o dia.']) },
 
-  { id: id.c4, channel: 'telefone', from_phone: DEMO_PHONE, patient_name: 'Tiago Ferreira',
+  { id: id.c4, channel: 'telefone', from_phone: null, patient_name: 'Tiago Ferreira',
     duration_seconds: 156, result: 'marcacao', created_at: at(0, 11, 52),
     summary: 'Quer aparelho. A Telma explicou que a primeira consulta é de avaliação e marcou para hoje às 14h.',
     transcript: turns(
@@ -261,7 +277,7 @@ const calls = [
       ['telma', 'Fica marcado. O seu nome, por favor?'],
       ['paciente', 'Tiago Ferreira.']) },
 
-  { id: id.c5, channel: 'whatsapp', from_phone: DEMO_PHONE, patient_name: 'Beatriz Nogueira',
+  { id: id.c5, channel: 'whatsapp', from_phone: null, patient_name: 'Beatriz Nogueira',
     duration_seconds: 0, result: 'marcacao', created_at: at(0, 12, 20),
     summary: 'Branqueamento antes do casamento da irmã, dia 22. Marcada para hoje às 15h.',
     transcript: turns(
@@ -272,7 +288,7 @@ const calls = [
       ['paciente', 'Sim, por favor.'],
       ['telma', 'Deixei marcado para hoje às 15h. A receção confirma já a seguir.']) },
 
-  { id: id.c7, channel: 'whatsapp', from_phone: DEMO_PHONE, patient_name: 'Alice Ventura',
+  { id: id.c7, channel: 'whatsapp', from_phone: null, patient_name: 'Alice Ventura',
     duration_seconds: 0, result: 'marcacao', created_at: at(0, 16, 40),
     summary: 'Limpeza para amanhã às 11h, primeira hora livre da manhã.',
     transcript: turns(
@@ -282,7 +298,7 @@ const calls = [
       ['telma', 'Marcado para amanhã às 11h. O seu nome?'],
       ['paciente', 'Alice Ventura.']) },
 
-  { id: id.c8, channel: 'telefone', from_phone: DEMO_PHONE, patient_name: null,
+  { id: id.c8, channel: 'telefone', from_phone: null, patient_name: null,
     duration_seconds: 19, result: 'nao_resolvida', created_at: at(0, 17, 5),
     summary: 'A chamada caiu ao fim de dezanove segundos, antes de dizer o que queria.',
     transcript: turns(
@@ -295,63 +311,73 @@ const calls = [
 // Sending it made the whole seed fail on the first call, which is why the
 // staged day was never finished and the demo clinic held three conversations
 // instead of nine.
-].map(({ transcript: _script, ...c }) => ({ ...c, clinic_id: CLINIC, recording_url: null }))
+].map(({ transcript: _script, ...c }) => ({
+  ...c,
+  clinic_id: CLINIC,
+  recording_url: null,
+  // The same number this person's bookings carry, so the call shows up on their
+  // record. A call with no name is a number nobody claimed, which happens.
+  from_phone: fakePhone(c.patient_name ?? c.id),
+}))
 
 await api('/rest/v1/calls', { method: 'POST', body: JSON.stringify(calls) })
 
 // --- Appointments -------------------------------------------------------------
 const appts = [
-  { patient_name: 'Carla Esteves', patient_phone: DEMO_PHONE, reason: 'Destartarização',
+  { patient_name: 'Carla Esteves', reason: 'Destartarização',
     scheduled_at: at(-1, 10), status: 'copiada', origin: 'telefone',
     summary: 'Limpeza anual. Já passada para o software da clínica.', decided_at: at(-2, 9, 20), created_at: at(-2, 9, 12) },
-  { patient_name: 'Nuno Bastos', patient_phone: DEMO_PHONE, reason: 'Revisão de aparelho',
+  { patient_name: 'Nuno Bastos', reason: 'Revisão de aparelho',
     scheduled_at: at(-1, 16, 30), status: 'copiada', origin: 'whatsapp',
     summary: 'Ajuste do aparelho. Pediu o fim da tarde.', decided_at: at(-2, 12), created_at: at(-2, 11, 48) },
 
-  { patient_name: 'Ana Martins', patient_phone: DEMO_PHONE, reason: 'Limpeza',
+  { patient_name: 'Ana Martins', reason: 'Limpeza',
     scheduled_at: at(0, 9), status: 'copiada', origin: 'telefone', call_id: id.y1,
     summary: 'Limpeza de rotina. Prefere sempre de manhã.', decided_at: at(-1, 15, 2), created_at: at(-1, 14, 55) },
-  { patient_name: 'Carlos Nunes', patient_phone: DEMO_PHONE, reason: 'Revisão',
+  { patient_name: 'Carlos Nunes', reason: 'Revisão',
     scheduled_at: at(0, 9, 30), status: 'copiada', origin: 'telefone',
     summary: 'Revisão dos seis meses.', decided_at: at(-3, 10), created_at: at(-3, 9, 55) },
-  { patient_name: 'Sofia Ramos', patient_phone: DEMO_PHONE, reason: 'Dor num molar',
+  { patient_name: 'Sofia Ramos', reason: 'Dor num molar',
     scheduled_at: at(0, 10), status: 'confirmada', origin: 'whatsapp', call_id: id.c3,
     summary: 'Dor do lado direito desde sábado. A Telma encaixou às 10h.', decided_at: at(0, 8, 5), created_at: at(0, 8, 2) },
-  { patient_name: 'Hélder Braga', patient_phone: DEMO_PHONE, reason: 'Destartarização',
+  { patient_name: 'Hélder Braga', reason: 'Destartarização',
     scheduled_at: at(0, 11), status: 'cancelada', origin: 'telefone', call_id: id.c6,
     summary: 'Tinha marcado há duas semanas.', cancelled_at: at(0, 10, 14), cancelled_by: 'paciente',
     cancel_reason: 'Ficou retido no trabalho. Quer remarcar para a próxima semana.', created_at: at(-14, 11, 10) },
-  { patient_name: 'Marta Lopes', patient_phone: DEMO_PHONE, reason: 'Consulta de rotina',
+  { patient_name: 'Marta Lopes', reason: 'Consulta de rotina',
     scheduled_at: at(0, 11, 30), status: 'confirmada', origin: 'telefone',
     summary: 'Rotina anual.', decided_at: at(-5, 16), created_at: at(-5, 15, 40) },
-  { patient_name: 'Tiago Ferreira', patient_phone: DEMO_PHONE, reason: 'Ortodontia — primeira avaliação',
+  { patient_name: 'Tiago Ferreira', reason: 'Ortodontia — primeira avaliação',
     scheduled_at: at(0, 14), status: 'pendente', origin: 'telefone', call_id: id.c4,
     summary: 'Quer avaliação para aparelho. A Telma explicou que a primeira consulta é de diagnóstico.', created_at: at(0, 11, 54) },
-  { patient_name: 'Beatriz Nogueira', patient_phone: DEMO_PHONE, reason: 'Branqueamento',
+  { patient_name: 'Beatriz Nogueira', reason: 'Branqueamento',
     scheduled_at: at(0, 15), status: 'pendente', origin: 'whatsapp', call_id: id.c5,
     summary: 'Pergunta se dá para fazer antes do casamento da irmã, dia 22.', created_at: at(0, 12, 22) },
-  { patient_name: 'Rui Almeida', patient_phone: DEMO_PHONE, reason: 'Urgência — dente partido',
+  { patient_name: 'Rui Almeida', reason: 'Urgência — dente partido',
     scheduled_at: at(0, 16), status: 'confirmada', origin: 'telefone', call_id: id.c2,
     summary: 'Partiu um incisivo a comer. A Telma passou a chamada à receção.', decided_at: at(0, 9, 48), created_at: at(0, 9, 44) },
-  { patient_name: 'Inês Cardoso', patient_phone: DEMO_PHONE, reason: 'Primeira consulta',
+  { patient_name: 'Inês Cardoso', reason: 'Primeira consulta',
     scheduled_at: at(0, 17), status: 'confirmada', origin: 'whatsapp',
     summary: 'Veio pela indicação da irmã, que já é paciente.', decided_at: at(-1, 18, 10), created_at: at(-1, 18, 4) },
 
-  { patient_name: 'Paulo Serra', patient_phone: DEMO_PHONE, reason: 'Endodontia',
+  { patient_name: 'Paulo Serra', reason: 'Endodontia',
     scheduled_at: at(1, 9, 30), status: 'confirmada', origin: 'telefone',
     summary: 'Segunda sessão do tratamento de canal.', decided_at: at(-7, 11), created_at: at(-7, 10, 50) },
-  { patient_name: 'Alice Ventura', patient_phone: DEMO_PHONE, reason: 'Limpeza',
+  { patient_name: 'Alice Ventura', reason: 'Limpeza',
     scheduled_at: at(1, 11), status: 'pendente', origin: 'whatsapp', call_id: id.c7,
     summary: 'Pediu a primeira hora livre da manhã.', created_at: at(0, 16, 42) },
-  { patient_name: 'Diogo Meireles', patient_phone: DEMO_PHONE, reason: 'Revisão',
+  { patient_name: 'Diogo Meireles', reason: 'Revisão',
     scheduled_at: at(1, 15, 30), status: 'confirmada', origin: 'telefone',
     summary: 'Revisão semestral.', decided_at: at(-4, 9), created_at: at(-4, 8, 52) },
-  { patient_name: 'Fernando Pires', patient_phone: DEMO_PHONE, reason: 'Implante',
+  { patient_name: 'Fernando Pires', reason: 'Implante',
     scheduled_at: at(2, 10), status: 'rejeitada', origin: 'telefone',
     summary: 'Pediu consulta de implantes.',
     reject_reason: 'O Dr. Almeida só faz implantes às quintas. Remarcado por telefone.',
     decided_at: at(-1, 17, 30), created_at: at(-1, 17, 12) },
 ].map((a) => ({
+  // One per person, derived from the name, so a re-seed does not shuffle the
+  // records. Never a real number: see the note at the top.
+  patient_phone: fakePhone(a.patient_name),
   // PostgREST inserts a batch as one statement, so every object has to carry
   // the same keys — a row missing `cancelled_at` is not "use the default", it
   // is a 400.
@@ -382,7 +408,7 @@ const byName = {}
 for (const name of names) {
   byName[name] = await api('/rest/v1/rpc/remember_patient', {
     method: 'POST',
-    body: JSON.stringify({ p_clinic_id: CLINIC, p_name: name, p_phone: DEMO_PHONE }),
+    body: JSON.stringify({ p_clinic_id: CLINIC, p_name: name, p_phone: fakePhone(name) }),
   })
   await api(
     `/rest/v1/appointments?clinic_id=eq.${CLINIC}&patient_name=eq.${encodeURIComponent(name)}`,
@@ -443,6 +469,7 @@ Pronto.
   login      ${EMAIL}
   password   ${PASSWORD}
   marcações  ${appts.length}
-  fichas     ${names.length}, uma delas com dois avisos
+  fichas     ${names.length}, cada uma com o seu número, nenhum marcável
+  SMS        só com uma chamada a sério: nenhuma destas fichas tem telemóvel
   conversas  ${calls.length}  (${calls.filter((c) => c.channel === 'whatsapp').length} de WhatsApp)
 `)

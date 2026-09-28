@@ -211,7 +211,7 @@ export const en: Dictionary = {
   },
   marcacoes: {
     title: 'Bookings',
-    help: 'Telma leaves bookings here. Confirm each one and copy it into your clinic software.',
+    help: 'Telma leaves bookings here. Confirm each one and copy it into your clinic software. What stays in view is everything still unanswered, however old, and everything decided in the last 30 days.',
     empty: 'No bookings right now.',
     confirm: 'Confirm',
     alter: 'Change',
@@ -227,7 +227,7 @@ export const en: Dictionary = {
     visits: '{n} bookings at this clinic',
     olderHint: '{n} bookings were decided more than {days} days ago. They stay in the agenda, on their day.',
     olderGo: 'Go to the agenda',
-    filterAll: 'All',
+    filterAll: 'Recent',
     filterCancelled: 'Cancelled',
     filterPending: 'To confirm',
   },

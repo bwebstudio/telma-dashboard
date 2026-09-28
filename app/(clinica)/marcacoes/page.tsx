@@ -90,6 +90,17 @@ export default async function MarcacoesPage({
       : +new Date(b.created_at) - +new Date(a.created_at)
   })
 
+  // ── THE FIRST TAB IS NOT "ALL" ────────────────────────────────────────────
+  // It said "Todas" and showed what is above: everything unanswered, and
+  // everything decided in the last thirty days. A reader who sees "all" and is
+  // shown a subset does not conclude that the screen is scoped, they conclude
+  // that the older ones were deleted, which is the one thing that does not
+  // happen to a booking here.
+  //
+  // So the tab says "Recentes", which under-promises: an unanswered booking
+  // from two months ago is still on it. The scope itself is stated once, in the
+  // line under the title, where it is read before the tabs rather than
+  // discovered through them.
   const tab = (key: 'all' | 'pending' | 'cancelled', label: string) => {
     const active =
       key === 'pending' ? onlyPending : key === 'cancelled' ? onlyCancelled : !onlyPending && !onlyCancelled

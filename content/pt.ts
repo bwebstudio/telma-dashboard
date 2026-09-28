@@ -213,7 +213,7 @@ export const pt: Dictionary = {
   },
   marcacoes: {
     title: 'Marcações',
-    help: 'A Telma deixa aqui as marcações. Confirme e passe cada uma para o software da clínica.',
+    help: 'A Telma deixa aqui as marcações. Confirme e passe cada uma para o software da clínica. Ficam à vista as que estão por responder, por mais antigas que sejam, e as decididas nos últimos 30 dias.',
     empty: 'Não há marcações neste momento.',
     confirm: 'Confirmar',
     alter: 'Alterar',
@@ -229,7 +229,7 @@ export const pt: Dictionary = {
     visits: '{n}.ª marcação nesta clínica',
     olderHint: 'Há {n} marcações decididas há mais de {days} dias. Ficam na agenda, no seu dia.',
     olderGo: 'Ir à agenda',
-    filterAll: 'Todas',
+    filterAll: 'Recentes',
     filterCancelled: 'Canceladas',
     filterPending: 'Por confirmar',
   },

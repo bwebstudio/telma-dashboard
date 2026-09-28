@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:prompt": "node --experimental-strip-types --test scripts/test-prompt.mjs",
-    "test": "npm run test:prompt && npm run test:notify && npm run test:recall-copy && npm run test:content && npm run test:duration",
+    "test": "npm run test:prompt && npm run test:notify && npm run test:recall-copy && npm run test:middleware && npm run test:content && npm run test:duration",
     "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs",
     "test:agenda": "node --experimental-strip-types --test scripts/test-agenda.mjs",
     "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs",
@@ -20,7 +20,8 @@
     "latency": "node --experimental-strip-types scripts/measure-latency.mjs",
     "test:notify": "node --experimental-strip-types --test scripts/test-notify.mjs",
     "test:recalls": "node --experimental-strip-types --test scripts/test-recalls.mjs",
-    "test:recall-copy": "node --experimental-strip-types --test scripts/test-recall-copy.mjs"
+    "test:recall-copy": "node --experimental-strip-types --test scripts/test-recall-copy.mjs",
+    "test:middleware": "node --experimental-strip-types --test scripts/test-middleware.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

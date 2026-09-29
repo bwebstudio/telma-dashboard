@@ -132,6 +132,19 @@ const REFERENCE = {
   after_hours_patients_only: false, after_hours_number: null, today: null,
 }
 
+// ── UNA LLAMADA EN INGLÉS NO DISPARABA NINGUNO ──────────────────────────────
+// Los disparadores decían "in a conversation held in Portuguese" y "in Spanish",
+// y una clínica puede atender en inglés. Se oyó en una llamada de verdad: pidió
+// cancelar en inglés, el procedimiento no cargó, y ella improvisó: tomó el
+// nombre y el teléfono, no volvió a buscar con ese número y no canceló nada. El
+// registro de la llamada dice `nao_resolvida`, pero la persona colgó creyendo
+// que estaba hecho.
+//
+// El español se queda con su disparador porque tiene su propio procedimiento.
+// El portugués pasa a ser el que atiende todo lo demás, y eso incluye el inglés:
+// el contenido está en portugués y ella responde en inglés sin problema, que es
+// lo que ya hace con la base entera.
+//
 // The triggers are in English on purpose. They are read by the model deciding
 // what to load, not spoken to anybody, and the one thing they have to do
 // reliably is tell a Portuguese call from a Spanish one.
@@ -140,7 +153,7 @@ const PIECES = [
     node: 'cancelling',
     slug: 'cancelamentos',
     trigger: {
-      pt: 'The caller wants to cancel or move an appointment they already have, in a conversation held in Portuguese.',
+      pt: 'The caller wants to cancel or move an appointment they already have. Use this whenever the conversation is NOT in Spanish, whatever language it is in, including English.',
       es: 'The caller wants to cancel or move an appointment they already have, in a conversation held in Spanish.',
     },
   },
@@ -148,7 +161,7 @@ const PIECES = [
     node: 'difficult',
     slug: 'dificil',
     trigger: {
-      pt: 'The caller has gone quiet, has said they will leave it for another time, or is being abusive, in a conversation held in Portuguese.',
+      pt: 'The caller has gone quiet, has said they will leave it for another time, or is being abusive. Use this whenever the conversation is NOT in Spanish, whatever language it is in, including English.',
       es: 'The caller has gone quiet, has said they will leave it for another time, or is being abusive, in a conversation held in Spanish.',
     },
   },

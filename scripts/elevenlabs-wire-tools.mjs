@@ -547,6 +547,16 @@ const AGENT_SPEC = {
     // en la sala.
     vad: { background_voice_detection: true },
     asr: { keywords: ASR_KEYWORDS },
+    // ── UNA VOZ POR IDIOMA ──────────────────────────────────────────────────
+    // Sin esto el agente tiene una sola voz y habla inglés con acento
+    // portugués. Se oyó en una llamada de verdad, y el agente de la demostración
+    // llevaba meses así: estas líneas estaban escritas y este script nunca había
+    // corrido contra él, de modo que el trabajo estaba hecho y no estaba puesto.
+    //
+    // Van en `conversation_config.language_presets`, hermanas de `tts`, no
+    // dentro de `agent`. Puestas dentro de `agent` la API responde 200 y las
+    // tira, que es la peor forma de fallar: parece que fue.
+    //
     // El catalán no está en la lista que acepta ElevenLabs, aunque lo ofrezcamos
     // en el alta. Ver a memória do projecto.
     language_presets: {

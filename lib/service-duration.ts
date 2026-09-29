@@ -90,12 +90,23 @@ export function matchService(services: string[], said: string | null): string | 
 
   // Callers say "el láser", not "depilación láser". Short words are excluded
   // because "de" and "una" would match everything there is.
+  //
+  // ── Y LA PALABRA ENTERA, NO UN TROZO DE OTRA ──────────────────────────────
+  // Esto miraba si la palabra aparecía en cualquier parte de lo dicho, y en una
+  // llamada en inglés eso reservó un branqueamento como consulta de avaliação:
+  // "whitening consultation" contiene "consulta", porque "consultation" empieza
+  // igual. La persona oyó el servicio equivocado y en la ficha quedó el
+  // equivocado.
+  //
+  // Palabra entera, con el plural como única licencia: "limpezas" sigue siendo
+  // "limpeza", y "consultation" deja de ser "consulta". Bastan dos letras de
+  // margen; las cuatro de "-tion" ya no pasan.
   return only(
     services.filter((id) =>
       [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
         .flatMap((l) => flatten(l).split(' '))
         .filter((w) => w.length >= 5)
-        .some((w) => heard.includes(w))
+        .some((w) => new RegExp(`\\b${w}(s|es)?\\b`).test(heard))
     )
   )
 }

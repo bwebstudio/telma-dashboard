@@ -171,3 +171,22 @@ test('a booking is never lost for want of a number the network already has', () 
   // left with nothing to store, and it is the one that should still refuse.
   assert.equal(phoneForAppointment('345', null), null)
 })
+
+// ── UNA PALABRA INGLESA QUE SE TRAGA UNA PORTUGUESA ─────────────────────────
+// Ocurrió en una llamada de verdad: alguien pidió "a whitening consultation" y
+// quedó reservada una consulta de avaliação, porque "consultation" contiene
+// "consulta". Telma dijo en voz alta el servicio equivocado y en la ficha quedó
+// el equivocado.
+const { matchService } = await import('../lib/service-duration.ts')
+
+test('una palabra que empieza igual no es la misma palabra', () => {
+  const dental = ['dent_consulta', 'dent_limpeza', 'dent_branqueamento']
+  assert.equal(matchService(dental, 'whitening consultation'), null)
+  assert.equal(matchService(dental, 'cleaning consultation'), null)
+  // Y lo que sí es esa palabra sigue siéndolo, en singular y en plural.
+  assert.equal(matchService(dental, 'consulta'), 'dent_consulta')
+  assert.equal(matchService(dental, 'consultas'), 'dent_consulta')
+  assert.equal(matchService(dental, 'queria uma limpeza'), 'dent_limpeza')
+  assert.equal(matchService(dental, 'as limpezas'), 'dent_limpeza')
+  assert.equal(matchService(dental, 'o branqueamento'), 'dent_branqueamento')
+})

@@ -3,7 +3,6 @@ import type { Locale } from '@/content'
 const LOCALE_TAGS: Record<Locale, string> = {
   pt: 'pt-PT',
   es: 'es-ES',
-  en: 'en-GB',
 }
 const localeTag = (l: Locale) => LOCALE_TAGS[l] ?? 'pt-PT'
 
@@ -20,6 +19,19 @@ export function formatDate(iso: string, l: Locale): string {
     month: 'short',
     year: 'numeric',
   })
+}
+
+/**
+ * A day, from a date with no time on it.
+ *
+ * Midday and not midnight. `new Date('2027-07-15')` is midnight UTC, and read
+ * back in a timezone behind UTC that is the fourteenth: a reminder due on
+ * Thursday shown as Wednesday. Neither country this serves is behind UTC, which
+ * is exactly the kind of reason that stops being true the day somebody opens the
+ * panel from a holiday.
+ */
+export function formatDay(dateOnly: string, l: Locale): string {
+  return formatDate(`${dateOnly.slice(0, 10)}T12:00:00.000Z`, l)
 }
 
 export function formatDateTime(iso: string, l: Locale): string {

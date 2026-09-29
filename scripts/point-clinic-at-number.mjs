@@ -103,10 +103,14 @@ if (clash) {
   process.exit(1)
 }
 
+// Só `assigned_phone`. Desde a migração 0028 que `assigned_phone_digits` é uma
+// coluna gerada, e escrevê-la devolve 428C9 "can only be updated to DEFAULT":
+// este script escrevia as duas e falhava sempre, o que só se descobre ao
+// ligar um número a sério. Os dígitos saem sozinhos do que aqui fica.
 await rest(`clinics?id=eq.${clinic.id}`, {
   method: 'PATCH',
   headers: { Prefer: 'return=minimal' },
-  body: JSON.stringify({ assigned_phone: raw, assigned_phone_digits: digits }),
+  body: JSON.stringify({ assigned_phone: raw }),
 })
 console.log(`\n  "${clinic.name}" atende agora em ${raw}`)
 
@@ -133,5 +137,10 @@ if (!res.ok || !body?.conversation_config_override) {
 
 const o = body.conversation_config_override
 console.log(`  o init encontra-a: ${body.dynamic_variables.clinic_name}`)
-console.log(`  língua ${o.agent.language}, voz ${o.tts.voice_id}, prompt ${o.agent.prompt.prompt.length} chars`)
+// O init pode devolver só `agent`: a voz não é sobreposta por chamada, fica a
+// do agente. Ler `o.tts.voice_id` às cegas rebentava o script logo a seguir a
+// ter feito a ligação bem, o que se lê como se a ligação tivesse falhado.
+console.log(
+  `  língua ${o.agent?.language}, voz ${o.tts?.voice_id ?? '(a do agente)'}, prompt ${o.agent?.prompt?.prompt?.length ?? 0} chars`
+)
 console.log(`  atende com: "${o.agent.first_message}"\n`)

@@ -1,0 +1,189 @@
+-- Los minutos de cada plan, puestos donde el margen aguanta.
+--
+-- Los precios no se tocan. Lo que se corrige es cuántos minutos incluye cada
+-- uno, porque la cuenta nunca se había hecho contra una factura real y la
+-- escalera salía al revés de lo que parecía.
+--
+-- ── DE DÓNDE SALE ───────────────────────────────────────────────────────────
+-- Del consumo medido en la API de ElevenLabs, no de dividir la factura: 834
+-- créditos por minuto entre la conversación y su modelo, a 22 $ los 121.000 de
+-- Creator, son 0,137 € el minuto. Con Twilio, las transferencias y los SMS de
+-- confirmación dentro, un minuto de Telma cuesta unos 0,209 €, y ese coste es
+-- idéntico en los tres planes: los mensajes crecen con las llamadas y las
+-- llamadas con los minutos. La cuenta entera está en lib/plans.ts.
+--
+-- Lo único que cambiaba entre planes era lo que cobramos por ese minuto, y así
+-- quedaba, contando también los 9,70 € fijos de cada clínica:
+--
+--   Essencial   99 € / 250 min    0,396 €/min    38 % de margen
+--   Clínica    249 € / 750 min    0,332 €/min    33 %
+--   Rede       599 € / 2000 min   0,299 €/min    29 %
+--
+-- El plan que se le vende a quien más gasta era el que menos dejaba. Bajar sólo
+-- Rede no lo arregla: lo pone en cabeza y deja a Clínica en último lugar. Así
+-- que se corrige la escalera entera.
+--
+-- ── ESSENCIAL NO SE TOCA, Y ES UNA DECISIÓN ────────────────────────────────
+-- Se queda en 34 %, el más fino de los tres, a propósito. Es el plan con el que
+-- entra un cliente que no nos conoce, y ese margen es lo que cuesta el primer
+-- sí. Lo pagan los otros dos.
+--
+-- Ahora es gratis hacerlo: no hay ni un cliente de pago. Con diez firmados sería
+-- una renegociación con diez personas.
+
+update plans set max_minutes_per_month = 650 where id = 'clinica';
+update plans set max_minutes_per_month = 1600 where id = 'rede';
+update plans set description = 'Para mais de 5 sedes ou mais de 1600 minutos. Sob consulta'
+ where id = 'personalizado';
+
+-- ── Y LAS CLÍNICAS QUE YA EXISTEN ──────────────────────────────────────────
+-- `clinics.minute_limit` es la copia que cada clínica lleva encima, y es la que
+-- el panel mira. Sin esto, la de demostración seguiría diciendo 750 mientras su
+-- plan dice 650, y la primera persona que lo notase tendría razón.
+update clinics c
+   set minute_limit = p.max_minutes_per_month
+  from plans p
+ -- `plans.id` es texto y `clinics.plan` es un enum, así que el cast no es
+   -- decorativo: sin él Postgres rechaza la comparación entera.
+ where p.id = c.plan::text
+   and p.max_minutes_per_month is not null
+   and c.minute_limit is distinct from p.max_minutes_per_month;
+
+-- ── EL PACK DE MINUTOS: SE QUEDA COMO ESTÁ ────────────────────────────────
+-- Estuvo a punto de subir a 89 €, y habría sido un error que se ve de un
+-- vistazo: 250 minutos sueltos cuestan 87,50 €, así que un pack de 89 € es más
+-- caro que no comprarlo. Un producto cuya única razón de ser es salir más
+-- barato, y que sale más caro, es un producto que sobra.
+--
+-- El error de fondo era de comparación. El pack parecía el más flojo de todo el
+-- catálogo, 30 % contra el 34-39 % de los planes, pero esos porcentajes no son
+-- comparables: el de los planes carga los 9,70 € fijos de cada clínica y el del
+-- pack no, porque esa clínica ya paga su número y su parte de plataforma con el
+-- plan. Lo comparable es el pack contra el minuto suelto, los dos marginales:
+-- 30 % contra 37 %. Siete puntos de descuento por pagar por adelantado, que es
+-- exactamente para lo que existe un pack.
+--
+-- Así que no se toca. Se deja escrito aquí para que nadie vuelva a "arreglarlo"
+-- mirando el porcentaje equivocado.
+
+
+
+-- ── Y LOS AVISOS, QUE SÍ GASTAN ─────────────────────────────────────────────
+-- Las confirmaciones no pueden desbocarse: sólo sale una cuando la clínica
+-- decide una cita, y las citas entran por llamada, y las llamadas gastan
+-- minutos que ya están medidos. El techo lo pone el propio plan.
+--
+-- Los avisos programados sí. Los escribe una persona y pueden apuntar a la
+-- lista entera de pacientes: ochocientos mensajes en un clic, unos 112 € que
+-- nadie ha pagado.
+--
+-- Así que cuentan como un minuto cada uno. Un mensaje nos cuesta 0,14 € y un
+-- minuto 0,17: cuestan casi lo mismo, de modo que no es un invento contable
+-- sino la verdad redondeada a favor de la clínica. Y se capa solo, porque
+-- cuando se acaban los minutos se acaban los avisos, sin contador nuevo, sin
+-- unidad nueva y sin una línea más en la factura.
+create or replace function charge_recall_minute(p_clinic_id uuid)
+returns boolean language plpgsql security definer set search_path = public as $$
+declare
+  v_month  date := date_trunc('month', now())::date;
+  v_used   numeric;
+  v_limit  integer;
+  v_extra  integer;
+begin
+  -- El mismo cálculo que hace el panel: lo que incluye el plan más lo que la
+  -- clínica haya comprado encima.
+  select coalesce(c.minute_limit, 0),
+         coalesce((c.usage_this_month->>'extra_minutes_purchased')::integer, 0)
+    into v_limit, v_extra
+    from clinics c
+   where c.id = p_clinic_id;
+  if not found then return false; end if;
+
+  select coalesce(minutes, 0) into v_used
+    from usage where clinic_id = p_clinic_id and month = v_month;
+  v_used := coalesce(v_used, 0);
+
+  -- Sin sitio, no sale. El aviso se queda esperando en vez de cancelarse: la
+  -- clínica compra un pack o espera al mes que viene, y en ninguno de los dos
+  -- casos pierde lo que había programado.
+  if v_used + 1 > v_limit + v_extra then
+    return false;
+  end if;
+
+  insert into usage (clinic_id, month, calls_count, minutes)
+  values (p_clinic_id, v_month, 0, 1)
+  on conflict (clinic_id, month) do update
+    set minutes = usage.minutes + 1;
+
+  return true;
+end;
+$$;
+
+revoke execute on function charge_recall_minute(uuid) from anon, authenticated;
+
+comment on function charge_recall_minute is
+  'Cobra un minuto del plan por cada aviso programado que sale. Devuelve false '
+  'cuando no queda sitio, y entonces el aviso espera en vez de enviarse.';
+
+-- ── Y LO QUE EL ADD-ON DE WHATSAPP DICE QUE ES ──────────────────────────────
+-- Decía "Confirmações e recordatórios automáticos", que era verdad cuando las
+-- confirmaciones sólo existían si se pagaba por ellas. Desde hoy van incluidas
+-- en todos los planes, así que esa frase vende por 49 € algo que la clínica ya
+-- tiene, y calla lo único que el add-on hace de verdad: que la Telma atienda en
+-- WhatsApp igual que atiende al teléfono.
+--
+-- Es la frase que lee quien está con el dedo encima del botón de comprar, así
+-- que importa más que la de la landing.
+update addons
+   set name = 'Telma no WhatsApp',
+       description = 'A Telma atende também no WhatsApp: o paciente escreve e ela marca, '
+                     'remarca e desmarca. As confirmações já vão incluídas no plano; com '
+                     'o add-on chegam por WhatsApp. Até 1000 mensagens/mês'
+ where id = 'whatsapp';
+
+-- ── EL MINUTO SUELTO, Y POR QUÉ SUBE ────────────────────────────────────────
+-- Este número no es sólo lo que cuesta un minuto de más. Es el que decide si
+-- alguien sube de plan alguna vez, y eso no se ve hasta que se escribe:
+--
+--   subir de plan compensa sólo cuando los minutos que añade
+--   valen más que el precio que añade, a este precio por minuto.
+--
+--   Essencial a Clínica  +150 €  necesita un salto de más de 150/0,45 = 333 min
+--   Clínica a Rede       +350 €  necesita un salto de más de 350/0,45 = 778 min
+--
+-- Los saltos de esta migración son 400 y 950, así que los dos se cumplen. A
+-- 0,35 € habrían hecho falta 429 y 1000, y con 400 y 950 una clínica que
+-- hablase mil minutos al mes habría pagado menos quedándose en Essencial y
+-- comprando extras, para siempre. Subir esto es lo que hace que los escalones
+-- signifiquen algo.
+--
+-- `unit_price_eur` del pack es ese mismo precio, guardado para que el panel
+-- pueda enseñar cuánto se ahorra comprándolo: a 0,45 el pack de 79 € pasa a ser
+-- un 30 % más barato en vez de un 10 %, que es lo que un pack debe ser.
+update minute_packs set unit_price_eur = 0.45 where id = 'pack_250';
+
+-- ── Y LA MISMA PRUEBA CONTRA EL BONO, QUE ES LA QUE MUERDE ──────────────────
+-- Comparar el salto contra el minuto suelto no basta, y por poco se queda una
+-- escalera que nadie habría subido nunca. Nadie recarga al precio suelto
+-- teniendo un bono más barato, así que el escalón tiene que ganarle al bono.
+--
+-- Con el bono a 79 € (0,316 el minuto) y los planes en 650 y 1600, cubrir los
+-- 950 minutos que separan Clínica de Rede costaba 300 € en bonos contra 350 €
+-- de subir de plan. Los bonos ganaban, y para siempre.
+--
+-- Con los planes en 700 y 1750 y el bono a 89 € (0,356) los dos saltos ganan
+-- contra las dos formas de comprar minutos, y el bono sigue siendo un 21 % más
+-- barato que el suelto, que es para lo que existe.
+update plans set max_minutes_per_month = 700 where id = 'clinica';
+update plans set max_minutes_per_month = 1750 where id = 'rede';
+update plans set description = 'Para mais de 5 sedes ou mais de 1750 minutos. Sob consulta'
+ where id = 'personalizado';
+
+update clinics c
+   set minute_limit = p.max_minutes_per_month
+  from plans p
+ where p.id = c.plan::text
+   and p.max_minutes_per_month is not null
+   and c.minute_limit is distinct from p.max_minutes_per_month;
+
+update minute_packs set price_eur = 89 where id = 'pack_250';

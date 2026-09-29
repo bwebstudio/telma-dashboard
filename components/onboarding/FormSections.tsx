@@ -275,7 +275,56 @@ function Checkbox({
 
 // Step 1: the clinic ---------------------------------------------------------
 
-export function ClinicStep({ values, set, errors, locale }: StepProps) {
+/**
+ * A heading over a handful of questions that belong together.
+ *
+ * Step five had twelve fields in a flat list: the languages, how she addresses
+ * people, what she does when she cannot help, three different numbers to send a
+ * call to, what happens at three in the morning, and a free text box. Every one
+ * of them earns its place and together they read as a wall, which is the
+ * difference between a form that looks thorough and a form that looks long.
+ *
+ * Four groups, because there are four questions underneath: how she speaks,
+ * what she does when she is stuck, what happens in an emergency, and anything
+ * else. The panel's Telma screen already groups its sections this way; the
+ * sign-up is where the same clinic meets the same questions first.
+ */
+function Group({
+  title,
+  lead,
+  children,
+}: {
+  title: string
+  lead?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="flex flex-col gap-5 border-t border-line pt-7 first:border-t-0 first:pt-0">
+      <div>
+        <h3 className="text-lg font-semibold text-ink">{title}</h3>
+        {lead && <p className="mt-1 text-sm text-ink-mute">{lead}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+export function ClinicStep({
+  values,
+  set,
+  errors,
+  locale,
+  showIdentity = true,
+}: StepProps & {
+  /**
+   * False on the Telma screen. The email, the country and the region are who
+   * the clinic is and where its number comes from, not how she answers, and on
+   * a screen whose whole promise is "this is how she behaves" they were a
+   * third of the fields saying nothing about behaviour. They live on the
+   * account page now, beside the name and the plan.
+   */
+  showIdentity?: boolean
+}) {
   const t = copyFor(locale)
   const country = countryOf(values, locale)
   return (
@@ -293,18 +342,20 @@ export function ClinicStep({ values, set, errors, locale }: StepProps) {
         />
       </div>
 
-      <Text
-        name="email"
-        label={t.email}
-        hint={t.emailHelp}
-        error={errors.email}
-        value={values.email}
-        onChange={(v) => set({ email: v })}
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        placeholder="geral@clinicaserrano.pt"
-      />
+      {showIdentity && (
+        <Text
+          name="email"
+          label={t.email}
+          hint={t.emailHelp}
+          error={errors.email}
+          value={values.email}
+          onChange={(v) => set({ email: v })}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="geral@clinicaserrano.pt"
+        />
+      )}
 
       <Text
         name="phone"
@@ -331,24 +382,26 @@ export function ClinicStep({ values, set, errors, locale }: StepProps) {
         />
       </div>
 
-      <Select
-        name="country"
-        label={t.country}
-        error={errors.country}
-        value={country}
-        onChange={(v) =>
-          // Changing country empties the region: a Portuguese district is not a
-          // valid answer for a clinic in Spain, and leaving it selected would
-          // buy a number with the wrong dial code.
-          set({ country: v, region: '', area_region: '' })
-        }
-      >
-        {COUNTRIES.map((c) => (
-          <option key={c} value={c}>
-            {COUNTRY_LABEL[locale][c]}
-          </option>
-        ))}
-      </Select>
+      {showIdentity && (
+        <Select
+          name="country"
+          label={t.country}
+          error={errors.country}
+          value={country}
+          onChange={(v) =>
+            // Changing country empties the region: a Portuguese district is not
+            // a valid answer for a clinic in Spain, and leaving it selected
+            // would buy a number with the wrong dial code.
+            set({ country: v, region: '', area_region: '' })
+          }
+        >
+          {COUNTRIES.map((c) => (
+            <option key={c} value={c}>
+              {COUNTRY_LABEL[locale][c]}
+            </option>
+          ))}
+        </Select>
+      )}
 
       <Select
         name="specialty"
@@ -370,26 +423,28 @@ export function ClinicStep({ values, set, errors, locale }: StepProps) {
         ))}
       </Select>
 
-      <Select
-        name="region"
-        label={t.region}
-        error={errors.region}
-        value={values.region}
-        onChange={(v) =>
-          // The new number's area follows the clinic's region. Almost every
-          // clinic wants a number where it is, and step 6 can still change it.
-          // Without this the select there *showed* the region and stored
-          // nothing, so leaving the default was the one answer that failed.
-          set({ region: v, area_region: values.area_region || v })
-        }
-      >
-        <option value="">{t.choose}</option>
-        {regionsFor(country).map((r) => (
-          <option key={r.id} value={r.id}>
-            {r.label}
-          </option>
-        ))}
-      </Select>
+      {showIdentity && (
+        <Select
+          name="region"
+          label={t.region}
+          error={errors.region}
+          value={values.region}
+          onChange={(v) =>
+            // The new number's area follows the clinic's region. Almost every
+            // clinic wants a number where it is, and step 6 can still change
+            // it. Without this the select there *showed* the region and stored
+            // nothing, so leaving the default was the one answer that failed.
+            set({ region: v, area_region: values.area_region || v })
+          }
+        >
+          <option value="">{t.choose}</option>
+          {regionsFor(country).map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
+        </Select>
+      )}
     </div>
   )
 }
@@ -528,7 +583,16 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      {/* One number, not two.
+          Beside it there used to be "interval between appointments", which is
+          the grid the hours sit on: with a thirty minute appointment and a
+          fifteen minute grid, times start at nine, quarter past, half past. A
+          real distinction, and one that almost every clinic answers with the
+          same number as the duration -- so it was a second question, on the
+          same screen, whose right answer was the one just given. It comes from
+          the duration now, and a clinic that wants a different grid changes it
+          in the panel, where the diary is on screen while they do it. */}
+      <div className="max-w-xs">
         <Select
           name="appointment_duration_minutes"
           label={t.duration}
@@ -538,21 +602,6 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
           onChange={(v) => set({ appointment_duration_minutes: Number(v) })}
         >
           {[15, 20, 30, 45, 60, 90].map((m) => (
-            <option key={m} value={m}>
-              {m} {t.minutes}
-            </option>
-          ))}
-        </Select>
-
-        <Select
-          name="min_interval_minutes"
-          label={t.interval}
-          hint={t.intervalHelp}
-          error={errors.min_interval_minutes}
-          value={String(values.min_interval_minutes ?? 30)}
-          onChange={(v) => set({ min_interval_minutes: Number(v) })}
-        >
-          {[15, 20, 30, 45, 60].map((m) => (
             <option key={m} value={m}>
               {m} {t.minutes}
             </option>
@@ -585,9 +634,13 @@ export function HoursStep({ values, set, errors, locale }: StepProps) {
  * Nothing is required. An empty duration means the clinic's usual appointment,
  * an empty price means Telma quotes none for that service and says so.
  */
-function ServiceDetails({ values, set, locale }: StepProps) {
+function ServiceDetails({ values, set, errors, locale, inPanel }: StepProps & { inPanel?: boolean }) {
   const t = copyFor(locale)
-  const [open, setOpen] = useState(false)
+  // Folded on the way in, open in the panel. The fold is a sign-up measure and
+  // the comment above says why; the panel is where somebody has come on purpose
+  // to change these numbers, and a table behind a plus sign there is a feature
+  // nobody finds.
+  const [open, setOpen] = useState(Boolean(inPanel))
   const chosen: string[] = values.services ?? []
   const durations: Record<string, number> = values.service_durations ?? {}
   const prices: Record<string, number> = values.service_prices ?? {}
@@ -618,18 +671,22 @@ function ServiceDetails({ values, set, locale }: StepProps) {
 
   return (
     <div className="rounded-card border border-line bg-surface-sunken">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left"
-      >
-        <span className="text-base font-medium text-ink">{t.durationsToggle}</span>
-        <span aria-hidden className="text-ink-mute">{open ? '\u2212' : '+'}</span>
-      </button>
+      {inPanel ? (
+        <p className="p-4 pb-0 text-base font-medium text-ink">{t.durationsToggle}</p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          className="flex w-full items-center justify-between gap-3 p-4 text-left"
+        >
+          <span className="text-base font-medium text-ink">{t.durationsToggle}</span>
+          <span aria-hidden className="text-ink-mute">{open ? '\u2212' : '+'}</span>
+        </button>
+      )}
 
       {open && (
-        <div className="border-t border-line p-4">
+        <div className={`p-4 ${inPanel ? '' : 'border-t border-line'}`}>
           <p className="text-sm text-ink-mute">{t.durationsHelp}</p>
 
           <div className="mt-4 flex flex-col gap-2.5">
@@ -682,6 +739,40 @@ function ServiceDetails({ values, set, locale }: StepProps) {
             ))}
           </div>
 
+          {/* ── WHAT A TABLE CANNOT HOLD ──────────────────────────────────
+              "The laser varies with the area." "The first estimate is free."
+              "From 60 euros." Sentences, not numbers, and the prompt has read
+              this field for as long as it has existed.
+
+              It rendered on no screen. Not here, not in the panel. The table
+              above replaced the old free text box for the prices that ARE
+              numbers, which was right, and the box went with it -- taking the
+              sentences that are not numbers along with it. A clinic could not
+              say "the first estimate is free" anywhere, while Telma was ready
+              to say it.
+
+              In the panel only, and after the table, so it reads as the
+              exception to what is above rather than an alternative to it. It
+              is not in the sign-up: nobody needs it to start, and a sign-up
+              with fewer boxes is a sign-up more people finish. */}
+          {inPanel && (
+            <Field
+              label={t.detailsNotes}
+              htmlFor="price_info"
+              hint={t.priceInfoHelp}
+              error={errors.price_info}
+            >
+              <textarea
+                id="price_info"
+                name="price_info"
+                rows={3}
+                placeholder={t.priceInfoPlaceholder}
+                value={values.price_info ?? ''}
+                onChange={(e) => set({ price_info: e.target.value })}
+                className={`${inputClass(errors.price_info)} py-2.5`}
+              />
+            </Field>
+          )}
         </div>
       )}
     </div>
@@ -690,7 +781,12 @@ function ServiceDetails({ values, set, locale }: StepProps) {
 
 // Step 3: services -----------------------------------------------------------
 
-export function ServicesStep({ values, set, errors, locale }: StepProps) {
+export function ServicesStep({ values, set, errors, locale, inPanel = false }: StepProps & {
+  /** True in the panel. The sentences about prices that are not numbers live
+   *  beside the numbers, and a sign-up with fewer boxes is one more people
+   *  finish. */
+  inPanel?: boolean
+}) {
   const t = copyFor(locale)
   const specialty = (values.specialty as Specialty) || 'outra'
   const options = servicesFor(specialty, locale)
@@ -752,7 +848,7 @@ export function ServicesStep({ values, set, errors, locale }: StepProps) {
         />
       </Field>
 
-      <ServiceDetails {...{ values, set, errors, locale }} />
+      <ServiceDetails {...{ values, set, errors, locale, inPanel }} />
 
     </div>
   )
@@ -778,6 +874,7 @@ export function TelmaStep({
   maxLanguages,
   showLanguages = true,
   showGreetingLanguage,
+  showPreview = true,
 }: StepProps & {
   /** In the panel the languages themselves are billing, and live on the account
    *  page. Which of them she answers in is not, and belongs here. */
@@ -790,9 +887,28 @@ export function TelmaStep({
   /** The ceiling of the most generous plan on sale. The plan itself is chosen
    *  two steps later, so this caps the picker and step 6 marks what fits. */
   maxLanguages: number | null
+  /** False in the panel, which shows it at the top instead. */
+  showPreview?: boolean
 }) {
   const t = copyFor(locale)
   const chosen: string[] = values.selected_languages ?? []
+
+  // The emergency number, prefilled from the one they just gave for transfers.
+  //
+  // A clinic whose answer to "when Telma cannot help" is "put the call
+  // through" has already typed the number a call goes to. The emergency box
+  // sits a few centimetres below asking for a number a call goes to. For most
+  // clinics it is the same line, and typing it twice is the sort of thing that
+  // makes a sign-up feel like paperwork. It is prefilled and editable, not
+  // merged: an emergency and a general enquiry can legitimately ring different
+  // phones, and the ones where that matters are exactly the ones where getting
+  // it wrong matters.
+  useEffect(() => {
+    if (!values.emergency_number && values.fallback_policy === 'transfer' && values.fallback_number) {
+      set({ emergency_number: values.fallback_number })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.fallback_number, values.fallback_policy])
   const atMax = maxLanguages !== null && chosen.length >= maxLanguages
   const greeting: string = values.greeting_language ?? chosen[0] ?? ''
   const fallback: string = values.fallback_policy ?? 'message'
@@ -822,6 +938,7 @@ export function TelmaStep({
 
   return (
     <div className="flex flex-col gap-8">
+      <Group title={t.groupVoice} lead={t.groupVoiceLead}>
       {showLanguages && (
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -933,12 +1050,11 @@ export function TelmaStep({
         </div>
       </div>
 
+      </Group>
+
       {/* What happens when Telma cannot help. Three honest answers. */}
+      <Group title={t.groupStuck} lead={t.groupStuckLead}>
       <div className="flex flex-col gap-2.5">
-        <div>
-          <p className="field-label">{t.fallback}</p>
-          <p className="text-sm text-ink-mute">{t.fallbackHelp}</p>
-        </div>
         {(['transfer', 'message', 'callback'] as const).map((p) => (
           <OptionCard
             key={p}
@@ -977,8 +1093,16 @@ export function TelmaStep({
 
       {/* Emergencies. Its own block, above the catch-all, because it is a
           different path from "I do not know": one takes a message, the other
-          interrupts. The landing promises this in writing. */}
-      <div className="rounded-card border border-danger/25 bg-danger-soft/40 p-4">
+          interrupts. The landing promises this in writing.
+
+          Drawn in the brand's emphasis and not in the danger red it used to
+          wear. Red on a settings screen means something is wrong with what you
+          typed; this is the strongest guarantee on the page, and an owner
+          being shown the product read it as a warning. */}
+      </Group>
+
+      <Group title={t.groupUrgent} lead={t.groupUrgentLead}>
+      <div className="rounded-card border border-brand-accent/30 bg-brand-wash p-4">
         <p className="field-label">{t.emergency}</p>
         <p className="mb-4 text-sm text-ink-soft">{t.emergencyHelp}</p>
         <div className="flex flex-col gap-5">
@@ -1069,10 +1193,13 @@ export function TelmaStep({
         </div>
       </div>
 
+      </Group>
+
       {/* The catch-all. Parking, which insurers are accepted, the entrance
           being round the back, the dentist away on Thursdays. Read into the
           prompt verbatim, which is why the placeholder shows the shape rather
           than describing it. */}
+      <Group title={t.groupExtra} lead={t.groupExtraLead}>
       <Field
         label={t.briefing}
         htmlFor="briefing"
@@ -1089,10 +1216,14 @@ export function TelmaStep({
           className={`${inputClass(errors.briefing)} py-2.5`}
         />
       </Field>
+      </Group>
 
-      {/* Last, and not first. Everything above is a question; this is the
-          answer, and it only means anything once there is something to show. */}
-      <PromptPreview values={values} locale={locale} />
+      {/* Last, and not first, in the sign-up: everything above is a question
+          and this is the answer. The panel asks for it at the top instead,
+          because somebody arriving there is not answering questions, they are
+          checking what she says today and going to the line that is wrong. It
+          was rendering in both places at once. */}
+      {showPreview && <PromptPreview values={values} locale={locale} />}
     </div>
   )
 }
@@ -1112,6 +1243,11 @@ export function NumberStep({
   // no area. Fill it once, so what the select shows is what it holds.
   useEffect(() => {
     if (!values.area_region && values.region) set({ area_region: values.region })
+    // And the number itself, which step 2 already asked for as "the clinic's
+    // number, so we can talk to you". Asking again four steps later under a
+    // different label is the same question twice, and the second time the
+    // reader has to go back and check which one they typed.
+    if (!values.current_number && values.phone) set({ current_number: values.phone })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values.region])
   const country = countryOf(values, locale)

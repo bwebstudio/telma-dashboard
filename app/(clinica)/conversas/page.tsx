@@ -43,6 +43,13 @@ export default async function ConversasPage({
   const { data } = await query
   const calls = (data ?? []) as Call[]
 
+  // Said once, under the title, instead of once under every summary. It used
+  // to sit in the row where the transcript would have been, directly below the
+  // summary, where it read as though the summary were the thing missing.
+  // Only when there is in fact nothing to transcribe anywhere in the list.
+  const nothingToTranscribe =
+    calls.length > 0 && calls.every((call) => !call.transcript?.length)
+
   return (
     <>
       <AgendaLive clinicId={clinicId} />
@@ -51,6 +58,12 @@ export default async function ConversasPage({
         title={dict.conversas.title}
         subtitle={hasWhatsapp ? dict.conversas.subtitle : dict.conversas.subtitleNoWhatsapp}
       />
+
+      {nothingToTranscribe && (
+        <p className="-mt-2 mb-6 max-w-lead text-sm text-ink-mute">
+          {dict.conversas.noTranscript}
+        </p>
+      )}
 
       <form method="GET" className="card mb-6 flex flex-wrap items-end gap-4 p-4 sm:p-5">
         {/* The channel filter only exists for a clinic that has both. Offering

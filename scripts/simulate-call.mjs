@@ -34,6 +34,26 @@ if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
 // it looked. What a rule is worth is how often it is obeyed.
 const RUNS = Math.max(1, Number(process.argv.find((a) => a.startsWith('--runs='))?.slice(7)) || 1)
 
+// Which model answers. Hardcoded until now, which made "is the model the
+// problem?" a question nobody could answer without editing this file, and an
+// answer nobody could reproduce afterwards. The default is what the live
+// agents run, so an unflagged run still measures the product.
+const LLM = process.argv.find((a) => a.startsWith('--llm='))?.slice(6) || 'gpt-5.4-mini'
+
+// Whether to run the shape that is actually in production.
+//
+// Since 772c0df the live agent carries the booking, the cancellations, the
+// goodbye and the difficult calls as procedures, and /api/voice/init sends only
+// the core. Neither of the two shapes this file could already run is that one:
+// the default sends the whole sheet, and `nodes` builds a workflow graph, which
+// was measured in e5a4f7e and is not what shipped.
+//
+// So every number this harness has produced since then has been about a
+// configuration nobody is running. This flag makes the throwaway agent the same
+// shape as the real one: core in the prompt, the four procedures on the agent,
+// each behind the trigger that decides when it loads.
+const PROCEDURES = process.argv.includes('--procedures')
+
 // The platform stops a simulation at about thirty agent turns and returns what
 // it has, mid-sentence, mid-tool-call, with no flag saying so. Three of twelve
 // runs in one measurement had been cut like that and were scored anyway, and a
@@ -71,6 +91,13 @@ if (nodes) {
   console.log(`  núcleo:  ${n.core.length + n.closing.length} caracteres`)
   console.log(`  nós:     reservar ${n.booking.length}, cancelar ${n.cancelling.length}`)
   console.log(`  a mais:  ${n.core.length + n.closing.length + n.booking.length} numa marcação, contra ${built.text.length} sem nós\n`)
+} else if (PROCEDURES) {
+  const n = built.nodes
+  const tok = (t) => Math.round(t.length / 3.4)
+  console.log(`  forma:   como produção — núcleo no prompt, procedimentos no agente`)
+  console.log(`  núcleo:  ${tok(n.core)} tokens`)
+  console.log(`  procs:   cancelar ${tok(n.cancelling)}, difícil ${tok(n.difficult)}`)
+  console.log(`  numa marcação: ${tok(n.core)} sem voltas a mais, contra ${tok(built.text)} com a folha inteira\n`)
 } else {
   console.log(`  prompt:  ${built.text.length} caracteres, versão ${built.version}\n`)
 }
@@ -139,8 +166,12 @@ const agent = await api('POST', '/v1/convai/agents/create', {
       prompt: {
         // Only the core when running as a graph: the procedures arrive with
         // the node.
-        prompt: nodes ? `${built.nodes.core}\n\n${built.nodes.closing}` : built.text,
-        llm: 'gpt-5.4-mini',
+        prompt: PROCEDURES
+          ? built.nodes.core
+          : nodes
+            ? `${built.nodes.core}\n\n${built.nodes.closing}`
+            : built.text,
+        llm: LLM,
         max_tokens: 300,
         ...(tools ? { tool_ids: tools } : {}),
       },
@@ -160,6 +191,50 @@ const agent = await api('POST', '/v1/convai/agents/create', {
   ...(guardrails ? { platform_settings: { guardrails } } : {}),
   ...(WORKFLOW ? { workflow: WORKFLOW } : {}),
 })
+
+// The same four pieces the live agent carries, with the same triggers, on a
+// branch of a throwaway agent. Written out here rather than imported from
+// scripts/elevenlabs-procedures.mjs because that script talks to the real
+// agent and is not a module: what has to match between them is the text, and
+// the text comes from buildPrompt in both.
+if (PROCEDURES) {
+  // No booking: since the timing on conv_9301m3jj2s6w it lives in the core,
+  // because `start_procedure` costs a round trip and booking is the common
+  // path. Keep this list the same as the one in elevenlabs-procedures.mjs or
+  // the harness measures a shape nobody runs, which is the mistake 451bff4
+  // exists to stop repeating.
+  const pieces = [
+    ['cancelamentos', 'cancelling', 'The caller wants to cancel or move an appointment they already have.'],
+    ['dificil', 'difficult', 'The caller has gone quiet, has said they will leave it for another time, or is being abusive.'],
+  ]
+  const branch = (await api('GET', `/v1/convai/agents/${agent.agent_id}/branches`)).results.find(
+    (b) => !b.is_archived
+  )
+  for (const [slug, node, trigger] of pieces) {
+    const { procedure_id } = await api(
+      'POST',
+      `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures`,
+      {}
+    )
+    await api(
+      'PATCH',
+      `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures/${procedure_id}/draft`,
+      { name: `telma/${slug}`, type: 'free_form', trigger, content: built.nodes[node] }
+    )
+  }
+  // Out of draft. A procedure left in draft is written and never read, and the
+  // simulation would quietly measure an agent with no booking instructions.
+  await api('PATCH', `/v1/convai/agents/${agent.agent_id}?branch_id=${branch.id}`, {
+    name: agent.name,
+  })
+  const live = (
+    await api('GET', `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures`)
+  ).procedures.filter((x) => !x.has_draft)
+  if (live.length !== pieces.length) {
+    throw new Error(`só ${live.length} de ${pieces.length} procedimentos ficaram publicados`)
+  }
+  console.log(`  ${live.length} procedimentos publicados no agente de ensaio\n`)
+}
 
 try {
   const tally = new Map()
@@ -273,13 +348,25 @@ try {
 
 // ---------------------------------------------------------------------------
 
-async function api(method, path, body) {
+async function api(method, path, body, attempt = 1) {
   const res = await fetch(`https://api.elevenlabs.io${path}`, {
     method,
     headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   })
   const text = await res.text()
+
+  // A 500 from the far end used to take the whole run down, and it happened
+  // twice in one afternoon: six simulated calls thrown away because the last
+  // one crashed on their side. Retried three times, widening, because the
+  // alternative is a measurement that silently reports nothing and gets read
+  // as "no findings". Only for their faults — a 4xx is ours and stays fatal.
+  if (res.status >= 500 && attempt <= 3) {
+    console.log(`  ${res.status} de ElevenLabs, tentativa ${attempt} de 3...`)
+    await new Promise((r) => setTimeout(r, attempt * 4000))
+    return api(method, path, body, attempt + 1)
+  }
+
   // Thrown, never process.exit(). Exiting here skipped the `finally` that
   // deletes the throwaway agent, so a rate limit mid-run left one behind in a
   // list where every other entry answers a real telephone. Which is exactly

@@ -38,7 +38,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
       switchLabel={dict.panels.switch}
       locale={locale}
       userLabel={user.full_name ?? user.email ?? t.nav.section}
-      langLabel={dict.common.language}
+      langLabel={dict.common.switchLanguage}
       signOutLabel={dict.common.signOut}
     >
       {isDemo() && <DemoBar role={user.role} />}

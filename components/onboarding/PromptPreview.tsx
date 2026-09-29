@@ -26,7 +26,7 @@ import type { OnboardingLocale } from '@/lib/onboarding/locale'
 const COPY = {
   pt: {
     title: 'O que a Telma vai saber',
-    help: 'Montado a partir das suas respostas. Se alguma coisa não estiver bem, volte ao passo e corrija.',
+    help: 'Montado a partir das suas respostas. Se alguma coisa não estiver bem, volte atrás e corrija.',
     greeting: 'Assim atende',
     listen: 'Ouvir',
     listening: 'Um momento...',
@@ -40,7 +40,7 @@ const COPY = {
   },
   es: {
     title: 'Lo que Telma va a saber',
-    help: 'Montado a partir de sus respuestas. Si algo no está bien, vuelva al paso y corríjalo.',
+    help: 'Montado a partir de sus respuestas. Si algo no está bien, vuelva atrás y corríjalo.',
     greeting: 'Así contesta',
     listen: 'Escuchar',
     listening: 'Un momento...',
@@ -57,11 +57,20 @@ const COPY = {
 export function PromptPreview({
   values,
   locale,
+  help,
 }: {
   values: Record<string, unknown>
   locale: OnboardingLocale
+  /**
+   * Overrides the line under the title. The default is written for the
+   * sign-up, where there are steps to go back to; the panel has none, and
+   * telling somebody to return to a step they never came from is an
+   * instruction they cannot follow.
+   */
+  help?: string
 }) {
-  const t = COPY[locale] ?? COPY.pt
+  const base = COPY[locale] ?? COPY.pt
+  const t = { ...base, help: help ?? base.help }
   const [summary, setSummary] = useState<PromptSummary | null>(null)
   const [open, setOpen] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)

@@ -4,6 +4,10 @@ import type { Appointment, AvailabilitySlot, BlockedDay } from '@/lib/types'
 import { dayIn, dayKeyIn, timeIn, weekdayIn } from '@/lib/time'
 import { startsIn } from '@/lib/slots'
 import { bookingCategory, categoryBackground } from '@/lib/service-colour'
+// The facts a day carries, counted in one place so the week and the month say
+// the same things the day does.
+import { dayFacts, needsAnswer, SHOWN_AS } from '@/lib/agenda-facts'
+import { DayLoad } from '@/components/clinic/DayLoad'
 import { resolveDuration, type DurationSource } from '@/lib/service-duration'
 import { serviceLabel } from '@/lib/onboarding/catalog'
 import { fill } from '@/lib/fill'
@@ -73,12 +77,14 @@ export function Planner({
 
   const blockedByDay = new Map(blocked.map((b) => [b.day.slice(0, 10), b]))
 
-  // A cancelled or refused booking does not occupy its hour any more, so it is
-  // not counted and its slot shows as free — which is the whole point of
-  // looking ahead.
-  const live = appointments.filter((a) => a.status !== 'cancelada' && a.status !== 'rejeitada')
+  // ── EVERY BOOKING, INCLUDING THE ONES THAT ARE NOT HAPPENING ─────────────
+  // A cancelled booking does not occupy its hour any more, so it is not counted
+  // as busy — that is what `dayFacts` is for. It used to be filtered out of the
+  // week altogether, which meant the planning view was the one screen that
+  // could not show the thing a clinic can act on: an hour that just came back.
+  // It stays, struck through, in its place.
   const byDay = new Map<string, Appointment[]>()
-  for (const a of live) {
+  for (const a of appointments) {
     const key = dayKeyIn(tz, new Date(a.scheduled_at))
     const list = byDay.get(key) ?? []
     list.push(a)
@@ -92,14 +98,18 @@ export function Planner({
   function dayState(date: Date) {
     const key = dayKeyIn(tz, date)
     const dow = weekdayIn(tz, date)
+    const block = blockedByDay.get(key)
+    const open = hoursByWeekday.get(dow) ?? []
+    const appts = (byDay.get(key) ?? []).sort(
+      (a, b) => +new Date(a.scheduled_at) - +new Date(b.scheduled_at)
+    )
     return {
       key,
       dow,
-      block: blockedByDay.get(key),
-      open: hoursByWeekday.get(dow) ?? [],
-      appts: (byDay.get(key) ?? []).sort(
-        (a, b) => +new Date(a.scheduled_at) - +new Date(b.scheduled_at)
-      ),
+      block,
+      open,
+      appts,
+      facts: dayFacts(appts, open.length, Boolean(block)),
       isToday: key === todayKey,
     }
   }
@@ -145,7 +155,10 @@ export function Planner({
           {cells.map((date) => {
             const d = dayState(date)
             const outside = month.format(date) !== month.format(first)
-            const count = d.appts.length
+            // What is happening, not how many rows exist: a cancelled booking
+            // gave its hour back and counting it would say the day is fuller
+            // than it is.
+            const count = d.facts.busy
             return (
               <Link
                 key={d.key}
@@ -189,7 +202,18 @@ export function Planner({
                     ) : d.open.length === 0 ? (
                       <span className="block h-1 w-5 rounded-full bg-line-strong" />
                     ) : count > 0 ? (
-                      <span className="font-semibold text-ink">{count}</span>
+                      <span className="font-semibold text-ink">
+                        {count}
+                        {/* The only thing a fifty pixel cell has room to add,
+                            and the one thing it must. A day with four bookings
+                            and a day with four bookings nobody has answered
+                            were the same figure in the same grey. */}
+                        {needsAnswer(d.facts) && (
+                          <span aria-hidden className="ml-0.5 text-warn">
+                            •
+                          </span>
+                        )}
+                      </span>
                     ) : (
                       <span className="block h-1 w-5 rounded-full bg-ok/50" />
                     )}
@@ -212,6 +236,17 @@ export function Planner({
                     ) : (
                       <span className="text-ok">{t.free}</span>
                     )}
+                  </span>
+                )}
+
+                {/* Said in the same words as the week and the day, because it
+                    is the same fact and a reader should not have to learn it
+                    twice. */}
+                {!outside && needsAnswer(d.facts) && (
+                  <span className="mt-0.5 hidden text-xs font-medium leading-tight text-warn sm:block">
+                    {d.facts.pending > 0
+                      ? fill(dict.agenda.pendingCount, { n: d.facts.pending })
+                      : fill(dict.agenda.cancelledCount, { n: d.facts.cancelled })}
                   </span>
                 )}
               </Link>
@@ -259,8 +294,21 @@ export function Planner({
   // apart.
   const key = new Map<string, { index: number | null; label: string }>()
   let uncategorised = 0
+  // The two marks that are not colours. Listed only when the week contains one,
+  // for the same reason the colours are: a key naming things that are not on
+  // screen is a key nobody reads.
+  let hasPending = false
+  let hasCancelled = false
   for (const date of days) {
     for (const a of dayState(date).appts) {
+      const shown = SHOWN_AS[a.status]
+      if (shown === 'pendente') hasPending = true
+      // A cancelled booking is drawn without a colour, so it must not put one
+      // in the key either.
+      if (shown === 'cancelada') {
+        hasCancelled = true
+        continue
+      }
       const cat = categoryOf(a)
       if (!cat) {
         uncategorised++
@@ -275,9 +323,7 @@ export function Planner({
     <ol className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7 lg:gap-2">
       {days.map((date) => {
         const d = dayState(date)
-        const total = d.open.length
-        const busy = d.appts.length
-        const free = Math.max(0, total - busy)
+        const { total, busy } = d.facts
 
         return (
           <li
@@ -306,42 +352,67 @@ export function Planner({
               <p className="mt-2 text-sm text-ink-mute">{t.closed}</p>
             ) : (
               <>
-                {/* How full the day is, in one line and one bar. The bar is
-                    never the only carrier: the count is written beside it. */}
+                {/* How full the day is, and whether it is asking for
+                    anything. The same component the day view draws, so the two
+                    zooms cannot phrase one fact two ways. */}
                 <div className="mt-2">
-                  <div
-                    className="h-1.5 w-full overflow-hidden rounded-full bg-line"
-                    role="img"
-                    aria-label={`${busy} / ${total}`}
-                  >
-                    <div
-                      className="h-full rounded-full bg-brand-accent"
-                      style={{ width: `${total ? (busy / total) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <p className="mt-1.5 text-sm text-ink-mute tabular-nums">
-                    {busy > 0
-                      ? fill(t.bookedOfTotal, { n: busy, total })
-                      : fill(t.allFree, { n: free })}
-                  </p>
+                  <DayLoad facts={d.facts} dict={dict} href={`/hoje?d=${d.key}`} />
                 </div>
 
                 <ul className="mt-2 flex min-w-0 flex-col gap-1">
                   {d.appts.map((a) => {
                     const cat = categoryOf(a)
+                    const shown = SHOWN_AS[a.status]
+                    const off = shown === 'cancelada'
                     return (
-                      <li
-                        key={a.id}
-                        title={[timeIn(a.scheduled_at, locale, tz), a.patient_name, a.reason]
-                          .filter(Boolean)
-                          .join(' · ')}
-                        style={{ backgroundColor: categoryBackground(cat?.index ?? null) }}
-                        className="flex min-w-0 items-baseline gap-1.5 rounded-lg px-1.5 py-1 text-sm text-ink"
-                      >
-                        <span className="shrink-0 tabular-nums font-medium">
-                          {timeIn(a.scheduled_at, locale, tz)}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate">{a.patient_name}</span>
+                      <li key={a.id} className="min-w-0">
+                        {/* ── EVERY CHIP IS A WAY IN ───────────────────────
+                            Only the date at the top of the card used to be, so
+                            a week of names was a week of things you could read
+                            and not touch: the one booking asking to be
+                            confirmed was drawn here and answered two clicks
+                            away, with no sign that the two were connected.
+
+                            It lands on the booking itself rather than on the
+                            day, because a day with twelve rows opens above the
+                            one that was pressed. */}
+                        <Link
+                          href={`/hoje?d=${d.key}#a-${a.id}`}
+                          title={[
+                            timeIn(a.scheduled_at, locale, tz),
+                            a.patient_name,
+                            a.reason,
+                            dict.status.appointment[shown],
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                          // A cancelled booking keeps its place and loses its
+                          // colour: the hour is the information now, not what
+                          // it was going to be for.
+                          style={off ? undefined : { backgroundColor: categoryBackground(cat?.index ?? null) }}
+                          className={`flex min-w-0 items-baseline gap-1.5 rounded-lg px-1.5 py-1 text-sm transition-shadow duration-fast hover:shadow-sm ${
+                            off
+                              ? 'text-ink-mute line-through'
+                              : shown === 'pendente'
+                                ? // Waiting for an answer: a ring, because the
+                                  // fills are already spoken for by the
+                                  // services. Green rather than amber, the same
+                                  // as the card in Marcações, because a booking
+                                  // that has just come in is not the same kind
+                                  // of news as one that has just been lost.
+                                  'text-ink ring-1 ring-inset ring-ok'
+                                : 'text-ink'
+                          }`}
+                        >
+                          <span
+                            className={`shrink-0 tabular-nums font-medium ${
+                              shown === 'pendente' ? 'text-ok' : ''
+                            }`}
+                          >
+                            {timeIn(a.scheduled_at, locale, tz)}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate">{a.patient_name}</span>
+                        </Link>
                       </li>
                     )
                   })}
@@ -353,8 +424,36 @@ export function Planner({
       })}
     </ol>
 
-    {(key.size > 0 || uncategorised > 0) && (
+    {(key.size > 0 || uncategorised > 0 || hasPending || hasCancelled) && (
       <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-ink-soft">
+        {/* ── WHAT THE MARKS MEAN, BEFORE WHAT THE COLOURS MEAN ───────────
+            The colours tell one treatment from another, which is an aid. The
+            ring and the strike say a booking is waiting for the clinic or has
+            been called off, which is work. Work comes first, and it is drawn
+            as the thing itself rather than described: the sample is a chip. */}
+        {hasPending && (
+          <li className="flex min-w-0 items-center gap-1.5">
+            <span
+              aria-hidden
+              className="h-3 w-5 shrink-0 rounded ring-1 ring-inset ring-ok"
+            />
+            <span className="truncate font-medium text-ok">
+              {dict.status.appointment.pendente}
+            </span>
+          </li>
+        )}
+        {hasCancelled && (
+          <li className="flex min-w-0 items-center gap-1.5">
+            <span
+              aria-hidden
+              className="h-3 w-5 shrink-0 rounded bg-surface-sunken"
+              style={{ backgroundImage: 'linear-gradient(to bottom, transparent 45%, rgb(var(--ink-mute)) 45%, rgb(var(--ink-mute)) 55%, transparent 55%)' }}
+            />
+            <span className="truncate line-through">
+              {dict.status.appointment.cancelada}
+            </span>
+          </li>
+        )}
         {[...key.values()].map((c) => (
           <li key={c.label} className="flex min-w-0 items-center gap-1.5">
             <span

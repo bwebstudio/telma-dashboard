@@ -54,7 +54,7 @@ export function LiveBar({
 
   useEffect(() => {
     setStamp(
-      new Date(renderedAt).toLocaleTimeString(locale === 'en' ? 'en-GB' : `${locale}-${locale === 'pt' ? 'PT' : 'ES'}`, {
+      new Date(renderedAt).toLocaleTimeString(locale === 'pt' ? 'pt-PT' : 'es-ES', {
         hour: '2-digit',
         minute: '2-digit',
       })

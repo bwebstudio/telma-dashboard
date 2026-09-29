@@ -1,5 +1,8 @@
 export type PlanType = 'essencial' | 'clinica' | 'rede' | 'personalizado'
-export type ClinicStatus = 'ativa' | 'pausada' | 'cancelada'
+/** 'por_configurar' is a clinic that has signed up and not yet been set up:
+ *  it has a number and no opening hours. Distinct from 'pausada', which is a
+ *  clinic that was answering and was stopped. See migration 0044. */
+export type ClinicStatus = 'ativa' | 'por_configurar' | 'pausada' | 'cancelada'
 // 'interno' is the Bweb Studio team (full reach, including the CRM admin
 // views). 'comercial' is a sales rep: internal, but scoped to their own
 // prospects. 'clinica' is a paying client.
@@ -16,6 +19,25 @@ export type AppointmentStatus =
   | 'copiada'
   | 'cancelada'
   | 'expirada'
+/**
+ * The statuses that still hold an hour.
+ *
+ * Written as an allowlist because that is what the database uses: every diary
+ * function in supabase/migrations asks for `status in ('pendente',
+ * 'confirmada', 'copiada')`. The panel asked the opposite question, listing the
+ * ones to drop, and a denylist rots every time a status is added. 'expirada'
+ * arrived in migration 0019 and nobody added it, so the week planner went on
+ * counting an hour the database had already put back on sale: an expired
+ * pre-marcação showed as "1 de 6 ocupadas" while Telma was free to offer it.
+ *
+ * Add a status to the type and this list decides, once, whether it holds time.
+ */
+export const HOLDS_AN_HOUR: AppointmentStatus[] = ['pendente', 'confirmada', 'copiada']
+
+export function holdsAnHour(status: AppointmentStatus): boolean {
+  return HOLDS_AN_HOUR.includes(status)
+}
+
 export type AppointmentOrigin = 'telefone' | 'whatsapp'
 export type CallResult = 'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida'
 export type ConversationChannel = 'telefone' | 'whatsapp'
@@ -305,6 +327,9 @@ export interface Appointment {
   call_id: string | null
   patient_name: string
   patient_phone: string
+  /** The record this booking belongs to, when one was matched. Null on
+   *  everything written before migration 0046. */
+  patient_id?: string | null
   reason: string | null
   scheduled_at: string
   status: AppointmentStatus
@@ -358,5 +383,76 @@ export interface ActivityEvent {
   clinic_id: string | null
   type: string
   message: string
+  created_at: string
+}
+
+/**
+ * One person, as one clinic knows them.
+ *
+ * Keyed on (clinic, last nine digits of the telephone) in the database, so two
+ * clinics that share a patient hold two rows and neither can see the other's. A
+ * single cross-clinic record would be a register of who goes to which clinic,
+ * held by us, which is a worse thing to hold than a clinic's own list of its
+ * own patients.
+ */
+export interface Patient {
+  id: string
+  clinic_id: string
+  name: string
+  phone: string
+  /** The last nine digits of every other number this person has rung from,
+   *  gathered when two records were merged. Without it a merge lasts until the
+   *  next call from the other telephone. */
+  other_digits?: string[] | null
+  /** Optional, and never asked for by Telma: a receptionist types it with the
+   *  person in front of them. Its purpose is to say that two records are one
+   *  person, which no telephone number can. */
+  tax_id?: string | null
+  /** The comparable form of it: uppercased, letters and digits only. */
+  tax_key?: string | null
+  /** The comparable form of the name, for spotting a second record. */
+  name_key?: string | null
+  /** The clinic's own note. Not clinical history: that belongs in the clinic's
+   *  software, and this field is the one thing on the record Telma is never
+   *  given, so nothing written here can be read out to whoever rings. */
+  notes?: string | null
+  /** When they asked to stop hearing about their own appointments. */
+  reminders_opt_out_at?: string | null
+  /** When they agreed to commercial messages. Null means never asked, which is
+   *  the same as no. */
+  marketing_consent_at?: string | null
+  marketing_consent_source?: string | null
+  last_seen_at: string
+  created_at: string
+}
+
+export type RecallState = 'agendado' | 'enviado' | 'cancelado' | 'falhou'
+
+/**
+ * One reminder waiting to go out, or the record that one did.
+ *
+ * Always somebody's decision about somebody. Nothing schedules these by itself:
+ * 0047 did, from intervals per service, and 0048 took it out because the message
+ * never names the treatment, so a patient on two cycles got the same sentence
+ * twice with nothing to tell them apart.
+ */
+export interface PatientRecall {
+  id: string
+  clinic_id: string
+  patient_id: string
+  kind: 'aviso' | 'campanha'
+  /** A date, not an instant: a reminder is a day in the diary. */
+  due_on: string
+  /** Why it exists, in the clinic's own words: "revisão 3 meses após a
+   *  cirurgia". For the clinic's eyes, never in the message that is sent. */
+  note?: string | null
+  /** The clinic's own sentence, for a campanha. An aviso uses fixed copy. */
+  body?: string | null
+  state: RecallState
+  sent_at?: string | null
+  channel?: string | null
+  /** Twilio's own words when it refused, or why it was closed without sending:
+   *  'baixa', 'sem_consentimento', 'sem_numero'. */
+  error?: string | null
   created_at: string
 }

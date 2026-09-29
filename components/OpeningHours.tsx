@@ -95,9 +95,13 @@ export function OpeningHours({
 
   return (
     <div>
-      <p className="mb-4 text-base text-ink-soft">
-        {readOnly ? dict.horarios.gridReadOnly : dict.horarios.help}
-      </p>
+      {/* Only when read only. When the grid can be edited, the section above
+          already says that Telma never books outside it, and the two sat one
+          under the other: the same sentence twice in a row reads as a page that
+          has lost track of itself. */}
+      {readOnly && (
+        <p className="mb-4 text-base text-ink-soft">{dict.horarios.gridReadOnly}</p>
+      )}
 
       <Diaries
         resources={resources}

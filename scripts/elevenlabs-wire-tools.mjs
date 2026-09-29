@@ -20,6 +20,8 @@
 // part of the call path.
 
 import { readFileSync } from 'node:fs'
+import { SERVICES, serviceLabel } from '../lib/onboarding/catalog.ts'
+import { AGENT_TTS } from '../lib/onboarding/voice-settings.ts'
 
 const args = process.argv.slice(2)
 const flag = (name) => {
@@ -65,6 +67,8 @@ function fail(msg) {
   process.exit(1)
 }
 
+// `let`-like on purpose: the block further down may replace the token with
+// the one the live tools already carry. See the comment there.
 const auth = { Authorization: `Bearer ${TOKEN}` }
 
 // The tools ------------------------------------------------------------------
@@ -84,7 +88,7 @@ const TOOLS = [
     // própria plataforma para o mesmo fim, e não gera um turno a mais.
     force_pre_tool_speech: true,
     description:
-      'Consulta as horas realmente livres da clínica. Usa isto SEMPRE antes de oferecer qualquer hora: nunca inventes disponibilidade. Cada slot traz say (a hora já na hora da clínica, para dizeres em voz alta) e slot_start (identificador em UTC, para devolveres às outras ferramentas, nunca para ler).',
+      'Diz-te se a clínica faz o que a pessoa pediu E que horas tem livres, numa só pergunta. Usa isto SEMPRE antes de oferecer qualquer hora: nunca inventes disponibilidade nem decidas por tua conta se a clínica faz uma coisa. Se vier faz=false, a clínica não faz isso: dizes que aqui não se faz, ofereces o que vier em alternativas e não há horas para dar. Se vier faz=true, o campo servico é o nome que usas ao falar e ao registar, nunca as palavras da pessoa. Cada slot traz say (a hora já na hora da clínica, para dizeres em voz alta) e slot_start (identificador em UTC, para devolveres às outras ferramentas, nunca para ler).',
     api_schema: {
       url: `${BASE}/api/availability`,
       method: 'GET',
@@ -119,7 +123,11 @@ const TOOLS = [
   },
   {
     name: 'telma_reservar_hora',
-    force_pre_tool_speech: true,
+    // A false, ao contrário da consulta de horas. Segurar uma hora é instantâneo
+    // e invisível, não há espera nenhuma que encher, e obrigá-la a falar antes
+    // foi o que produziu "vou segurar essa hora enquanto confirmamos os seus
+    // dados" — que descreve um mecanismo que quem liga não sabe que existe.
+    force_pre_tool_speech: false,
     description:
       'Segura uma hora concreta durante três minutos, enquanto confirmas o nome e o telefone. Usa isto depois de a pessoa escolher uma hora e antes de lhe pedir os dados, para que outra chamada em simultâneo não fique com a mesma hora.',
     api_schema: {
@@ -223,7 +231,7 @@ const TOOLS = [
           summary: {
             type: 'string',
             description:
-              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça — que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém — porque isso é trabalho para alguém e perde-se se não ficar escrito.',
+              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça: que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém, porque isso é trabalho para alguém e perde-se se não ficar escrito.',
           },
           appointments: {
             type: 'array',
@@ -237,7 +245,7 @@ const TOOLS = [
               reason: {
                 type: 'string',
                 description:
-                  'O serviço da agenda desta clínica, escolhido da lista que ela oferece: "Consulta de avaliação", "Limpeza". **Nunca as palavras da pessoa nem nada sobre a saúde dela.** Se ela disse "lifting", escreves o serviço da lista a que isso corresponde — e **se não corresponder a nenhum, esta clínica não faz isso e não devia haver marcação nenhuma**. Isto fica numa base de dados durante meses e não é sítio para o que alguém contou ao telefone sobre o seu corpo.',
+                  'O serviço da agenda desta clínica, escolhido da lista que ela oferece: "Consulta de avaliação", "Limpeza". **Nunca as palavras da pessoa nem nada sobre a saúde dela.** Se ela disse "lifting", escreves o serviço da lista a que isso corresponde, e **se não corresponder a nenhum, esta clínica não faz isso e não devia haver marcação nenhuma**. Isto fica numa base de dados durante meses e não é sítio para o que alguém contou ao telefone sobre o seu corpo.',
               },
               scheduled_at: { type: 'string', description: 'O identificador slot_start da hora marcada, copiado tal e qual. Não é a hora que disseste em voz alta.' },
               professional: {
@@ -248,7 +256,7 @@ const TOOLS = [
               note: {
                 type: 'string',
                 description:
-                  'O que a clínica precisa de saber sobre ESTA marcação e mais nenhuma. Uma ou duas frases: o que a pessoa pediu para esta consulta e o que alguém tem de fazer antes dela — por exemplo que pediu que lhe liguem por causa do preço. Não descrevas aqui as outras marcações da chamada: cada uma leva a sua, e quem lê esta no dia só quer saber desta.',
+                  'O que a clínica precisa de saber sobre ESTA marcação e mais nenhuma. Uma ou duas frases: o que a pessoa pediu para esta consulta e o que alguém tem de fazer antes dela, por exemplo que pediu que lhe liguem por causa do preço. Não descrevas aqui as outras marcações da chamada: cada uma leva a sua, e quem lê esta no dia só quer saber desta.',
               },
               },
             },
@@ -272,6 +280,119 @@ const TOOLS = [
 // an English-speaking stranger with no idea what clinic it is improvising
 // answers about someone's appointment. So the box holds a fallback that is
 // honest about not knowing anything, takes a message, and books nothing.
+
+// ── LAS PALABRAS QUE EL TRANSCRIPTOR NO CONOCE ──────────────────────────────
+// `asr.keywords` inclina el reconocimiento hacia una lista de términos, y
+// estaba vacía. Importa porque el vocabulario de una clínica no es vocabulario
+// corriente: "destartarização" y "criolipólise" no están en el habla de la que
+// aprende un transcriptor, y una cita pedida con esa palabra llega escrita como
+// otra cosa. Esto es lo que hace que el paso 2 —mirar si la clínica hace eso—
+// compare contra lo que la persona dijo de verdad.
+//
+// Sale del catálogo y no de una lista a mano, para que añadir un servicio en
+// lib/onboarding/catalog.ts lo añada también aquí. El corte por longitud es
+// tosco a propósito: deja fuera "consulta", "limpeza", "banho", "geral", que el
+// transcriptor ya acierta y que sólo diluirían las que importan.
+// Palabras corrientes que llegan hasta aquí por ser largas y que el
+// transcriptor ya acierta. Cada una que se quede diluye a las que no.
+const ASR_ORDINARY = new Set([
+  'consulta', 'primeira', 'primera', 'limpieza', 'implantes', 'urgencia', 'urgência',
+  'tratamento', 'tratamiento', 'seguimento', 'seguimiento', 'cirurgia', 'análises',
+])
+const ASR_KEYWORDS = [
+  ...new Map(
+    Object.values(SERVICES)
+      .flat()
+      .flatMap((service) => ['pt', 'es'].map((locale) => serviceLabel(service.id, locale)))
+      .flatMap((label) => label.split(/[\s/(),.]+/))
+      .map((word) => word.trim())
+      .filter((word) => word.length >= 8 && !ASR_ORDINARY.has(word.toLowerCase()))
+      // Por clave en minúsculas: "Avaliação" y "avaliação" son la misma palabra
+      // para quien transcribe, y dos entradas por término gastan la lista.
+      .map((word) => [word.toLowerCase(), word])
+  ).values(),
+]
+
+// The platform's own tools. Configuration of the agent rather than tools we
+// host, so they are not in TOOLS above.
+//
+// Out here rather than inside AGENT_SPEC because AGENT_SPEC is only ever sent
+// by --create. Everything written in here reached a brand new agent and none of
+// it ever reached the one answering the telephone, which is why the live agent
+// has end_call and skip_turn with empty descriptions and transfer_to_number
+// switched off.
+const BUILT_IN_TOOLS = {
+      end_call: {
+        name: 'end_call',
+        description:
+          'Termina a chamada. Usa assim que acabares a frase da despedida, sem esperar resposta, ou quando te pedirem para desligar. Não a uses enquanto a outra pessoa estiver a falar.',
+      },
+      skip_turn: {
+        name: 'skip_turn',
+        description:
+          'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
+      },
+      // ── DETEÇÃO DE IDIOMA, QUE JÁ ESTEVE DESLIGADA ────────────────────
+      // Esteve desligada de propósito, e por uma boa razão: numa chamada a
+      // sério a Telma leu em voz alta a opção do menu, "português", e mudou-se
+      // a si própria de língua a meio de uma conversa em castelhano.
+      //
+      // Ligada outra vez porque sem ela a conversa fica na língua base e os
+      // `language_presets` nunca entram: quem pedir inglês ouve inglês lido
+      // pela voz portuguesa, com o sotaque que ela tem. Ouviu-se, e não passa.
+      //
+      // O que impede a avaria de voltar não é a ferramenta, é a regra que
+      // faltava e agora está na base: só se muda de língua quando a pessoa
+      // passa a falá-la, nunca porque o nome de uma língua apareceu numa frase.
+      language_detection: {
+        name: 'language_detection',
+        description:
+          'Muda a língua da conversa. Usa quando a pessoa passar a falar noutra língua das que atendes. Nunca a uses porque o nome de uma língua apareceu numa frase, nem porque a leste em voz alta na saudação.',
+      },
+
+      // ── PASSAR A CHAMADA ────────────────────────────────────────────
+      // A base diz "passas a chamada" em dois sítios: numa urgência, e numa
+      // clínica cuja resposta a "quero falar com alguém" é transferir. O
+      // agente não tinha ferramenta nenhuma para o fazer, por isso as duas
+      // eram promessas que nada cumpria. Numa chamada real ela disse quatro
+      // vezes "ahora mismo le paso con la clínica" a quem descrevia uma
+      // possível complicação, e nunca ia acontecer nada. Prometer uma
+      // transferência é mau em qualquer sítio e pior aqui, porque a pessoa
+      // deixa de procurar ajuda.
+      //
+      // O destino é uma variável dinâmica e não um número: há um só agente
+      // partilhado por todas as clínicas, e é /api/voice/init que manda o
+      // número desta chamada. `fallback_number` chega vazio quando a
+      // política da clínica não é transferir, e uma transferência sem
+      // destino não parte para lado nenhum — que é o que tem de acontecer
+      // numa clínica que nunca pediu transferências.
+      //
+      // `conference` e não `blind`: blind exige que o número tenha entrado
+      // pela integração nativa da Twilio, e o nosso não entrou.
+      transfer_to_number: {
+        name: 'transfer_to_number',
+        type: 'system',
+        description:
+          'Passa a chamada a uma pessoa. Avisas sempre antes de passar. Se não houver número, não passas e não dizes que vais passar.',
+        params: {
+          system_tool_type: 'transfer_to_number',
+          transfers: [
+            {
+              transfer_destination: { type: 'phone', phone_number: '{{emergency_number}}' },
+              transfer_type: 'conference',
+              condition:
+                'Quem liga descreve uma urgência e a clínica está aberta, ou está fechada mas autorizou receber urgências fora de horas.',
+            },
+            {
+              transfer_destination: { type: 'phone', phone_number: '{{fallback_number}}' },
+              transfer_type: 'conference',
+              condition:
+                'Quem liga pede para falar com uma pessoa da clínica, ou há alguma coisa que a Telma não consegue resolver, e esta clínica transfere chamadas.',
+            },
+          ],
+        },
+      },
+    }
 
 const AGENT_SPEC = {
   name: AGENT_NAME,
@@ -312,26 +433,7 @@ const AGENT_SPEC = {
         // low enough to cut a real sentence, it would truncate her mid-word,
         // which sounds like a fault rather than like brevity.
         max_tokens: 300,
-        built_in_tools: {
-          end_call: {
-            name: 'end_call',
-            description:
-              'Termina a chamada. Usa depois de te despedires e de a pessoa responder, ou quando te pedirem para desligar.',
-          },
-          skip_turn: {
-            name: 'skip_turn',
-            description:
-              'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
-          },
-          // Sem isto o prompt promete uma coisa que a plataforma não faz. Ele diz
-          // "respondes na língua em que te falarem", e a conversa fica presa na
-          // que abriu: o modelo escreve português e o reconhecimento continua à
-          // espera de espanhol.
-          // Sem deteção de idioma, de propósito: o prompt diz que a língua se escolhe
-          // na saudação e não muda, e esta ferramenta existe para a mudar. Numa
-          // chamada real a Telma leu em voz alta a opção do menu — "português" — e
-          // mudou-se a si própria de língua a meio de uma conversa em castelhano.
-        },
+        built_in_tools: BUILT_IN_TOOLS,
       },
       first_message:
         'Hola, le habla Telma. Disculpe, en este momento tengo un problema técnico y no puedo consultar la agenda. ¿Me deja su nombre y un teléfono y le devolvemos la llamada?',
@@ -354,21 +456,23 @@ const AGENT_SPEC = {
     // modelo que se saltaba los pasos, no saber colgar, quedarse escuchando
     // siete segundos después de que el otro terminara. La configuración hecha a
     // mano no se hereda; ésta sí.
+    //
+    // Y hasta hoy tampoco se aplicaba. Este bloque sólo se enviaba con
+    // --create, así que todo lo que hay escrito aquí abajo llegaba a un agente
+    // recién nacido y nunca al que contesta el teléfono: el que contesta tenía
+    // lo que le tocó al nacer, más lo que se tocó a mano en la consola. Ahora
+    // se envía en las dos rutas, y esto vuelve a ser lo que dice ser.
     tts: {
-      // Un agente que no sea inglés exige turbo o flash v2_5: es requisito de la
-      // plataforma, no una preferencia nuestra.
-      model_id: 'eleven_turbo_v2_5',
-      // A voz da língua base do agente. As outras vêm nos presets abaixo, porque
-      // mudar de língua a meio e continuar com a mesma voz dá uma espanhola a
-      // falar português, que se nota mais do que o sotaque que se queria evitar.
+      // Todo lo que suena vive en lib/onboarding/voice-settings.ts, para que el
+      // "Ouvir" del panel y el teléfono no puedan discrepar. Discreparon: el
+      // alta estaba en turbo_v2_5 con stability 0.5 y el teléfono en v3
+      // conversational con 0.7 y modo expresivo.
+      ...AGENT_TTS,
+      // La voz de la lengua base del agente. Las otras van en los presets de
+      // abajo, porque cambiar de lengua a media llamada y seguir con la misma
+      // voz da una española hablando portugués, que se nota más que el acento
+      // que se quería evitar.
       voice_id: env('ELEVENLABS_VOICE_ID_PT') ?? undefined,
-      // 0 y no 3: el troceado agresivo arranca una entonación nueva por trozo, y
-      // eso es lo que se oye como voz de máquina.
-      optimize_streaming_latency: 0,
-      // 0.7 está en la ventana: por debajo salta de aguda a seria entre frases,
-      // por encima de 0.8 arrastra y repite sílabas.
-      stability: 0.7,
-      similarity_boost: 0.75,
     },
     turn: {
       // Cuatro segundos, no siete. Siete es una eternidad al teléfono: quien ha
@@ -385,33 +489,95 @@ const AGENT_SPEC = {
       // Long enough to hunt for a calendar, short enough not to fund a dead
       // line. The base asks once whether they are still there before it gets
       // here; this is what happens when nobody is.
+      //
+      // El agente en vivo está en 75, que es donde nació. Esta línea gana:
+      // treinta segundos de línea muerta por llamada abandonada los paga la
+      // clínica, y el argumento de arriba no ha dejado de ser cierto.
       silence_end_call_timeout: 45.0,
       // `eager` cierra el turno en cuanto la frase suena terminada, en vez de
-      // esperar a que el silencio lo confirme. Es la única palanca que queda
-      // contra el ruido de sala: la plataforma no expone un umbral de VAD, solo
-      // el interruptor de voces de fondo, y en una habitación con un bebé eso no
-      // basta. El riesgo es cortar a quien hace una pausa a media frase.
-      turn_eagerness: 'eager',
+      // esperar a que el silencio lo confirme. Sería la única palanca contra el
+      // ruido de sala: la plataforma no expone un umbral de VAD, sólo el
+      // interruptor de voces de fondo, y en una habitación con un bebé eso no
+      // basta.
+      //
+      // Pero el riesgo es cortar a quien hace una pausa a media frase, y el
+      // agente en vivo lleva semanas en `normal` sin que nadie se queje de
+      // ruido. Esta línea decía `eager` y nunca llegó a aplicarse, así que
+      // nunca se midió. Se queda en lo que está probado; cambiarlo es un
+      // experimento con su propia medición, no un valor por defecto.
+      turn_eagerness: 'normal',
       // Apagado: genera antes de que el interlocutor termine y luego continúa, y
       // las dos generaciones se cosen con una costura audible.
       speculative_turn: false,
       // El relleno mientras espera una herramienta lo pone la plataforma. Pedirlo
       // en el prompt le hacía hablar dos veces por cada consulta.
+      //
+      // Y lo escribe esta lista, no el modelo. Con
+      // `use_llm_generated_message` la muletilla se genera en cada espera, y se
+      // generaba en el idioma que le apeteciera: "a ver" (español) dos veces en
+      // una llamada en portugués, y "Позвольте" (ruso) en otra, dicho en voz
+      // alta por el altavoz. No era la detección de idioma, que lleva semanas
+      // apagada, ni el tamaño del modelo: era esto. Cuatro frases escritas a
+      // mano y `randomize_fillers` dan la variedad que se buscaba al
+      // encenderlo, sin que haya un idioma que elegir.
       soft_timeout_config: {
-        timeout_seconds: 2.5,
-        message: 'Mmm...',
-        use_llm_generated_message: true,
-        max_soft_timeouts_per_generation: 1,
+        // Cinco segundos, e o número deixa de andar de um lado para o outro
+        // porque o princípio passa a estar escrito: **isto só existe para uma
+        // espera que quem liga não consegue explicar.**
+        //
+        // Esteve em 3, subiu a 4.5 e a 6 para não pisar a frase da Telma,
+        // desceu outra vez a 3 quando havia nove segundos de silêncio antes da
+        // primeira palavra. Esses nove segundos eram o `start_procedure`, e
+        // desapareceram quando a marcação e a despedida voltaram ao núcleo
+        // (f72894f). O silêncio que isto tapava já não existe.
+        //
+        // As esperas que restam anuncia-as ela própria: `force_pre_tool_speech`
+        // está ligado na agenda e na reserva, e é ela quem diz "só um momento,
+        // que vou ver a disponibilidade". O registo da chamada não o tem, de
+        // propósito, porque é invisível — e foi aí que a três segundos saiu um
+        // "Deixe ver..." colado à frente de uma boa notícia.
+        //
+        // Cinco é mais longo do que qualquer geração normal e mais curto do que
+        // uma avaria. Se voltar a aparecer onde não faz falta, o que está
+        // errado é a ferramenta que a provoca, não este número.
+        timeout_seconds: 5,
+        // "Já lhe digo..." saiu daqui. Promete uma resposta a uma pergunta,
+        // e a plataforma di-lo sempre que uma geração demora — incluindo antes
+        // de registar a chamada e antes de se despedir, onde não há pergunta
+        // nenhuma pendente. Numa chamada real saiu três vezes, duas delas sem
+        // sentido. As que ficam são hesitações e não promessas.
+        message: 'Deixe ver...',
+        // "Pronto..." saiu. Ouviu-se no fim de uma chamada, antes da
+        // despedida, e "pronto" sozinho não é uma hesitação: é o que se diz
+        // quando algo acabou, dito antes de acabar.
+        additional_soft_timeout_messages: ['Um momento...', 'Ora bem...'],
+        use_llm_generated_message: false,
+        randomize_fillers: true,
+        max_soft_timeouts_per_generation: 4,
       },
     },
     // Distingue la voz de quien llama de la tele, de un bebé o de alguien más
     // en la sala.
     vad: { background_voice_detection: true },
+    asr: { keywords: ASR_KEYWORDS },
+    // ── UNA VOZ POR IDIOMA ──────────────────────────────────────────────────
+    // Sin esto el agente tiene una sola voz y habla inglés con acento
+    // portugués. Se oyó en una llamada de verdad, y el agente de la demostración
+    // llevaba meses así: estas líneas estaban escritas y este script nunca había
+    // corrido contra él, de modo que el trabajo estaba hecho y no estaba puesto.
+    //
+    // Van en `conversation_config.language_presets`, hermanas de `tts`, no
+    // dentro de `agent`. Puestas dentro de `agent` la API responde 200 y las
+    // tira, que es la peor forma de fallar: parece que fue.
+    //
     // El catalán no está en la lista que acepta ElevenLabs, aunque lo ofrezcamos
     // en el alta. Ver a memória do projecto.
     language_presets: {
       es: { overrides: { tts: { voice_id: env('ELEVENLABS_VOICE_ID_ES') ?? undefined } } },
-      en: { overrides: { tts: { voice_id: env('ELEVENLABS_VOICE_ID_EN') ?? undefined } } },
+      // El inglés no lleva voz propia, y es una decisión, no un olvido. Se
+      // probó una voz inglesa y no gustó: prefieren la de siempre aunque lea el
+      // inglés con acento portugués, porque es la voz que la clínica reconoce
+      // como la suya. Sin preset, el inglés usa la de por defecto.
     },
   },
 }
@@ -447,6 +613,32 @@ else console.log('')
 
 const existing = await api('/convai/tools').catch((e) => fail(`Não consegui listar as ferramentas: ${e.message}`))
 const byName = new Map((existing.tools ?? []).map((t) => [t.tool_config?.name ?? t.name, t]))
+
+// ── O token que já lá está ganha ao token que temos à mão ───────────────────
+// Este script reescreve a ferramenta inteira, cabeçalho de autorização
+// incluído. O token não é um só: a demonstração corre no Vercel com o seu, o
+// .env.local de quem desenvolve tem outro, e uma correria deste script a partir
+// de uma máquina qualquer trocava o da demonstração pelo de casa. Nada falhava
+// aqui: falhava depois, em cada chamada, com 401 em todas as ferramentas e a
+// Telma a dizer que não conseguia consultar a agenda.
+//
+// Por isso, quando as ferramentas já existem e trazem um token diferente do
+// nosso, é o delas que vale. Trocá-lo é uma decisão explícita e pede --token.
+{
+  const live = [...byName.entries()]
+    .filter(([name]) => name.startsWith('telma_') && name.endsWith(SUFFIX))
+    .map(([, t]) => (t.tool_config?.api_schema?.request_headers ?? {}).Authorization)
+    .find((v) => typeof v === 'string' && v.startsWith('Bearer '))
+  const liveToken = live?.slice('Bearer '.length).trim()
+  if (liveToken && liveToken !== TOKEN) {
+    if (flag('token')) {
+      console.log('  aviso: o token dado difere do que as ferramentas têm. Vai ser trocado.\n')
+    } else {
+      console.log('  token: mantido o que as ferramentas já tinham (use --token para trocar)\n')
+      auth.Authorization = `Bearer ${liveToken}`
+    }
+  }
+}
 
 const ids = []
 for (const tool of TOOLS) {
@@ -495,12 +687,59 @@ if (AGENT && !DRY) {
   // devolve-o na leitura mas recusa recebê-lo ao lado de `tool_ids`, por isso
   // reenviar tal e qual o que se leu rebenta. Fica de fora.
   const { tools: _legacy, ...prompt } = agent?.conversation_config?.agent?.prompt ?? {}
-  const merged = [...new Set([...(prompt.tool_ids ?? []), ...ids])]
+  // La unión menos las nuestras que ya no existen.
+  //
+  // Esto sólo sumaba. Cuando telma_verificar_servico se fundió con la agenda,
+  // la herramienta siguió colgada del agente: el modelo leía su descripción en
+  // cada turno y podía llamarla, contra un prompt que ya no la nombraba. Una
+  // herramienta que nadie retira es una herramienta que se queda.
+  //
+  // Sólo se sueltan las que llevan nuestro prefijo y no están en TOOLS. Una que
+  // alguien haya añadido a mano en la consola no se toca: este script no la
+  // creó y no le toca decidir sobre ella.
+  const ours = new Set(TOOLS.map((t) => `${t.name}${SUFFIX}`))
+  const byId = new Map((existing.tools ?? []).map((t) => [t.id ?? t.tool_id, t.tool_config?.name ?? t.name]))
+  const stale = (prompt.tool_ids ?? []).filter((id) => {
+    const name = byId.get(id)
+    return name?.startsWith('telma_') && name.endsWith(SUFFIX) && !ours.has(name)
+  })
+  const merged = [...new Set([...(prompt.tool_ids ?? []), ...ids])].filter((id) => !stale.includes(id))
+  if (stale.length) {
+    console.log(`  soltadas do agente: ${stale.map((id) => byId.get(id)).join(', ')}`)
+  }
 
+  // A partial patch, deliberately. `tts` and `turn` sit beside `agent` under
+  // conversation_config and are not sent, so a voice or a timeout chosen in the
+  // console survives a run of this script -- the live agent is on
+  // eleven_v3_conversational with expressive mode, which this file does not
+  // know about and must not undo.
+  //
+  // The built-ins go on top of what the agent has rather than instead of it, so
+  // one somebody switched on in the console is not switched off by a run of
+  // this.
+  const builtIns = { ...(prompt.built_in_tools ?? {}), ...BUILT_IN_TOOLS }
+  const spec = AGENT_SPEC.conversation_config
   await api(`/convai/agents/${AGENT}`, 'PATCH', {
-    conversation_config: { agent: { prompt: { ...prompt, tool_ids: merged } } },
+    conversation_config: {
+      agent: { prompt: { ...prompt, tool_ids: merged, built_in_tools: builtIns } },
+      // La voz, los turnos y las muletillas, que hasta ahora sólo existían para
+      // un agente recién creado. El prompt de reserva no se toca aquí: vive en
+      // AGENT_SPEC.conversation_config.agent.prompt.prompt y lo pisaría el
+      // spread de arriba, que es el del agente y es el que vale.
+      tts: spec.tts,
+      turn: spec.turn,
+      vad: spec.vad,
+      asr: { ...(agent?.conversation_config?.asr ?? {}), ...spec.asr },
+      language_presets: spec.language_presets,
+    },
   })
   console.log(`\n  ligadas ao agente ${AGENT}: ${merged.length} ferramentas`)
+  console.log(
+    `  ferramentas da plataforma: ${Object.entries(builtIns)
+      .filter(([, v]) => v)
+      .map(([k]) => k)
+      .join(', ')}`
+  )
 
   // ── O interruptor sem o qual nada disto conta ──────────────────────────────
   // A ElevenLabs aceita o que /api/voice/init devolve apenas se o agente

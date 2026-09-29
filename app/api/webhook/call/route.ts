@@ -75,12 +75,13 @@ export async function POST(request: Request) {
   // written down blocks exactly what was held.
   const { data: lengths } = await admin
     .from('clinics')
-    .select('service_durations, appointment_duration_minutes, slot_minutes, services, custom_services')
+    .select('service_durations, appointment_duration_minutes, slot_minutes, services, custom_services, language')
     .eq('id', clinicId)
     .maybeSingle()
   const clinicLengths = (lengths ?? {}) as DurationSource
   const minutesFor = (a: Record<string, unknown>) =>
     resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
+
 
   // Which diary this belongs to.
   //
@@ -263,6 +264,7 @@ export async function POST(request: Request) {
   // record_call, which would have created a second call row for a single
   // conversation and doubled the minutes.
   const callId = (data as { call_id?: string } | null)?.call_id
+
   if (callId && extras.length) {
     const usableExtras = extras
       .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
@@ -291,6 +293,55 @@ export async function POST(request: Request) {
       // written, and losing them too would turn a partial record into none.
       if (extraErr) console.error('[call] extra appointments', extraErr.message)
     }
+  }
+
+  // ── AND WHO THEY WERE ─────────────────────────────────────────────────────
+  // After the bookings are written, never before, and never in a way that can
+  // fail the call: a patient record is a convenience for the next call, and
+  // the booking is the thing somebody is waiting on.
+  //
+  // Here rather than inside record_call because it is the only moment both the
+  // name and the contact number have been said out loud and confirmed back —
+  // which is what step 8 of the booking procedure exists to do. A name heard
+  // and not confirmed is a name that goes into the record wrong.
+  try {
+    // Keyed on the number AND the name, not the number alone. One call can book
+    // for two people in the same household — a mother ringing for herself and
+    // her son — and keying on the number meant the second one was skipped and
+    // then given the first one's record.
+    const seen = new Set<string>()
+    for (const a of [...(usable ? [usable] : []), ...extras]) {
+      const name = typeof a?.patient_name === 'string' ? a.patient_name.trim() : ''
+      const phone = phoneForAppointment(a?.patient_phone, body.from_phone)
+      const digits = String(phone ?? '').replace(/\D/g, '').slice(-9)
+      const who = `${digits}|${name.toLowerCase()}`
+      if (!name || digits.length < 9 || seen.has(who)) continue
+      seen.add(who)
+      const { data: patientId } = await admin.rpc('remember_patient', {
+        p_clinic_id: clinicId,
+        p_name: name,
+        p_phone: phone,
+      })
+      // And the bookings of this call point at it. Without this the table is a
+      // list nobody joins to: the panel could not show that somebody has been
+      // here before, which is the whole reason it exists.
+      if (patientId && callId) {
+        await admin
+          .from('appointments')
+          .update({ patient_id: patientId })
+          .eq('clinic_id', clinicId)
+          .eq('call_id', callId)
+          .eq('patient_phone', phone)
+          // And the name, for the same reason: two bookings on one number in one
+          // call are two people, and without this both would point at whichever
+          // record was written first.
+          .eq('patient_name', name)
+      }
+    }
+  } catch (e) {
+    // Never fatal. The clinic has its booking either way, and the only thing
+    // lost is that Telma asks this person their name again next time.
+    console.error('[call] remember_patient', e instanceof Error ? e.message : e)
   }
 
   if (rejected) {

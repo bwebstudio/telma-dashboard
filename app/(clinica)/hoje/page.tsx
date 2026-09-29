@@ -1,17 +1,21 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { AgendaDay } from '@/components/clinic/AgendaDay'
 import { AgendaLive } from '@/components/clinic/AgendaLive'
-import { AttentionBand } from '@/components/clinic/AttentionBand'
+import { ElsewhereNote } from '@/components/clinic/ElsewhereNote'
 import { BillingLive } from '@/components/clinic/BillingLive'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
+import { DayTally } from '@/components/clinic/DayTally'
+import { DayLoad } from '@/components/clinic/DayLoad'
+import { SetupGate } from '@/components/clinic/SetupGate'
+import { setupSteps } from '@/lib/clinic-setup'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
+import { PlannerSection } from '@/components/clinic/PlannerSection'
+import { ViewSwitcher } from '@/components/clinic/ViewSwitcher'
 import { getClinicWithPlan, getMinutePackOffer } from '@/lib/clinic-utils'
 import { percentUsed } from '@/lib/purchase-utils'
-import { IconPhone, IconWhatsApp, IconBookings, IconClose, IconCheck } from '@/components/icons'
 import {
   dayKeyIn,
   dayIn,
@@ -20,23 +24,38 @@ import {
   endOfDayIn,
   isSameDayIn,
   weekdayDateIn,
+  weekdayIn,
 } from '@/lib/time'
-import type { Appointment, Call } from '@/lib/types'
+import { dayFacts } from '@/lib/agenda-facts'
+import { startsIn } from '@/lib/slots'
+import type { Appointment, AvailabilitySlot, BlockedDay, Call } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AgendaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ d?: string }>
+  searchParams: Promise<{ d?: string; v?: string; p?: string }>
 }) {
-  const { d } = await searchParams
+  const { d, v, p } = await searchParams
   const { locale, dict } = await getDict()
   const { clinicId, clinic, readOnly } = await requireClinicContext()
   const supabase = await createClient()
 
   const tz = clinic?.timezone || 'Europe/Lisbon'
   const now = new Date()
+
+  // ── ONE SCREEN, THREE ZOOMS ───────────────────────────────────────────────
+  // The day, the week and the month are the same diary looked at from
+  // different distances, and they were in two different places: the day here,
+  // the other two inside Horários, under Configuração. Somebody wanting to
+  // know what Thursday looks like was being sent to a settings page.
+  //
+  // The day stays the default, because it is what the clinic opens the panel
+  // for every morning. The counters, the minutes and the band belong to it and
+  // not to the others: "what Telma did today" does not become a different
+  // question because somebody is looking at November.
+  const view = v === 'semana' ? 'semana' : v === 'mes' ? 'mes' : 'dia'
   const day = (d && fromDayKey(d)) || now
   const dayStart = startOfDayIn(tz, day)
   const dayEnd = endOfDayIn(tz, day)
@@ -48,7 +67,8 @@ export default async function AgendaPage({
   const todayStart = startOfDayIn(tz, now)
   const todayEnd = endOfDayIn(tz, now)
 
-  const [dayRes, pendingRes, cancelledRes, cancelledTodayRes, callsRes] = await Promise.all([
+  const [dayRes, pendingRes, cancelledRes, cancelledTodayRes, callsRes, slotsRes, blockedRes] =
+    await Promise.all([
     // The day on screen.
     supabase
       .from('appointments')
@@ -94,6 +114,17 @@ export default async function AgendaPage({
       .eq('clinic_id', clinicId)
       .gte('created_at', todayStart.toISOString())
       .lte('created_at', todayEnd.toISOString()),
+    // ── HOW MANY HOURS THIS DAY HAS TO GIVE ──────────────────────────────
+    // The week has said "3 de 8 ocupadas" since it existed and the day could
+    // not: the screen a clinic opens every morning was the one that could not
+    // say how full the morning was. It needs the same two rows the planner
+    // reads, for this one day.
+    supabase.from('availability_slots').select('*').eq('clinic_id', clinicId),
+    supabase
+      .from('blocked_days')
+      .select('*')
+      .eq('clinic_id', clinicId)
+      .eq('day', dayKeyIn(tz, day)),
   ])
 
   const dayAppointments = (dayRes.data ?? []) as Appointment[]
@@ -112,6 +143,22 @@ export default async function AgendaPage({
 
   const dayKey = dayKeyIn(tz, day)
 
+  // The same arithmetic the planner does, for one day: the windows the clinic
+  // opens on this weekday, cut into bookable starts.
+  const windows = ((slotsRes.data ?? []) as AvailabilitySlot[]).filter(
+    (s) => s.active && s.weekday === weekdayIn(tz, day)
+  )
+  const openStarts = startsIn(
+    windows,
+    clinic?.slot_minutes ?? 60,
+    clinic?.appointment_duration_minutes ?? 30
+  ).length
+  const facts = dayFacts(
+    dayAppointments,
+    openStarts,
+    ((blockedRes.data ?? []) as BlockedDay[]).length > 0
+  )
+
   // The minutes, and whether they are worth interrupting the day over.
   //
   // Under 80% the card is a status line and sits with the rest of the summary,
@@ -125,6 +172,7 @@ export default async function AgendaPage({
   ])
   const minutesCard = billing ? (
     <MinutesProgressCard
+      quiet
       minutes={billing.minutes}
       pack={pack}
       canBuy={!readOnly}
@@ -132,9 +180,34 @@ export default async function AgendaPage({
       locale={locale}
     />
   ) : null
+  // ── A CLINIC THAT HAS NOT BEEN SET UP GETS THE SETUP, NOT THE DAY ────────
+  // It has a number and no hours and no services, so the agenda would be an
+  // empty list under a screen of counters reading zero: a product that looks
+  // broken rather than one that has not been started. This is the whole screen
+  // until it is done, and then it is never seen again.
+  const awaitingSetup = clinic?.status === 'por_configurar'
+  const { count: openDays } = awaitingSetup
+    ? await supabase
+        .from('availability_slots')
+        .select('*', { count: 'exact', head: true })
+        .eq('clinic_id', clinicId)
+    : { count: 0 }
+  const steps = setupSteps(clinic ?? null, openDays ?? 0)
+
   const minutesUrgent = billing
     ? billing.minutes.exhausted || percentUsed(billing.minutes.used, billing.minutes.allowance) >= 80
     : false
+
+  if (awaitingSetup) {
+    return (
+      <>
+        <div className="mb-6">
+          <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
+        </div>
+        <SetupGate steps={steps} dict={dict} />
+      </>
+    )
+  }
 
   return (
     <>
@@ -144,6 +217,16 @@ export default async function AgendaPage({
         <div>
           <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
           <p className="mt-1 text-lg text-ink-soft">{t.greeting}</p>
+          <div className="mt-4">
+            <ViewSwitcher
+              current={view}
+              labels={{
+                dia: t.viewDay,
+                semana: dict.horarios.viewWeek,
+                mes: dict.horarios.viewMonth,
+              }}
+            />
+          </div>
         </div>
         <LiveBar
           clinicId={clinicId}
@@ -156,57 +239,40 @@ export default async function AgendaPage({
         />
       </div>
 
+      {/* Week and month: the same diary, further away. Everything between here
+          and the day list is about today, so none of it is drawn. */}
+      {view !== 'dia' && (
+        <PlannerSection
+          clinicId={clinicId}
+          clinic={clinic ?? {}}
+          view={view}
+          pointer={(p && fromDayKey(p)) || now}
+          tz={tz}
+          dict={dict}
+          locale={locale}
+          base="/hoje"
+        />
+      )}
+
+      {view === 'dia' && (
+        <>
+      {/* ── THE ORDER, AND WHY IT CHANGED ────────────────────────────────────
+          It used to be: what Telma handled, then what needs an answer, then
+          the day. The reasoning was that opening onto a stack of problems
+          reads badly at eight in the morning, and that is true. What it cost
+          was that the day — the thing this screen exists for — started below
+          the fold, under five counter cards, a billing card and a band.
+
+          The reassurance is kept and the cost is not: the tally is one line
+          instead of five cards, and it sits under the day rather than over it.
+          Somebody arriving still meets a calm line before a list of work; they
+          just meet the list on the same screen.
+
+          So: which day, the day itself, then what is going on elsewhere, then
+          the money. Subject first, annotations after. */}
       {minutesUrgent && <div className="mb-8">{minutesCard}</div>}
 
-      {/* The order here is deliberate and it is not "most urgent first".
-          Opening onto a stack of things that need answering reads as a list of
-          problems, and a receptionist arriving at eight in the morning bounces
-          off it. So: what Telma already handled, then what needs an answer,
-          then the day itself. Reassurance, then work, then the plan. */}
-      <section className="mb-10">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-ink">{t.doneTitle}</h2>
-          <Link href="/conversas" className="text-base text-brand-accent hover:text-brand-hover">
-            {t.seeConversations}
-          </Link>
-        </div>
-        <dl className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
-          <Tally icon={<IconPhone className="h-5 w-5" />} label={t.doneCalls} value={counts.calls} />
-          {clinic?.addon_whatsapp && (
-            <Tally
-              icon={<IconWhatsApp className="h-5 w-5" />}
-              label={t.doneWhatsapp}
-              value={counts.whatsapp}
-            />
-          )}
-          <Tally
-            icon={<IconBookings className="h-5 w-5" />}
-            label={t.doneBookings}
-            value={counts.bookings}
-          />
-          <Tally icon={<IconCheck className="h-5 w-5" />} label={t.doneInfo} value={counts.info} />
-          <Tally
-            icon={<IconClose className="h-5 w-5" />}
-            label={t.doneCancelled}
-            value={counts.cancelled}
-            tone={counts.cancelled > 0 ? 'warn' : undefined}
-          />
-        </dl>
-
-        {!minutesUrgent && minutesCard && <div className="mt-4">{minutesCard}</div>}
-      </section>
-
-      <AttentionBand
-        pending={pending}
-        cancelled={cancelled}
-        dict={dict}
-        locale={locale}
-        tz={tz}
-        readOnly={readOnly}
-        serverNow={now.toISOString()}
-      />
-
-      <div className="mb-4 mt-10 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h2 className="text-xl font-semibold text-ink">
           {weekdayDateIn(day.toISOString(), locale, tz)}
         </h2>
@@ -224,44 +290,39 @@ export default async function AgendaPage({
         />
       </div>
 
+      {/* How full it is, and whether it is asking for anything. The same
+          component each card in the week draws, so one fact is not phrased two
+          ways at two zooms. */}
+      <div className="mb-4">
+        <DayLoad facts={facts} dict={dict} large />
+      </div>
+
       <AgendaDay
         appointments={dayAppointments}
+        clinic={clinic ?? {}}
         dict={dict}
         locale={locale}
         tz={tz}
-        isToday={isToday}
+        readOnly={readOnly}
       />
-    </>
-  )
-}
 
-function Tally({
-  icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  tone?: 'warn'
-}) {
-  return (
-    // On a phone the label and the figure sit on one line. Stacked, five of
-    // these filled three rows and pushed the day off the screen — which is the
-    // opposite of what a summary is for.
-    <div className="card flex items-center justify-between gap-3 p-3 sm:block sm:p-4">
-      <div className={`flex items-center gap-2 ${tone === 'warn' ? 'text-warn' : 'text-ink-mute'}`}>
-        {icon}
-        <dt className="label-caps text-inherit">{label}</dt>
-      </div>
-      <dd
-        className={`shrink-0 text-2xl font-semibold tabular-nums sm:mt-1 sm:text-3xl ${
-          tone === 'warn' ? 'text-warn' : 'text-ink'
-        }`}
-      >
-        {value}
-      </dd>
-    </div>
+      {/* Not the bookings themselves: confirming lives in one place per
+          context, and for anything not on this day that place is Marcações. */}
+      <ElsewhereNote
+        pending={pending.filter((a) => dayKeyIn(tz, new Date(a.scheduled_at)) !== dayKey).length}
+        cancelled={
+          cancelled.filter((a) => dayKeyIn(tz, new Date(a.scheduled_at)) !== dayKey).length
+        }
+        dict={dict}
+      />
+
+      {isToday && <DayTally counts={counts} whatsapp={Boolean(clinic?.addon_whatsapp)} dict={dict} />}
+
+      {/* The money, last and quiet. It shouts for itself when it has to: past
+          eighty per cent it moves to the top of the screen, above everything. */}
+      {!minutesUrgent && minutesCard && <div className="mt-8">{minutesCard}</div>}
+        </>
+      )}
+    </>
   )
 }

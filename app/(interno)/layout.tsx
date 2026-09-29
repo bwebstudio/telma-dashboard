@@ -44,7 +44,7 @@ export default async function InternoLayout({
       switchLabel={dict.panels.switch}
       locale={locale}
       userLabel={user.full_name ?? user.email ?? 'Bweb Studio'}
-      langLabel={dict.common.language}
+      langLabel={dict.common.switchLanguage}
       signOutLabel={dict.common.signOut}
     >
       {isDemo() && <DemoBar role="interno" />}

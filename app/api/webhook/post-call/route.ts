@@ -30,7 +30,13 @@ interface PostCall {
     conversation_id?: string
     status?: string
     metadata?: { call_duration_secs?: number }
-    analysis?: { transcript_summary?: string; call_successful?: string }
+    analysis?: {
+      transcript_summary?: string
+      call_successful?: string
+      /** What the analysis pass pulled out of the transcript. Configured by
+       *  scripts/elevenlabs-evaluation.mjs; empty until it has been run. */
+      data_collection_results?: Record<string, { value?: unknown }>
+    }
     conversation_initiation_client_data?: { dynamic_variables?: Record<string, string> }
   }
 }
@@ -70,6 +76,27 @@ export async function POST(request: Request) {
   const duration = Math.round(call?.metadata?.call_duration_secs ?? 0)
   const summary = call?.analysis?.transcript_summary ?? null
 
+  // What was said out loud, gone and fetched afterwards.
+  //
+  // Telma files a call by calling telma_registar_chamada, and the name and the
+  // number only ever exist inside that tool call. When she does not reach for
+  // it -- she said "voy a dejarlo registrado" to a caller who had sworn at her
+  // and never called it, and on another call somebody hung up between the "sim"
+  // and the goodbye -- what lands here is a summary of a booking the clinic
+  // cannot confirm and cannot ring back.
+  //
+  // The analysis pass runs on the finished transcript, so it does not depend on
+  // the model having remembered anything. These four fields are its answer.
+  const collected = call?.analysis?.data_collection_results ?? {}
+  const field = (name: string): string | null => {
+    const v = collected[name]?.value
+    if (typeof v === 'string' && v.trim()) return v.trim()
+    return null
+  }
+  const rescuedName = field('paciente_nome')
+  const rescuedPhone = field('paciente_telefone')
+  const rescuedBooking = field('marcacao_pedida')
+
   const { data: seen } = await admin
     .from('calls')
     .select('id, summary, duration_seconds')
@@ -91,12 +118,24 @@ export async function POST(request: Request) {
   // Nothing filed it, so this is the only record there will be. `nao_resolvida`
   // is literally what happened: the call ended without a booking and without a
   // transfer, and a clinic seeing it can decide whether that matters.
+  //
+  // The rescued details go into the summary rather than into columns of their
+  // own, because `calls` has neither: a name and a number live on an
+  // appointment, and there is no appointment here -- that is the whole problem.
+  // The summary is what the panel puts at the top of an opened call, so this is
+  // where somebody reading it will find the number to ring.
+  const rescued = [rescuedName, rescuedPhone, rescuedBooking].filter(Boolean).join(' · ')
+  const fullSummary = rescued ? [rescued, summary].filter(Boolean).join('\n\n') : summary
+
   const { data, error } = await admin.rpc('record_call', {
     p_clinic_id: clinicId,
-    p_from_phone: vars.system__caller_id ?? null,
+    // The number she was given to ring back on, when there is one. The caller
+    // id is the number the call came in from, which the base spends a whole
+    // rule explaining is not the same thing.
+    p_from_phone: rescuedPhone ?? vars.system__caller_id ?? null,
     p_duration: duration,
     p_result: 'nao_resolvida',
-    p_summary: summary,
+    p_summary: fullSummary,
     p_recording_url: null,
     p_external_ref: conversationId,
     p_appointment: null,

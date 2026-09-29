@@ -1,4 +1,4 @@
-import { serviceLabel } from './onboarding/catalog.ts'
+import { serviceLabel, serviceLabelEn } from './onboarding/catalog.ts'
 
 /**
  * How long to leave in the diary for what the caller just asked for.
@@ -23,6 +23,8 @@ import { serviceLabel } from './onboarding/catalog.ts'
 export interface DurationSource {
   services?: string[] | null
   custom_services?: string | null
+  /** The clinic's own language. What a booking's service is written in. */
+  language?: string | null
   service_durations?: Record<string, number> | null
   appointment_duration_minutes?: number | null
   slot_minutes?: number | null
@@ -78,8 +80,16 @@ export function matchService(services: string[], said: string | null): string | 
 
   const only = (ids: string[]): string | null => (ids.length === 1 ? ids[0] : null)
 
+  // El inglés entra aquí y no se muestra en ninguna parte: hay clínicas que
+  // atienden en inglés, y sin esto "a whitening" no encontraba nada y la
+  // herramienta respondía que la clínica no lo hace.
+  const names = (id: string) =>
+    [serviceLabel(id, 'pt'), serviceLabel(id, 'es'), serviceLabelEn(id)].filter(
+      (l): l is string => Boolean(l)
+    )
+
   const labelled = services.filter((id) =>
-    [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
+    names(id)
       .map(flatten)
       .some((l) => l && (l === heard || heard.includes(l) || l.includes(heard)))
   )
@@ -88,12 +98,23 @@ export function matchService(services: string[], said: string | null): string | 
 
   // Callers say "el láser", not "depilación láser". Short words are excluded
   // because "de" and "una" would match everything there is.
+  //
+  // ── Y LA PALABRA ENTERA, NO UN TROZO DE OTRA ──────────────────────────────
+  // Esto miraba si la palabra aparecía en cualquier parte de lo dicho, y en una
+  // llamada en inglés eso reservó un branqueamento como consulta de avaliação:
+  // "whitening consultation" contiene "consulta", porque "consultation" empieza
+  // igual. La persona oyó el servicio equivocado y en la ficha quedó el
+  // equivocado.
+  //
+  // Palabra entera, con el plural como única licencia: "limpezas" sigue siendo
+  // "limpeza", y "consultation" deja de ser "consulta". Bastan dos letras de
+  // margen; las cuatro de "-tion" ya no pasan.
   return only(
     services.filter((id) =>
-      [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
+      names(id)
         .flatMap((l) => flatten(l).split(' '))
         .filter((w) => w.length >= 5)
-        .some((w) => heard.includes(w))
+        .some((w) => new RegExp(`\\b${w}(s|es)?\\b`).test(heard))
     )
   )
 }
@@ -182,5 +203,10 @@ export function canonicalReason(clinic: DurationSource, said: string | null): st
   const id = matchService(allServices(clinic), said)
   if (!id) return null
   // The catalogue's own wording, in the clinic's language, never the caller's.
-  return serviceLabel(id, 'es') === id ? id : serviceLabel(id, 'es')
+  //
+  // It said 'es' here whatever the clinic was, so a Portuguese clinic that
+  // booked a branqueamento read "Blanqueamiento" back off its own panel. The
+  // comment was right and the argument was not.
+  const locale = clinic.language === 'pt' ? 'pt' : 'es'
+  return serviceLabel(id, locale) === id ? id : serviceLabel(id, locale)
 }

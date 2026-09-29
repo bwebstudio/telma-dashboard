@@ -27,6 +27,8 @@ export interface Copy {
   intro: string
   introLead: string
   savedNotice: string
+  startOver: string
+  startOverConfirm: string
   languageLabel: string
 
   next: string
@@ -87,6 +89,14 @@ export interface Copy {
   priceInfo: string
   priceInfoHelp: string
   priceInfoPlaceholder: string
+  groupVoice: string
+  groupVoiceLead: string
+  groupStuck: string
+  groupStuckLead: string
+  groupUrgent: string
+  groupUrgentLead: string
+  groupExtra: string
+  groupExtraLead: string
   greetingLanguage: string
   greetingLanguageHelp: string
   formality: string
@@ -185,11 +195,8 @@ export interface Copy {
 const pt: Copy = {
   steps: [
     { n: 1, short: 'Plano', title: 'O plano', help: 'Sem permanência. Pode mudar de plano ou cancelar quando quiser.' },
-    { n: 2, short: 'Clínica', title: 'A sua clínica', help: 'O essencial, e a morada, que é a pergunta que mais fazem ao telefone.' },
-    { n: 3, short: 'Horários', title: 'Quando está aberta', help: 'A Telma só oferece horas dentro deste horário. Pode ajustar tudo depois, no painel.' },
-    { n: 4, short: 'Serviços', title: 'O que a Telma pode marcar', help: 'Escolha só o que a clínica faz. A Telma nunca marca nada fora desta lista.' },
-    { n: 5, short: 'A Telma', title: 'Formar a sua rececionista', help: 'A parte que faz a diferença: como fala, em que idiomas, e o que faz quando não sabe.' },
-    { n: 6, short: 'Número', title: 'O número e o arranque', help: 'Pode manter o número que já divulgou, ou receber um novo da sua região.' },
+    { n: 2, short: 'Clínica', title: 'A sua clínica', help: 'Quem é e onde está. A Telma aprende o resto no seu painel.' },
+    { n: 3, short: 'Número', title: 'O número e o pagamento', help: 'O número que a Telma vai atender. Fica pronta a configurar logo a seguir.' },
   ],
 
   pageTitle: 'Inscrição',
@@ -197,6 +204,8 @@ const pt: Copy = {
   introLead:
     'Seis perguntas e a sua clínica passa a ter quem atenda todas as chamadas, marque consultas na agenda e responda ao que os pacientes perguntam sempre.',
   savedNotice: 'As suas respostas ficam guardadas. Pode fechar e voltar mais tarde.',
+  startOver: 'Começar de novo',
+  startOverConfirm: 'Isto apaga o que já preencheu e volta ao primeiro passo. Continuar?',
   languageLabel: 'Idioma',
 
   next: 'Continuar',
@@ -217,7 +226,7 @@ const pt: Copy = {
   clinicName: 'Nome da clínica',
   clinicNameHelp: 'Como a Telma se apresenta ao telefone.',
   email: 'Email da receção',
-  emailHelp: 'Para onde enviamos os acessos e o resumo do dia.',
+  emailHelp: 'Para onde enviamos os acessos.',
   phone: 'Telefone de contacto',
   phoneHelp: 'O número atual da clínica, para falarmos consigo.',
   specialty: 'Área da clínica',
@@ -236,7 +245,7 @@ const pt: Copy = {
   pauseStart: 'Início',
   pauseEnd: 'Fim',
   duration: 'Duração da consulta',
-  durationHelp: 'Quanto tempo o paciente ocupa a cadeira.',
+  durationHelp: 'Quanto tempo o paciente ocupa a cadeira. É também de quanto em quanto tempo a Telma oferece horas.',
   interval: 'Intervalo entre consultas',
   intervalHelp: 'De quanto em quanto tempo pode começar uma consulta nova.',
   minutes: 'minutos',
@@ -259,8 +268,17 @@ const pt: Copy = {
   priceInfo: 'Preços',
   priceInfoHelp: 'Opcional, e só para o que não cabe num número: "o laser varia com a zona", "o primeiro orçamento é gratuito". Os preços de cada serviço põem-se em cima.',
   priceInfoPlaceholder: 'Primeira consulta 40 €. Limpeza a partir de 60 €.',
+  groupVoice: 'Como fala',
+  groupVoiceLead: 'Em que língua abre a chamada e como trata quem liga.',
+  groupStuck: 'Quando não consegue ajudar',
+  groupStuckLead: 'Vai acontecer. O que decide aqui é o que ela faz nesse momento.',
+  groupUrgent: 'Urgências e fora de horas',
+  groupUrgentLead: 'As duas situações em que uma marcação não serve de nada.',
+  groupExtra: 'O resto',
+  groupExtraLead: 'O que nenhuma pergunta acima previu.',
   greetingLanguage: 'Idioma com que atende',
-  greetingLanguageHelp: 'O primeiro que se ouve, antes de quem liga dizer nada. Depois a Telma acompanha a língua da pessoa.',
+  greetingLanguageHelp:
+    'O primeiro que se ouve, antes de quem liga dizer nada. Se a clínica atende em mais línguas, a saudação diz como pedi-las, e a partir daí a Telma não muda de língua durante a chamada.',
   formality: 'Como trata os pacientes',
   formalityHelp: 'A primeira coisa que se nota ao telefone.',
   formalityFormal: 'Por "o senhor" / "a senhora"',
@@ -322,8 +340,8 @@ const pt: Copy = {
   includedMinutes: 'minutos de conversa por mês',
   locations: 'sedes incluídas',
   addonWhatsapp: 'Adicionar a Telma no WhatsApp',
-  addonWhatsappHelp: 'Confirmações e lembretes automáticos. 49 €/mês.',
-  needMore: 'Mais de 5 sedes ou mais de 2000 minutos?',
+  addonWhatsappHelp: 'A Telma atende também no WhatsApp: o paciente escreve e ela marca. 49 €/mês.',
+  needMore: 'Mais de 5 sedes ou mais de 1750 minutos?',
   needMoreLink: 'Fale connosco',
   terms: 'Li e aceito os termos de serviço e a política de privacidade.',
   paymentNote:
@@ -367,11 +385,8 @@ const pt: Copy = {
 const es: Copy = {
   steps: [
     { n: 1, short: 'Plan', title: 'El plan', help: 'Sin permanencia. Puede cambiar de plan o cancelar cuando quiera.' },
-    { n: 2, short: 'Clínica', title: 'Su clínica', help: 'Lo esencial, y la dirección, que es la pregunta que más hacen por teléfono.' },
-    { n: 3, short: 'Horarios', title: 'Cuándo está abierta', help: 'Telma solo ofrece horas dentro de este horario. Puede ajustarlo todo después, en el panel.' },
-    { n: 4, short: 'Servicios', title: 'Qué puede citar Telma', help: 'Elija solo lo que hace la clínica. Telma nunca cita nada fuera de esta lista.' },
-    { n: 5, short: 'Telma', title: 'Formar a su recepcionista', help: 'La parte que marca la diferencia: cómo habla, en qué idiomas, y qué hace cuando no sabe.' },
-    { n: 6, short: 'Número', title: 'El número y el arranque', help: 'Puede conservar el número que ya ha publicado, o recibir uno nuevo de su zona.' },
+    { n: 2, short: 'Clínica', title: 'Su clínica', help: 'Quién es y dónde está. Telma aprende el resto en su panel.' },
+    { n: 3, short: 'Número', title: 'El número y el pago', help: 'El número que Telma va a atender. Queda lista para configurar justo después.' },
   ],
 
   pageTitle: 'Alta',
@@ -379,6 +394,8 @@ const es: Copy = {
   introLead:
     'Seis preguntas y su clínica pasa a tener quien conteste todas las llamadas, dé cita en la agenda y responda lo que los pacientes preguntan siempre.',
   savedNotice: 'Sus respuestas quedan guardadas. Puede cerrar y volver más tarde.',
+  startOver: 'Empezar de nuevo',
+  startOverConfirm: 'Esto borra lo que ya ha rellenado y vuelve al primer paso. ¿Continuar?',
   languageLabel: 'Idioma',
 
   next: 'Continuar',
@@ -399,7 +416,7 @@ const es: Copy = {
   clinicName: 'Nombre de la clínica',
   clinicNameHelp: 'Cómo se presenta Telma al teléfono.',
   email: 'Email de recepción',
-  emailHelp: 'Adonde enviamos los accesos y el resumen del día.',
+  emailHelp: 'Adonde enviamos los accesos.',
   phone: 'Teléfono de contacto',
   phoneHelp: 'El número actual de la clínica, para poder hablar con usted.',
   specialty: 'Área de la clínica',
@@ -418,7 +435,7 @@ const es: Copy = {
   pauseStart: 'Inicio',
   pauseEnd: 'Fin',
   duration: 'Duración de la cita',
-  durationHelp: 'Cuánto tiempo ocupa el paciente el sillón.',
+  durationHelp: 'Cuánto tiempo ocupa el paciente el sillón. Es también cada cuánto ofrece horas la Telma.',
   interval: 'Intervalo entre citas',
   intervalHelp: 'Cada cuánto tiempo puede empezar una cita nueva.',
   minutes: 'minutos',
@@ -441,8 +458,17 @@ const es: Copy = {
   priceInfo: 'Precios',
   priceInfoHelp: 'Opcional, y solo para lo que no cabe en un número: "el láser varía según la zona", "el primer presupuesto es gratis". Los precios de cada servicio se ponen arriba.',
   priceInfoPlaceholder: 'Primera visita 40 €. Limpieza desde 60 €.',
+  groupVoice: 'Cómo habla',
+  groupVoiceLead: 'En qué lengua abre la llamada y cómo trata a quien llama.',
+  groupStuck: 'Cuando no puede ayudar',
+  groupStuckLead: 'Va a pasar. Lo que decide aquí es qué hace en ese momento.',
+  groupUrgent: 'Urgencias y fuera de horario',
+  groupUrgentLead: 'Las dos situaciones en las que una cita no sirve de nada.',
+  groupExtra: 'Lo demás',
+  groupExtraLead: 'Lo que ninguna pregunta de arriba ha previsto.',
   greetingLanguage: 'Idioma con el que descuelga',
-  greetingLanguageHelp: 'Lo primero que se oye, antes de que quien llama diga nada. Después Telma sigue la lengua de la persona.',
+  greetingLanguageHelp:
+    'Lo primero que se oye, antes de que quien llama diga nada. Si la clínica atiende en más idiomas, el saludo dice cómo pedirlos, y a partir de ahí Telma no cambia de idioma en toda la llamada.',
   formality: 'Cómo trata a los pacientes',
   formalityHelp: 'Lo primero que se nota por teléfono.',
   formalityFormal: 'De usted',
@@ -504,8 +530,8 @@ const es: Copy = {
   includedMinutes: 'minutos de conversación al mes',
   locations: 'sedes incluidas',
   addonWhatsapp: 'Añadir Telma en WhatsApp',
-  addonWhatsappHelp: 'Confirmaciones y recordatorios automáticos. 49 €/mes.',
-  needMore: '¿Más de 5 sedes o más de 2000 minutos?',
+  addonWhatsappHelp: 'Telma atiende también en WhatsApp: el paciente escribe y ella da cita. 49 €/mes.',
+  needMore: '¿Más de 5 sedes o más de 1750 minutos?',
   needMoreLink: 'Hable con nosotros',
   terms: 'He leído y acepto los términos del servicio y la política de privacidad.',
   paymentNote:

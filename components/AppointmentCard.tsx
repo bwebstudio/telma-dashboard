@@ -4,7 +4,9 @@ import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment } from '@/lib/types'
 import { formatWeekdayDate, formatTime } from '@/lib/format'
+import { fill } from '@/lib/fill'
 import { Badge, APPOINTMENT_TONE } from './ui'
+import { SHOWN_AS } from '@/lib/agenda-facts'
 import { IconCopy, IconCheck, IconClose } from './icons'
 import {
   confirmAppointment,
@@ -15,11 +17,15 @@ import {
 
 export function AppointmentCard({
   appt,
+  visits = 0,
   dict,
   locale,
   readOnly = false,
 }: {
   appt: Appointment
+  /** How many bookings this clinic has for this person, this one included.
+   *  Zero when nobody has been matched to a record yet. */
+  visits?: number
   dict: Dictionary
   locale: Locale
   /**
@@ -67,13 +73,60 @@ export function AppointmentCard({
     }
   }
 
+  // ── THE STATE, BEFORE ANYBODY READS A WORD ────────────────────────────────
+  // Twenty cards in a two column grid, each carrying its state in a badge in the
+  // top right corner, is twenty badges to read before the screen means anything.
+  // The edge and the tint say it from across the room.
+  //
+  // ── AND WAITING IS NOT THE SAME KIND OF NEWS AS CALLED OFF ────────────────
+  // Both used to be amber, because amber is what this panel uses for "this is
+  // yours", and both carried a faint wash of it. Side by side they were one
+  // colour: a booking that had just come in looked like a booking that had just
+  // been lost, and the only thing telling them apart was a word in the corner.
+  //
+  // So the hue says what kind of news it is and the tint says whether it needs
+  // an answer:
+  //
+  //   green + tint    a booking arrived and is waiting on you
+  //   green, no tint  settled, it needs nothing
+  //   amber + tint    an hour came back and nobody has said they saw it
+  //   amber, no tint  the same, already acknowledged
+  //   red             the clinic refused it, which is the one thing red means
+  //   grey            the hour lapsed
+  //
+  // The badge stays amber on a green card and that is not a contradiction: the
+  // green says a booking came in, the badge says it still wants an answer.
+  const shown = SHOWN_AS[appt.status]
+  const edge =
+    shown === 'pendente' || shown === 'confirmada'
+      ? 'border-l-ok'
+      : appt.status === 'rejeitada'
+        ? 'border-l-danger'
+        : appt.status === 'expirada'
+          ? 'border-l-line-strong'
+          : 'border-l-warn'
+  const wash =
+    appt.status === 'pendente'
+      ? 'bg-ok-soft/50'
+      : appt.status === 'cancelada' && !appt.cancel_seen_at
+        ? 'bg-warn-soft/50'
+        : ''
+
   return (
-    <article className="card p-5">
+    <article className={`card border-l-4 p-5 ${edge} ${wash}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-xl font-semibold text-ink">
             {appt.patient_name}
           </h3>
+          {/* Whether this clinic has seen them before. It changes how somebody
+              answers the telephone to them, and until now the screen could not
+              say. Drawn only when there is a before: "first visit" on every
+              card is noise on the days it is true and a lie on the days the
+              record has simply not caught up. */}
+          {visits > 1 && (
+            <p className="text-sm text-ink-mute">{fill(dict.marcacoes.visits, { n: visits })}</p>
+          )}
           <a
             href={`tel:${appt.patient_phone}`}
             className="text-base text-ink-soft underline decoration-line-strong underline-offset-4"
@@ -90,7 +143,7 @@ export function AppointmentCard({
         <Row label={dict.common.date} value={formatWeekdayDate(appt.scheduled_at, locale)} />
         <Row label={dict.common.time} value={formatTime(appt.scheduled_at, locale)} />
         {appt.reason && <Row label={dict.common.reason} value={appt.reason} />}
-        <Row label="" value={dict.status.origin[appt.origin]} />
+        <Row label={dict.common.channel} value={dict.status.origin[appt.origin]} />
       </dl>
 
       {appt.summary && (

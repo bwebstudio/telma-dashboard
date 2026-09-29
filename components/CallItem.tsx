@@ -32,7 +32,7 @@ export function CallItem({
           )}
         </span>
         <span className="min-w-0 flex-1 truncate text-base text-ink-soft">
-          {call.patient_name || call.from_phone || dict.common.none}
+          {call.patient_name || call.from_phone || dict.common.noNumber}
           {withDate && (
             <span className="ml-2 text-sm text-ink-mute">
               {formatDate(call.created_at, locale)}

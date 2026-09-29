@@ -265,7 +265,20 @@ export async function completeOnboarding(
         phone: wizard.phone,
         plan,
         minute_limit: PLAN_MINUTES[plan] ?? 250,
-        status: pendingPayment ? 'pausada' : 'ativa',
+        // ── A CLINIC IS BORN UNCONFIGURED ────────────────────────────────
+        // Not 'ativa'. The sign-up identifies the clinic and buys it a number;
+        // it does not know the opening hours, what the clinic does, or how
+        // Telma should answer, because it no longer asks. Turning her on at
+        // this point would put a receptionist on the telephone who cannot say
+        // when the clinic opens.
+        //
+        // 'por_configurar' rather than 'pausada': paused is a clinic that was
+        // running and was stopped, and the panel has to tell a first morning
+        // apart from a suspension. Everything downstream already refuses to
+        // book unless the status is 'ativa' -- /api/availability blocks on it
+        // and /api/voice/init hands `can_book: false` -- so Telma answers,
+        // takes a message and promises nothing.
+        status: pendingPayment ? 'pausada' : 'por_configurar',
         billing_cycle: wizard.billing_cycle,
         // What was bought on top of the plan. Every language beyond the first
         // is one of these, sold exactly like WhatsApp.
@@ -276,7 +289,7 @@ export async function completeOnboarding(
         addon_whatsapp: Boolean(wizard.addon_whatsapp),
         specialty: wizard.specialty,
         region: wizard.region,
-        services: wizard.services,
+        services: wizard.services ?? [],
         // Free text from step 3. The only place a business outside the four
         // specialties gets to say what it does, so it goes to the agent prompt.
         custom_services: wizard.custom_services || null,
@@ -293,7 +306,9 @@ export async function completeOnboarding(
         // How finely the day is cut. The sign-up already asks this as "how
         // often can an appointment start"; it just had nowhere to live before,
         // because the generator baked it into the rows it wrote.
-        slot_minutes: wizard.min_interval_minutes ?? 30,
+        // La rejilla de la agenda sale de la duración, porque es lo que vale
+        // para casi todas las clínicas y es una pregunta menos en el alta.
+        slot_minutes: wizard.min_interval_minutes ?? wizard.appointment_duration_minutes ?? 30,
         address: wizard.address || null,
         price_info: wizard.price_info || null,
         formality: wizard.formality,
@@ -309,7 +324,7 @@ export async function completeOnboarding(
         emergency_protocol: wizard.emergency_protocol || null,
         language: chosenLanguages.includes(clinicLanguage) ? clinicLanguage : chosenLanguages[0],
         appointment_duration_minutes: wizard.appointment_duration_minutes,
-        min_interval_minutes: wizard.min_interval_minutes,
+        min_interval_minutes: wizard.min_interval_minutes ?? wizard.appointment_duration_minutes ?? 30,
         assigned_phone: assignedPhone,
         phone_source: wizard.phone_option === 'new' ? 'provisioned' : 'ported',
         phone_provider_ref: provisioned?.sid ?? null,
@@ -457,7 +472,15 @@ export async function completeOnboarding(
             {
               clinic_id: cid,
               type: 'needs_attention',
-              message: `O número ${provisioned.number} é fictício: a Twilio não está configurada.`,
+              // Two different situations wearing the same flag, and the
+              // difference decides who has to do something. No Twilio at all
+              // is how this runs before the account is funded and nobody is
+              // surprised by it. Twilio configured and refusing is a clinic
+              // that signed up believing it has a line, and somebody here has
+              // to find it a number before that number is on a door.
+              message: provisioned.unavailable
+                ? `O número ${provisioned.number} é fictício: a Twilio não deu número. ${provisioned.unavailable}`
+                : `O número ${provisioned.number} é fictício: a Twilio não está configurada.`,
             },
           ]
         : []),

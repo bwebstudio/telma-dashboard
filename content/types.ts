@@ -31,9 +31,13 @@ export interface Dictionary {
     search: string
     all: string
     none: string
+    /** A call that arrived without a caller id. "None" read as a phone number. */
+    noNumber: string
     today: string
     signOut: string
     language: string
+    /** Read out by the language button. Carries {lang}, the target language. */
+    switchLanguage: string
     copy: string
     copied: string
     patient: string
@@ -41,6 +45,8 @@ export interface Dictionary {
     email: string
     name: string
     reason: string
+    /** Label for how a booking arrived: by phone or by WhatsApp. */
+    channel: string
     date: string
     time: string
     status: string
@@ -55,7 +61,7 @@ export interface Dictionary {
       'pendente' | 'confirmada' | 'rejeitada' | 'copiada' | 'cancelada' | 'expirada',
       string
     >
-    clinic: Record<'ativa' | 'pausada' | 'cancelada', string>
+    clinic: Record<'ativa' | 'por_configurar' | 'pausada' | 'cancelada', string>
     call: Record<'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida', string>
     origin: Record<'telefone' | 'whatsapp', string>
     channel: Record<'telefone' | 'whatsapp', string>
@@ -105,21 +111,54 @@ export interface Dictionary {
   clinicNav: {
     hoje: string
     marcacoes: string
+    pacientes: string
     horarios: string
     chamadas: string
     conta: string
     /** What Telma says, which is the clinic's to change and not ours. */
     telma: string
     /** Only shown where the simulator exists, which is never in production. */
+    /** Sidebar group headings: today's work, and what is set once. */
+    groupDay: string
+    groupSetup: string
     testCall: string
   }
   telmaSettings: {
     title: string
     lead: string
+    /**
+     * The rules that are ours, shown and not editable.
+     *
+     * An owner being sold this asks "and what if she makes something up?", and
+     * until now the answer lived only in the prompt, where nobody could see it.
+     * A screen full of fields says the clinic is in control; this says the
+     * control has a floor under it, which is the half that makes the other
+     * half safe to sell.
+     */
+    guaranteesTitle: string
+    guaranteesLead: string
+    guarantees: string[]
   }
   // The clinic's home screen: the day, and what needs an answer before it.
+  setup: {
+    eyebrow: string
+    title: string
+    lead: string
+    go: string
+    activate: string
+    activating: string
+    notYet: string
+    failed: string
+    steps: { hours: string; services: string }
+  }
   agenda: {
     title: string
+    elsewhereOnePending: string
+    elsewherePending: string
+    elsewhereOneCancelled: string
+    elsewhereCancelled: string
+    elsewhereGo: string
+    viewDay: string
     greeting: string
     live: string
     liveLost: string
@@ -128,6 +167,10 @@ export interface Dictionary {
     attention: string
     attentionNone: string
     needsAnswer: string
+    /** Said the same way by the day, the week and the month: one fact, one
+     *  sentence, so nobody has to learn it twice. Both carry {n}. */
+    pendingCount: string
+    cancelledCount: string
     justCancelled: string
     cancelledBy: string
     slotFreed: string
@@ -199,8 +242,115 @@ export interface Dictionary {
     rejectReason: string
     rejectReasonHint: string
     confirmConfirm: string
+    visits: string
+    olderHint: string
+    olderGo: string
     filterAll: string
+    /** A filter's own label. It used to borrow the singular status badge. */
+    filterCancelled: string
     filterPending: string
+    /** The two groups the default view is split into, each with its count, so
+     *  the order is visible instead of being something you work out. */
+    groupPending: string
+    groupAnswered: string
+    orderPending: string
+    orderAnswered: string
+  }
+  /**
+   * The patient record, and the reminders hanging off it.
+   *
+   * One screen and not two: a reminder is about a person, so it lives on that
+   * person's record, and the only thing the list adds is what is going out this
+   * week. Anything else would be the same decision in two places, which is how
+   * the calendar words went wrong before.
+   */
+  pacientes: {
+    title: string
+    lead: string
+    search: string
+    searchGo: string
+    empty: string
+    none: string
+    more: string
+    optedOut: string
+    back: string
+    /** Housekeeping, not the right to be forgotten. The screen says which. */
+    deleteRecord: string
+    deleteWhatGoes: string
+    deleteVsErasure: string
+    deleteConfirm: string
+    /** A record opened by hand, for somebody standing at the desk. */
+    addPatient: string
+    addName: string
+    addPhone: string
+    addPhoneHint: string
+
+    notes: string
+    notesHint: string
+    /** The identifier a receptionist types and Telma never asks for. */
+    taxId: string
+    taxIdHint: string
+    /** Two records that look like one person. */
+    maybeSame: string
+    maybeSameHint: string
+    merge: string
+    mergeWarn: string
+    history: string
+    /** The calls, matched to this person by their number. */
+    calls: string
+    callsEmpty: string
+    callsGone: string
+    since: string
+    historyEmpty: string
+    visits: string
+    visitsOne: string
+
+    messages: string
+    reminders: string
+    remindersHint: string
+    marketing: string
+    marketingHint: string
+    marketingSource: string
+    marketingSourcePlaceholder: string
+    marketingSourceRequired: string
+    marketingSourceMandatory: string
+
+    recalls: string
+    recallsEmpty: string
+    add: string
+    addWhen: string
+    addNote: string
+    addNoteHint: string
+    /** Said where the reminder is scheduled and nowhere else: it is the one
+     *  moment the cost is about to be incurred and the one reader it concerns. */
+    addCosts: string
+    addKind: string
+    addKindAviso: string
+    addKindCampanha: string
+    addBody: string
+    addBodyHint: string
+    /** Said next to the box, because the box can now be edited. */
+    addBodyWarn: string
+    /** The exact text the person will get, shown before anything is scheduled.
+     *  The only honest way to promise a message never names the treatment. */
+    preview: string
+    previewSegments: string
+
+    stateAgendado: string
+    stateEnviado: string
+    stateFalhou: string
+    stateCancelado: string
+    cancelRecall: string
+    retryRecall: string
+    sentOn: string
+    dueOn: string
+
+    queue: string
+    queueEmpty: string
+    failed: string
+    whyBaixa: string
+    whySemConsentimento: string
+    whySemNumero: string
   }
   /** A patient asking to be forgotten, answered by the clinic itself. */
   erasure: {
@@ -250,6 +400,8 @@ export interface Dictionary {
     removeProfessional: string
     lastProfessional: string
     help: string
+    /** The weekly grid's own heading. It used to repeat the page title. */
+    gridTitle: string
     gridHint: string
     gridReadOnly: string
     capacityNote: string

@@ -171,3 +171,48 @@ test('a booking is never lost for want of a number the network already has', () 
   // left with nothing to store, and it is the one that should still refuse.
   assert.equal(phoneForAppointment('345', null), null)
 })
+
+const { matchService } = await import('../lib/service-duration.ts')
+
+// ── UNA PALABRA INGLESA QUE SE TRAGA UNA PORTUGUESA ─────────────────────────
+// Ocurrió en una llamada de verdad: alguien pidió "a whitening consultation" y
+// quedó reservada una consulta de avaliação, porque "consultation" contiene
+// "consulta". Telma dijo en voz alta el servicio equivocado y en la ficha quedó
+// el equivocado.
+//
+// Ahora encuentra el que toca, porque el catálogo también oye inglés. Lo que
+// esta prueba guarda es lo de antes: que "consultation" no sea "consulta".
+test('una palabra que empieza igual no es la misma palabra', () => {
+  const dental = ['dent_consulta', 'dent_limpeza', 'dent_branqueamento']
+  assert.equal(matchService(dental, 'whitening consultation'), 'dent_branqueamento')
+  assert.equal(matchService(dental, 'cleaning consultation'), 'dent_limpeza')
+  // Sin nada más a lo que agarrarse, "consultation" no vale por "consulta".
+  assert.equal(matchService(['dent_consulta'], 'consultation'), null)
+  // Y lo que sí es esa palabra sigue siéndolo, en singular y en plural.
+  assert.equal(matchService(dental, 'consulta'), 'dent_consulta')
+  assert.equal(matchService(dental, 'consultas'), 'dent_consulta')
+  assert.equal(matchService(dental, 'queria uma limpeza'), 'dent_limpeza')
+  assert.equal(matchService(dental, 'as limpezas'), 'dent_limpeza')
+  assert.equal(matchService(dental, 'o branqueamento'), 'dent_branqueamento')
+})
+// ── LO QUE SE DICE EN INGLÉS ────────────────────────────────────────────────
+// Una clínica puede atender en inglés. En una llamada de verdad alguien pidió
+// "a whitening" y Telma respondió "we don't offer whitening or branqueamento
+// here", de una clínica que lo ofrece: el emparejador no encontraba nada y la
+// herramienta responde `faz: false`, que significa que no se hace.
+test('lo que se pide en inglés encuentra el servicio de la clínica', () => {
+  const dental = [
+    'dent_consulta', 'dent_limpeza', 'dent_urgencia', 'dent_branqueamento',
+    'dent_endodontia', 'dent_extracao',
+  ]
+  assert.equal(matchService(dental, 'whitening'), 'dent_branqueamento')
+  assert.equal(matchService(dental, 'a teeth whitening'), 'dent_branqueamento')
+  assert.equal(matchService(dental, 'a cleaning'), 'dent_limpeza')
+  assert.equal(matchService(dental, 'root canal'), 'dent_endodontia')
+  assert.equal(matchService(dental, 'an extraction'), 'dent_extracao')
+  // Y sigue guardándose en la lengua de la clínica, nunca en la del paciente.
+  assert.equal(
+    canonicalReason({ services: dental, language: 'pt' }, 'whitening'),
+    'Branqueamento'
+  )
+})

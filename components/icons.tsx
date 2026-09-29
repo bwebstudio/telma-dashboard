@@ -28,6 +28,17 @@ export function IconBookings({ className }: P) {
     </svg>
   )
 }
+// A person, not a folder. The screen is called Pacientes and the icon says the
+// same word; a filing cabinet would say "records", which is the jargon this
+// panel spends its whole time avoiding.
+export function IconPatients({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c0-3.5 3.1-5.5 7-5.5s7 2 7 5.5" />
+    </svg>
+  )
+}
 export function IconHours({ className }: P) {
   return (
     <svg {...base} className={className}>
@@ -114,6 +125,15 @@ export function IconSignOut({ className }: P) {
   return (
     <svg {...base} className={className}>
       <path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3M10 12H3M6 8l-4 4 4 4" />
+    </svg>
+  )
+}
+/** A globe. Says "language" to somebody who cannot read the label next to it. */
+export function IconLanguage({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.5 2.5 3.8 5.6 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.6-3.8-9S9.5 5.5 12 3Z" />
     </svg>
   )
 }

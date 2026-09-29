@@ -196,11 +196,18 @@ function build(m: Messages) {
         .int()
         .min(5, { error: m.durationMin })
         .max(240, { error: m.durationMax }),
+      // Ya no se pregunta. Era un segundo número, en el mismo paso, que para
+      // casi cualquier clínica vale lo mismo que la duración: si una consulta
+      // dura treinta minutos, las horas empiezan cada treinta. Quien necesite
+      // otra rejilla la cambia en el panel, donde ya existe ese mando
+      // (lib/actions/availability.ts), y donde además ve la agenda mientras lo
+      // toca. Sigue aceptándose por si alguien lo manda, pero nadie lo pide.
       min_interval_minutes: z.coerce
         .number()
         .int()
         .min(5, { error: m.intervalMin })
-        .max(240, { error: m.intervalMax }),
+        .max(240, { error: m.intervalMax })
+        .optional(),
     })
     .refine((s) => !s.weekdays.closed || !s.saturday.closed || !s.sunday.closed, {
       error: m.neverOpen,
@@ -233,6 +240,12 @@ function build(m: Messages) {
       .default({}),
     // Empty means Telma does not discuss prices, which is a real answer and the
     // prompt says so out loud rather than staying silent about it.
+    // Fuera del alta. Convivía con la tabla de precios por servicio de arriba,
+    // hasta el punto de que su propia ayuda decía "los precios de cada
+    // servicio se ponen arriba": dos sitios para lo mismo, y el de abajo era el
+    // peor de los dos porque no queda junto a lo que cobra. El campo sigue
+    // existiendo y se edita en el panel, para las frases que una tabla no
+    // aguanta ("el láser varía con la zona").
     price_info: z.string().trim().max(1000, { error: m.priceTooLong }).optional().default(''),
   })
 
@@ -315,7 +328,24 @@ function build(m: Messages) {
     z.object({ terms: z.literal(true, { error: m.terms }) })
   )
 
-  return { 1: step1, 2: step2, 3: step3, 4: step4, 5: step5, 6: step6 } as const
+  // ── THREE STEPS, NOT SIX ──────────────────────────────────────────────
+  // The sign-up identifies the clinic and buys it a number. It does not set
+  // Telma up, and it does not turn her on.
+  //
+  // Everything it used to ask about how she answers -- the hours, the
+  // services, the languages, how she addresses people, what she does when she
+  // cannot help, emergencies, out of hours, the notes -- has a home in the
+  // panel and had one all along. Asking in both places meant a clinic
+  // wondering, six weeks later, whether the thing it wanted to change lived in
+  // a form it had already submitted. That question has no good answer, so the
+  // question is removed: one place to configure, and it is the panel.
+  //
+  // The old step3/4/5 objects stay, and `completeWizard` still validates
+  // whatever arrives against them. A draft started before this change, or a
+  // partner posting the whole thing to /api/onboarding, is still checked by
+  // the same rules. They are simply no longer asked for.
+  // Named by what they hold, not by a step they are no longer asked at.
+  return { 1: step1, 2: step2, 3: step6, hours: step3, services: step4, telma: step5 } as const
 }
 
 // Built once per language and kept. Rebuilding a dozen zod objects on every
@@ -335,9 +365,9 @@ export function wizardSchemas(locale: OnboardingLocale = DEFAULT_ONBOARDING_LOCA
 /** The Portuguese set, for callers that have no reader to speak to. */
 export const wizardStepSchemas = wizardSchemas(DEFAULT_ONBOARDING_LOCALE)
 
-export type StepNumber = 1 | 2 | 3 | 4 | 5 | 6
-export const STEP_NUMBERS: StepNumber[] = [1, 2, 3, 4, 5, 6]
-export const LAST_STEP: StepNumber = 6
+export type StepNumber = 1 | 2 | 3
+export const STEP_NUMBERS: StepNumber[] = [1, 2, 3]
+export const LAST_STEP: StepNumber = 3
 
 export function isStepNumber(n: unknown): n is StepNumber {
   return typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= LAST_STEP
@@ -346,10 +376,14 @@ export function isStepNumber(n: unknown): n is StepNumber {
 type Schemas = ReturnType<typeof build>
 export type Step1 = z.infer<Schemas[1]>
 export type Step2 = z.infer<Schemas[2]>
-export type Step3 = z.infer<Schemas[3]>
-export type Step4 = z.infer<Schemas[4]>
-export type Step5 = z.infer<Schemas[5]>
-export type Step6 = z.infer<Schemas[6]>
+/** The number, which is the sign-up's third and last question. */
+export type Step6 = z.infer<Schemas[3]>
+// Still named for what they hold rather than for a step they are no longer
+// asked at: the panel edits these, and completeWizard still checks them when
+// something sends them.
+export type Step3 = z.infer<Schemas['hours']>
+export type Step4 = z.infer<Schemas['services']>
+export type Step5 = z.infer<Schemas['telma']>
 
 /** Everything a completed sign-up knows. The union is flattened, not nested,
  *  because the draft is one merged object and the server writes one clinic. */
@@ -405,8 +439,24 @@ export function validateComplete(
   const merged: Record<string, unknown> = {}
   const errors: Record<string, string> = {}
 
+  // Only what the sign-up asks. The hours, the services and the way Telma
+  // answers are not among them any more: a clinic is created unconfigured and
+  // fills them in on the panel, so requiring them here would refuse a sign-up
+  // for not having answered questions it was never shown.
   for (const step of STEP_NUMBERS) {
     const result = schemas[step].safeParse(data)
+    if (result.success) Object.assign(merged, result.data)
+    else Object.assign(errors, fieldErrors(result.error))
+  }
+
+  // Whatever else arrived is still checked against the same rules -- a partner
+  // posting the whole thing at once, or a draft started before the sign-up got
+  // shorter. Absent is fine; wrong is not.
+  for (const key of ['hours', 'services', 'telma'] as const) {
+    const shape = schemas[key]
+    const asked = Object.keys(shape instanceof z.ZodObject ? shape.shape : {})
+    if (!asked.some((f) => (data as Record<string, unknown>)?.[f] !== undefined)) continue
+    const result = shape.safeParse(data)
     if (result.success) Object.assign(merged, result.data)
     else Object.assign(errors, fieldErrors(result.error))
   }

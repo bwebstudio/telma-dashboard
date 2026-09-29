@@ -118,6 +118,39 @@ export async function POST(request: Request) {
     .order('sort')
     .order('created_at')
 
+  // ── DOES THIS CLINIC ALREADY KNOW THIS NUMBER? ────────────────────────────
+  // One query, keyed on the last nine digits the same way everything else that
+  // matches a telephone is. The answer only ever removes a question: a clinic
+  // that already has this person's contact number does not have to be given it
+  // again. The name is read but never spoken -- see `knownPatient` in the base.
+  //
+  // ── AND A NUMBER CAN NOW BE SEVERAL PEOPLE ────────────────────────────────
+  // Since 0049 a household shares a record per person on one handset. This asked
+  // for a single row and got an error instead of an answer the moment there were
+  // two, so a family was silently demoted to a stranger and asked for the number
+  // it had already given. Most recently heard from, limit one.
+  //
+  // Which of them it is does not matter here, and that is the point: the only
+  // thing the prompt does with this is decide whether to ask for the number. The
+  // name never reaches it, and who is actually speaking is a question Telma
+  // still asks out loud, because with a household on one handset it is the
+  // question that matters.
+  const callerDigits = (body.caller_id ?? '').replace(/\D/g, '').slice(-9)
+  let knownPatient: string | null = null
+  if (callerDigits.length === 9) {
+    const { data: found } = await createAdminClient()
+      .from('patients')
+      .select('name')
+      .eq('clinic_id', clinicId)
+      // Their main number, or one they have rung from before and that survived
+      // a merge. Missing the second kind would undo every merge on the next
+      // call from the other telephone.
+      .or(`phone_digits.eq.${callerDigits},other_digits.cs.{${callerDigits}}`)
+      .order('last_seen_at', { ascending: false })
+      .limit(1)
+    knownPatient = (found as Array<{ name: string }> | null)?.[0]?.name ?? null
+  }
+
   const variables: PromptVariables = {
     clinic_name: clinic.name,
     // Only when there is more than one. A clinic with a single diary carries
@@ -126,6 +159,7 @@ export async function POST(request: Request) {
     professionals: ((diaries ?? []) as Array<{ name: string }>).map((r) => r.name),
     // Where an emergency goes, and the only thing about a clinic that changes it.
     caller_id: body.caller_id?.trim() || null,
+    known_patient: knownPatient,
     veterinary: clinic.specialty === 'veterinaria',
     specialty: clinic.specialty ? specialtyLabel(clinic.specialty as Specialty, promptLocale) : null,
     address: clinic.address ?? null,
@@ -178,11 +212,42 @@ export async function POST(request: Request) {
 
   const built = buildPrompt(variables, baseLanguage)
 
+  // Whether this clinic has anywhere to put a call through to. Either it asked
+  // for transfers as its answer when Telma cannot help, or it agreed to be rung
+  // out of hours. Anything else and there is no destination, which is a fact
+  // about the clinic and not a state of the call.
+  const transfersAllowed =
+    variables.fallback_policy === 'transfer' || variables.after_hours_transfer
+
+  // The whole sheet, or only the part of it that is true in every sentence.
+  //
+  // scripts/elevenlabs-procedures.mjs puts the booking, the cancellations, the
+  // goodbye and the difficult calls on the agent as procedures, where the
+  // platform loads each one when the conversation matches its trigger. Once
+  // they are live on the branch answering the telephone, sending them in the
+  // prompt as well means every call carries them twice, and the thing this was
+  // all for -- ElevenLabs asks for a system prompt under two thousand tokens --
+  // does not happen.
+  //
+  // On by default, now that they are on the agent's Main branch.
+  //
+  // It is a default and not an environment variable somebody has to remember,
+  // because the order of the two changes decides which way a mistake hurts.
+  // Procedures live and this still sending the whole sheet means every call
+  // carries them twice: worse, and working. This flipped while the procedures
+  // were not there yet would mean Telma with no booking, no cancellation and
+  // no goodbye: not working at all. So the procedures went first and this
+  // follows, and the escape hatch goes the safe way round.
+  //
+  // TELMA_PROCEDURES_IN_PROMPT=1 puts the whole sheet back, for an agent or a
+  // branch that does not have them.
+  const procedures = process.env.TELMA_PROCEDURES_IN_PROMPT !== '1'
+
   return NextResponse.json({
     type: 'conversation_initiation_client_data',
     conversation_config_override: {
       agent: {
-        prompt: { prompt: built.text },
+        prompt: { prompt: procedures ? built.nodes.core : built.text },
         // The opening line, authored rather than improvised, so the recording
         // notice is always in it and always in the right language.
         first_message: greetingLine(
@@ -219,14 +284,25 @@ export async function POST(request: Request) {
       clinic_language: promptLocale,
       can_book: String(variables.can_book),
       prompt_version: built.version,
+      prompt_shape: procedures ? 'core' : 'whole',
       // Read by the built-in transfer tool, which needs a number and cannot be
       // given one per clinic any other way: there is a single shared agent, so
       // the destination has to arrive with the call.
       //
-      // Empty string rather than null when the clinic named nobody. The tool
+      // Empty string rather than null when there is nobody to ring. The tool
       // then has nothing to dial, which is correct: a clinic that gave no number
       // must not have its main line rung by an agent improvising.
-      fallback_number: variables.fallback_number ?? clinic.phone ?? '',
+      //
+      // And empty for a clinic that does not transfer at all. This used to fall
+      // through to `clinic.phone` whatever the policy was, so a clinic whose
+      // answer to "I want to speak to someone" is "I will take a message" would
+      // have had its own front desk dialled by the tool -- while the base was
+      // telling her, correctly, never to say she was putting anybody through.
+      // The policy decides, in one place, and the number only exists when it is
+      // allowed to be used.
+      fallback_number: transfersAllowed
+        ? (variables.fallback_number ?? clinic.phone ?? '')
+        : '',
       emergency_number: variables.emergency_number ?? '',
     },
   })

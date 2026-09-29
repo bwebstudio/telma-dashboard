@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveDuration, resolveResource } from '@/lib/service-duration'
+import { allServices, canonicalReason, resolveDuration, resolveResource } from '@/lib/service-duration'
+import { serviceLabel } from '@/lib/onboarding/catalog'
 import { authorizedWebhook } from '@/lib/api-auth'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
 
@@ -66,7 +67,40 @@ export async function GET(request: Request) {
   // configured service here rather than by the model: asking Telma to pick an
   // internal id mid-call means reading her a list of identifiers, and she would
   // guess wrong on exactly the unusual treatments whose length is not standard.
-  const wanted = resolveDuration(context.clinic, searchParams.get('service'))
+  const said = searchParams.get('service')
+  const wanted = resolveDuration(context.clinic, said)
+
+  // ── AND WHETHER THE CLINIC DOES IT AT ALL ─────────────────────────────────
+  // This was a tool of its own for a few hours, and a tool of its own is a
+  // round trip of its own. Measured on a real call: the caller stopped talking
+  // at twelve seconds and Telma said her first word at twenty-one, and three of
+  // those nine seconds were the service check being a separate question. The
+  // endpoint itself answers in three hundred milliseconds; what costs is the
+  // model going round again.
+  //
+  // It belongs here anyway. "Can you do this, and when?" is one question, and
+  // the two halves already shared `resolveDuration` -- checking the service was
+  // most of the work of pricing the slot.
+  //
+  // No slots when the answer is no. A list of free hours for something the
+  // clinic does not do is how somebody ends up crossing the city to be told no.
+  const known = said ? canonicalReason(context.clinic, said) : null
+  if (said && !known) {
+    const locale = context.clinic.language === 'pt' ? 'pt' : 'es'
+    return NextResponse.json({
+      clinic_id: clinicId,
+      date,
+      slots: [],
+      days_with_slots: [],
+      faz: false,
+      servico: null,
+      // Three, not all of them: nobody on a telephone can hold a list, which is
+      // a rule the base states and this must not quietly undo.
+      alternativas: allServices(context.clinic)
+        .slice(0, 3)
+        .map((id) => (serviceLabel(id, locale) === id ? id : serviceLabel(id, locale))),
+    })
+  }
 
   // "with Doctor Ruiz". Null when nobody was named, which asks every diary and
   // is what a caller who just wants an appointment means.
@@ -200,6 +234,13 @@ export async function GET(request: Request) {
     // for an hour of laser, and the difference is invisible otherwise.
     duration_minutes: wanted.minutes,
     service_matched: wanted.service_id,
+    // The same two fields the refusal above carries, so the agent reads one
+    // shape either way and does not have to notice which branch it got. `faz`
+    // is null, not true, when nobody said what they were coming for: that is a
+    // caller asking what is free, and answering "yes we do it" to a question
+    // nobody asked is worse than saying nothing.
+    faz: said ? true : null,
+    servico: known,
     // Named on every slot as `resource_name`, so an agent offering two times
     // can say who each one is with. Null here means no particular person was
     // asked for, not that there is nobody.

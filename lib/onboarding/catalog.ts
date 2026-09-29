@@ -91,6 +91,66 @@ const SERVICE_LABEL_ES: Record<string, string> = {
   gen_urgencia: 'Urgencia',
 }
 
+/**
+ * Los mismos servicios en inglés, y no es para enseñarlos en ningún sitio.
+ *
+ * ── PARA QUÉ EXISTE ─────────────────────────────────────────────────────────
+ * El Algarve y la Costa del Sol reciben tantas llamadas en inglés como en la
+ * lengua del país, y una clínica puede configurar que Telma atienda en inglés.
+ * Cuando lo hace, la persona dice "a whitening" y el emparejador sólo conocía
+ * "branqueamento" y "blanqueamiento": no encontraba nada.
+ *
+ * Y no encontrar nada no era neutro. La herramienta de disponibilidad responde
+ * `faz: false`, que significa "la clínica no hace eso", y Telma se lo dijo a un
+ * paciente en una llamada de verdad: "we don't offer whitening or branqueamento
+ * here", de una clínica que lo ofrece y lo tiene en su lista. Negar un servicio
+ * que sí se hace es peor que no reconocerlo: la persona cuelga y llama a otro
+ * sitio.
+ *
+ * ── POR QUÉ NO SE MUESTRA ───────────────────────────────────────────────────
+ * El panel y el alta siguen en portugués y en español, que son las lenguas en
+ * las que una clínica de aquí lleva su agenda. Esto es sólo para entender lo
+ * que se oye por teléfono, y por eso se lee en `matchService` y en ningún
+ * sitio más.
+ */
+const SERVICE_LABEL_EN: Record<string, string> = {
+  dent_consulta: 'Check-up appointment',
+  dent_limpeza: 'Cleaning / scaling',
+  dent_branqueamento: 'Whitening',
+  dent_implantes: 'Implants',
+  dent_ortodontia: 'Orthodontics',
+  dent_endodontia: 'Root canal',
+  dent_proteses: 'Dentures',
+  dent_extracao: 'Extraction',
+  dent_urgencia: 'Emergency',
+  est_consulta: 'Consultation',
+  est_botox: 'Botox',
+  est_acido: 'Hyaluronic filler',
+  est_lifting: 'Lifting',
+  est_peeling: 'Chemical peel',
+  est_laser: 'Laser hair removal',
+  est_mesoterapia: 'Mesotherapy',
+  est_criolipolise: 'Cryolipolysis',
+  vet_consulta: 'General appointment',
+  vet_vacinacao: 'Vaccination',
+  vet_desparasitacao: 'Deworming',
+  vet_cirurgia: 'Surgery',
+  vet_analises: 'Blood tests',
+  vet_imagem: 'Scan / x-ray',
+  vet_estetica: 'Grooming',
+  vet_urgencia: 'Emergency',
+  gen_consulta: 'First appointment',
+  gen_seguimento: 'Follow-up appointment',
+  gen_tratamento: 'Treatment session',
+  gen_avaliacao: 'Assessment',
+  gen_urgencia: 'Emergency',
+}
+
+/** Sólo para oír, nunca para mostrar. Ver el comentario de arriba. */
+export function serviceLabelEn(id: string): string | null {
+  return SERVICE_LABEL_EN[id] ?? null
+}
+
 export const SERVICES: Record<Specialty, ServiceOption[]> = {
   dentaria: [
     { id: 'dent_consulta', label: 'Consulta de avaliação' },

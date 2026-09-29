@@ -1,4 +1,4 @@
-import { serviceLabel } from './onboarding/catalog.ts'
+import { serviceLabel, serviceLabelEn } from './onboarding/catalog.ts'
 
 /**
  * How long to leave in the diary for what the caller just asked for.
@@ -80,8 +80,16 @@ export function matchService(services: string[], said: string | null): string | 
 
   const only = (ids: string[]): string | null => (ids.length === 1 ? ids[0] : null)
 
+  // El inglés entra aquí y no se muestra en ninguna parte: hay clínicas que
+  // atienden en inglés, y sin esto "a whitening" no encontraba nada y la
+  // herramienta respondía que la clínica no lo hace.
+  const names = (id: string) =>
+    [serviceLabel(id, 'pt'), serviceLabel(id, 'es'), serviceLabelEn(id)].filter(
+      (l): l is string => Boolean(l)
+    )
+
   const labelled = services.filter((id) =>
-    [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
+    names(id)
       .map(flatten)
       .some((l) => l && (l === heard || heard.includes(l) || l.includes(heard)))
   )
@@ -103,7 +111,7 @@ export function matchService(services: string[], said: string | null): string | 
   // margen; las cuatro de "-tion" ya no pasan.
   return only(
     services.filter((id) =>
-      [serviceLabel(id, 'pt'), serviceLabel(id, 'es')]
+      names(id)
         .flatMap((l) => flatten(l).split(' '))
         .filter((w) => w.length >= 5)
         .some((w) => new RegExp(`\\b${w}(s|es)?\\b`).test(heard))

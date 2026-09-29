@@ -574,7 +574,10 @@ const AGENT_SPEC = {
     // en el alta. Ver a memória do projecto.
     language_presets: {
       es: { overrides: { tts: { voice_id: env('ELEVENLABS_VOICE_ID_ES') ?? undefined } } },
-      en: { overrides: { tts: { voice_id: env('ELEVENLABS_VOICE_ID_EN') ?? undefined } } },
+      // El inglés no lleva voz propia, y es una decisión, no un olvido. Se
+      // probó una voz inglesa y no gustó: prefieren la de siempre aunque lea el
+      // inglés con acento portugués, porque es la voz que la clínica reconoce
+      // como la suya. Sin preset, el inglés usa la de por defecto.
     },
   },
 }

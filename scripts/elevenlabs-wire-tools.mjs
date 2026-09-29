@@ -332,10 +332,23 @@ const BUILT_IN_TOOLS = {
         description:
           'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
       },
-      // Sem deteção de idioma, de propósito: o prompt diz que a língua se escolhe
-      // na saudação e não muda, e esta ferramenta existe para a mudar. Numa
-      // chamada real a Telma leu em voz alta a opção do menu — "português" — e
-      // mudou-se a si própria de língua a meio de uma conversa em castelhano.
+      // ── DETEÇÃO DE IDIOMA, QUE JÁ ESTEVE DESLIGADA ────────────────────
+      // Esteve desligada de propósito, e por uma boa razão: numa chamada a
+      // sério a Telma leu em voz alta a opção do menu, "português", e mudou-se
+      // a si própria de língua a meio de uma conversa em castelhano.
+      //
+      // Ligada outra vez porque sem ela a conversa fica na língua base e os
+      // `language_presets` nunca entram: quem pedir inglês ouve inglês lido
+      // pela voz portuguesa, com o sotaque que ela tem. Ouviu-se, e não passa.
+      //
+      // O que impede a avaria de voltar não é a ferramenta, é a regra que
+      // faltava e agora está na base: só se muda de língua quando a pessoa
+      // passa a falá-la, nunca porque o nome de uma língua apareceu numa frase.
+      language_detection: {
+        name: 'language_detection',
+        description:
+          'Muda a língua da conversa. Usa quando a pessoa passar a falar noutra língua das que atendes. Nunca a uses porque o nome de uma língua apareceu numa frase, nem porque a leste em voz alta na saudação.',
+      },
 
       // ── PASSAR A CHAMADA ────────────────────────────────────────────
       // A base diz "passas a chamada" em dois sítios: numa urgência, e numa

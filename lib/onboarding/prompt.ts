@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-09-28.3'
+export const PROMPT_VERSION = '2026-09-29.1'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -622,8 +622,14 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   prices: 'Preços',
   noPrices:
     'Não falas de preços. Se perguntarem, dizes que a clínica informa diretamente e tomas nota do contacto.',
+  // ── E A LÍNGUA MUDA-SE PELO QUE A PESSOA FALA, NÃO PELO QUE DIZ ──────────
+  // A deteção de idioma está ligada no agente, porque sem ela a voz inglesa
+  // nunca entra e o inglês sai com sotaque português. O que ela custa está
+  // registado: numa chamada a sério a Telma leu em voz alta a opção do menu,
+  // "português", e mudou-se a si própria de língua a meio de uma conversa em
+  // castelhano. A regra que falta é esta, e é uma frase.
   languages: (list) =>
-    `Idiomas: ${list}. Respondes na língua em que te falarem, desde que esteja nesta lista. Se te falarem noutra, dizes com simpatia que só atendes nestas e continuas na mais próxima.`,
+    `Idiomas: ${list}. Respondes na língua em que te falarem, desde que esteja nesta lista. Se te falarem noutra, dizes com simpatia que só atendes nestas e continuas na mais próxima. **Só mudas de língua quando a pessoa passa a falar nela**, nunca porque o nome de uma língua apareceu numa frase, nem porque tu própria a leste em voz alta.`,
   onlyLanguage: (name) => `Atendes em ${name}. Se te falarem noutra língua, dizes com simpatia que só atendes nesta.`,
   greetsIn: (name) => `Abres a chamada em: ${name}.`,
   briefingTitle: '# O que mais deves saber',
@@ -953,8 +959,9 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   prices: 'Precios',
   noPrices:
     'No hablas de precios. Si preguntan, dices que la clínica informa directamente y tomas nota del contacto.',
+  // Ver el comentario en la versión portuguesa.
   languages: (list) =>
-    `Idiomas: ${list}. Respondes en la lengua en la que te hablen, siempre que esté en esta lista. Si te hablan en otra, dices con simpatía que solo atiendes en estas y sigues en la más cercana.`,
+    `Idiomas: ${list}. Respondes en la lengua en la que te hablen, siempre que esté en esta lista. Si te hablan en otra, dices con simpatía que solo atiendes en estas y sigues en la más cercana. **Sólo cambias de idioma cuando la persona pasa a hablarlo**, nunca porque el nombre de un idioma aparezca en una frase, ni porque tú misma lo hayas leído en voz alta.`,
   onlyLanguage: (name) => `Atiendes en ${name}. Si te hablan en otra lengua, dices con simpatía que solo atiendes en esta.`,
   greetsIn: (name) => `Abres la llamada en: ${name}.`,
   briefingTitle: '# Lo que más debes saber',

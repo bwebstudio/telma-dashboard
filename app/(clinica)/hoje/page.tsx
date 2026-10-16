@@ -205,8 +205,15 @@ export default async function AgendaPage({
     forward_type?: ForwardType
     forward_done?: boolean
   } | null
+  // Only once she is actually answering. 'por_configurar' is a clinic that has
+  // not told Telma anything yet and 'pausada' is one whose payment has not
+  // landed; forwarding a real telephone into either is worse than not
+  // forwarding it at all, and the clinic would not find out.
   const needsForwarding =
-    clinic?.phone_source === 'ported' && !!clinic?.assigned_phone && !porting?.forward_done
+    clinic?.status === 'ativa' &&
+    clinic?.phone_source === 'ported' &&
+    !!clinic?.assigned_phone &&
+    !porting?.forward_done
 
   const minutesUrgent = billing
     ? billing.minutes.exhausted || percentUsed(billing.minutes.used, billing.minutes.allowance) >= 80
@@ -218,19 +225,13 @@ export default async function AgendaPage({
         <div className="mb-6">
           <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
         </div>
+        {/* No forwarding card here, deliberately. A clinic on this screen has
+            no hours and no services, and Telma answers anyway with
+            `can_book: false`: she picks up, cannot say when the clinic opens
+            or what it does, and takes a message. Handing over the codes at
+            this point sends a clinic's real patients to that, silently. The
+            forward is the last step, not the first. */}
         <SetupGate steps={steps} dict={dict} />
-        {needsForwarding && (
-          <div className="mt-6">
-            <ForwardingCard
-              telmaNumber={clinic!.assigned_phone!}
-              ownNumber={porting?.current_number ?? null}
-              forwardType={porting?.forward_type ?? null}
-              dict={dict}
-              dismissable
-              readOnly={readOnly}
-            />
-          </div>
-        )}
       </>
     )
   }

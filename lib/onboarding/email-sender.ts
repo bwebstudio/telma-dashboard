@@ -1,5 +1,5 @@
 import { copyFor } from './copy'
-import { FORWARD_UNDO, forwardCodes, type ForwardType } from '../forwarding'
+import type { ForwardType } from '../forwarding'
 import { DEFAULT_ONBOARDING_LOCALE, type OnboardingLocale } from './locale'
 
 /**
@@ -68,18 +68,15 @@ interface EmailCopy {
   leadPending: string
   numberLabel: string
   numberTemp: string
+  /** The forward is the last step, not the first, so the email explains it
+   *  and does not hand over the codes. Those live in the panel, behind the
+   *  moment the clinic turns Telma on. */
   forwardTitle: string
-  forwardLeadKeep: string
-  forwardLeadAll: string
-  forwardStepsMany: string
-  forwardStepsOne: string
-  forwardReassure: string
-  forwardLabelAll: string
-  forwardLabelNoAnswer: string
-  forwardLabelBusy: string
-  forwardLabelUnreachable: string
-  forwardUndo: string
-  forwardFixed: string
+  forwardWhat: string
+  forwardNotYet: string
+  /** Steps for a clinic that kept its number: three, ending in the forward.
+   *  `next` stays for one that bought a new number and has nothing to forward. */
+  nextKeep: string[]
   accessLabel: string
   passwordNote: string
   openPanel: string
@@ -101,32 +98,25 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
       'O painel já é seu e os acessos estão abaixo. Assim que o pagamento for confirmado, a linha entra ao serviço.',
     numberLabel: 'O número que a Telma atende',
     numberTemp:
-      'O seu número de sempre fica onde está, na sua operadora. Basta desviá-lo para este.',
-    forwardTitle: 'Falta uma coisa: desviar o seu número',
-    forwardLeadKeep:
-      'O seu número de sempre, {own}, continua a ser o seu e não muda. Diga à sua operadora que, quando não puder atender, mande a chamada para o número da Telma acima. Ninguém marca esse número: é só para onde a chamada salta.',
-    forwardLeadAll:
-      'O seu número de sempre, {own}, continua a ser o seu e não muda. Diga à sua operadora que mande todas as chamadas para o número da Telma acima. O telefone da clínica deixa de tocar.',
-    forwardStepsMany:
-      'Marque estes três códigos no telefone da clínica, um a seguir ao outro. São três porque o telefone distingue três maneiras de não poder atender.',
-    forwardStepsOne: 'Marque este código no telefone da clínica.',
-    forwardReassure:
-      'Cada um demora um segundo. Não corta o serviço e os seus doentes não dão por nada.',
-    forwardLabelAll: 'Todas as chamadas, sempre',
-    forwardLabelNoAnswer: 'Se ninguém atender',
-    forwardLabelBusy: 'Se estiver a falar',
-    forwardLabelUnreachable: 'Se o telefone estiver desligado ou sem rede',
-    forwardUndo: `Para desfazer, marque ${FORWARD_UNDO} e tudo volta ao que era.`,
-    forwardFixed:
-      'Se o número da clínica é fixo, estes códigos não servem: o desvio pede-se à operadora ou faz-se na área de cliente. Responda a este email e tratamos disso consigo.',
+      'O seu número de sempre fica onde está, na sua operadora. No fim, será desviado para este.',
+    forwardTitle: 'E por fim, desviar o seu número',
+    forwardWhat:
+      'O seu número de sempre, {own}, continua a ser o seu e não muda. No fim, diz-se à sua operadora que passe para a Telma as chamadas que não conseguir atender. São três códigos marcados no telefone da clínica e demora um minuto.',
+    forwardNotYet:
+      'Mas ainda não. Primeiro diga à Telma quando abre e o que faz, e ligue-a. Antes disso ela atende sem saber nada da sua clínica, e quem liga são os seus doentes. Os códigos ficam à sua espera no painel, já preenchidos, assim que a ligar.',
     accessLabel: 'Os seus acessos',
     passwordNote: 'Palavra-passe temporária. Mude-a assim que entrar.',
     openPanel: 'Abrir o painel',
     nextTitle: 'O que acontece a seguir',
     next: [
-      'Confirmamos a configuração e ligamos a voz ao seu número.',
-      'Fazemos uma chamada de teste consigo, para ouvir como soa.',
+      'Diga à Telma quando a clínica abre e o que faz. São duas respostas no painel.',
+      'Ligue-a quando quiser. O painel diz-lhe quando está pronta.',
       'A partir daí, a Telma atende. Vê tudo no painel, em direto.',
+    ],
+    nextKeep: [
+      'Diga à Telma quando a clínica abre e o que faz. São duas respostas no painel.',
+      'Ligue-a quando quiser. O painel diz-lhe quando está pronta.',
+      'Só então desvie o seu número. Os códigos estão no painel, já preenchidos.',
     ],
     footer:
       'Recebeu este email porque inscreveu a sua clínica na Telma. Se não foi você, responda a esta mensagem e tratamos disso.',
@@ -143,32 +133,25 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
       'El panel ya es suyo y los accesos están abajo. En cuanto se confirme el pago, la línea entra en servicio.',
     numberLabel: 'El número que contesta Telma',
     numberTemp:
-      'Su número de siempre se queda donde está, en su operadora. Solo hay que desviarlo a este.',
-    forwardTitle: 'Falta una cosa: desviar su número',
-    forwardLeadKeep:
-      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Dígale a su operadora que, cuando no pueda atender, mande la llamada al número de Telma de arriba. Nadie marca ese número: es solo adonde salta la llamada.',
-    forwardLeadAll:
-      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Dígale a su operadora que mande todas las llamadas al número de Telma de arriba. El teléfono de la clínica deja de sonar.',
-    forwardStepsMany:
-      'Marque estos tres códigos en el teléfono de la clínica, uno detrás de otro. Son tres porque el teléfono distingue tres formas de no poder atender.',
-    forwardStepsOne: 'Marque este código en el teléfono de la clínica.',
-    forwardReassure:
-      'Cada uno tarda un segundo. No corta el servicio y sus pacientes no notan nada.',
-    forwardLabelAll: 'Todas las llamadas, siempre',
-    forwardLabelNoAnswer: 'Si no coge nadie',
-    forwardLabelBusy: 'Si está comunicando',
-    forwardLabelUnreachable: 'Si el teléfono está apagado o sin cobertura',
-    forwardUndo: `Para deshacerlo, marque ${FORWARD_UNDO} y todo vuelve a como estaba.`,
-    forwardFixed:
-      'Si el número de la clínica es fijo, estos códigos no sirven: el desvío se pide a la operadora o se hace en el área de cliente. Responda a este email y lo vemos con usted.',
+      'Su número de siempre se queda donde está, en su operadora. Al final lo desviará a este.',
+    forwardTitle: 'Y por último, desviar su número',
+    forwardWhat:
+      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Al final se le dice a su operadora que pase a Telma las llamadas que usted no pueda atender. Son tres códigos que se marcan en el teléfono de la clínica y se tarda un minuto.',
+    forwardNotYet:
+      'Pero todavía no. Primero dígale a Telma cuándo abre y qué hace, y enciéndala. Antes de eso contesta sin saber nada de su clínica, y quien llama son sus pacientes. Los códigos le esperan en el panel, ya rellenos, en cuanto la encienda.',
     accessLabel: 'Sus accesos',
     passwordNote: 'Contraseña temporal. Cámbiela en cuanto entre.',
     openPanel: 'Abrir el panel',
     nextTitle: 'Qué pasa a continuación',
     next: [
-      'Confirmamos la configuración y conectamos la voz a su número.',
-      'Hacemos una llamada de prueba con usted, para oír cómo suena.',
+      'Dígale a Telma cuándo abre la clínica y qué hace. Son dos respuestas en el panel.',
+      'Enciéndala cuando quiera. El panel le dirá cuándo está lista.',
       'A partir de ahí, Telma contesta. Lo ve todo en el panel, en directo.',
+    ],
+    nextKeep: [
+      'Dígale a Telma cuándo abre la clínica y qué hace. Son dos respuestas en el panel.',
+      'Enciéndala cuando quiera. El panel le dirá cuándo está lista.',
+      'Solo entonces desvíe su número. Los códigos están en el panel, ya rellenos.',
     ],
     footer:
       'Ha recibido este email porque ha dado de alta su clínica en Telma. Si no ha sido usted, responda a este mensaje y lo resolvemos.',
@@ -262,21 +245,6 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
 // palette is the brand's, taken from globals.css by hand: an email cannot read
 // a custom property, so these are the only literal colours in the project and
 // they are here for that reason.
-/** The codes, from the one file that holds them, paired with this email's
- *  own words for them. */
-function codeLines(p: WelcomeEmail, t: EmailCopy): { label: string; code: string }[] {
-  const label: Record<string, string> = {
-    all: t.forwardLabelAll,
-    noAnswer: t.forwardLabelNoAnswer,
-    busy: t.forwardLabelBusy,
-    unreachable: t.forwardLabelUnreachable,
-  }
-  return forwardCodes(p.phoneNumber, p.forwardType).map((c) => ({
-    label: label[c.id] ?? c.id,
-    code: c.code,
-  }))
-}
-
 const INK = '#111111'
 const INK_SOFT = '#525252'
 const INK_MUTE = '#706E6E'
@@ -293,40 +261,27 @@ export function welcomeHtml(p: WelcomeEmail): string {
   // The forwarding block only exists for a clinic that kept its own number.
   // For one that bought a new number there is nothing to forward, and a set of
   // codes it must not dial is worse than no block at all.
-  // Numbered steps, not a list of options. Three equal rows each with their
-  // own heading read as a menu to choose from, and a clinic that dials only
-  // the first still sends patients the engaged tone.
-  const steps = codeLines(p, t)
-  const many = steps.length > 1
+  // No codes here, on purpose. They used to be printed in full, and a clinic
+  // that dialled them the day it signed up pointed a real telephone at a Telma
+  // who had not been told the opening hours yet: she answers anyway, with
+  // `can_book: false`, so patients got a receptionist who could not say when
+  // the clinic opens and took a message instead. Silently, because nothing
+  // tells the clinic that is what happened.
+  //
+  // So the email explains the step and withholds the digits. They are in the
+  // panel, behind the moment the clinic turns her on, which is also the only
+  // place they can stay correct if the number ever changes.
   const forwarding = p.temporaryNumber
     ? `
       <h2 style="margin:36px 0 8px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
-      <p style="margin:0 0 12px;font-size:15px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
-        (p.forwardType === 'all' ? t.forwardLeadAll : t.forwardLeadKeep).replace(
-          '{own}',
-          p.ownNumber ?? '—'
-        )
+      <p style="margin:0 0 10px;font-size:15px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
+        t.forwardWhat.replace('{own}', p.ownNumber ?? '—')
       )}</p>
-      <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(
-        many ? t.forwardStepsMany : t.forwardStepsOne
-      )}</p>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px;background:${SUNKEN}">
-        ${steps
-          .map(
-            (c, i) => `<tr><td style="padding:${i ? '12px' : '16px'} 18px 12px 18px">
-          <p style="margin:0;font-size:14px;color:${INK_SOFT}">${
-            many ? `<strong style="color:${INK}">${i + 1}.</strong> ` : ''
-          }${escapeHtml(c.label)}</p>
-          <p style="margin:4px 0 0;font-size:19px;font-weight:600;font-family:${MONO};color:${INK}">${escapeHtml(c.code)}</p>
-        </td></tr>`
-          )
-          .join('\n        ')}
-        <tr><td style="padding:4px 18px 16px">
-          <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardReassure)}</p>
-          <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardUndo)}</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:3px solid ${MACAW};background:${SUNKEN};border-radius:0 12px 12px 0">
+        <tr><td style="padding:14px 18px">
+          <p style="margin:0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardNotYet)}</p>
         </td></tr>
-      </table>
-      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardFixed)}</p>`
+      </table>`
     : ''
 
   return `<!doctype html>
@@ -381,7 +336,9 @@ ${forwarding}
 
           <h2 style="margin:36px 0 10px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.nextTitle)}</h2>
           <ol style="margin:0;padding-left:20px;font-size:16px;line-height:1.7;color:${INK_SOFT}">
-            ${t.next.map((l) => `<li>${escapeHtml(l)}</li>`).join('\n            ')}
+            ${(p.temporaryNumber ? t.nextKeep : t.next)
+              .map((l) => `<li style="margin:0 0 6px">${escapeHtml(l)}</li>`)
+              .join('\n            ')}
           </ol>
         </td></tr>
 
@@ -414,17 +371,13 @@ export function welcomeText(p: WelcomeEmail): string {
       ? [
           '',
           `${t.forwardTitle}:`,
-          `  ${(p.forwardType === 'all' ? t.forwardLeadAll : t.forwardLeadKeep).replace('{own}', p.ownNumber ?? '-')}`,
-          `  ${codeLines(p, t).length > 1 ? t.forwardStepsMany : t.forwardStepsOne}`,
-          ...codeLines(p, t).map((c, i) => `  ${i + 1}. ${c.label}: ${c.code}`),
-          `  ${t.forwardReassure}`,
-          `  ${t.forwardUndo}`,
-          `  ${t.forwardFixed}`,
+          `  ${t.forwardWhat.replace('{own}', p.ownNumber ?? '-')}`,
+          `  ${t.forwardNotYet}`,
         ]
       : []),
     '',
     `${t.nextTitle}:`,
-    ...t.next.map((l, i) => `  ${i + 1}. ${l}`),
+    ...(p.temporaryNumber ? t.nextKeep : t.next).map((l, i) => `  ${i + 1}. ${l}`),
   ].join('\n')
 }
 

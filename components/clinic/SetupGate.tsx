@@ -25,9 +25,25 @@ import { IconCheck } from '@/components/icons'
 export function SetupGate({
   steps,
   dict,
+  forwarding = false,
 }: {
   steps: SetupStep[]
   dict: Dictionary
+  /**
+   * True for a clinic that kept its own number, which has a third thing to do
+   * that this screen cannot list as a step: the forward.
+   *
+   * It is not in the list because the list is things we can check and that
+   * gate the button, and the forward is neither. It cannot be checked -- it
+   * lives in an operator's switch -- and it must not gate activation, because
+   * it has to happen *after*: forwarding a real telephone into a Telma who has
+   * not been told the opening hours sends patients to a receptionist who
+   * cannot answer them.
+   *
+   * But leaving it unmentioned made this screen promise a two-step job that
+   * is really three, and the third one arrived as a surprise on the agenda.
+   */
+  forwarding?: boolean
 }) {
   const t = dict.setup
   const [pending, start] = useTransition()
@@ -38,7 +54,9 @@ export function SetupGate({
     <section className="card p-6 sm:p-8">
       <p className="label-caps text-brand-accent">{t.eyebrow}</p>
       <h2 className="mt-2 text-2xl font-semibold text-ink sm:text-3xl">{t.title}</h2>
-      <p className="mt-2 max-w-prose text-lg text-ink-soft">{t.lead}</p>
+      <p className="mt-2 max-w-prose text-lg text-ink-soft">
+        {forwarding ? t.leadKeep : t.lead}
+      </p>
 
       <ol className="mt-6 flex flex-col gap-3">
         {steps.map((s) => (
@@ -62,6 +80,12 @@ export function SetupGate({
           </li>
         ))}
       </ol>
+
+      {forwarding && (
+        <p className="mt-5 max-w-prose rounded-card border-l-[3px] border-accent bg-surface-sunken px-4 py-3 text-base leading-relaxed text-ink">
+          {t.thenForward}
+        </p>
+      )}
 
       <div className="mt-7 flex flex-wrap items-center gap-3">
         <button

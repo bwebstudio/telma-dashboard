@@ -133,12 +133,16 @@ export const en: Dictionary = {
     eyebrow: 'Almost there',
     title: 'Telma is ready to learn your clinic',
     lead: 'She is not answering yet. Answer these two things in your panel and turn her on when you want. The number is already yours.',
+    leadKeep:
+      'She is not answering yet. Answer these two things in your panel and turn her on when you want. Your own number stays yours and does not change: only at the end does it start passing calls to Telma.',
     go: 'Set up',
     activate: 'Turn Telma on',
     activating: 'Turning on...',
     notYet: 'Finish both steps to turn her on.',
     failed: 'Could not turn her on. Try again.',
     steps: { hours: 'Say when the clinic is open', services: 'Say what the clinic does' },
+    thenForward:
+      'Once you turn her on there is one last thing: forwarding your own number to Telma\u2019s. Three codes dialled on the clinic phone, a minute\u2019s work. They appear here the moment you turn her on, already filled in. Not before, because until then Telma knows nothing about your clinic.',
   },
   forwarding: {
     eyebrow: 'Your line',

@@ -231,7 +231,7 @@ export default async function AgendaPage({
             or what it does, and takes a message. Handing over the codes at
             this point sends a clinic's real patients to that, silently. The
             forward is the last step, not the first. */}
-        <SetupGate steps={steps} dict={dict} />
+        <SetupGate steps={steps} dict={dict} forwarding={clinic?.phone_source === 'ported'} />
       </>
     )
   }

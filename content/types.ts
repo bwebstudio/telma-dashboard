@@ -171,12 +171,18 @@ export interface Dictionary {
     eyebrow: string
     title: string
     lead: string
+    /** For a clinic that kept its own number: the one above promises a
+     *  number that is theirs to hand out, and this one is not. */
+    leadKeep: string
     go: string
     activate: string
     activating: string
     notYet: string
     failed: string
     steps: { hours: string; services: string }
+    /** Shown only to a clinic that kept its own number: the forward comes
+     *  after activation, and this screen has to say so. */
+    thenForward: string
   }
   agenda: {
     title: string

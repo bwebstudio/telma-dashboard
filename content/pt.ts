@@ -135,12 +135,16 @@ export const pt: Dictionary = {
     eyebrow: 'Falta pouco',
     title: 'A Telma está pronta a aprender a sua clínica',
     lead: 'Ainda não atende. Responda a estas duas coisas no seu painel e active-a quando quiser. O número já é seu.',
+    leadKeep:
+      'Ainda não atende. Responda a estas duas coisas no seu painel e active-a quando quiser. O seu número continua a ser o seu e não muda: só no fim é que passa as chamadas para a Telma.',
     go: 'Configurar',
     activate: 'Activar a Telma',
     activating: 'A activar...',
     notYet: 'Complete os dois passos para poder activar.',
     failed: 'Não foi possível activar. Tente novamente.',
     steps: { hours: 'Diga quando a clínica está aberta', services: 'Diga o que a clínica faz' },
+    thenForward:
+      'Depois de a ligar fica uma última coisa: desviar o seu número de sempre para o número da Telma. São três códigos marcados no telefone da clínica e demora um minuto. Aparecem aqui assim que a ligar, já preenchidos. Antes disso não, porque a Telma ainda não sabe nada da sua clínica.',
   },
   forwarding: {
     eyebrow: 'A sua linha',

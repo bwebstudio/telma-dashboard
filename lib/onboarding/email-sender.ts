@@ -1,4 +1,5 @@
 import { copyFor } from './copy'
+import { FORWARD_UNDO, forwardCodes, type ForwardType } from '../forwarding'
 import { DEFAULT_ONBOARDING_LOCALE, type OnboardingLocale } from './locale'
 
 /**
@@ -30,7 +31,7 @@ export interface WelcomeEmail {
   temporaryNumber: boolean
   /** Which calls they chose to send over, from step 3. Decides which codes
    *  the email prints. */
-  forwardType?: 'no_answer' | 'all' 
+  forwardType?: ForwardType
   dashboardUrl: string
   /** The language the sign-up was filled in. The clinic reads this email in
    *  the language it just spent six steps typing in, not in ours. */
@@ -101,7 +102,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     forwardLabelNoAnswer: 'Quando ninguém atende',
     forwardLabelBusy: 'Quando está ocupado',
     forwardLabelUnreachable: 'Quando está sem rede',
-    forwardUndo: 'Para desfazer, marque ##002# e tudo volta ao que era.',
+    forwardUndo: `Para desfazer, marque ${FORWARD_UNDO} e tudo volta ao que era.`,
     forwardFixed:
       'Se o número é fixo, o desvio pede-se à operadora ou faz-se na área de cliente. Responda a este email e tratamos disso consigo.',
     accessLabel: 'Os seus acessos',
@@ -136,7 +137,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     forwardLabelNoAnswer: 'Cuando no contesta nadie',
     forwardLabelBusy: 'Cuando comunica',
     forwardLabelUnreachable: 'Cuando está sin cobertura',
-    forwardUndo: 'Para deshacerlo, marque ##002# y todo vuelve a como estaba.',
+    forwardUndo: `Para deshacerlo, marque ${FORWARD_UNDO} y todo vuelve a como estaba.`,
     forwardFixed:
       'Si el número es fijo, el desvío se pide a la operadora o se hace en el área de cliente. Responda a este email y lo vemos con usted.',
     accessLabel: 'Sus accesos',
@@ -223,23 +224,19 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
 // palette is the brand's, taken from globals.css by hand: an email cannot read
 // a custom property, so these are the only literal colours in the project and
 // they are here for that reason.
-/**
- * The GSM codes, already filled in with the number Telma answers on.
- *
- * Three for "only the ones nobody picked up", not one: a phone that is engaged
- * and a phone that is out of range are different conditions with different
- * codes, and forwarding only `no answer` leaves a patient hearing the engaged
- * tone, which is the call the clinic most wanted answered.
- */
-function forwardCodes(p: WelcomeEmail, t: EmailCopy): { label: string; code: string }[] {
-  const n = p.phoneNumber.replace(/[\s-]/g, '')
-  return p.forwardType === 'all'
-    ? [{ label: t.forwardLabelAll, code: `**21*${n}#` }]
-    : [
-        { label: t.forwardLabelNoAnswer, code: `**61*${n}#` },
-        { label: t.forwardLabelBusy, code: `**67*${n}#` },
-        { label: t.forwardLabelUnreachable, code: `**62*${n}#` },
-      ]
+/** The codes, from the one file that holds them, paired with this email's
+ *  own words for them. */
+function codeLines(p: WelcomeEmail, t: EmailCopy): { label: string; code: string }[] {
+  const label: Record<string, string> = {
+    all: t.forwardLabelAll,
+    noAnswer: t.forwardLabelNoAnswer,
+    busy: t.forwardLabelBusy,
+    unreachable: t.forwardLabelUnreachable,
+  }
+  return forwardCodes(p.phoneNumber, p.forwardType).map((c) => ({
+    label: label[c.id] ?? c.id,
+    code: c.code,
+  }))
 }
 
 const INK = '#111111'
@@ -263,7 +260,7 @@ export function welcomeHtml(p: WelcomeEmail): string {
       <h2 style="margin:36px 0 6px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
       <p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${INK_SOFT}">${escapeHtml(t.forwardLead)}</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px;background:${SUNKEN}">
-        ${forwardCodes(p, t)
+        ${codeLines(p, t)
           .map(
             (c, i) => `<tr><td style="padding:${i ? '10px' : '16px'} 18px ${i === 0 ? '10px' : '10px'}">
           <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(c.label)}</p>
@@ -364,7 +361,7 @@ export function welcomeText(p: WelcomeEmail): string {
           '',
           `${t.forwardTitle}:`,
           `  ${t.forwardLead}`,
-          ...forwardCodes(p, t).map((c) => `  ${c.label}: ${c.code}`),
+          ...codeLines(p, t).map((c) => `  ${c.label}: ${c.code}`),
           `  ${t.forwardUndo}`,
           `  ${t.forwardFixed}`,
         ]

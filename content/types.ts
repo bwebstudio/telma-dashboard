@@ -146,6 +146,23 @@ export interface Dictionary {
     guarantees: string[]
   }
   // The clinic's home screen: the day, and what needs an answer before it.
+  /** The forwarding card: codes a clinic dials to point its own line at ours.
+   *  The digits live in lib/forwarding.ts; these are only the words. */
+  forwarding: {
+    eyebrow: string
+    title: string
+    /** `{n}` is the number Telma answers on. */
+    lead: string
+    codes: { all: string; noAnswer: string; busy: string; unreachable: string }
+    copy: string
+    copied: string
+    /** `{code}` is the cancel-everything code. */
+    undo: string
+    fixedLine: string
+    markDone: string
+    savingDone: string
+    failed: string
+  }
   setup: {
     eyebrow: string
     title: string

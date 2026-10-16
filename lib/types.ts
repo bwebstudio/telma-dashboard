@@ -100,6 +100,17 @@ export interface Clinic {
   /** Monthly allowance in minutes of conversation. Plans are metered in minutes. */
   minute_limit: number
   assigned_phone: string | null
+  /** 'provisioned' when we bought the number, 'ported' when the clinic kept
+   *  its own and forwards it to ours. */
+  phone_source: 'provisioned' | 'ported' | null
+  /** Only for 'ported': the clinic's own number, its operator, which calls it
+   *  chose to send over, and whether it says the forward is set. */
+  porting_details: {
+    current_number?: string
+    operator?: string
+    forward_type?: 'no_answer' | 'all'
+    forward_done?: boolean
+  } | null
   /** ElevenLabs agent. Shared per language, not per clinic. */
   voice_agent_id: string | null
   /** ElevenLabs voice: what that agent sounds like for this clinic. */

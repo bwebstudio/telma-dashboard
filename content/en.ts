@@ -140,6 +140,25 @@ export const en: Dictionary = {
     failed: 'Could not turn her on. Try again.',
     steps: { hours: 'Say when the clinic is open', services: 'Say what the clinic does' },
   },
+  forwarding: {
+    eyebrow: 'Your line',
+    title: 'Forward your number to Telma',
+    lead: 'Your own number stays with your operator. Dial the code on the clinic phone, once, and calls start arriving at {n}. Nothing goes down.',
+    codes: {
+      all: 'All calls',
+      noAnswer: 'When nobody answers',
+      busy: 'When the line is busy',
+      unreachable: 'When there is no signal',
+    },
+    copy: 'Copy',
+    copied: 'Copied',
+    undo: 'To undo it, dial {code} and everything goes back as it was.',
+    fixedLine:
+      'On a landline the forward is set by the operator or in their customer area. Write to us and we will do it with you.',
+    markDone: 'I have forwarded it',
+    savingDone: 'Saving...',
+    failed: 'Could not save. Try again.',
+  },
   agenda: {
     title: 'Agenda',
     elsewhereOnePending: '1 booking to confirm on another day.',

@@ -9,6 +9,7 @@ import { ErasureForm } from '@/components/clinic/ErasureForm'
 import { BrandingForm } from '@/components/clinic/BrandingForm'
 import { BillingLive } from '@/components/clinic/BillingLive'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
+import { ForwardingCard } from '@/components/clinic/ForwardingCard'
 import { PlanSection } from '@/components/clinic/PlanSection'
 import { PreAppointmentHoldConfig } from '@/components/clinic/PreAppointmentHoldConfig'
 import { AddonsSection } from '@/components/clinic/AddonsSection'
@@ -101,6 +102,19 @@ export default async function ContaPage() {
         {/* Next to the plan rather than buried in a settings menu: it changes
             what the clinic sees on its agenda every day, so it belongs where
             the clinic reads about itself. */}
+        {/* Kept here for good, with no "done" button, because this is where
+            somebody comes back to it: a change of operator, a new handset, or
+            a receptionist who cancelled every forward on the line by dialling
+            ##002# for an unrelated reason. On the agenda it is a task and goes
+            away; here it is reference and stays. */}
+        {clinic?.phone_source === 'ported' && clinic.assigned_phone && (
+          <ForwardingCard
+            toNumber={clinic.assigned_phone}
+            forwardType={clinic.porting_details?.forward_type ?? null}
+            dict={dict}
+          />
+        )}
+
         {clinic && (
           <section className="card p-6">
             <SectionTitle>{dict.conta.holdTitle}</SectionTitle>

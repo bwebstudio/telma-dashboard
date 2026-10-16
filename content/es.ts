@@ -140,6 +140,25 @@ export const es: Dictionary = {
     failed: 'No se ha podido activar. Inténtelo de nuevo.',
     steps: { hours: 'Diga cuándo está abierta la clínica', services: 'Diga qué hace la clínica' },
   },
+  forwarding: {
+    eyebrow: 'Su línea',
+    title: 'Desvíe su número a Telma',
+    lead: 'Su número de siempre se queda en su operadora. Marque el código en el teléfono de la clínica, una vez, y las llamadas pasan a llegar al {n}. No corta el servicio.',
+    codes: {
+      all: 'Todas las llamadas',
+      noAnswer: 'Cuando no contesta nadie',
+      busy: 'Cuando comunica',
+      unreachable: 'Cuando está sin cobertura',
+    },
+    copy: 'Copiar',
+    copied: 'Copiado',
+    undo: 'Para deshacerlo, marque {code} y todo vuelve a como estaba.',
+    fixedLine:
+      'Si el número es fijo, el desvío se pide a la operadora o se hace en el área de cliente. Escríbanos y lo vemos con usted.',
+    markDone: 'Ya lo he desviado',
+    savingDone: 'Guardando...',
+    failed: 'No se ha podido guardar. Inténtelo otra vez.',
+  },
   agenda: {
     title: 'Agenda',
     elsewhereOnePending: '1 cita por confirmar en otro día.',

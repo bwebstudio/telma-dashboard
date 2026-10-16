@@ -10,6 +10,8 @@ import { LiveBar } from '@/components/clinic/LiveBar'
 import { DayTally } from '@/components/clinic/DayTally'
 import { DayLoad } from '@/components/clinic/DayLoad'
 import { SetupGate } from '@/components/clinic/SetupGate'
+import { ForwardingCard } from '@/components/clinic/ForwardingCard'
+import type { ForwardType } from '@/lib/forwarding'
 import { setupSteps } from '@/lib/clinic-setup'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
 import { PlannerSection } from '@/components/clinic/PlannerSection'
@@ -194,6 +196,17 @@ export default async function AgendaPage({
     : { count: 0 }
   const steps = setupSteps(clinic ?? null, openDays ?? 0)
 
+  // A clinic that kept its own number has to point it at ours, and nothing in
+  // the product told it how until now. It stays on the agenda until the clinic
+  // says it has done it: we cannot read an operator's switch, so there is no
+  // fact to check and the clinic is the one who knows.
+  const porting = (clinic?.porting_details ?? null) as {
+    forward_type?: ForwardType
+    forward_done?: boolean
+  } | null
+  const needsForwarding =
+    clinic?.phone_source === 'ported' && !!clinic?.assigned_phone && !porting?.forward_done
+
   const minutesUrgent = billing
     ? billing.minutes.exhausted || percentUsed(billing.minutes.used, billing.minutes.allowance) >= 80
     : false
@@ -205,6 +218,17 @@ export default async function AgendaPage({
           <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
         </div>
         <SetupGate steps={steps} dict={dict} />
+        {needsForwarding && (
+          <div className="mt-6">
+            <ForwardingCard
+              toNumber={clinic!.assigned_phone!}
+              forwardType={porting?.forward_type ?? null}
+              dict={dict}
+              dismissable
+              readOnly={readOnly}
+            />
+          </div>
+        )}
       </>
     )
   }
@@ -238,6 +262,18 @@ export default async function AgendaPage({
           updatedLabel={t.updated}
         />
       </div>
+
+      {needsForwarding && (
+        <div className="mb-6">
+          <ForwardingCard
+            toNumber={clinic!.assigned_phone!}
+            forwardType={porting?.forward_type ?? null}
+            dict={dict}
+            dismissable
+            readOnly={readOnly}
+          />
+        </div>
+      )}
 
       {/* Week and month: the same diary, further away. Everything between here
           and the day list is about today, so none of it is drawn. */}

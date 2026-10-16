@@ -577,7 +577,14 @@ const AGENT_SPEC = {
       // El inglés no lleva voz propia, y es una decisión, no un olvido. Se
       // probó una voz inglesa y no gustó: prefieren la de siempre aunque lea el
       // inglés con acento portugués, porque es la voz que la clínica reconoce
-      // como la suya. Sin preset, el inglés usa la de por defecto.
+      // como la suya.
+      //
+      // Pero la entrada tiene que estar, aunque vaya vacía: las claves de
+      // `language_presets` son la lista de lenguas que el agente atiende, así
+      // que sin ella el inglés no es que suene con otra voz, es que no existe.
+      // Y como esta sección se reemplaza entera en cada envío, un inglés
+      // añadido sólo en la consola dura hasta la próxima ejecución.
+      en: { overrides: {} },
     },
   },
 }

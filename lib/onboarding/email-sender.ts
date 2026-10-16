@@ -160,7 +160,23 @@ function emailCopy(locale: OnboardingLocale): EmailCopy {
 }
 
 const RESEND_KEY = process.env.RESEND_API_KEY
-const FROM = process.env.ONBOARDING_EMAIL_FROM || 'Telma <ola@telmaatende.com>'
+
+/**
+ * Sent from the subdomain, answered at the main one.
+ *
+ * Transactional mail goes out through `notificacoes.telmaatende.com`, which is
+ * the domain verified at Resend and deliberately not the main one: the main
+ * one carries the company's real mail through another provider, and putting
+ * both in one SPF record is how a sign-up email takes the inbox down with it.
+ *
+ * Nobody reads that subdomain, though, and this email invites a reply twice --
+ * once in the footer and once about forwarding a landline. So replies are
+ * pointed at the address a person actually opens. Without this they went to a
+ * mailbox that does not exist, which is worse than not asking: the clinic
+ * writes, nothing bounces for days, and it believes it is waiting on us.
+ */
+const FROM = process.env.ONBOARDING_EMAIL_FROM || 'Telma <ola@notificacoes.telmaatende.com>'
+const REPLY_TO = process.env.ONBOARDING_EMAIL_REPLY_TO || 'ola@telmaatende.com'
 
 export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResult> {
   const t = emailCopy(payload.locale)
@@ -202,6 +218,7 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
       body: JSON.stringify({
         from: FROM,
         to: [payload.email],
+        reply_to: REPLY_TO,
         subject,
         html: welcomeHtml(payload),
         text: welcomeText(payload),

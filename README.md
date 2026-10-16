@@ -166,6 +166,7 @@ modo de demonstração, em vez de bloquear o formulário:
 | `STRIPE_WEBHOOK_SECRET` | Verificar a assinatura dos webhooks | Todos os webhooks são recusados |
 | `RESEND_API_KEY` | Enviar o email de boas-vindas | Impresso no log em dev, recusado em produção |
 | `ONBOARDING_EMAIL_FROM` | Remetente do email | `Telma <ola@telmaatende.com>` |
+| `ONBOARDING_EMAIL_REPLY_TO` | Para onde vão as respostas | `ola@telmaatende.com` |
 
 Os `stripe_price_id` **não** estão aqui: vivem em `plans.stripe_price_id` e
 `addons.stripe_price_id`, que já é o sítio onde a lista de preços mora.

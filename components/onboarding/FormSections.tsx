@@ -215,7 +215,7 @@ function OptionCard({
       className={[
         'flex cursor-pointer gap-3.5 rounded-card border p-4 transition-all duration-fast ease-calm',
         checked
-          ? 'border-brand bg-brand-wash shadow-1'
+          ? 'border-ink bg-accent-wash shadow-1'
           : 'border-line bg-surface hover:border-ink/20',
       ].join(' ')}
     >
@@ -810,7 +810,7 @@ export function ServicesStep({ values, set, errors, locale, inPanel = false }: S
                 className={[
                   'flex cursor-pointer items-center gap-3 rounded-card border p-3.5 transition-all duration-fast ease-calm',
                   on
-                    ? 'border-brand bg-brand-wash'
+                    ? 'border-ink bg-accent-wash'
                     : 'border-line bg-surface hover:border-ink/20',
                 ].join(' ')}
               >
@@ -970,7 +970,7 @@ export function TelmaStep({
                   'flex items-center justify-between gap-3 rounded-card border p-3.5 transition-all duration-fast ease-calm',
                   disabled ? 'cursor-not-allowed' : 'cursor-pointer',
                   on
-                    ? 'border-brand bg-brand-wash'
+                    ? 'border-ink bg-accent-wash'
                     : soon || (!on && atMax)
                       ? 'border-line bg-surface-sunken opacity-60'
                       : 'border-line bg-surface hover:border-ink/20',

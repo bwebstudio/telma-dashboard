@@ -122,10 +122,14 @@ export function PromptPreview({
     })
   }
 
+  // Not a card. With nothing to preview yet this used to be an empty bordered
+  // box with grey text in it, which on a page made of bordered boxes with text
+  // in them reads as a disabled field somebody forgot to fill. A sunken block
+  // with no border reads as what it is: a note.
   if (!summary) {
     return (
-      <div className="card p-5">
-        <p className="text-base text-ink-mute">{t.help}</p>
+      <div className="rounded-card bg-surface-sunken px-5 py-4">
+        <p className="text-base text-ink-soft">{t.help}</p>
       </div>
     )
   }

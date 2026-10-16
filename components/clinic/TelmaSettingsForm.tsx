@@ -165,7 +165,13 @@ export function TelmaSettingsForm({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-lg font-semibold text-ink">{title}</h2>
+      {/* The hairline is this design system's structural element — it does the
+          job borders and shadows were doing before. Without it the three
+          groups on this page ran together into one long column of fields. */}
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold text-ink">{title}</h2>
+        <div className="rule" />
+      </div>
       {children}
     </section>
   )

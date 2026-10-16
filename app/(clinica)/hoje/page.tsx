@@ -201,6 +201,7 @@ export default async function AgendaPage({
   // says it has done it: we cannot read an operator's switch, so there is no
   // fact to check and the clinic is the one who knows.
   const porting = (clinic?.porting_details ?? null) as {
+    current_number?: string
     forward_type?: ForwardType
     forward_done?: boolean
   } | null
@@ -221,7 +222,8 @@ export default async function AgendaPage({
         {needsForwarding && (
           <div className="mt-6">
             <ForwardingCard
-              toNumber={clinic!.assigned_phone!}
+              telmaNumber={clinic!.assigned_phone!}
+              ownNumber={porting?.current_number ?? null}
               forwardType={porting?.forward_type ?? null}
               dict={dict}
               dismissable
@@ -266,7 +268,8 @@ export default async function AgendaPage({
       {needsForwarding && (
         <div className="mb-6">
           <ForwardingCard
-            toNumber={clinic!.assigned_phone!}
+            telmaNumber={clinic!.assigned_phone!}
+            ownNumber={porting?.current_number ?? null}
             forwardType={porting?.forward_type ?? null}
             dict={dict}
             dismissable

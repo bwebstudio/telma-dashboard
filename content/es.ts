@@ -142,20 +142,27 @@ export const es: Dictionary = {
   },
   forwarding: {
     eyebrow: 'Su línea',
-    title: 'Desvíe su número a Telma',
-    lead: 'Su número de siempre se queda en su operadora. Marque el código en el teléfono de la clínica, una vez, y las llamadas pasan a llegar al {n}. No corta el servicio.',
+    title: 'Haga que Telma conteste lo que usted no puede',
+    leadKeep:
+      'Su número de siempre, {own}, sigue siendo suyo y no cambia: es el que está en sus tarjetas y en Google. Lo que vamos a hacer es decirle a su operadora que, cuando usted no pueda atender, mande esa llamada al número de Telma, {telma}. Nadie marca ese número: es solo el sitio al que salta la llamada.',
+    leadAll:
+      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Lo que vamos a hacer es decirle a su operadora que mande todas las llamadas al número de Telma, {telma}. El teléfono de la clínica deja de sonar.',
+    stepsIntroMany:
+      'Marque estos tres códigos en el teléfono de la clínica, uno detrás de otro. Son tres porque el teléfono distingue tres formas de no poder atender, y hay que cubrir las tres.',
+    stepsIntroOne: 'Marque este código en el teléfono de la clínica.',
     codes: {
-      all: 'Todas las llamadas',
-      noAnswer: 'Cuando no contesta nadie',
-      busy: 'Cuando comunica',
-      unreachable: 'Cuando está sin cobertura',
+      all: 'Todas las llamadas, siempre',
+      noAnswer: 'Si no coge nadie',
+      busy: 'Si está comunicando',
+      unreachable: 'Si el teléfono está apagado o sin cobertura',
     },
+    reassure: 'Cada uno tarda un segundo. No corta el servicio y sus pacientes no notan nada.',
     copy: 'Copiar',
     copied: 'Copiado',
-    undo: 'Para deshacerlo, marque {code} y todo vuelve a como estaba.',
+    undo: 'Para deshacerlo todo, marque {code}.',
     fixedLine:
-      'Si el número es fijo, el desvío se pide a la operadora o se hace en el área de cliente. Escríbanos y lo vemos con usted.',
-    markDone: 'Ya lo he desviado',
+      'Si el número de la clínica es fijo, estos códigos no sirven: el desvío se pide a la operadora o se hace en el área de cliente. Escríbanos y lo vemos con usted.',
+    markDone: 'Ya he marcado los códigos',
     savingDone: 'Guardando...',
     failed: 'No se ha podido guardar. Inténtelo otra vez.',
   },

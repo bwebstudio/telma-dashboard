@@ -144,20 +144,27 @@ export const pt: Dictionary = {
   },
   forwarding: {
     eyebrow: 'A sua linha',
-    title: 'Desvie o seu número para a Telma',
-    lead: 'O seu número de sempre fica na sua operadora. Marque o código no telefone da clínica, uma vez, e as chamadas passam a chegar ao {n}. Não corta o serviço.',
+    title: 'Faça a Telma atender o que não consegue atender',
+    leadKeep:
+      'O seu número de sempre, {own}, continua a ser o seu e não muda: é o que está nos cartões e no Google. O que vamos fazer é dizer à sua operadora que, quando não puder atender, mande essa chamada para o número da Telma, {telma}. Ninguém marca esse número: é só o sítio para onde a chamada salta.',
+    leadAll:
+      'O seu número de sempre, {own}, continua a ser o seu e não muda. O que vamos fazer é dizer à sua operadora que mande todas as chamadas para o número da Telma, {telma}. O telefone da clínica deixa de tocar.',
+    stepsIntroMany:
+      'Marque estes três códigos no telefone da clínica, um a seguir ao outro. São três porque o telefone distingue três maneiras de não poder atender, e é preciso cobrir as três.',
+    stepsIntroOne: 'Marque este código no telefone da clínica.',
     codes: {
-      all: 'Todas as chamadas',
-      noAnswer: 'Quando ninguém atende',
-      busy: 'Quando está ocupado',
-      unreachable: 'Quando está sem rede',
+      all: 'Todas as chamadas, sempre',
+      noAnswer: 'Se ninguém atender',
+      busy: 'Se estiver a falar',
+      unreachable: 'Se o telefone estiver desligado ou sem rede',
     },
+    reassure: 'Cada um demora um segundo. Não corta o serviço e os seus doentes não dão por nada.',
     copy: 'Copiar',
     copied: 'Copiado',
-    undo: 'Para desfazer, marque {code} e tudo volta ao que era.',
+    undo: 'Para desfazer tudo, marque {code}.',
     fixedLine:
-      'Se o número é fixo, o desvio pede-se à operadora ou faz-se na área de cliente. Escreva-nos e tratamos disso consigo.',
-    markDone: 'Já desviei',
+      'Se o número da clínica é fixo, estes códigos não servem: o desvio pede-se à operadora ou faz-se na área de cliente. Escreva-nos e tratamos disso consigo.',
+    markDone: 'Já marquei os códigos',
     savingDone: 'A guardar...',
     failed: 'Não foi possível guardar. Tente outra vez.',
   },

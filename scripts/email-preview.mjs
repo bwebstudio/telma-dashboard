@@ -27,8 +27,9 @@ const base = {
 }
 
 const variants = [
-  { name: 'pt-desvio-no-atendidas', locale: 'pt', phoneNumber: '+351 300 500 900', temporaryNumber: true, forwardType: 'no_answer' },
-  { name: 'pt-desvio-todas', locale: 'pt', phoneNumber: '+351 300 500 900', temporaryNumber: true, forwardType: 'all' },
+  { name: 'pt-desvio-no-atendidas', locale: 'pt', phoneNumber: '+351 300 500 900', ownNumber: '+351 220 123 456', temporaryNumber: true, forwardType: 'no_answer' },
+  { name: 'pt-desvio-todas', locale: 'pt', phoneNumber: '+351 300 500 900', ownNumber: '+351 220 123 456', temporaryNumber: true, forwardType: 'all' },
+  { name: 'es-desvio-no-atendidas', locale: 'es', phoneNumber: '+34 910 555 020', ownNumber: '+34 663 886 113', temporaryNumber: true, forwardType: 'no_answer' },
   { name: 'es-numero-nuevo', locale: 'es', phoneNumber: '+34 910 000 000', temporaryNumber: false },
   { name: 'es-pago-pendiente', locale: 'es', phoneNumber: '+34 910 000 000', temporaryNumber: false, pendingPayment: true },
 ]

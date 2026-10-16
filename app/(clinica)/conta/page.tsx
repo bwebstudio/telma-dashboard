@@ -109,7 +109,8 @@ export default async function ContaPage() {
             away; here it is reference and stays. */}
         {clinic?.phone_source === 'ported' && clinic.assigned_phone && (
           <ForwardingCard
-            toNumber={clinic.assigned_phone}
+            telmaNumber={clinic.assigned_phone}
+            ownNumber={clinic.porting_details?.current_number ?? null}
             forwardType={clinic.porting_details?.forward_type ?? null}
             dict={dict}
           />

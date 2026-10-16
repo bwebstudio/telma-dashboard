@@ -247,12 +247,30 @@ export async function completeOnboarding(
     // The number. Bought before the clinic row so a Twilio failure (no funds,
     // no numbers in that district) stops the sign-up before anything exists,
     // rather than leaving a clinic with no line and no explanation.
-    if (wizard.phone_option === 'new') {
-      provisioned = await provisionTwilioNumber(wizard.area_region)
-    }
+    // ── TELMA ALWAYS NEEDS A NUMBER OF HER OWN ───────────────────────────
+    // Both options, and this is the half that was missing. A number is where
+    // a call lands on our side; without one there is nothing for anybody to
+    // reach, whatever the clinic chose.
+    //
+    // What the two options actually decide is who dials it. With a new number
+    // it is the public one, on the cards and on Google. Keeping their own, it
+    // is hidden: the clinic's number stays public and is forwarded here, and
+    // no patient ever sees these digits.
+    //
+    // Until now `keep` bought nothing and stored the clinic's own number as
+    // ours, so the forwarding codes we hand out told a clinic to forward its
+    // number to itself. The feature was sold, explained and impossible.
+    //
+    // The region comes from the clinic itself when it is not buying a public
+    // number, because the forwarded leg is billed to the clinic by its own
+    // operator: a local number in its own province is a national call and
+    // usually inside a business tariff, and one bought in another country is
+    // an international call per patient.
+    provisioned = await provisionTwilioNumber(
+      wizard.phone_option === 'new' ? wizard.area_region : wizard.region
+    )
 
-    const assignedPhone =
-      wizard.phone_option === 'new' ? provisioned!.number : wizard.current_number
+    const assignedPhone = provisioned.number
 
     // A clinic that has not paid yet is 'pausada', which already means exactly
     // this everywhere else in the panel: it exists, it is not answering. The
@@ -538,6 +556,7 @@ export async function completeOnboarding(
       // a clinic that asked for "only the ones nobody answered" and dials the
       // unconditional code stops hearing its own phone ring.
       forwardType: wizard.phone_option === 'keep' ? wizard.forward_type : undefined,
+      ownNumber: wizard.phone_option === 'keep' ? wizard.current_number : null,
       dashboardUrl,
       locale,
       pendingPayment,

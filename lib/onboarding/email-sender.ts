@@ -32,6 +32,9 @@ export interface WelcomeEmail {
   /** Which calls they chose to send over, from step 3. Decides which codes
    *  the email prints. */
   forwardType?: ForwardType
+  /** The clinic's own public number, when it kept it. Named beside ours so
+   *  the reader can tell which of the two numbers on the page is theirs. */
+  ownNumber?: string | null
   dashboardUrl: string
   /** The language the sign-up was filled in. The clinic reads this email in
    *  the language it just spent six steps typing in, not in ours. */
@@ -66,7 +69,11 @@ interface EmailCopy {
   numberLabel: string
   numberTemp: string
   forwardTitle: string
-  forwardLead: string
+  forwardLeadKeep: string
+  forwardLeadAll: string
+  forwardStepsMany: string
+  forwardStepsOne: string
+  forwardReassure: string
   forwardLabelAll: string
   forwardLabelNoAnswer: string
   forwardLabelBusy: string
@@ -95,16 +102,23 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     numberLabel: 'O número que a Telma atende',
     numberTemp:
       'O seu número de sempre fica onde está, na sua operadora. Basta desviá-lo para este.',
-    forwardTitle: 'Desviar o seu número, em cinco minutos',
-    forwardLead:
-      'Marque o código no telefone da clínica, uma vez. Não corta o serviço e desfaz-se quando quiser.',
-    forwardLabelAll: 'Todas as chamadas',
-    forwardLabelNoAnswer: 'Quando ninguém atende',
-    forwardLabelBusy: 'Quando está ocupado',
-    forwardLabelUnreachable: 'Quando está sem rede',
+    forwardTitle: 'Falta uma coisa: desviar o seu número',
+    forwardLeadKeep:
+      'O seu número de sempre, {own}, continua a ser o seu e não muda. Diga à sua operadora que, quando não puder atender, mande a chamada para o número da Telma acima. Ninguém marca esse número: é só para onde a chamada salta.',
+    forwardLeadAll:
+      'O seu número de sempre, {own}, continua a ser o seu e não muda. Diga à sua operadora que mande todas as chamadas para o número da Telma acima. O telefone da clínica deixa de tocar.',
+    forwardStepsMany:
+      'Marque estes três códigos no telefone da clínica, um a seguir ao outro. São três porque o telefone distingue três maneiras de não poder atender.',
+    forwardStepsOne: 'Marque este código no telefone da clínica.',
+    forwardReassure:
+      'Cada um demora um segundo. Não corta o serviço e os seus doentes não dão por nada.',
+    forwardLabelAll: 'Todas as chamadas, sempre',
+    forwardLabelNoAnswer: 'Se ninguém atender',
+    forwardLabelBusy: 'Se estiver a falar',
+    forwardLabelUnreachable: 'Se o telefone estiver desligado ou sem rede',
     forwardUndo: `Para desfazer, marque ${FORWARD_UNDO} e tudo volta ao que era.`,
     forwardFixed:
-      'Se o número é fixo, o desvio pede-se à operadora ou faz-se na área de cliente. Responda a este email e tratamos disso consigo.',
+      'Se o número da clínica é fixo, estes códigos não servem: o desvio pede-se à operadora ou faz-se na área de cliente. Responda a este email e tratamos disso consigo.',
     accessLabel: 'Os seus acessos',
     passwordNote: 'Palavra-passe temporária. Mude-a assim que entrar.',
     openPanel: 'Abrir o painel',
@@ -130,16 +144,23 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     numberLabel: 'El número que contesta Telma',
     numberTemp:
       'Su número de siempre se queda donde está, en su operadora. Solo hay que desviarlo a este.',
-    forwardTitle: 'Desviar su número, en cinco minutos',
-    forwardLead:
-      'Marque el código en el teléfono de la clínica, una vez. No corta el servicio y se deshace cuando quiera.',
-    forwardLabelAll: 'Todas las llamadas',
-    forwardLabelNoAnswer: 'Cuando no contesta nadie',
-    forwardLabelBusy: 'Cuando comunica',
-    forwardLabelUnreachable: 'Cuando está sin cobertura',
+    forwardTitle: 'Falta una cosa: desviar su número',
+    forwardLeadKeep:
+      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Dígale a su operadora que, cuando no pueda atender, mande la llamada al número de Telma de arriba. Nadie marca ese número: es solo adonde salta la llamada.',
+    forwardLeadAll:
+      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Dígale a su operadora que mande todas las llamadas al número de Telma de arriba. El teléfono de la clínica deja de sonar.',
+    forwardStepsMany:
+      'Marque estos tres códigos en el teléfono de la clínica, uno detrás de otro. Son tres porque el teléfono distingue tres formas de no poder atender.',
+    forwardStepsOne: 'Marque este código en el teléfono de la clínica.',
+    forwardReassure:
+      'Cada uno tarda un segundo. No corta el servicio y sus pacientes no notan nada.',
+    forwardLabelAll: 'Todas las llamadas, siempre',
+    forwardLabelNoAnswer: 'Si no coge nadie',
+    forwardLabelBusy: 'Si está comunicando',
+    forwardLabelUnreachable: 'Si el teléfono está apagado o sin cobertura',
     forwardUndo: `Para deshacerlo, marque ${FORWARD_UNDO} y todo vuelve a como estaba.`,
     forwardFixed:
-      'Si el número es fijo, el desvío se pide a la operadora o se hace en el área de cliente. Responda a este email y lo vemos con usted.',
+      'Si el número de la clínica es fijo, estos códigos no sirven: el desvío se pide a la operadora o se hace en el área de cliente. Responda a este email y lo vemos con usted.',
     accessLabel: 'Sus accesos',
     passwordNote: 'Contraseña temporal. Cámbiela en cuanto entre.',
     openPanel: 'Abrir el panel',
@@ -272,21 +293,37 @@ export function welcomeHtml(p: WelcomeEmail): string {
   // The forwarding block only exists for a clinic that kept its own number.
   // For one that bought a new number there is nothing to forward, and a set of
   // codes it must not dial is worse than no block at all.
+  // Numbered steps, not a list of options. Three equal rows each with their
+  // own heading read as a menu to choose from, and a clinic that dials only
+  // the first still sends patients the engaged tone.
+  const steps = codeLines(p, t)
+  const many = steps.length > 1
   const forwarding = p.temporaryNumber
     ? `
-      <h2 style="margin:36px 0 6px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
-      <p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${INK_SOFT}">${escapeHtml(t.forwardLead)}</p>
+      <h2 style="margin:36px 0 8px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
+      <p style="margin:0 0 12px;font-size:15px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
+        (p.forwardType === 'all' ? t.forwardLeadAll : t.forwardLeadKeep).replace(
+          '{own}',
+          p.ownNumber ?? '—'
+        )
+      )}</p>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(
+        many ? t.forwardStepsMany : t.forwardStepsOne
+      )}</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px;background:${SUNKEN}">
-        ${codeLines(p, t)
+        ${steps
           .map(
-            (c, i) => `<tr><td style="padding:${i ? '10px' : '16px'} 18px ${i === 0 ? '10px' : '10px'}">
-          <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(c.label)}</p>
+            (c, i) => `<tr><td style="padding:${i ? '12px' : '16px'} 18px 12px 18px">
+          <p style="margin:0;font-size:14px;color:${INK_SOFT}">${
+            many ? `<strong style="color:${INK}">${i + 1}.</strong> ` : ''
+          }${escapeHtml(c.label)}</p>
           <p style="margin:4px 0 0;font-size:19px;font-weight:600;font-family:${MONO};color:${INK}">${escapeHtml(c.code)}</p>
         </td></tr>`
           )
           .join('\n        ')}
         <tr><td style="padding:4px 18px 16px">
-          <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardUndo)}</p>
+          <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardReassure)}</p>
+          <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardUndo)}</p>
         </td></tr>
       </table>
       <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardFixed)}</p>`
@@ -377,8 +414,10 @@ export function welcomeText(p: WelcomeEmail): string {
       ? [
           '',
           `${t.forwardTitle}:`,
-          `  ${t.forwardLead}`,
-          ...codeLines(p, t).map((c) => `  ${c.label}: ${c.code}`),
+          `  ${(p.forwardType === 'all' ? t.forwardLeadAll : t.forwardLeadKeep).replace('{own}', p.ownNumber ?? '-')}`,
+          `  ${codeLines(p, t).length > 1 ? t.forwardStepsMany : t.forwardStepsOne}`,
+          ...codeLines(p, t).map((c, i) => `  ${i + 1}. ${c.label}: ${c.code}`),
+          `  ${t.forwardReassure}`,
           `  ${t.forwardUndo}`,
           `  ${t.forwardFixed}`,
         ]

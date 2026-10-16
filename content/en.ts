@@ -142,20 +142,27 @@ export const en: Dictionary = {
   },
   forwarding: {
     eyebrow: 'Your line',
-    title: 'Forward your number to Telma',
-    lead: 'Your own number stays with your operator. Dial the code on the clinic phone, once, and calls start arriving at {n}. Nothing goes down.',
+    title: 'Let Telma answer what you cannot',
+    leadKeep:
+      'Your own number, {own}, stays yours and does not change: it is the one on your cards and on Google. What we are going to do is tell your operator that, when you cannot pick up, it should send that call to Telma\u2019s number, {telma}. Nobody dials that number: it is only where the call jumps to.',
+    leadAll:
+      'Your own number, {own}, stays yours and does not change. What we are going to do is tell your operator to send every call to Telma\u2019s number, {telma}. The clinic phone stops ringing.',
+    stepsIntroMany:
+      'Dial these three codes on the clinic phone, one after the other. There are three because a telephone tells apart three ways of not being able to answer, and all three need covering.',
+    stepsIntroOne: 'Dial this code on the clinic phone.',
     codes: {
-      all: 'All calls',
-      noAnswer: 'When nobody answers',
-      busy: 'When the line is busy',
-      unreachable: 'When there is no signal',
+      all: 'Every call, always',
+      noAnswer: 'If nobody picks up',
+      busy: 'If the line is busy',
+      unreachable: 'If the phone is off or has no signal',
     },
+    reassure: 'Each one takes a second. Nothing goes down and your patients notice nothing.',
     copy: 'Copy',
     copied: 'Copied',
-    undo: 'To undo it, dial {code} and everything goes back as it was.',
+    undo: 'To undo all of it, dial {code}.',
     fixedLine:
-      'On a landline the forward is set by the operator or in their customer area. Write to us and we will do it with you.',
-    markDone: 'I have forwarded it',
+      'On a landline these codes do nothing: the forward is set by the operator or in their customer area. Write to us and we will do it with you.',
+    markDone: 'I have dialled the codes',
     savingDone: 'Saving...',
     failed: 'Could not save. Try again.',
   },

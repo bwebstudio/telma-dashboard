@@ -330,7 +330,14 @@ export async function completeOnboarding(
         phone_provider_ref: provisioned?.sid ?? null,
         porting_details:
           wizard.phone_option === 'keep'
-            ? { current_number: wizard.current_number, operator: wizard.operator }
+            ? {
+                current_number: wizard.current_number,
+                operator: wizard.operator,
+                // Goes in here rather than in a column of its own: the shape
+                // already exists and this belongs to the same fact, which is
+                // how the clinic's own line is pointed at ours.
+                forward_type: wizard.forward_type,
+              }
             : null,
         // Two different things, in two different columns since 0023. The agent
         // is shared by every clinic on this language; the voice is this

@@ -1305,6 +1305,50 @@ export function NumberStep({
               ))}
             </Select>
           </div>
+
+          {/* Asked here and not left to the operator's default, because the
+              default is usually "everything" and that is the expensive one:
+              Telma takes every call instead of the overflow, and a clinic on
+              250 minutes spends them in a week. The two lines under each
+              option are the whole explanation a clinic needs. */}
+          <fieldset className="flex flex-col gap-2.5">
+            <legend className="field-label">{t.forwardTitle}</legend>
+            {(
+              [
+                ['no_answer', t.forwardNoAnswer, t.forwardNoAnswerHelp],
+                ['all', t.forwardAll, t.forwardAllHelp],
+              ] as const
+            ).map(([val, label, help]) => {
+              const on = values.forward_type === val
+              return (
+                <label
+                  key={val}
+                  className={[
+                    'flex cursor-pointer gap-3 rounded-card border p-3.5 transition-all duration-fast ease-calm',
+                    on ? 'border-ink bg-accent-wash' : 'border-line bg-surface hover:border-ink/20',
+                  ].join(' ')}
+                >
+                  <input
+                    type="radio"
+                    name="forward_type"
+                    checked={on}
+                    onChange={() => set({ forward_type: val })}
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-base text-ink">{label}</span>
+                    <span className="mt-0.5 block text-sm text-ink-soft">{help}</span>
+                  </span>
+                </label>
+              )
+            })}
+            {errors.forward_type && (
+              <p role="alert" className="text-sm font-medium text-danger">
+                {errors.forward_type}
+              </p>
+            )}
+          </fieldset>
+
           <p className="text-sm text-ink-mute">{t.portingNote}</p>
         </div>
       ) : (

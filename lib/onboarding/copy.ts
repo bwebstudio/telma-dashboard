@@ -147,6 +147,13 @@ export interface Copy {
   newNumberHelp: string
   currentNumber: string
   operator: string
+  /** Which calls reach her. The expensive answer is the one a clinic would
+   *  otherwise get by default, so it is asked rather than assumed. */
+  forwardTitle: string
+  forwardNoAnswer: string
+  forwardNoAnswerHelp: string
+  forwardAll: string
+  forwardAllHelp: string
   areaRegion: string
   portingNote: string
 
@@ -328,6 +335,11 @@ const pt: Copy = {
   newNumberHelp: 'Um número da sua região, ativo no mesmo dia.',
   currentNumber: 'Número atual',
   operator: 'Operadora atual',
+  forwardTitle: 'Que chamadas passam para a Telma',
+  forwardNoAnswer: 'Só as que ninguém atendeu',
+  forwardNoAnswerHelp: 'O telefone da clínica toca primeiro. A Telma entra quando está ocupado ou ninguém atende.',
+  forwardAll: 'Todas',
+  forwardAllHelp: 'O telefone da clínica deixa de tocar. Gasta muito mais minutos.',
   areaRegion: 'Região do novo número',
   portingNote:
     'A portabilidade demora entre 5 e 10 dias úteis. Até lá, damos-lhe um número temporário para poder começar.',
@@ -518,6 +530,11 @@ const es: Copy = {
   newNumberHelp: 'Un número de su zona, activo el mismo día.',
   currentNumber: 'Número actual',
   operator: 'Operadora actual',
+  forwardTitle: 'Qué llamadas pasan a Telma',
+  forwardNoAnswer: 'Solo las que nadie atendió',
+  forwardNoAnswerHelp: 'El teléfono de la clínica suena primero. Telma entra cuando está ocupado o no contesta nadie.',
+  forwardAll: 'Todas',
+  forwardAllHelp: 'El teléfono de la clínica deja de sonar. Gasta muchos más minutos.',
   areaRegion: 'Zona del número nuevo',
   portingNote:
     'La portabilidad tarda entre 5 y 10 días laborables. Hasta entonces le damos un número temporal para poder empezar.',

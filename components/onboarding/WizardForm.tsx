@@ -101,6 +101,9 @@ const INITIAL: Values = {
   phone_option: 'new',
   current_number: '',
   operator: '',
+  // The one a clinic almost always wants, so it is the one already ticked.
+  // Defaulting to 'all' would have been defaulting to the expensive answer.
+  forward_type: 'no_answer',
   area_region: '',
   plan_id: 'clinica',
   billing_cycle: 'monthly',

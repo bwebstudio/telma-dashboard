@@ -63,6 +63,7 @@ interface Messages {
   emergencyTooLong: string
   afterHoursNumberRequired: string
   operator: string
+  forwardType: string
   areaRegion: string
   plan: string
   terms: string
@@ -101,6 +102,7 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     emergencyTooLong: 'Máximo de 1000 caracteres.',
     afterHoursNumberRequired: 'Indique para onde vai a chamada fora de horas, aqui ou no número de urgências.',
     operator: 'Escolha a operadora atual.',
+    forwardType: 'Diga que chamadas passam para a Telma.',
     areaRegion: 'Escolha a região do novo número.',
     plan: 'Escolha um plano.',
     terms: 'É preciso aceitar os termos para continuar.',
@@ -137,6 +139,7 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     emergencyTooLong: 'Máximo de 1000 caracteres.',
     afterHoursNumberRequired: 'Indique adónde va la llamada fuera de horario, aquí o en el número de urgencias.',
     operator: 'Elija la operadora actual.',
+    forwardType: 'Diga qué llamadas pasan a Telma.',
     areaRegion: 'Elija la provincia del número nuevo.',
     plan: 'Elija un plan.',
     terms: 'Hay que aceptar los términos para continuar.',
@@ -319,6 +322,17 @@ function build(m: Messages) {
         phone_option: z.literal('keep'),
         current_number: phone,
         operator: z.enum(OPERATORS, { error: m.operator }),
+        // WHICH CALLS REACH HER, AND IT IS NOT A DETAIL.
+        //
+        // 'no_answer' forwards only what the clinic did not pick up. 'all'
+        // forwards everything and the clinic's own phone stops ringing.
+        //
+        // The second one is almost never what a clinic wants and it is
+        // expensive in a way nobody sees coming: Telma takes every call
+        // instead of the overflow, so a clinic on 250 minutes spends them in
+        // days. Defaulted, and asked out loud, because the alternative is
+        // finding out from an angry invoice.
+        forward_type: z.enum(['no_answer', 'all'], { error: m.forwardType }),
       }),
       z.object({
         phone_option: z.literal('new'),

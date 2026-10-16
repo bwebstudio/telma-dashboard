@@ -314,8 +314,13 @@
 
   /* Buttons. Minimum 44px tall, and the primary needs no contrast workaround:
      white on the forest green is 12.07:1. */
+  /* Squared off to --radius-input, not --radius-pill. A pill sitting directly
+     under an 8px field was two different opinions about corners in the same
+     six inches of screen, and the field is the one that cannot change: it has
+     to read as something you type into. Pills are left to .badge and .chip,
+     which are tags rather than controls. */
   .btn {
-    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-pill px-5 text-base font-medium transition-all duration-fast ease-calm disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-input px-5 text-base font-medium transition-all duration-fast ease-calm disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
     @apply btn bg-brand text-white shadow-brand hover:bg-brand-hover;

@@ -330,7 +330,7 @@ const pt: Copy = {
 
   keepNumber: 'Quero manter o meu número',
   keepNumberHelp:
-    'Fica com o número que já está nos cartões e no Google. Tratamos do encaminhamento com a sua operadora, sem interromper o serviço.',
+    'Fica com o número que já está nos cartões e no Google. Ajudamo-lo a configurar o desvio, em cinco minutos, sem interromper o serviço.',
   newNumber: 'Quero um número novo da Telma',
   newNumberHelp: 'Um número da sua região, ativo no mesmo dia.',
   currentNumber: 'Número atual',
@@ -525,7 +525,7 @@ const es: Copy = {
 
   keepNumber: 'Quiero conservar mi número',
   keepNumberHelp:
-    'Se queda con el número que ya está en las tarjetas y en Google. Nos encargamos del desvío con su operadora, sin cortar el servicio.',
+    'Se queda con el número que ya está en las tarjetas y en Google. Le ayudamos a configurar el desvío, en cinco minutos, sin cortar el servicio.',
   newNumber: 'Quiero un número nuevo de Telma',
   newNumberHelp: 'Un número de su zona, activo el mismo día.',
   currentNumber: 'Número actual',

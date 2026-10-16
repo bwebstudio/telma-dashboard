@@ -248,13 +248,15 @@ const pt: Copy = {
   opens: 'Abre',
   closes: 'Fecha',
   pause: 'Pausa para almoço',
-  pauseHelp: 'Aplicada a todos os dias abertos. A Telma não marca nada neste intervalo.',
+  pauseHelp: 'A Telma não marca nada a estas horas. Aplica-se a todos os dias em que a clínica abre.',
   pauseStart: 'Início',
   pauseEnd: 'Fim',
-  duration: 'Duração da consulta',
-  durationHelp: 'Quanto tempo o paciente ocupa a cadeira. É também de quanto em quanto tempo a Telma oferece horas.',
-  interval: 'Intervalo entre consultas',
-  intervalHelp: 'De quanto em quanto tempo pode começar uma consulta nova.',
+  duration: 'Quanto dura uma consulta',
+  durationHelp:
+    'O tempo que a Telma reserva na agenda para cada pessoa. Com 30 minutos, uma consulta das 9:00 ocupa até às 9:30.',
+  interval: 'A que horas pode começar uma consulta',
+  intervalHelp:
+    'De quanto em quanto tempo abre um horário. Com 30 minutos, a Telma oferece as 9:00, as 9:30, as 10:00. Normalmente é igual à duração acima.',
   minutes: 'minutos',
 
   servicesHelp: 'Pode escolher vários.',
@@ -342,7 +344,7 @@ const pt: Copy = {
   forwardAllHelp: 'O telefone da clínica deixa de tocar. Gasta muito mais minutos.',
   areaRegion: 'Região do novo número',
   portingNote:
-    'A portabilidade demora entre 5 e 10 dias úteis. Até lá, damos-lhe um número temporário para poder começar.',
+    'O seu número não sai da sua operadora e não muda. Damos-lhe um número da Telma e, quando acabar de a configurar no painel, dizemos-lhe como mandar para lá as chamadas que não conseguir atender.',
 
   planMonthly: 'Mensal',
   planAnnual: 'Anual',
@@ -367,16 +369,16 @@ const pt: Copy = {
   doneDemo:
     'Modo de demonstração: o número é fictício e não foi cobrado nada. Nada disto chega a um cliente real.',
   doneNumber: 'O número que a Telma atende',
-  donePorting: 'Número temporário enquanto a portabilidade decorre',
-  donePortingNote: 'Avisamos assim que a portabilidade do seu número estiver concluída.',
+  donePorting: 'O número da Telma, para onde vai desviar o seu',
+  donePortingNote: 'O seu número de sempre não muda. Explicamos no painel como desviar para aqui as chamadas que não conseguir atender.',
   doneCredentials: 'Os seus acessos',
   donePassword: 'Palavra-passe temporária',
   donePasswordHelp: 'Mostrada uma única vez. Mude-a assim que entrar.',
   doneOpenPanel: 'Abrir o painel',
   doneNextTitle: 'O que acontece a seguir',
   doneNext: [
-    'Confirmamos a configuração e ligamos a voz ao seu número.',
-    'Fazemos uma chamada de teste consigo, para ouvir como soa.',
+    'Diga à Telma quando a clínica abre e o que faz. São duas respostas no painel.',
+    'Ligue-a quando quiser. O painel diz-lhe quando está pronta.',
     'A partir daí, a Telma atende. Vê tudo no painel, em direto.',
   ],
   copy: 'Copiar',
@@ -443,13 +445,15 @@ const es: Copy = {
   opens: 'Abre',
   closes: 'Cierra',
   pause: 'Pausa para comer',
-  pauseHelp: 'Se aplica a todos los días abiertos. Telma no cita nada en este intervalo.',
+  pauseHelp: 'Telma no da citas a estas horas. Se aplica a todos los días que la clínica abre.',
   pauseStart: 'Inicio',
   pauseEnd: 'Fin',
-  duration: 'Duración de la cita',
-  durationHelp: 'Cuánto tiempo ocupa el paciente el sillón. Es también cada cuánto ofrece horas la Telma.',
-  interval: 'Intervalo entre citas',
-  intervalHelp: 'Cada cuánto tiempo puede empezar una cita nueva.',
+  duration: 'Cuánto dura una cita',
+  durationHelp:
+    'El tiempo que Telma reserva en la agenda para cada persona. Con 30 minutos, una cita de las 9:00 ocupa hasta las 9:30.',
+  interval: 'A qué horas puede empezar una cita',
+  intervalHelp:
+    'Cada cuánto se abre un hueco. Con 30 minutos, Telma ofrece las 9:00, las 9:30, las 10:00. Normalmente es igual que la duración de arriba.',
   minutes: 'minutos',
 
   servicesHelp: 'Puede elegir varios.',
@@ -537,7 +541,7 @@ const es: Copy = {
   forwardAllHelp: 'El teléfono de la clínica deja de sonar. Gasta muchos más minutos.',
   areaRegion: 'Zona del número nuevo',
   portingNote:
-    'La portabilidad tarda entre 5 y 10 días laborables. Hasta entonces le damos un número temporal para poder empezar.',
+    'Su número no se mueve de su operadora y no cambia. Le damos un número de Telma y, cuando termine de configurarla en el panel, le decimos cómo mandarle las llamadas que usted no pueda atender.',
 
   planMonthly: 'Mensual',
   planAnnual: 'Anual',
@@ -562,16 +566,16 @@ const es: Copy = {
   doneDemo:
     'Modo de demostración: el número es ficticio y no se ha cobrado nada. Nada de esto llega a un cliente real.',
   doneNumber: 'El número que contesta Telma',
-  donePorting: 'Número temporal mientras se hace la portabilidad',
-  donePortingNote: 'Le avisamos en cuanto la portabilidad de su número esté terminada.',
+  donePorting: 'El número de Telma, al que desviará el suyo',
+  donePortingNote: 'Su número de siempre no cambia. En el panel le explicamos cómo desviar aquí las llamadas que no pueda atender.',
   doneCredentials: 'Sus accesos',
   donePassword: 'Contraseña temporal',
   donePasswordHelp: 'Se muestra una sola vez. Cámbiela en cuanto entre.',
   doneOpenPanel: 'Abrir el panel',
   doneNextTitle: 'Qué pasa a continuación',
   doneNext: [
-    'Confirmamos la configuración y conectamos la voz a su número.',
-    'Hacemos una llamada de prueba con usted, para oír cómo suena.',
+    'Dígale a Telma cuándo abre la clínica y qué hace. Son dos respuestas en el panel.',
+    'Actívela cuando quiera. El panel le dirá cuándo está lista.',
     'A partir de ahí, Telma contesta. Lo ve todo en el panel, en directo.',
   ],
   copy: 'Copiar',

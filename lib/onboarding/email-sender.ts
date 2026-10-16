@@ -103,7 +103,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     forwardWhat:
       'O seu número de sempre, {own}, continua a ser o seu e não muda. No fim, diz-se à sua operadora que passe para a Telma as chamadas que não conseguir atender. São três códigos marcados no telefone da clínica e demora um minuto.',
     forwardNotYet:
-      'Mas ainda não. Primeiro diga à Telma quando abre e o que faz, e ligue-a. Antes disso ela atende sem saber nada da sua clínica, e quem liga são os seus doentes. Os códigos ficam à sua espera no painel, já preenchidos, assim que a ligar.',
+      'Ainda não, por esta ordem: primeiro diga à Telma quando abre e o que faz, e ligue-a. Antes disso ela não conhece a clínica e não conseguiria atender quem liga. Os códigos aparecem no painel, já preenchidos, assim que a ligar.',
     accessLabel: 'Os seus acessos',
     passwordNote: 'Palavra-passe temporária. Mude-a assim que entrar.',
     openPanel: 'Abrir o painel',
@@ -138,7 +138,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     forwardWhat:
       'Su número de siempre, {own}, sigue siendo suyo y no cambia. Al final se le dice a su operadora que pase a Telma las llamadas que usted no pueda atender. Son tres códigos que se marcan en el teléfono de la clínica y se tarda un minuto.',
     forwardNotYet:
-      'Pero todavía no. Primero dígale a Telma cuándo abre y qué hace, y enciéndala. Antes de eso contesta sin saber nada de su clínica, y quien llama son sus pacientes. Los códigos le esperan en el panel, ya rellenos, en cuanto la encienda.',
+      'Todavía no, y en este orden: primero dígale a Telma cuándo abre y qué hace, y actívela. Antes de eso no conoce la clínica y no podría atender a quien llame. Los códigos aparecen en el panel, ya rellenos, en cuanto la active.',
     accessLabel: 'Sus accesos',
     passwordNote: 'Contraseña temporal. Cámbiela en cuanto entre.',
     openPanel: 'Abrir el panel',

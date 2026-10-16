@@ -180,10 +180,10 @@ export const en: Dictionary = {
       review: 'This is what Telma will know',
     },
     leads: {
-      hours: 'Telma only offers times inside these ranges. You can fine-tune them later, day by day, under Hours.',
-      services: 'She only books what is here. Booking something the clinic does not do sends somebody across town to be told no.',
-      telma: 'The tone, what to do with an emergency, and what to do when she cannot help.',
-      review: 'Read it as a patient on the phone would hear it. If something is wrong, go back and fix it: everything stays editable after you turn her on.',
+      hours: 'Telma only offers times inside these ranges. You can adjust them later, day by day, under Hours.',
+      services: 'Telma only books appointments for what appears in this list. If a service is missing, she cannot book it.',
+      telma: 'The tone she speaks in, what she does with an emergency, and what she does when she cannot settle the call.',
+      review: 'Read it as the caller would hear it. If something is not right, go back and correct it. Everything stays editable after you turn her on.',
     },
     reviewHelp: 'Built from what you answered in the steps before this.',
     back: 'Back',
@@ -192,7 +192,7 @@ export const en: Dictionary = {
     activate: 'Turn Telma on',
     activating: 'Turning on...',
     activateFailed: 'Could not turn her on. Try again.',
-    hoursAlready: 'You already had hours: they are here, you can leave them as they are.',
+    hoursAlready: 'These are the hours you already have. If they are right, carry on.',
   },
   welcome: {
     eyebrow: 'Welcome',

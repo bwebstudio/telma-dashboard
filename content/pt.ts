@@ -182,10 +182,10 @@ export const pt: Dictionary = {
       review: 'Isto é o que a Telma vai saber',
     },
     leads: {
-      hours: 'A Telma só oferece horas dentro destes intervalos. Pode afiná-los depois, dia a dia, em Horários.',
-      services: 'Ela só marca o que estiver aqui. Marcar algo que a clínica não faz manda alguém atravessar a cidade para ouvir que não.',
-      telma: 'O tom, o que fazer com uma urgência e o que fazer quando não consegue resolver.',
-      review: 'Leia como se fosse um doente ao telefone. Se alguma coisa não estiver bem, volte atrás e corrija: depois de a ligar continua tudo editável.',
+      hours: 'A Telma só oferece horas dentro destes intervalos. Poderá ajustá-los depois, dia a dia, em Horários.',
+      services: 'A Telma só marca consultas para o que estiver nesta lista. Se faltar um serviço, não o poderá marcar.',
+      telma: 'O tom com que fala, o que faz perante uma urgência e o que faz quando não consegue resolver a chamada.',
+      review: 'Leia-o como o ouviria quem liga. Se algo não estiver correcto, volte atrás e corrija. Tudo continua editável depois de a ligar.',
     },
     reviewHelp: 'Montado a partir do que respondeu nos passos anteriores.',
     back: 'Atrás',
@@ -194,7 +194,7 @@ export const pt: Dictionary = {
     activate: 'Activar a Telma',
     activating: 'A activar...',
     activateFailed: 'Não foi possível activar. Tente novamente.',
-    hoursAlready: 'Já tinha horários: estão aqui, pode deixá-los como estão.',
+    hoursAlready: 'Estes são os horários que já tem. Se estiverem bem, continue.',
   },
   welcome: {
     eyebrow: 'Bem-vinda',

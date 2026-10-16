@@ -711,7 +711,7 @@ if (AGENT && !DRY) {
   // A partial patch, deliberately. `tts` and `turn` sit beside `agent` under
   // conversation_config and are not sent, so a voice or a timeout chosen in the
   // console survives a run of this script -- the live agent is on
-  // eleven_v3_conversational with expressive mode, which this file does not
+  // eleven_v4_turbo with expressive mode, which this file does not
   // know about and must not undo.
   //
   // The built-ins go on top of what the agent has rather than instead of it, so

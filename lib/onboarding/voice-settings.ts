@@ -17,11 +17,15 @@
 
 export const AGENT_TTS = {
   /**
-   * v3 conversational, chosen by listening against HeyGen. Turbo v2_5 was the
-   * platform requirement when the agent was built and stopped being one.
+   * v4 Turbo, since October 2026. It replaced v3 conversational, which had been
+   * chosen by listening against HeyGen: same $0.04 per 1K characters and the
+   * same per-minute agent rate, so the move is for latency (~80ms against
+   * ~169ms in the agent console), not for price. Turbo v2_5 was the platform
+   * requirement when the agent was built and stopped being one.
    */
-  model_id: 'eleven_v3_conversational',
-  /** What v3 adds and turbo did not have. Without it the voice is flat again. */
+  model_id: 'eleven_v4_turbo',
+  /** What v3 added and turbo v2_5 did not have; v4 Turbo keeps it. Without it
+   *  the voice is flat again. */
   expressive_mode: true,
   /**
    * 0.7, and it has been to 0.8 and back.

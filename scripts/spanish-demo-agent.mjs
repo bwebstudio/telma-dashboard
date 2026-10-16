@@ -32,7 +32,7 @@ const LIVE = 'agent_9701kzp690x6fnaba03rmp81kt9a'
 
 // Voice. The same one the telephone uses, and that is not a compromise.
 //
-//   --model=eleven_v3_conversational  la del agente en vivo (por defecto)
+//   --model=eleven_v4_turbo           la del agente en vivo (por defecto)
 //   --model=eleven_multilingual_v2    más lenta y sin expressive; ver abajo
 //
 // `eleven_v3` y `eleven_v4` los rechaza la cuenta ("Expressive TTS is not
@@ -45,8 +45,8 @@ const LIVE = 'agent_9701kzp690x6fnaba03rmp81kt9a'
 // da la entonación. Las otras palancas tampoco existen ahí: "voice settings
 // (stability, speed, similarity) are not customizable for v3 models", así que
 // la estabilidad que se le pase a un modelo v3 no hace nada.
-const MODEL = process.argv.find((a) => a.startsWith('--model='))?.slice(8) || 'eleven_v3_conversational'
-const EXPRESSIVE = MODEL.startsWith('eleven_v3')
+const MODEL = process.argv.find((a) => a.startsWith('--model='))?.slice(8) || 'eleven_v4_turbo'
+const EXPRESSIVE = MODEL.startsWith('eleven_v3') || MODEL.startsWith('eleven_v4')
 
 const api = async (path, method = 'GET', body) => {
   const r = await fetch(`https://api.elevenlabs.io/v1${path}`, {

@@ -22,6 +22,7 @@
 // scope here; that is what scripts/test-agenda.mjs is for.
 
 import { readFileSync } from 'node:fs'
+import { AGENT_TTS } from '../lib/onboarding/voice-settings.ts'
 
 const KEY = env('ELEVENLABS_API_KEY')
 if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
@@ -180,8 +181,11 @@ const agent = await api('POST', '/v1/convai/agents/create', {
     },
     // Required for any agent that is not in English, and the same model the
     // live agents run. A simulation on a different voice model would be a
-    // simulation of a product we do not sell.
-    tts: { model_id: 'eleven_turbo_v2_5' },
+    // simulation of a product we do not sell, which is what this had become:
+    // the string here said turbo_v2_5 long after the telephone moved to v4,
+    // and the comment above went on claiming they matched. Read from the one
+    // file that decides, so there is nowhere left for the two to disagree.
+    tts: { model_id: AGENT_TTS.model_id },
   },
   // Platform-level guardrails, when a scenario asks for them. Worth being able
   // to run the same conversation with and without: prompt_injection has an

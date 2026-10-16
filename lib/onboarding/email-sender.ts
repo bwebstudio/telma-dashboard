@@ -20,8 +20,17 @@ export interface WelcomeEmail {
   password: string
   /** E.164, as it will be dialled. */
   phoneNumber: string
-  /** True when the number is a placeholder while porting completes. */
+  /**
+   * True when the clinic kept its own number, so the one above is the number
+   * it has to forward to. Not "a placeholder while porting completes", which
+   * is what this used to say and what the email used to announce: nobody
+   * ports anything here, and telling a clinic to wait for a portability that
+   * is not happening is how it ends up waiting instead of forwarding.
+   */
   temporaryNumber: boolean
+  /** Which calls they chose to send over, from step 3. Decides which codes
+   *  the email prints. */
+  forwardType?: 'no_answer' | 'all' 
   dashboardUrl: string
   /** The language the sign-up was filled in. The clinic reads this email in
    *  the language it just spent six steps typing in, not in ours. */
@@ -55,6 +64,14 @@ interface EmailCopy {
   leadPending: string
   numberLabel: string
   numberTemp: string
+  forwardTitle: string
+  forwardLead: string
+  forwardLabelAll: string
+  forwardLabelNoAnswer: string
+  forwardLabelBusy: string
+  forwardLabelUnreachable: string
+  forwardUndo: string
+  forwardFixed: string
   accessLabel: string
   passwordNote: string
   openPanel: string
@@ -76,7 +93,17 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
       'O painel já é seu e os acessos estão abaixo. Assim que o pagamento for confirmado, a linha entra ao serviço.',
     numberLabel: 'O número que a Telma atende',
     numberTemp:
-      'Número temporário. Avisamos assim que a portabilidade do seu número estiver concluída.',
+      'O seu número de sempre fica onde está, na sua operadora. Basta desviá-lo para este.',
+    forwardTitle: 'Desviar o seu número, em cinco minutos',
+    forwardLead:
+      'Marque o código no telefone da clínica, uma vez. Não corta o serviço e desfaz-se quando quiser.',
+    forwardLabelAll: 'Todas as chamadas',
+    forwardLabelNoAnswer: 'Quando ninguém atende',
+    forwardLabelBusy: 'Quando está ocupado',
+    forwardLabelUnreachable: 'Quando está sem rede',
+    forwardUndo: 'Para desfazer, marque ##002# e tudo volta ao que era.',
+    forwardFixed:
+      'Se o número é fixo, o desvio pede-se à operadora ou faz-se na área de cliente. Responda a este email e tratamos disso consigo.',
     accessLabel: 'Os seus acessos',
     passwordNote: 'Palavra-passe temporária. Mude-a assim que entrar.',
     openPanel: 'Abrir o painel',
@@ -101,7 +128,17 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
       'El panel ya es suyo y los accesos están abajo. En cuanto se confirme el pago, la línea entra en servicio.',
     numberLabel: 'El número que contesta Telma',
     numberTemp:
-      'Número temporal. Le avisamos en cuanto la portabilidad de su número esté terminada.',
+      'Su número de siempre se queda donde está, en su operadora. Solo hay que desviarlo a este.',
+    forwardTitle: 'Desviar su número, en cinco minutos',
+    forwardLead:
+      'Marque el código en el teléfono de la clínica, una vez. No corta el servicio y se deshace cuando quiera.',
+    forwardLabelAll: 'Todas las llamadas',
+    forwardLabelNoAnswer: 'Cuando no contesta nadie',
+    forwardLabelBusy: 'Cuando comunica',
+    forwardLabelUnreachable: 'Cuando está sin cobertura',
+    forwardUndo: 'Para deshacerlo, marque ##002# y todo vuelve a como estaba.',
+    forwardFixed:
+      'Si el número es fijo, el desvío se pide a la operadora o se hace en el área de cliente. Responda a este email y lo vemos con usted.',
     accessLabel: 'Sus accesos',
     passwordNote: 'Contraseña temporal. Cámbiela en cuanto entre.',
     openPanel: 'Abrir el panel',
@@ -186,70 +223,129 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
 // palette is the brand's, taken from globals.css by hand: an email cannot read
 // a custom property, so these are the only literal colours in the project and
 // they are here for that reason.
-function welcomeHtml(p: WelcomeEmail): string {
+/**
+ * The GSM codes, already filled in with the number Telma answers on.
+ *
+ * Three for "only the ones nobody picked up", not one: a phone that is engaged
+ * and a phone that is out of range are different conditions with different
+ * codes, and forwarding only `no answer` leaves a patient hearing the engaged
+ * tone, which is the call the clinic most wanted answered.
+ */
+function forwardCodes(p: WelcomeEmail, t: EmailCopy): { label: string; code: string }[] {
+  const n = p.phoneNumber.replace(/[\s-]/g, '')
+  return p.forwardType === 'all'
+    ? [{ label: t.forwardLabelAll, code: `**21*${n}#` }]
+    : [
+        { label: t.forwardLabelNoAnswer, code: `**61*${n}#` },
+        { label: t.forwardLabelBusy, code: `**67*${n}#` },
+        { label: t.forwardLabelUnreachable, code: `**62*${n}#` },
+      ]
+}
+
+const INK = '#111111'
+const INK_SOFT = '#525252'
+const INK_MUTE = '#706E6E'
+const LINE = '#E7EAE8'
+const SUNKEN = '#F5F5F3'
+const MACAW = '#D9EE50'
+const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+
+export function welcomeHtml(p: WelcomeEmail): string {
   const t = emailCopy(p.locale)
-  const numberNote = p.temporaryNumber
-    ? `<p style="margin:8px 0 0;font-size:14px;color:#706E6E">${escapeHtml(t.numberTemp)}</p>`
+  const lead = p.pendingPayment ? t.leadPending : t.leadReady
+
+  // The forwarding block only exists for a clinic that kept its own number.
+  // For one that bought a new number there is nothing to forward, and a set of
+  // codes it must not dial is worse than no block at all.
+  const forwarding = p.temporaryNumber
+    ? `
+      <h2 style="margin:36px 0 6px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
+      <p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${INK_SOFT}">${escapeHtml(t.forwardLead)}</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px;background:${SUNKEN}">
+        ${forwardCodes(p, t)
+          .map(
+            (c, i) => `<tr><td style="padding:${i ? '10px' : '16px'} 18px ${i === 0 ? '10px' : '10px'}">
+          <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(c.label)}</p>
+          <p style="margin:4px 0 0;font-size:19px;font-weight:600;font-family:${MONO};color:${INK}">${escapeHtml(c.code)}</p>
+        </td></tr>`
+          )
+          .join('\n        ')}
+        <tr><td style="padding:4px 18px 16px">
+          <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardUndo)}</p>
+        </td></tr>
+      </table>
+      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.forwardFixed)}</p>`
     : ''
 
   return `<!doctype html>
 <html lang="${t.htmlLang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
 <title>${escapeHtml(p.clinicName)}</title></head>
-<body style="margin:0;padding:32px 16px;background:#FFFFFF;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#111111">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto">
-    <tr><td>
-      <p style="margin:0 0 28px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#525252">Telma</p>
+<body style="margin:0;padding:0;background:${SUNKEN};font-family:${SANS};color:${INK};-webkit-font-smoothing:antialiased">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(lead)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SUNKEN}">
+    <tr><td align="center" style="padding:32px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border:1px solid ${LINE};border-radius:12px;overflow:hidden">
 
-      <h1 style="margin:0 0 12px;font-size:26px;line-height:1.2;font-weight:600;letter-spacing:-0.02em">${
-        p.pendingPayment
-          ? escapeHtml(t.headingPending(p.clinicName))
-          : escapeHtml(t.headingReady(p.clinicName))
-      }</h1>
-      <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#4B5563">
-        ${
-          escapeHtml(p.pendingPayment ? t.leadPending : t.leadReady)
-        }
-      </p>
-
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E7EAE8;border-radius:12px;background:#FFFFFF">
-        <tr><td style="padding:20px 22px">
-          <p style="margin:0;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#706E6E">${escapeHtml(t.numberLabel)}</p>
-          <p style="margin:6px 0 0;font-size:22px;font-weight:600">${escapeHtml(p.phoneNumber)}</p>
-          ${numberNote}
+        <tr><td style="background:${INK};padding:0;font-size:0;line-height:0">
+          <img src="https://app.telmaatende.com/brand/telma-lockup.png" width="240" height="56" alt="Telma"
+               style="display:block;border:0;width:240px;height:56px;max-width:240px">
         </td></tr>
-        <tr><td style="padding:0 22px"><div style="height:1px;background:#E7EAE8"></div></td></tr>
-        <tr><td style="padding:20px 22px">
-          <p style="margin:0;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#706E6E">${escapeHtml(t.accessLabel)}</p>
-          <p style="margin:6px 0 0;font-size:16px">${escapeHtml(p.email)}</p>
-          <p style="margin:4px 0 0;font-size:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${escapeHtml(
-            p.password
-          )}</p>
-          <p style="margin:8px 0 0;font-size:14px;color:#706E6E">${escapeHtml(t.passwordNote)}</p>
+        <tr><td style="background:${MACAW};font-size:0;line-height:0;height:3px">&nbsp;</td></tr>
+
+        <tr><td style="padding:32px 24px">
+          <h1 style="margin:0 0 12px;font-size:25px;line-height:1.25;font-weight:600;letter-spacing:-0.02em;color:${INK}">${
+            p.pendingPayment
+              ? escapeHtml(t.headingPending(p.clinicName))
+              : escapeHtml(t.headingReady(p.clinicName))
+          }</h1>
+          <p style="margin:0 0 26px;font-size:16px;line-height:1.6;color:${INK_SOFT}">${escapeHtml(lead)}</p>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
+            <tr><td style="padding:18px 20px">
+              <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberLabel)}</p>
+              <p style="margin:6px 0 0;font-size:22px;font-weight:600;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
+              ${
+                p.temporaryNumber
+                  ? `<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.numberTemp)}</p>`
+                  : ''
+              }
+            </td></tr>
+            <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>
+            <tr><td style="padding:18px 20px">
+              <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.accessLabel)}</p>
+              <p style="margin:6px 0 0;font-size:16px;color:${INK}">${escapeHtml(p.email)}</p>
+              <p style="margin:4px 0 0;font-size:17px;font-weight:600;font-family:${MONO};color:${INK}">${escapeHtml(p.password)}</p>
+              <p style="margin:8px 0 0;font-size:14px;color:${INK_MUTE}">${escapeHtml(t.passwordNote)}</p>
+            </td></tr>
+          </table>
+
+          <p style="margin:24px 0 0">
+            <a href="${escapeHtml(p.dashboardUrl)}"
+               style="display:inline-block;background:${INK};color:#FFFFFF;text-decoration:none;padding:13px 24px;border-radius:8px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
+          </p>
+${forwarding}
+
+          <h2 style="margin:36px 0 10px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.nextTitle)}</h2>
+          <ol style="margin:0;padding-left:20px;font-size:16px;line-height:1.7;color:${INK_SOFT}">
+            ${t.next.map((l) => `<li>${escapeHtml(l)}</li>`).join('\n            ')}
+          </ol>
+        </td></tr>
+
+        <tr><td style="padding:0 24px"><div style="height:1px;background:${LINE}"></div></td></tr>
+        <tr><td style="padding:18px 24px 24px">
+          <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.footer)}</p>
+          <p style="margin:10px 0 0;font-size:13px;color:${INK_MUTE}">Telma, de Bweb Studio</p>
         </td></tr>
       </table>
-
-      <p style="margin:28px 0">
-        <a href="${escapeHtml(
-          p.dashboardUrl
-        )}" style="display:inline-block;background:#111111;color:#FFFFFF;text-decoration:none;padding:14px 26px;border-radius:999px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
-      </p>
-
-      <h2 style="margin:32px 0 10px;font-size:17px;font-weight:600">${escapeHtml(t.nextTitle)}</h2>
-      <ol style="margin:0;padding-left:20px;font-size:16px;line-height:1.7;color:#4B5563">
-        ${t.next.map((l) => `<li>${escapeHtml(l)}</li>`).join('\n        ')}
-      </ol>
-
-      <div style="height:1px;background:#E7EAE8;margin:36px 0 16px"></div>
-      <p style="margin:0;font-size:13px;line-height:1.6;color:#706E6E">
-        ${escapeHtml(t.footer)}
-      </p>
     </td></tr>
   </table>
 </body></html>`
 }
 
-function welcomeText(p: WelcomeEmail): string {
+export function welcomeText(p: WelcomeEmail): string {
   const t = emailCopy(p.locale)
   return [
     p.pendingPayment ? t.headingPending(p.clinicName) : t.headingReady(p.clinicName),
@@ -262,6 +358,17 @@ function welcomeText(p: WelcomeEmail): string {
     `  ${p.password}`,
     `  ${t.passwordNote}`,
     `  ${p.dashboardUrl}`,
+    '',
+    ...(p.temporaryNumber
+      ? [
+          '',
+          `${t.forwardTitle}:`,
+          `  ${t.forwardLead}`,
+          ...forwardCodes(p, t).map((c) => `  ${c.label}: ${c.code}`),
+          `  ${t.forwardUndo}`,
+          `  ${t.forwardFixed}`,
+        ]
+      : []),
     '',
     `${t.nextTitle}:`,
     ...t.next.map((l, i) => `  ${i + 1}. ${l}`),

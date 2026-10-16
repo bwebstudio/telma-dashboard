@@ -533,6 +533,11 @@ export async function completeOnboarding(
       password,
       phoneNumber: assignedPhone,
       temporaryNumber: wizard.phone_option === 'keep',
+      // Which calls they chose to send over. The email prints the codes for
+      // that choice, and printing the wrong ones is worse than printing none:
+      // a clinic that asked for "only the ones nobody answered" and dials the
+      // unconditional code stops hearing its own phone ring.
+      forwardType: wizard.phone_option === 'keep' ? wizard.forward_type : undefined,
       dashboardUrl,
       locale,
       pendingPayment,

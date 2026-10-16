@@ -32,6 +32,7 @@ import {
 } from '@/lib/time'
 import { dayFacts } from '@/lib/agenda-facts'
 import { slotsToSimple } from '@/lib/onboarding/schedule'
+import { clinicLanguageSettings } from '@/lib/actions/clinic-settings'
 import { startsIn } from '@/lib/slots'
 import type { Appointment, AvailabilitySlot, BlockedDay, Call } from '@/lib/types'
 
@@ -244,6 +245,7 @@ export default async function AgendaPage({
           languages={await signupLanguages(
             isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE
           )}
+          languageSettings={await clinicLanguageSettings(clinicId)}
           dict={dict}
           hasHours={(openDays ?? 0) > 0}
         />

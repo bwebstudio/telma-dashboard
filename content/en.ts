@@ -171,17 +171,19 @@ export const en: Dictionary = {
     failed: 'Could not save. Try again.',
   },
   setupWizard: {
-    steps: { hours: 'Hours', services: 'Services', telma: 'How she answers', review: 'Review' },
+    steps: { hours: 'Hours', services: 'Services', languages: 'Languages', telma: 'How she answers', review: 'Review' },
     doneLabel: 'done',
     titles: {
       hours: 'When is the clinic open?',
       services: 'What does the clinic do?',
+      languages: 'Which languages should she answer in?',
       telma: 'How should Telma answer?',
       review: 'This is what Telma will know',
     },
     leads: {
       hours: 'Telma only offers times inside these ranges. You can adjust them later, day by day, under Hours.',
       services: 'Telma only books appointments for what appears in this list. If a service is missing, she cannot book it.',
+      languages: 'Your plan includes more than one. Telma recognises the language of the person calling and replies in it, without anybody having to ask.',
       telma: 'The tone she speaks in, what she does with an emergency, and what she does when she cannot settle the call.',
       review: 'Read it as the caller would hear it. If something is not right, go back and correct it. Everything stays editable after you turn her on.',
     },
@@ -193,6 +195,8 @@ export const en: Dictionary = {
     activating: 'Turning on...',
     activateFailed: 'Could not turn her on. Try again.',
     hoursAlready: 'These are the hours you already have. If they are right, carry on.',
+    saveFailed: 'Could not save. Try again.',
+    tooManyLanguages: 'You have chosen more languages than your plan includes.',
   },
   welcome: {
     eyebrow: 'Welcome',
@@ -211,6 +215,15 @@ export const en: Dictionary = {
       horarios: { title: 'Hours', body: 'When the clinic is open, day by day, and the days it closes. Telma only offers times that fit in here.' },
       telma: { title: 'Telma', body: 'What she knows about the clinic and how she answers. Everything you told her during setup is here and changes whenever you want.' },
     },
+  },
+  languagesSection: {
+    title: 'Languages she answers in',
+    help: 'Telma recognises the language of the person calling and replies in it. Your plan includes a number of languages: choose which.',
+    count: '{n} of {max}',
+    base: 'always included',
+    soon: 'coming soon',
+    full: 'You have reached your plan\u2019s maximum. Remove one to choose another, or move up a plan.',
+    tooMany: 'You have chosen more languages than your plan includes.',
   },
   agenda: {
     title: 'Agenda',

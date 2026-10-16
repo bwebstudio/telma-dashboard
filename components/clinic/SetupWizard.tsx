@@ -7,6 +7,8 @@ import type { OnboardingLocale } from '@/lib/onboarding/locale'
 import { HoursStep, ServicesStep, TelmaStep } from '@/components/onboarding/FormSections'
 import { PromptPreview } from '@/components/onboarding/PromptPreview'
 import { saveSetupHours } from '@/lib/actions/setup-wizard'
+import { updateClinicLanguages } from '@/lib/actions/clinic-settings'
+import { LanguagesSection } from '@/components/clinic/LanguagesSection'
 import { updateClinicProfile } from '@/lib/actions/clinic-settings'
 import { activateClinic } from '@/lib/actions/activate'
 import { IconCheck } from '@/components/icons'
@@ -43,19 +45,36 @@ import { IconCheck } from '@/components/icons'
 
 type Values = Record<string, unknown>
 
-const STEP_IDS = ['hours', 'services', 'telma', 'review'] as const
+// Languages before `telma`, because the greeting step asks which of them she
+// opens the call in and can only offer the ones the clinic has.
+const STEP_IDS = ['hours', 'services', 'languages', 'telma', 'review'] as const
 type StepId = (typeof STEP_IDS)[number]
 
 export function SetupWizard({
   initial,
   locale,
   languages,
+  languageSettings,
   dict,
   hasHours,
 }: {
   initial: Values
   locale: OnboardingLocale
   languages: LanguageOption[]
+  /**
+   * What the plan includes and what the clinic has today.
+   *
+   * A clinic on a plan with three languages signed up with one, because the
+   * sign-up never asked and seeded whichever language the form was filled in.
+   * Nothing afterwards pointed at the other two, so they were paid for and
+   * invisible.
+   */
+  languageSettings: {
+    languages: Array<{ code: string; name: string; status: 'available' | 'coming_soon' | 'deprecated' }>
+    selected: string[]
+    base: string
+    max: number | null
+  }
   dict: Dictionary
   /** True when the timetable already exists, so the first step opens filled
    *  rather than on the defaults. */
@@ -69,6 +88,9 @@ export function SetupWizard({
   const [step, setStep] = useState(0)
   const [pending, start] = useTransition()
   const [failed, setFailed] = useState<string | null>(null)
+  const [langs, setLangs] = useState<string[]>(
+    languageSettings.selected.length ? languageSettings.selected : [languageSettings.base]
+  )
 
   const id: StepId = STEP_IDS[step]
   const last = step === STEP_IDS.length - 1
@@ -88,6 +110,20 @@ export function SetupWizard({
     setErrors({})
     setFailed(null)
     start(async () => {
+      // Languages have their own action: the plan's ceiling is checked there
+      // and again by the trigger, and `updateClinicProfile` does not touch
+      // them. Saved here, and mirrored into `values` so the next step can
+      // offer them as the one she greets in.
+      if (id === 'languages') {
+        const saved = await updateClinicLanguages(langs)
+        if (!saved.ok) {
+          setFailed(saved.error === 'too_many' ? t.tooManyLanguages : t.saveFailed)
+          return
+        }
+        setValues((v) => ({ ...v, selected_languages: langs }))
+        return go(step + 1)
+      }
+
       const r =
         id === 'hours'
           ? await saveSetupHours(values, locale)
@@ -138,6 +174,25 @@ export function SetupWizard({
       <div className="mt-7">
         {id === 'hours' && <HoursStep {...stepProps} />}
         {id === 'services' && <ServicesStep {...stepProps} inPanel />}
+        {id === 'languages' && (
+          <LanguagesSection
+            languages={languageSettings.languages}
+            selected={langs}
+            base={languageSettings.base}
+            max={languageSettings.max}
+            readOnly={false}
+            embedded
+            onChange={setLangs}
+            labels={{
+              ...dict.languagesSection,
+              save: dict.common.save,
+              saving: dict.common.saving,
+              saved: dict.common.saved,
+              error: dict.common.errorGeneric,
+              readOnly: dict.billing.readOnly,
+            }}
+          />
+        )}
         {id === 'telma' && (
           <TelmaStep
             {...stepProps}

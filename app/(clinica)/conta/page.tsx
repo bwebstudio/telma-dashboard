@@ -135,25 +135,10 @@ export default async function ContaPage() {
             max={languageSettings.max}
             readOnly={readOnly}
             labels={{
-              title: locale === 'es' ? 'Idiomas configurados' : 'Idiomas configurados',
-              help:
-                locale === 'es'
-                  ? 'Telma reconoce la lengua de quien llama y responde en ella. Su plan incluye un número de idiomas; elija cuáles.'
-                  : 'A Telma reconhece a língua de quem liga e responde nela. O seu plano inclui um número de idiomas; escolha quais.',
-              count: locale === 'es' ? '{n} de {max}' : '{n} de {max}',
-              base: locale === 'es' ? 'siempre incluido' : 'incluído sempre',
-              soon: locale === 'es' ? 'próximamente' : 'em breve',
-              full:
-                locale === 'es'
-                  ? 'Ha llegado al máximo de su plan. Quite uno para elegir otro, o suba de plan.'
-                  : 'Chegou ao máximo do seu plano. Retire um para escolher outro, ou suba de plano.',
+              ...dict.languagesSection,
               save: dict.common.save,
               saving: dict.common.saving,
               saved: dict.common.saved,
-              tooMany:
-                locale === 'es'
-                  ? 'Ha elegido más idiomas de los que incluye su plan.'
-                  : 'Escolheu mais idiomas do que o seu plano inclui.',
               error: dict.common.errorGeneric,
               readOnly: dict.billing.readOnly,
             }}

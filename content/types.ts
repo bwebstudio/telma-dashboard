@@ -170,10 +170,10 @@ export interface Dictionary {
   /** The guided first run: one question per screen, saved as it goes, ending
    *  on the clinic reading its own answers back before turning Telma on. */
   setupWizard: {
-    steps: { hours: string; services: string; telma: string; review: string }
+    steps: { hours: string; services: string; languages: string; telma: string; review: string }
     doneLabel: string
-    titles: { hours: string; services: string; telma: string; review: string }
-    leads: { hours: string; services: string; telma: string; review: string }
+    titles: { hours: string; services: string; languages: string; telma: string; review: string }
+    leads: { hours: string; services: string; languages: string; telma: string; review: string }
     reviewHelp: string
     back: string
     continue: string
@@ -182,6 +182,8 @@ export interface Dictionary {
     activating: string
     activateFailed: string
     hoursAlready: string
+    saveFailed: string
+    tooManyLanguages: string
   }
   /** The first minute in the panel: a welcome card, then a walk round the
    *  sidebar. `{clinic}` is the clinic's name, `{n}`/`{total}` the position. */
@@ -199,6 +201,18 @@ export interface Dictionary {
       'hoje' | 'marcacoes' | 'conversas' | 'horarios' | 'telma',
       { title: string; body: string }
     >
+  }
+  /** The language chooser, shared by the account page and the guided setup.
+   *  It was written inline in the page with a ternary per string, which is
+   *  how the second place to show it would have got a second wording. */
+  languagesSection: {
+    title: string
+    help: string
+    count: string
+    base: string
+    soon: string
+    full: string
+    tooMany: string
   }
   setup: {
     eyebrow: string

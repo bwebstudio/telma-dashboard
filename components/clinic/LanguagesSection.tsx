@@ -28,6 +28,8 @@ export function LanguagesSection({
   base,
   max,
   readOnly,
+  embedded = false,
+  onChange,
   labels,
 }: {
   languages: LanguageRow[]
@@ -36,6 +38,14 @@ export function LanguagesSection({
   /** Null is unlimited. */
   max: number | null
   readOnly: boolean
+  /**
+   * Inside the guided setup there is already a Continuar at the foot of the
+   * screen, and two buttons that both mean "go on" is how somebody presses
+   * the wrong one and believes they have saved. In that mode this reports the
+   * selection upward and the wizard writes it.
+   */
+  embedded?: boolean
+  onChange?: (codes: string[]) => void
   labels: {
     title: string
     help: string
@@ -67,9 +77,11 @@ export function LanguagesSection({
   function toggle(code: string) {
     if (code === base || readOnly) return
     setState('idle')
-    setChosen((prev) =>
-      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
-    )
+    setChosen((prev) => {
+      const next = prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+      onChange?.(next)
+      return next
+    })
   }
 
   function save() {
@@ -134,7 +146,7 @@ export function LanguagesSection({
       {atMax && !readOnly && <p className="mt-3 text-sm text-ink-mute">{labels.full}</p>}
       {readOnly && <p className="mt-3 text-sm text-ink-mute">{labels.readOnly}</p>}
 
-      {!readOnly && (
+      {!readOnly && !embedded && (
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <button
             type="button"

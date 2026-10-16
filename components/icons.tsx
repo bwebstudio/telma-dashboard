@@ -208,25 +208,28 @@ export function IconChevron({ className }: P) {
 }
 
 /**
- * The Telma mark, redrawn rather than served.
+ * THE MARK, at nav size.
  *
- * public/icons/telma-fav.png exists, and a PNG in the sidebar would have been
- * one line. But a nav icon has to invert: the active item is dark, and a flat
- * green bitmap on it reads as a sticker. Traced into paths it takes
- * `currentColor` like every other icon here and disappears into the row it
- * belongs to.
+ * Same geometry as components/TelmaMark and as web/app/icon.svg: three bars,
+ * left-flush, 556 / 294 / 162 wide on a 100 bar with a 62 gap, scaled into the
+ * 24 square the rest of these icons live in. The numbers are the logotype, so
+ * they are scaled from it rather than eyeballed.
+ *
+ * It replaces a hand-drawn pair of rounded bars that was the previous logo.
+ * That is the failure a drawn icon always has in the end: the brand changed
+ * and the sidebar went on showing last season's for months, in the one place
+ * a clinic looks at every day.
+ *
+ * Filled and not stroked, unlike its neighbours. The bars are solid shapes in
+ * the logotype and outlining them would be drawing a different mark; it takes
+ * `currentColor` either way, so it still inverts on the active dark row.
  */
 export function IconTelma({ className }: P) {
   return (
-    <svg
-      {...base}
-      className={className}
-      fill="currentColor"
-      stroke="none"
-      strokeWidth={0}
-    >
-      <path d="M11.2 3.6H8.3A2.9 2.9 0 0 0 5.4 6.5v7.1a2.9 2.9 0 0 0 2.9 2.9h2.9z" />
-      <path d="M12.8 20.4h2.9a2.9 2.9 0 0 0 2.9-2.9v-7.1a2.9 2.9 0 0 0-2.9-2.9h-2.9z" />
+    <svg {...base} className={className} fill="currentColor" stroke="none" strokeWidth={0}>
+      <rect x="3" y="5.14" width="18.00" height="3.24" rx="1.62" />
+      <rect x="3" y="10.38" width="9.52" height="3.24" rx="1.62" />
+      <rect x="3" y="15.63" width="5.24" height="3.24" rx="1.62" />
     </svg>
   )
 }

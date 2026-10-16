@@ -189,17 +189,17 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
 function welcomeHtml(p: WelcomeEmail): string {
   const t = emailCopy(p.locale)
   const numberNote = p.temporaryNumber
-    ? `<p style="margin:8px 0 0;font-size:14px;color:#5F6B66">${escapeHtml(t.numberTemp)}</p>`
+    ? `<p style="margin:8px 0 0;font-size:14px;color:#706E6E">${escapeHtml(t.numberTemp)}</p>`
     : ''
 
   return `<!doctype html>
 <html lang="${t.htmlLang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(p.clinicName)}</title></head>
-<body style="margin:0;padding:32px 16px;background:#FCFCFA;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#111827">
+<body style="margin:0;padding:32px 16px;background:#FFFFFF;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#111111">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto">
     <tr><td>
-      <p style="margin:0 0 28px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#3E7B73">Telma</p>
+      <p style="margin:0 0 28px;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#525252">Telma</p>
 
       <h1 style="margin:0 0 12px;font-size:26px;line-height:1.2;font-weight:600;letter-spacing:-0.02em">${
         p.pendingPayment
@@ -214,25 +214,25 @@ function welcomeHtml(p: WelcomeEmail): string {
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E7EAE8;border-radius:12px;background:#FFFFFF">
         <tr><td style="padding:20px 22px">
-          <p style="margin:0;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#5F6B66">${escapeHtml(t.numberLabel)}</p>
+          <p style="margin:0;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#706E6E">${escapeHtml(t.numberLabel)}</p>
           <p style="margin:6px 0 0;font-size:22px;font-weight:600">${escapeHtml(p.phoneNumber)}</p>
           ${numberNote}
         </td></tr>
         <tr><td style="padding:0 22px"><div style="height:1px;background:#E7EAE8"></div></td></tr>
         <tr><td style="padding:20px 22px">
-          <p style="margin:0;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#5F6B66">${escapeHtml(t.accessLabel)}</p>
+          <p style="margin:0;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#706E6E">${escapeHtml(t.accessLabel)}</p>
           <p style="margin:6px 0 0;font-size:16px">${escapeHtml(p.email)}</p>
           <p style="margin:4px 0 0;font-size:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${escapeHtml(
             p.password
           )}</p>
-          <p style="margin:8px 0 0;font-size:14px;color:#5F6B66">${escapeHtml(t.passwordNote)}</p>
+          <p style="margin:8px 0 0;font-size:14px;color:#706E6E">${escapeHtml(t.passwordNote)}</p>
         </td></tr>
       </table>
 
       <p style="margin:28px 0">
         <a href="${escapeHtml(
           p.dashboardUrl
-        )}" style="display:inline-block;background:#183C37;color:#FFFFFF;text-decoration:none;padding:14px 26px;border-radius:999px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
+        )}" style="display:inline-block;background:#111111;color:#FFFFFF;text-decoration:none;padding:14px 26px;border-radius:999px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
       </p>
 
       <h2 style="margin:32px 0 10px;font-size:17px;font-weight:600">${escapeHtml(t.nextTitle)}</h2>
@@ -241,7 +241,7 @@ function welcomeHtml(p: WelcomeEmail): string {
       </ol>
 
       <div style="height:1px;background:#E7EAE8;margin:36px 0 16px"></div>
-      <p style="margin:0;font-size:13px;line-height:1.6;color:#5F6B66">
+      <p style="margin:0;font-size:13px;line-height:1.6;color:#706E6E">
         ${escapeHtml(t.footer)}
       </p>
     </td></tr>

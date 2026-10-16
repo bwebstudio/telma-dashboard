@@ -18,11 +18,51 @@ const config: Config = {
         brand: {
           DEFAULT: 'rgb(var(--brand) / <alpha-value>)',
           hover: 'rgb(var(--brand-hover) / <alpha-value>)',
-          // The lighter green — the one that may be read as text on a light
-          // surface. Never use it for a label on the dark blocks.
+          // The mid grey — the one that may be read as text on a light
+          // surface, at 7.81:1. Never use it for a label on the dark blocks.
           accent: 'rgb(var(--brand-accent) / <alpha-value>)',
           wash: 'rgb(var(--brand-wash) / <alpha-value>)',
           'wash-strong': 'rgb(var(--brand-wash-strong) / <alpha-value>)',
+        },
+        // The clinic's colour. These resolve through --accent, which the
+        // [data-accent] blocks in globals.css repoint per clinic, so a
+        // component written against `bg-accent-wash` follows the clinic
+        // without naming a hue. Prefer these over naming a ramp directly.
+        accent: {
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          strong: 'rgb(var(--accent-strong) / <alpha-value>)',
+          soft: 'rgb(var(--accent-soft) / <alpha-value>)',
+          wash: 'rgb(var(--accent-wash) / <alpha-value>)',
+        },
+        // The four ramps themselves, for the handful of places that mean one
+        // specific hue and not "whatever this clinic picked" — a chart series,
+        // a legend. Four steps, and they mean the same thing in every hue: 400
+        // is the saturated one for a border or a small solid, the base is a
+        // ground you can read ink on, 200 is a hover, 100 is a wash. White
+        // never goes on any of them.
+        macaw: {
+          DEFAULT: 'rgb(var(--macaw) / <alpha-value>)',
+          400: 'rgb(var(--macaw-400) / <alpha-value>)',
+          200: 'rgb(var(--macaw-200) / <alpha-value>)',
+          100: 'rgb(var(--macaw-100) / <alpha-value>)',
+        },
+        purple: {
+          DEFAULT: 'rgb(var(--purple) / <alpha-value>)',
+          400: 'rgb(var(--purple-400) / <alpha-value>)',
+          200: 'rgb(var(--purple-200) / <alpha-value>)',
+          100: 'rgb(var(--purple-100) / <alpha-value>)',
+        },
+        blue: {
+          DEFAULT: 'rgb(var(--blue) / <alpha-value>)',
+          400: 'rgb(var(--blue-400) / <alpha-value>)',
+          200: 'rgb(var(--blue-200) / <alpha-value>)',
+          100: 'rgb(var(--blue-100) / <alpha-value>)',
+        },
+        red: {
+          DEFAULT: 'rgb(var(--red) / <alpha-value>)',
+          400: 'rgb(var(--red-400) / <alpha-value>)',
+          200: 'rgb(var(--red-200) / <alpha-value>)',
+          100: 'rgb(var(--red-100) / <alpha-value>)',
         },
         ink: {
           DEFAULT: 'rgb(var(--ink) / <alpha-value>)',

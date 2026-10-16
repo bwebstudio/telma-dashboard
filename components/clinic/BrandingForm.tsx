@@ -6,15 +6,19 @@ import type { Dictionary } from '@/content'
 import { CLINIC_ACCENTS, type ClinicAccent } from '@/lib/types'
 import { uploadLogo, removeLogo, setAccent } from '@/lib/actions/branding'
 
-// The swatch a clinic actually picks from. These are the same five ramps as
-// [data-accent] in globals.css; showing the solid is enough to choose by, and
-// keeps the control from turning into a colour picker.
+// The swatch a clinic actually picks from — the base of each ramp in
+// [data-accent] in globals.css.
+//
+// These used to be the dark solids, back when picking an accent changed the
+// primary button. It no longer does: the button is black in every clinic and
+// what the accent colours is the ground. So the swatch shows the ground, which
+// is both what the clinic will actually see and the honest thing to choose by.
 const SWATCH: Record<ClinicAccent, string> = {
-  brand: '#183C37',
-  ocean: '#143454',
-  plum: '#3D2242',
-  clay: '#7A301A',
-  slate: '#272D33',
+  brand: '#D9EE50',
+  ocean: '#6FE1EE',
+  plum: '#C3AFFE',
+  clay: '#FF9292',
+  slate: '#E2E2DF',
 }
 
 /**

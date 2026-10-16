@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#183C37',
+  themeColor: '#111111',
   width: 'device-width',
   initialScale: 1,
   // Zoom stays available: a rep reading a note in bright sun may need it.

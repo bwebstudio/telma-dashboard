@@ -34,13 +34,13 @@ export interface MapPin {
 // Pins carry the stage as colour, so a district reads as a state of play rather
 // than as a pile of dots: untouched, in progress, won, lost.
 const STAGE_COLOR: Record<CrmStage, string> = {
-  new: '#5F6B66',
+  new: '#706E6E',
   attempting: '#8C540A',
-  contacted: '#3E7B73',
-  interested: '#3E7B73',
-  meeting: '#183C37',
-  won: '#155E4C',
-  lost: '#9B2C26',
+  contacted: '#17616B',
+  interested: '#17616B',
+  meeting: '#111111',
+  won: '#525C10',
+  lost: '#9E3428',
 }
 
 export function ProspectMap({
@@ -109,7 +109,7 @@ export function ProspectMap({
           return L.divIcon({
             className: '',
             html: `<span style="display:flex;align-items:center;justify-content:center;
-                     width:${size}px;height:${size}px;border-radius:999px;background:#183C37;
+                     width:${size}px;height:${size}px;border-radius:999px;background:#111111;
                      color:#fff;font-weight:550;font-size:${n < 100 ? 14 : 13}px;
                      border:2px solid #fff;box-shadow:0 2px 8px rgba(17,24,39,.3)">${n}</span>`,
             iconSize: [size, size],
@@ -140,20 +140,20 @@ export function ProspectMap({
              <p style="margin:0 0 2px;font-weight:550;font-size:15px;line-height:1.3">${escapeHtml(
                pin.name
              )}</p>
-             <p style="margin:0 0 10px;color:#5F6B66;font-size:13px;line-height:1.4">${escapeHtml(
+             <p style="margin:0 0 10px;color:#706E6E;font-size:13px;line-height:1.4">${escapeHtml(
                [pin.specialtyLabel, pin.zone].filter(Boolean).join(' · ')
              )}${pin.address ? `<br>${escapeHtml(pin.address)}` : ''}</p>
              ${
                pin.referral
                  ? `<p style="margin:-6px 0 10px;display:inline-block;padding:2px 8px;
-                      border-radius:999px;background:#EFF3F1;color:#183C37;font-size:12px;
+                      border-radius:999px;background:#F1F1EF;color:#111111;font-size:12px;
                       font-weight:550">&#8599; ${escapeHtml(pin.referral)}</p>`
                  : ''
              }
              ${
                pin.telHref
                  ? `<a href="${pin.telHref}" style="display:flex;align-items:center;justify-content:center;
-                      min-height:44px;border-radius:999px;background:#183C37;color:#fff;
+                      min-height:44px;border-radius:999px;background:#111111;color:#fff;
                       font-weight:550;font-size:15px;text-decoration:none;margin-bottom:6px">${escapeHtml(
                         pin.phone ?? ''
                       )}</a>`
@@ -161,11 +161,11 @@ export function ProspectMap({
              }
              <div style="display:flex;gap:6px">
                <a href="/crm/prospetos/${pin.id}" style="flex:1;display:flex;align-items:center;
-                  justify-content:center;min-height:40px;border-radius:999px;border:1px solid #D4D9D6;
-                  color:#111827;font-size:13px;text-decoration:none">${escapeHtml(labels.openRecord)}</a>
+                  justify-content:center;min-height:40px;border-radius:999px;border:1px solid #D6D6D3;
+                  color:#111111;font-size:13px;text-decoration:none">${escapeHtml(labels.openRecord)}</a>
                <a href="${dir}" target="_blank" rel="noreferrer" style="flex:1;display:flex;
                   align-items:center;justify-content:center;min-height:40px;border-radius:999px;
-                  border:1px solid #D4D9D6;color:#111827;font-size:13px;text-decoration:none">${escapeHtml(
+                  border:1px solid #D6D6D3;color:#111111;font-size:13px;text-decoration:none">${escapeHtml(
                     labels.directions
                   )}</a>
              </div>
@@ -206,7 +206,7 @@ export function ProspectMap({
           radius: 8,
           color: '#fff',
           weight: 3,
-          fillColor: '#183C37',
+          fillColor: '#111111',
           fillOpacity: 1,
         }).addTo(meLayer.current!)
         map.current?.setView([latitude, longitude], 16)

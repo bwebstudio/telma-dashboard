@@ -32,47 +32,98 @@
 
        Stored as RGB channels, not hex, so every token composes with
        `rgb(var(--x) / <alpha>)` and Tailwind's opacity modifiers — bg-bg/85,
-       border-ink/25 — actually emit CSS. A token holding `#183c37` cannot be
+       border-ink/25 — actually emit CSS. A token holding `#111111` cannot be
        taken apart, and the utility silently vanishes from the stylesheet. */
-    --brand: 24 60 55;
-    --brand-hover: 33 81 73;
-    --brand-accent: 62 123 115;
-    --brand-wash: 239 243 241;
-    --brand-wash-strong: 221 231 228;
+    --macaw-400: 192 212 52;
+    --macaw: 217 238 80;
+    --macaw-200: 234 248 146;
+    --macaw-100: 247 253 208;
+
+    --purple-400: 157 127 243;
+    --purple: 195 175 254;
+    --purple-200: 216 203 255;
+    --purple-100: 244 240 255;
+
+    --blue-400: 54 200 216;
+    --blue: 111 225 238;
+    --blue-200: 167 243 252;
+    --blue-100: 217 251 255;
+
+    --red-400: 233 108 91;
+    --red: 255 146 146;
+    --red-200: 255 189 189;
+    --red-100: 255 241 241;
+
+    /* The neutrals carry the panel; the ramps mark one thing at a time.
+
+       --brand is near-black, so `btn-primary` is white on 18.88:1 and still
+       needs no contrast workaround — the same ratio the forest green gave,
+       reached without spending a colour on it. That is worth more here than on
+       the landing: a receptionist reads this screen a hundred times a day, and
+       the thing she presses should not be the loudest object on it.
+
+       White fails on every 400 above (macaw 1.65:1, blue 2.02:1, purple
+       3.10:1, red 3.11:1), so a white label never goes on one of these ramps.
+       They are grounds and marks. The action colour is ink. */
+    --brand: 17 17 17;
+    --brand-hover: 48 48 48;
+    --brand-accent: 82 82 82;
+    --brand-wash: 241 241 239;
+    --brand-wash-strong: 226 226 223;
+
+    /* The semantic accent points at one ramp, so every `bg-accent` moves
+       together by editing these four lines. The clinic blocks further down
+       repoint them, and nothing else in the panel names a ramp directly. */
+    --accent: var(--macaw);
+    --accent-strong: var(--macaw-400);
+    --accent-soft: var(--macaw-200);
+    --accent-wash: var(--macaw-100);
 
     /* --- Ink --------------------------------------------------------------
        Every value clears WCAG AA on both --bg and --surface. --ink-mute is
        pulled toward the green-grey of the borders rather than being neutral,
        so nothing on the page reads cold. */
-    --ink: 17 24 39;
-    --ink-soft: 75 85 99;
-    --ink-mute: 95 107 102;
+    --ink: 17 17 17;
+    --ink-soft: 82 82 82;
+    --ink-mute: 112 112 110;
 
     /* --- Surfaces ---------------------------------------------------------
        The page is warm off-white and the cards are pure white, which is the
        right way round: an object lifts by being lighter than its ground. */
-    --bg: 252 252 250;
+    --bg: 255 255 255;
     --surface: 255 255 255;
-    --surface-sunken: 244 244 240;
-    --border: 231 234 232;
-    --border-strong: 212 217 214;
+    --surface-sunken: 245 245 243;
+    --border: 232 232 230;
+    --border-strong: 214 214 211;
 
     /* --- Dark surface -----------------------------------------------------
        Ink, not the brand green. The green is reserved for marks and actions. */
-    --dark: 17 24 39;
-    --dark-soft: 27 36 48;
-    --dark-line: 42 52 65;
+    --dark: 11 11 11;
+    --dark-soft: 26 26 26;
+    --dark-line: 44 44 44;
 
     /* --- Status (panel only) ----------------------------------------------
        A landing page has no overdue rows. These are the three states a rep
-       reads at a glance, tuned to sit inside the brand rather than beside it:
-       the greens share the brand's family, the amber is ochre rather than
-       yellow, the red is brick rather than alarm.
+       reads at a glance.
 
-       Measured against --bg, --surface and their own wash, the worst pair is
-       5.49:1. None of this is decorative — an overdue clinic is the most
-       important thing on the HOJE screen and has to survive being read on a
-       phone in sunlight. */
+       They stay dark while the rest of the palette went light, and that is not
+       an oversight: `text-danger` appears 46 times in this codebase,
+       `text-warn` 34 and `text-ok` 20. A status token here is a text colour
+       far more often than it is a ground, so it has to clear AA as ink. The
+       ramps above cannot do that — they are grounds — so each status is the
+       ramp's hue taken down until it reads on white, and each soft is the
+       ramp's own 100 step.
+
+       Measured on white: ok 7.25:1, warn 6.20:1, danger 7.06:1, and the same
+       figures carry a white label where `bg-ok` and friends are used solid.
+       Ink on the softs is never below 16.7:1.
+
+       ok is macaw's hue at olive, which is the only green this palette has.
+       warn keeps its ochre: the palette holds no amber, and borrowing red's
+       hue for it would have left warn and danger looking like each other,
+       which is the one thing a warning may not do. None of this is decorative
+       — an overdue clinic is the most important thing on the HOJE screen and
+       has to survive being read on a phone with a window behind it. */
     /* Services, told apart at a glance.
        Categorical rather than semantic: none of these means good or bad, they
        only mean "not the same thing as the one next to it". Chosen to stay
@@ -90,12 +141,12 @@
     --cat-7: 233 231 250;
     --cat-8: 249 226 231;
 
-    --ok: 21 94 76;
-    --ok-soft: 232 241 237;
+    --ok: 82 92 16;
+    --ok-soft: 247 253 208;
     --warn: 140 84 10;
     --warn-soft: 250 240 224;
-    --danger: 155 44 38;
-    --danger-soft: 250 235 233;
+    --danger: 158 52 40;
+    --danger-soft: 255 241 241;
 
     /* --- Radius -----------------------------------------------------------
        Large radii are the loudest tell of a template: they read friendly, and
@@ -107,16 +158,16 @@
     --radius-pill: 999px;
 
     /* --- Elevation --------------------------------------------------------
-       Tinted with the brand green rather than neutral grey. Depth comes from
-       hairlines and white space; a shadow exists only to keep a white edge
-       from cutting out against a white ground. */
-    --shadow-1: 0 1px 1px rgba(17, 24, 39, 0.02),
-      0 2px 6px -3px rgba(24, 60, 55, 0.06);
-    --shadow-2: 0 1px 2px rgba(17, 24, 39, 0.02),
-      0 10px 24px -14px rgba(24, 60, 55, 0.1);
-    --shadow-3: 0 2px 4px rgba(17, 24, 39, 0.02),
-      0 24px 52px -30px rgba(24, 60, 55, 0.14);
-    --shadow-brand: 0 10px 28px -14px rgba(24, 60, 55, 0.28);
+       Neutral now, where they used to be tinted with the forest green. The
+       page is pure white and the brand is near-black: a green-tinted shadow
+       under a white card on a white ground was the last thing still making
+       this product read warm, and it read warm against nothing. Depth comes
+       from hairlines and white space; a shadow exists only to keep a white
+       edge from cutting out against a white ground. */
+    --shadow-1: 0 1px 1px rgba(0, 0, 0, 0.02), 0 2px 6px -3px rgba(0, 0, 0, 0.06);
+    --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.02), 0 10px 24px -14px rgba(0, 0, 0, 0.1);
+    --shadow-3: 0 2px 4px rgba(0, 0, 0, 0.02), 0 24px 52px -30px rgba(0, 0, 0, 0.14);
+    --shadow-brand: 0 10px 24px -14px rgba(0, 0, 0, 0.3);
 
     /* --- Motion -----------------------------------------------------------
        A single ease-out curve with no overshoot. Continuity, never spectacle. */
@@ -127,45 +178,61 @@
   }
 
   /* --- Clinic accents -----------------------------------------------------
-     A clinic picks a name, never a colour value. Each of these swaps the whole
-     brand ramp, so every relationship the design system already relies on —
-     solid button, readable accent text, wash behind a hovered row — moves
-     together instead of one of them drifting out of contrast.
+     A clinic picks a name, never a colour value.
 
-     Measured: the solid carries white at 9.27:1 in the worst case (clay), and
-     the accent read as text on the page clears 4.77:1 in the worst case
-     (the default forest). All AA, none of it decorative: this panel gets read
-     on a phone at a reception desk with a window behind it.
+     WHAT CHANGED, AND WHY THE NAMES DID NOT.
+     These used to swap --brand itself: each clinic got its own dark solid, and
+     the primary button came out navy, plum or brick. That cannot work against
+     the new ramps, which are light — white on any of them is under 3.2:1, so a
+     clinic set to macaw would have had an unreadable button on every screen.
 
-     Status tones are deliberately NOT swapped. "Cancelled" has to look the
-     same in every clinic, or it stops being information and becomes styling. */
+     So the action colour is now fixed. --brand stays near-black in every
+     clinic, the button is always black, and what the clinic actually colours
+     is the ground: the washes behind a hovered row, a selected day, a chip.
+     That is the right half to hand over anyway. A clinic should be able to
+     recognise its own panel; it should not be able to make the save button
+     hard to read.
+
+     The five names are kept exactly as they are stored, because clinics have
+     them in the database already and a rename is a migration for no gain.
+     They simply point somewhere else now, and three of the four map onto a
+     near-synonym: ocean at the blue, plum at the purple, clay at the red. The
+     default is macaw, and slate stays neutral for a clinic that wants none of
+     this — which is a real preference and not a missing choice.
+
+     Status tones are still NOT swapped. "Cancelled" has to look the same in
+     every clinic, or it stops being information and becomes styling. */
   [data-accent='ocean'] {
-    --brand: 20 52 84;
-    --brand-hover: 28 72 115;
-    --brand-accent: 41 94 140;
-    --brand-wash: 238 242 247;
-    --brand-wash-strong: 218 228 240;
+    --accent: var(--blue);
+    --accent-strong: var(--blue-400);
+    --accent-soft: var(--blue-200);
+    --accent-wash: var(--blue-100);
+    --brand-wash: var(--blue-100);
+    --brand-wash-strong: var(--blue-200);
   }
   [data-accent='plum'] {
-    --brand: 61 34 66;
-    --brand-hover: 84 47 90;
-    --brand-accent: 118 68 126;
-    --brand-wash: 245 241 246;
-    --brand-wash-strong: 233 224 235;
+    --accent: var(--purple);
+    --accent-strong: var(--purple-400);
+    --accent-soft: var(--purple-200);
+    --accent-wash: var(--purple-100);
+    --brand-wash: var(--purple-100);
+    --brand-wash-strong: var(--purple-200);
   }
   [data-accent='clay'] {
-    --brand: 122 48 26;
-    --brand-hover: 145 58 32;
-    --brand-accent: 169 74 39;
-    --brand-wash: 249 241 237;
-    --brand-wash-strong: 242 227 219;
+    --accent: var(--red);
+    --accent-strong: var(--red-400);
+    --accent-soft: var(--red-200);
+    --accent-wash: var(--red-100);
+    --brand-wash: var(--red-100);
+    --brand-wash-strong: var(--red-200);
   }
   [data-accent='slate'] {
-    --brand: 39 45 51;
-    --brand-hover: 55 63 71;
-    --brand-accent: 82 93 104;
-    --brand-wash: 241 242 243;
-    --brand-wash-strong: 226 229 231;
+    --accent: 226 226 223;
+    --accent-strong: 160 160 157;
+    --accent-soft: 236 236 233;
+    --accent-wash: 245 245 243;
+    --brand-wash: 241 241 239;
+    --brand-wash-strong: 226 226 223;
   }
 
   html {

@@ -13,8 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#FCFCFA',
-    theme_color: '#183C37',
+    background_color: '#FFFFFF',
+    theme_color: '#111111',
     lang: 'pt',
     dir: 'ltr',
     icons: [

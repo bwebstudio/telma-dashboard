@@ -63,8 +63,10 @@ export default async function InscricaoPage({
         <p className="mt-3 max-w-lead text-lg text-ink-soft">{t.introLead}</p>
       </div>
 
-      <div className="rule" />
-
+      {/* No rule here. The step indicator under it is already a horizontal
+          line with the steps drawn on it, so a hairline directly above was
+          two separators stacked and the heading ended up fenced off from the
+          thing it introduces. The air does the separating. */}
       <WizardForm
         plans={plans}
         demo={demo}

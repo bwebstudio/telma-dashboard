@@ -50,7 +50,10 @@ export const VOICES: Voice[] = [
       pt: 'Feminina, calma, português europeu. A escolha por defeito.',
       es: 'Femenina, tranquila, castellano peninsular. La opción por defecto.',
     },
-    sample: { pt: '/audio/telma-portugues.mp3', es: '/audio/telma-esp2.mp3' },
+    // Renamed on the site when the recordings were replaced and levelled; the
+    // old names are gone, and this file points at them by URL across a
+    // repository boundary that no compiler checks.
+    sample: { pt: '/audio/telma-pt.mp3', es: '/audio/telma-es.mp3' },
   },
   {
     id: 'demo-joao',

@@ -1,6 +1,7 @@
 import { getDict } from '@/lib/i18n'
 import { LoginForm } from '@/components/LoginForm'
 import { TelmaMark } from '@/components/TelmaMark'
+import { TelmaConversationField } from '@/components/field/TelmaConversationField'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,19 +43,34 @@ export default async function LoginPage({
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      <aside className="relative hidden flex-col justify-between bg-[#0B0B0B] p-12 lg:flex">
-        <div className="flex items-center gap-3">
+      <aside className="relative hidden overflow-hidden bg-[#0B0B0B] lg:block">
+        {/* The hero's own sculpture, not a still of it: the sheet of letters
+            that breathes and brightens under the cursor. `centered` aims the
+            camera at it rather than leaving it a backdrop beside copy, which
+            is the framing a panel this narrow needs — the hero's default is
+            composed for a full-bleed width that does not exist here.
+
+            It fills this aside and reads the pointer on it, so the copy below
+            carries data-field-copy: that is how the engine knows which words
+            to keep its mass away from. */}
+        <TelmaConversationField centered />
+
+        <div className="absolute left-12 top-12 flex items-center gap-3">
           <TelmaMark className="h-5 w-auto text-white" />
           <span className="text-lg font-medium tracking-tight text-white">Telma</span>
         </div>
-        {/* Two children, so justify-between puts the mark at the top and the
-            line at the foot and nothing has to be positioned. The subtitle is
-            deliberately not repeated down here: it is already under the
-            heading on the other half, and a screen this empty makes a repeat
-            look like a mistake rather than an echo. */}
-        <p className="max-w-[18ch] text-4xl font-semibold leading-[1.1] tracking-tight text-white">
-          {t.panelLine}
-        </p>
+
+        <div data-field-copy className="relative flex h-full flex-col justify-center px-12">
+          <p className="max-w-[18ch] text-[2.75rem] font-semibold leading-[1.08] tracking-tight text-white">
+            {t.panelLine}
+          </p>
+          {/* Grey, and a size down. It is the sentence that says what the line
+              above actually means, and a reader who is here to type a password
+              should be able to skip it without feeling they missed something. */}
+          <p className="mt-6 max-w-[38ch] text-lg leading-relaxed text-white/45">
+            {t.panelSub}
+          </p>
+        </div>
       </aside>
 
       <div className="flex items-center justify-center px-5 py-16 sm:px-10">

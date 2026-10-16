@@ -80,8 +80,9 @@ export interface Dictionary {
     /** For somebody who followed the sign-in link without having bought yet. */
     noAccount: string
     signUp: string
-    /** The one line on the dark half of the sign-in screen. */
+    /** The two lines on the dark half of the sign-in screen. */
     panelLine: string
+    panelSub: string
     /** The screen that asks for an email. */
     resetTitle: string
     resetLead: string

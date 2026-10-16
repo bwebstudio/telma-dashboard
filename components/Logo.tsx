@@ -1,18 +1,22 @@
-import Image from 'next/image'
+import { TelmaMark } from '@/components/TelmaMark'
 
 /**
- * The drawn lockup, the same artwork the landing uses.
+ * THE LOCKUP: the mark, then the word.
  *
- * The panel used to set the word "Telma" in Clash Display, which is now the
- * only place that typeface would still be loaded for — six font files to render
- * one word that the brand already has artwork for. The wordmark's letterforms
- * live inside the image, so the panel ships one font family and the two
- * surfaces cannot drift apart on the one element a user recognises first.
+ * It used to be a .webp of the old drawn lockup, which was the right call
+ * while the wordmark's letterforms were artwork the panel could not set. They
+ * are not any more: the word is Matter, the same face this whole panel is in,
+ * so the lockup is now two live elements and the image is gone. A drawn file
+ * is also exactly the thing that still shows last season's logo a year after
+ * the logo changed — which is what it had just spent a week doing here.
+ *
+ * `currentColor` for both halves, so the ground decides: ink on the panel,
+ * white wherever onDark puts it on near-black.
+ *
+ * The two ratios are eyeballed against the sign-in screen's lockup rather than
+ * derived, because that is the one a clinic sees first and the two have to
+ * look like the same object.
  */
-
-// The delivered artwork, trimmed. 1043 × 480.
-const RATIO = 2.172
-
 export function Logo({
   height = 28,
   onDark = false,
@@ -23,14 +27,17 @@ export function Logo({
   className?: string
 }) {
   return (
-    <Image
-      src={onDark ? '/images/logo-light.webp' : '/images/logo.webp'}
-      alt="Telma"
-      width={Math.round(height * RATIO)}
-      height={height}
-      priority
-      className={className}
-      style={{ height, width: 'auto' }}
-    />
+    <span
+      className={`inline-flex items-center ${onDark ? 'text-white' : 'text-ink'} ${className}`}
+      style={{ gap: Math.round(height * 0.3) }}
+    >
+      <TelmaMark className="w-auto" style={{ height: Math.round(height * 0.62) }} />
+      <span
+        style={{ fontSize: Math.round(height * 0.68), lineHeight: 1 }}
+        className="font-medium tracking-tight"
+      >
+        Telma
+      </span>
+    </span>
   )
 }

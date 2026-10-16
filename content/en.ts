@@ -75,6 +75,7 @@ export const en: Dictionary = {
     noAccount: 'No account yet?',
     signUp: 'Create an account',
     panelLine: 'Everything Telma answered, in one place.',
+    panelSub: 'Every call is reduced to what the clinic needs to know. The rest is deleted.',
     resetTitle: 'Reset your password',
     resetLead: 'Enter the email you sign in with. We will send a link to set a new one.',
     resetSend: 'Send the link',

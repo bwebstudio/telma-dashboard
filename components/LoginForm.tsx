@@ -8,7 +8,7 @@ import { signIn, type SignInState } from '@/app/login/actions'
 function SubmitButton({ dict }: { dict: Dictionary }) {
   const { pending } = useFormStatus()
   return (
-    <button type="submit" className="btn-primary mt-2 w-full" disabled={pending}>
+    <button type="submit" className="btn-accent mt-2 w-full" disabled={pending}>
       {pending ? dict.auth.signingIn : dict.auth.signIn}
     </button>
   )
@@ -58,7 +58,7 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
       {/* Under the button, not beside the field: it is read by somebody who has
           already tried and failed, and that is where their eye ends up. */}
       <p className="text-center text-sm">
-        <a href="/recuperar" className="text-ink-soft hover:text-brand-accent">
+        <a href="/recuperar" className="text-ink-soft hover:text-ink">
           {dict.auth.forgot}
         </a>
       </p>

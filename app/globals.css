@@ -329,6 +329,15 @@
   .btn-ghost {
     @apply btn px-4 text-ink-soft hover:text-ink;
   }
+  /* The door's button, and only the door's. Inside the panel the primary is
+     ink, because a receptionist presses it a hundred times a day and it should
+     not be the loudest thing on the screen. Out here it is pressed once and it
+     is the brand saying hello, so it is macaw with ink on it at 14.65:1.
+     White would be 1.65:1 and is never an option on this ramp. */
+  .btn-accent {
+    @apply btn bg-accent text-ink hover:bg-accent-strong;
+  }
+
   .btn-danger {
     @apply btn border border-danger/30 bg-surface text-danger hover:bg-danger hover:text-white;
   }

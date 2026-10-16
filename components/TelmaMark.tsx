@@ -16,9 +16,15 @@ export const MARK_WIDTHS = [556, 294, 162]
 const VW = MARK_WIDTHS[0]
 const VH = U * 3 + GAP * 2
 
-export function TelmaMark({ className = '' }: { className?: string }) {
+export function TelmaMark({
+  className = '',
+  style,
+}: {
+  className?: string
+  style?: React.CSSProperties
+}) {
   return (
-    <svg viewBox={`0 0 ${VW} ${VH}`} className={className} fill="currentColor" aria-hidden>
+    <svg viewBox={`0 0 ${VW} ${VH}`} className={className} style={style} fill="currentColor" aria-hidden>
       {MARK_WIDTHS.map((w, i) => (
         <rect key={i} x={0} y={i * (U + GAP)} width={w} height={U} rx={U / 2} />
       ))}

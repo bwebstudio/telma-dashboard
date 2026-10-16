@@ -75,6 +75,7 @@ export const pt: Dictionary = {
     noAccount: 'Ainda não tem conta?',
     signUp: 'Criar conta',
     panelLine: 'Tudo o que a Telma atendeu, num sítio só.',
+    panelSub: 'Cada chamada fica reduzida ao que a clínica precisa de saber. O resto apaga-se.',
     resetTitle: 'Recuperar a palavra-passe',
     resetLead: 'Escreva o email com que entra. Enviamos-lhe um link para definir uma nova.',
     resetSend: 'Enviar o link',

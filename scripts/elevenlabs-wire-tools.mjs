@@ -708,11 +708,21 @@ if (AGENT && !DRY) {
     console.log(`  soltadas do agente: ${stale.map((id) => byId.get(id)).join(', ')}`)
   }
 
-  // A partial patch, deliberately. `tts` and `turn` sit beside `agent` under
-  // conversation_config and are not sent, so a voice or a timeout chosen in the
-  // console survives a run of this script -- the live agent is on
-  // eleven_v4_turbo with expressive mode, which this file does not
-  // know about and must not undo.
+  // A partial patch, but `tts`, `turn`, `vad`, `asr` and `language_presets` are
+  // all sent, from AGENT_SPEC. This comment used to say the opposite -- that
+  // they were left out so a voice chosen in the console would survive -- and it
+  // was read and believed while the lines below did the other thing. Anything
+  // picked by hand in those sections is overwritten by a run of this script,
+  // which is the point: what Telma sounds like is decided in
+  // lib/onboarding/voice-settings.ts, not in a browser tab.
+  //
+  // `language_presets` is replaced whole, so a language added in the console and
+  // not added here disappears on the next run. Add it in AGENT_SPEC.
+  //
+  // Run this rather than the console when the console refuses to publish. Its
+  // form now rejects `{{emergency_number}}` in transfer_to_number -- it allows
+  // only alphanumerics, `+` and `*` -- and that blocks publishing anything at
+  // all, including an unrelated change. The API accepts the same payload.
   //
   // The built-ins go on top of what the agent has rather than instead of it, so
   // one somebody switched on in the console is not switched off by a run of

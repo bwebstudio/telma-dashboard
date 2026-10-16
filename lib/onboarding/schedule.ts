@@ -89,3 +89,63 @@ export function buildSlots(schedule: Step3): SlotRow[] {
 
   return rows
 }
+
+/**
+ * `buildSlots` read backwards, for the one screen that has to ask the small
+ * question about a timetable that is already stored as the big answer.
+ *
+ * Lossy on purpose, and only where loss is safe. Hours edited day by day in
+ * /horarios do not fit three groups and a break; what comes back then is the
+ * nearest three-group reading of them, which is what the guided setup can
+ * show. That is why this is used only before a clinic activates, when the
+ * timetable is still whatever the sign-up's defaults wrote.
+ *
+ * Defaults fill in whatever is missing rather than coming back empty: a blank
+ * opening time reads as "we do not know when you open", and the one thing we
+ * do know is what the clinic was created with.
+ */
+export function slotsToSimple(slots: Array<{ weekday: number; start_time: string; end_time: string }>) {
+  const hhmm = (t: string) => t.slice(0, 5)
+
+  function group(days: number[], fallbackOpen: string, fallbackClose: string, fallbackClosed: boolean) {
+    const rows = slots
+      .filter((s) => days.includes(s.weekday))
+      .sort((a, b) => a.start_time.localeCompare(b.start_time))
+    if (!rows.length) return { closed: true, open: fallbackOpen, close: fallbackClose, missing: !slots.length }
+    return {
+      closed: false,
+      open: hhmm(rows[0].start_time),
+      close: hhmm(rows[rows.length - 1].end_time),
+      missing: false,
+    }
+  }
+
+  const weekdays = group([1, 2, 3, 4, 5], '09:00', '19:00', false)
+  const saturday = group([6], '09:00', '13:00', false)
+  const sunday = group([0], '09:00', '13:00', true)
+
+  // The break is the gap between two stretches on the same weekday. Read off
+  // Monday, because a clinic with a break has the same one all week; a clinic
+  // whose Monday has one window has no break to show.
+  const monday = slots
+    .filter((s) => s.weekday === 1)
+    .sort((a, b) => a.start_time.localeCompare(b.start_time))
+  const pause =
+    monday.length >= 2
+      ? { enabled: true, start: hhmm(monday[0].end_time), end: hhmm(monday[1].start_time) }
+      : { enabled: false, start: '13:00', end: '14:00' }
+
+  // Nothing stored at all: the sign-up's own defaults, so the first screen a
+  // clinic sees is the week most clinics actually keep.
+  if (!slots.length) {
+    return {
+      weekdays: { closed: false, open: '09:00', close: '19:00' },
+      saturday: { closed: false, open: '09:00', close: '13:00' },
+      sunday: { closed: true, open: '09:00', close: '13:00' },
+      pause: { enabled: true, start: '13:00', end: '14:00' },
+    }
+  }
+
+  const strip = (g: ReturnType<typeof group>) => ({ closed: g.closed, open: g.open, close: g.close })
+  return { weekdays: strip(weekdays), saturday: strip(saturday), sunday: strip(sunday), pause }
+}

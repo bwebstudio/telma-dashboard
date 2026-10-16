@@ -167,6 +167,22 @@ export interface Dictionary {
     savingDone: string
     failed: string
   }
+  /** The guided first run: one question per screen, saved as it goes, ending
+   *  on the clinic reading its own answers back before turning Telma on. */
+  setupWizard: {
+    steps: { hours: string; services: string; telma: string; review: string }
+    doneLabel: string
+    titles: { hours: string; services: string; telma: string; review: string }
+    leads: { hours: string; services: string; telma: string; review: string }
+    reviewHelp: string
+    back: string
+    continue: string
+    saving: string
+    activate: string
+    activating: string
+    activateFailed: string
+    hoursAlready: string
+  }
   setup: {
     eyebrow: string
     title: string

@@ -9,10 +9,12 @@ import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
 import { DayTally } from '@/components/clinic/DayTally'
 import { DayLoad } from '@/components/clinic/DayLoad'
-import { SetupGate } from '@/components/clinic/SetupGate'
+import { SetupWizard } from '@/components/clinic/SetupWizard'
+import { clinicProfileValues } from '@/lib/clinic-profile'
+import { signupLanguages } from '@/lib/actions/onboarding'
+import { isOnboardingLocale, DEFAULT_ONBOARDING_LOCALE } from '@/lib/onboarding/locale'
 import { ForwardingCard } from '@/components/clinic/ForwardingCard'
 import type { ForwardType } from '@/lib/forwarding'
-import { setupSteps } from '@/lib/clinic-setup'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
 import { PlannerSection } from '@/components/clinic/PlannerSection'
 import { ViewSwitcher } from '@/components/clinic/ViewSwitcher'
@@ -29,6 +31,7 @@ import {
   weekdayIn,
 } from '@/lib/time'
 import { dayFacts } from '@/lib/agenda-facts'
+import { slotsToSimple } from '@/lib/onboarding/schedule'
 import { startsIn } from '@/lib/slots'
 import type { Appointment, AvailabilitySlot, BlockedDay, Call } from '@/lib/types'
 
@@ -194,7 +197,6 @@ export default async function AgendaPage({
         .select('*', { count: 'exact', head: true })
         .eq('clinic_id', clinicId)
     : { count: 0 }
-  const steps = setupSteps(clinic ?? null, openDays ?? 0)
 
   // A clinic that kept its own number has to point it at ours, and nothing in
   // the product told it how until now. It stays on the agenda until the clinic
@@ -231,7 +233,20 @@ export default async function AgendaPage({
             or what it does, and takes a message. Handing over the codes at
             this point sends a clinic's real patients to that, silently. The
             forward is the last step, not the first. */}
-        <SetupGate steps={steps} dict={dict} forwarding={clinic?.phone_source === 'ported'} />
+        <SetupWizard
+          // The profile plus the timetable. `clinicProfileValues` maps the
+          // clinic row, and the hours are not on it: they are rows in
+          // availability_slots, read back into the three groups this screen
+          // asks about. Without this the first step opens blank and saving it
+          // would wipe the week the sign-up created.
+          initial={{ ...clinicProfileValues(clinic!), ...slotsToSimple((slotsRes.data ?? []) as AvailabilitySlot[]) }}
+          locale={isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE}
+          languages={await signupLanguages(
+            isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE
+          )}
+          dict={dict}
+          hasHours={(openDays ?? 0) > 0}
+        />
       </>
     )
   }

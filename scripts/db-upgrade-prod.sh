@@ -24,18 +24,15 @@ PG=/opt/homebrew/opt/libpq/bin
 POOL=supabase/.temp/pooler-url
 [ -f "$POOL" ] || { echo "No hay enlace. Ejecuta primero:  supabase link --project-ref <ref>"; exit 1; }
 
-# The stored URL carries a [YOUR-PASSWORD] placeholder; the real one lives in
-# the OS keychain where only the CLI can reach it. Asked for here, used once,
-# never written down.
+# The stored pooler URL has no password in it at all — not even a
+# placeholder — so substituting into it found nothing and every tool asked
+# for the password itself, once each. PGPASSWORD is read by pg_dump and psql
+# alike, needs no URL-encoding of awkward characters, and is asked for once.
 printf 'Contraseña de la base de datos (Supabase → Settings → Database): '
-read -rs DBPASS
+read -rs PGPASSWORD
 echo
-
-URL=$(sed "s|\[YOUR-PASSWORD\]|$DBPASS|" "$POOL" | tr -d '\n')
-case "$URL" in *'[YOUR-PASSWORD]'*|*'[PASSWORD]'*) URL=$(python3 -c "
-import re,sys,urllib.parse
-u=sys.argv[1]; p=urllib.parse.quote(sys.argv[2],safe='')
-print(re.sub(r'(?<=:)\[?[A-Za-z-]*PASSWORD[A-Za-z-]*\]?(?=@)', p, u))" "$(cat $POOL | tr -d '\n')" "$DBPASS");; esac
+export PGPASSWORD
+URL=$(tr -d '\n' < "$POOL")
 
 STAMP=$(date +%Y-%m-%d-%H%M)
 mkdir -p supabase/backups

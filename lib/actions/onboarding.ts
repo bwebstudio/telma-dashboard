@@ -25,7 +25,11 @@ import {
   type OnboardingLocale,
 } from '@/lib/onboarding/locale'
 import { markCompleted, newToken, readDraft, saveStep } from '@/lib/onboarding/sessions'
-import { createCheckoutSession, stripeConfigured } from '@/lib/onboarding/stripe-client'
+import {
+  createCheckoutSession,
+  pricesByLookupKey,
+  stripeConfigured,
+} from '@/lib/onboarding/stripe-client'
 import {
   provisionTwilioNumber,
   releaseTwilioNumber,
@@ -511,6 +515,9 @@ export async function completeOnboarding(
       plan,
       billingCycle: wizard.billing_cycle,
       priceIds: await priceIdsFor(plan, wizard.billing_cycle, Boolean(wizard.addon_whatsapp)),
+      // The region the clinic picked decides the VAT treatment, so the country
+      // is derived from it rather than asked for a second time.
+      country: countryOfRegion(wizard.region),
       successUrl: `${dashboardUrl}/inscricao/obrigado?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${dashboardUrl}/inscricao?retomar=1`,
     })
@@ -640,6 +647,24 @@ async function rollback(
  * then takes the demo path. That is the intended behaviour today: the sign-up
  * must work before Stripe does.
  */
+/**
+ * WHAT THE CLINIC IS ABOUT TO BE CHARGED FOR.
+ *
+ * Asked of Stripe by name rather than read out of our own tables. The names
+ * are lookup keys — `clinica_annual` — which are identical in test mode and
+ * in live mode; the price ids behind them are not. Keeping ids in `plans`
+ * meant repopulating that table on launch day, and the failure mode of
+ * forgetting was every checkout dying the moment a real clinic tried to pay.
+ *
+ * It also fixes something that was quietly broken. This used to read one
+ * `stripe_price_id` per plan, with no annual price anywhere, and said so in a
+ * console warning nobody would see — so a clinic choosing "2 meses grátis"
+ * would have been billed monthly. A cycle is part of the name now, so annual
+ * either resolves or the sign-up stops.
+ *
+ * Returns an empty array when anything is missing, which `createCheckoutSession`
+ * reads as "do not charge". Half a basket is worse than none.
+ */
 async function priceIdsFor(
   plan: PlanType,
   cycle: 'monthly' | 'annual',
@@ -647,34 +672,21 @@ async function priceIdsFor(
 ): Promise<string[]> {
   if (isDemo()) return []
 
-  const admin = createAdminClient()
-  const ids: string[] = []
+  // `personalizado` is quoted by hand and has no price in Stripe.
+  if (plan === 'personalizado') return []
 
-  const { data: planRow } = await admin
-    .from('plans')
-    .select('stripe_price_id')
-    .eq('id', plan)
-    .maybeSingle()
-  if (planRow?.stripe_price_id) ids.push(planRow.stripe_price_id)
+  const wanted = [`${plan}_${cycle}`]
+  if (whatsapp) wanted.push(`whatsapp_${cycle}`)
 
-  if (whatsapp) {
-    const { data: addonRow } = await admin
-      .from('addons')
-      .select('stripe_price_id')
-      .eq('id', 'whatsapp')
-      .maybeSingle()
-    if (addonRow?.stripe_price_id) ids.push(addonRow.stripe_price_id)
+  const found = await pricesByLookupKey(wanted)
+
+  const missing = wanted.filter((k) => !found.has(k))
+  if (missing.length) {
+    console.error('[onboarding] no Stripe price for', missing.join(', '))
+    return []
   }
 
-  // An annual cycle with only a monthly price would charge the wrong amount, so
-  // it takes the demo path rather than guessing. `plans` carries one
-  // `stripe_price_id` today; when annual prices exist it gains a second column
-  // and this reads it. Until then, saying so out loud beats charging monthly.
-  if (cycle === 'annual' && ids.length) {
-    console.warn('[onboarding] annual cycle requested but only one stripe price exists')
-  }
-
-  return ids
+  return wanted.map((k) => found.get(k)!)
 }
 
 /**

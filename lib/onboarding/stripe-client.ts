@@ -38,8 +38,93 @@ const API = 'https://api.stripe.com/v1'
 // code receives without somebody choosing that.
 const API_VERSION = '2024-06-20'
 
+/**
+ * THE TWO TAX RATES, BY ENVIRONMENT AND NOT BY CONSTANT.
+ *
+ * Tax rate ids change between test mode and live, exactly like price ids, and
+ * unlike prices they cannot carry a lookup key — so there is no way to find
+ * them by name. They come from the environment instead, which makes the move
+ * to live a Vercel setting rather than a code change somebody has to remember.
+ *
+ *   STRIPE_TAX_RATE_PT   IVA 23%, applied to clinics in Portugal
+ *   STRIPE_TAX_RATE_ES   reverse charge at 0%, for Spanish clinics
+ *
+ * Unset means no rate is applied and the invoice goes out without VAT, which
+ * is wrong in both countries — so `checkoutTaxRate` says so in the log rather
+ * than failing the sign-up, because a clinic that cannot subscribe is worse
+ * than an invoice that needs correcting.
+ */
+const TAX_RATE: Partial<Record<'PT' | 'ES', string | undefined>> = {
+  PT: process.env.STRIPE_TAX_RATE_PT,
+  ES: process.env.STRIPE_TAX_RATE_ES,
+}
+
+function checkoutTaxRate(country: 'PT' | 'ES'): string | null {
+  const id = TAX_RATE[country]
+  if (!id) {
+    console.error(`[stripe] no tax rate configured for ${country}; invoicing without VAT`)
+    return null
+  }
+  return id
+}
+
 export function stripeConfigured(): boolean {
   return Boolean(SECRET)
+}
+
+/**
+ * The same call, read-only.
+ *
+ * Stripe's API takes query parameters on GET and a form body on POST, so the
+ * two cannot share one function without the caller having to know which it is.
+ * This one exists for `pricesByLookupKey` below and nothing else.
+ */
+async function stripeGet(path: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${API}${path}`, {
+    headers: {
+      Authorization: `Bearer ${SECRET}`,
+      'Stripe-Version': API_VERSION,
+    },
+    cache: 'no-store',
+  })
+  const payload = (await res.json().catch(() => ({}))) as {
+    error?: { message?: string }
+  } & Record<string, unknown>
+  if (!res.ok) {
+    throw new PaymentError(payload.error?.message ?? `Stripe respondeu ${res.status}.`)
+  }
+  return payload
+}
+
+/**
+ * PRICES ARE FOUND BY NAME, NOT BY STORED ID.
+ *
+ * A lookup key is a label we choose — `clinica_annual` — that Stripe keeps
+ * attached to a price. It is the same label in test mode and in live mode,
+ * while the price id behind it is not: moving to live means every id changes.
+ *
+ * Storing ids in the database therefore means repopulating a table on the day
+ * of launch, and forgetting to means every checkout fails at the moment the
+ * first real clinic tries to pay. Resolving by name costs one request per
+ * sign-up and cannot be forgotten.
+ *
+ * Unknown keys come back missing rather than wrong: Stripe returns only what
+ * it finds, and the caller checks the count.
+ */
+export async function pricesByLookupKey(keys: string[]): Promise<Map<string, string>> {
+  const found = new Map<string, string>()
+  if (!stripeConfigured() || keys.length === 0) return found
+
+  const qs = new URLSearchParams({ active: 'true', limit: '100' })
+  keys.forEach((k, i) => qs.set(`lookup_keys[${i}]`, k))
+
+  const res = (await stripeGet(`/prices?${qs}`)) as {
+    data?: { id?: string; lookup_key?: string }[]
+  }
+  for (const price of res.data ?? []) {
+    if (price.lookup_key && price.id) found.set(price.lookup_key, price.id)
+  }
+  return found
 }
 
 async function stripe(
@@ -87,6 +172,8 @@ export async function createCheckoutSession(opts: {
   billingCycle: BillingCycle
   /** Stripe price ids: the plan, plus any add-on bought at sign-up. */
   priceIds: string[]
+  /** Decides the VAT treatment. Comes from the clinic's region. */
+  country: 'PT' | 'ES'
   successUrl: string
   cancelUrl: string
 }): Promise<CheckoutSession> {
@@ -98,8 +185,16 @@ export async function createCheckoutSession(opts: {
 
   const form = new URLSearchParams({
     mode: 'subscription',
-    'payment_method_types[0]': 'card',
+    // No payment_method_types. Pinning it to card hid every other method the
+    // account has switched on — SEPA and Google Pay were enabled in the
+    // dashboard and never appeared. Left out, Stripe offers what the account
+    // allows and what the buyer's country supports, which is the whole point
+    // of enabling them there.
     customer_email: opts.email,
+    // Both needed for an invoice that stands up: the address decides the VAT
+    // treatment, and the tax id is the NIF-IVA a Spanish clinic needs on it.
+    billing_address_collection: 'required',
+    'tax_id_collection[enabled]': 'true',
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     locale: 'pt',
@@ -111,9 +206,11 @@ export async function createCheckoutSession(opts: {
     'subscription_data[metadata][clinic_id]': opts.clinicId,
   })
 
+  const taxRate = checkoutTaxRate(opts.country)
   usable.forEach((price, i) => {
     form.set(`line_items[${i}][price]`, price)
     form.set(`line_items[${i}][quantity]`, '1')
+    if (taxRate) form.set(`line_items[${i}][tax_rates][0]`, taxRate)
   })
 
   const session = (await stripe('/checkout/sessions', form, `signup_${opts.clinicId}`)) as {

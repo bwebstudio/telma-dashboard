@@ -332,23 +332,25 @@ const BUILT_IN_TOOLS = {
         description:
           'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
       },
-      // ── DETEÇÃO DE IDIOMA, QUE JÁ ESTEVE DESLIGADA ────────────────────
-      // Esteve desligada de propósito, e por uma boa razão: numa chamada a
-      // sério a Telma leu em voz alta a opção do menu, "português", e mudou-se
-      // a si própria de língua a meio de uma conversa em castelhano.
+      // ── DETEÇÃO DE IDIOMA: DESLIGADA, E DESTA VEZ POR MEDIÇÃO ─────────
+      // Esteve desligada, voltou a ser ligada com o argumento de que sem ela
+      // os `language_presets` nunca entram, e está desligada outra vez. O
+      // argumento era bom e a coisa não funciona: foi experimentada em
+      // chamadas a sério e não é de confiança.
       //
-      // Ligada outra vez porque sem ela a conversa fica na língua base e os
-      // `language_presets` nunca entram: quem pedir inglês ouve inglês lido
-      // pela voz portuguesa, com o sotaque que ela tem. Ouviu-se, e não passa.
+      // A avaria conhecida é esta: numa chamada em castelhano a Telma leu em
+      // voz alta a palavra "português" — a sua própria saudação a dizer como
+      // pedir as outras línguas — e mudou-se a si própria de língua a meio da
+      // conversa. Uma regra na base a proibir isso não chega, porque o que
+      // decide é o modelo e não a regra.
       //
-      // O que impede a avaria de voltar não é a ferramenta, é a regra que
-      // faltava e agora está na base: só se muda de língua quando a pessoa
-      // passa a falá-la, nunca porque o nome de uma língua apareceu numa frase.
-      language_detection: {
-        name: 'language_detection',
-        description:
-          'Muda a língua da conversa. Usa quando a pessoa passar a falar noutra língua das que atendes. Nunca a uses porque o nome de uma língua apareceu numa frase, nem porque a leste em voz alta na saudação.',
-      },
+      // O que há em vez disto: a Telma abre na língua da clínica e a saudação
+      // diz como pedir as outras ("for English say English"). Quem liga pede,
+      // e aí sim muda. Menos mágico e acerta sempre.
+      //
+      // `null` e não ausente: esta secção vai por cima do que o agente tem, e
+      // uma chave que falta deixa ficar o que lá estava ligado.
+      language_detection: null,
 
       // ── PASSAR A CHAMADA ────────────────────────────────────────────
       // A base diz "passas a chamada" em dois sítios: numa urgência, e numa

@@ -64,16 +64,37 @@ export async function POST(request: Request) {
         const plan = (metadata.plan || 'essencial') as PlanType
         const cycle = metadata.billing_cycle === 'annual' ? 'annual' : 'monthly'
 
+        // The billing facts, always.
         await admin
           .from('clinics')
           .update({
-            status: 'ativa',
             stripe_customer_id: (object.customer as string) ?? null,
             stripe_subscription_id: (object.subscription as string) ?? null,
             billing_cycle: cycle,
             plan_renews_at: renewalDate(cycle),
           })
           .eq('id', clinicId)
+
+        // ── PAID IS NOT THE SAME AS ANSWERING ────────────────────────────
+        // This used to write 'ativa' here, and that quietly made the whole
+        // setup screen unreachable. A clinic is created 'pausada' when Stripe
+        // is configured, so the only path a paying clinic ever took was
+        // pausada -> ativa: it never passed through 'por_configurar', never
+        // met the guided setup, and landed on an agenda with a forwarding
+        // card telling it to point its telephone at a Telma who had not been
+        // told the opening hours or what the clinic does.
+        //
+        // Payment means the account is paid. Whether Telma answers is the
+        // clinic's own decision, taken in `activateClinic` once it has told
+        // her something, and that action checks the same list again.
+        //
+        // Scoped to 'pausada' so a second checkout -- a plan change, a card
+        // replaced -- cannot take a working clinic off the telephone.
+        await admin
+          .from('clinics')
+          .update({ status: 'por_configurar' })
+          .eq('id', clinicId)
+          .eq('status', 'pausada')
 
         // The receipt, in our own table. Stripe has the authoritative copy; this
         // is the one the clinic's own billing screen reads, and it must exist

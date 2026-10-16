@@ -13,6 +13,7 @@ import {
   IconTelma,
 } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
+import { WelcomeTour } from '@/components/clinic/WelcomeTour'
 import { isDemo } from '@/lib/demo/config'
 
 export const dynamic = 'force-dynamic'
@@ -41,15 +42,15 @@ export default async function ClinicaLayout({
   const day = dict.clinicNav.groupDay
   const setup = dict.clinicNav.groupSetup
   const nav: NavItem[] = [
-    { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday />, group: day },
-    { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings />, group: day },
+    { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday />, group: day, tour: 'hoje' },
+    { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings />, group: day, tour: 'marcacoes' },
     // Beside the bookings, not down with the settings. A record is looked at
     // while somebody is on the telephone, which is the same work as answering
     // them, and the reminders waiting to go out live on it.
     { href: '/pacientes', label: dict.clinicNav.pacientes, icon: <IconPatients />, group: day },
-    { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls />, group: day },
-    { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours />, group: setup },
-    { href: '/telma', label: dict.clinicNav.telma, icon: <IconTelma />, group: setup },
+    { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls />, group: day, tour: 'conversas' },
+    { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours />, group: setup, tour: 'horarios' },
+    { href: '/telma', label: dict.clinicNav.telma, icon: <IconTelma />, group: setup, tour: 'telma' },
   ]
 
   const clinicName = clinic?.name ?? dict.clinicNav.conta
@@ -80,6 +81,12 @@ export default async function ClinicaLayout({
       }
     >
       {isDemo() && <DemoBar role="clinica" />}
+      {/* Once per person, and never to an administrator looking at somebody
+          else's clinic: a tour of a panel that is not theirs, on a visit they
+          will not repeat, and it would burn the real owner's one welcome. */}
+      {!viewingAs && user.welcomed_at === null && (
+        <WelcomeTour dict={dict} clinicName={clinicName} />
+      )}
       {children}
     </Shell>
   )

@@ -161,6 +161,7 @@ const seed: DemoStore = {
       role: 'clinica',
       clinic_id: DEMO_CLINIC_ID,
       locale: 'pt',
+      welcomed_at: '2026-01-01T00:00:00Z',
       clinic: null,
     },
     {
@@ -170,6 +171,7 @@ const seed: DemoStore = {
       role: 'interno',
       clinic_id: null,
       locale: 'pt',
+      welcomed_at: '2026-01-01T00:00:00Z',
       clinic: null,
     },
     {
@@ -179,6 +181,7 @@ const seed: DemoStore = {
       role: 'comercial',
       clinic_id: null,
       locale: 'pt',
+      welcomed_at: '2026-01-01T00:00:00Z',
       clinic: null,
     },
   ],

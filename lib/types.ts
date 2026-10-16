@@ -299,6 +299,9 @@ export interface AppUser {
   role: UserRole
   clinic_id: string | null
   locale: string
+  /** When this person was shown the welcome tour. Null means not yet, which
+   *  is also what every row written before the tour existed means. */
+  welcomed_at: string | null
   clinic: Clinic | null
 }
 

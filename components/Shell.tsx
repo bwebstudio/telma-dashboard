@@ -16,6 +16,15 @@ export interface NavItem {
   label: string
   icon: ReactNode
   /**
+   * A handle for the welcome tour to point at, rendered as `data-tour`.
+   *
+   * On the sidebar entry and not on the phone bar's copy of it: the tour
+   * measures one element per step, and two elements answering to the same
+   * name is a spotlight on whichever the browser found first, which at phone
+   * width is the wrong one.
+   */
+  tour?: string
+  /**
    * The heading this entry sits under in the sidebar. Grouping is what tells a
    * receptionist that Citas is something she opens every morning and Horarios
    * is something she sets once, which is the distinction the two names alone
@@ -160,6 +169,7 @@ export function Shell({
               )}
             <Link
               href={item.href}
+              data-tour={item.tour}
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={`mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors ${
                 isActive(item.href)

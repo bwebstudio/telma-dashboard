@@ -183,6 +183,23 @@ export interface Dictionary {
     activateFailed: string
     hoursAlready: string
   }
+  /** The first minute in the panel: a welcome card, then a walk round the
+   *  sidebar. `{clinic}` is the clinic's name, `{n}`/`{total}` the position. */
+  welcome: {
+    eyebrow: string
+    title: string
+    lead: string
+    start: string
+    skip: string
+    close: string
+    next: string
+    done: string
+    step: string
+    steps: Record<
+      'hoje' | 'marcacoes' | 'conversas' | 'horarios' | 'telma',
+      { title: string; body: string }
+    >
+  }
   setup: {
     eyebrow: string
     title: string

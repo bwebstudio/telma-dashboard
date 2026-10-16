@@ -45,20 +45,7 @@ supabase migration list --linked
 read -rp "     ¿La lista cuadra? Escribe 'aplicar' para empujar: " go
 [ "$go" = "aplicar" ] || { echo "Parado. Nada se ha aplicado al esquema."; exit 0; }
 
-# --include-all because 0007 is used twice in this folder:
-# 0007_crm_stage_no_regress and 0007_crm_veterinary. The remote has 0007
-# recorded, so the CLI sees the second file as sitting before the last applied
-# migration and refuses to touch it — correctly, since applying out of order
-# is how schemas end up in a state nobody can reason about.
-#
-# Here it is safe, and checked rather than assumed. That file is one line:
-#
-#     alter type crm_specialty add value if not exists 'veterinary';
-#
-# The value already exists on the live database — there is a prospect filed
-# under it — so the statement is a no-op. It is the only out-of-order file,
-# which is why the flag is acceptable at all.
-supabase db push --include-all
+supabase db push
 
 cat <<'NOTE'
 

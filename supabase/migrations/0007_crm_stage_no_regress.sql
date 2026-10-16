@@ -43,3 +43,22 @@ begin
 
   return new;
 end $$;
+
+-- ── FOLDED IN FROM 0007_crm_veterinary ──────────────────────────────────────
+-- Veterinary clinics are a target segment too: they take bookings by phone all
+-- day and lose the calls they cannot answer, exactly like a dental practice.
+--
+-- This arrived as a second file numbered 0007, and two files cannot share a
+-- version: supabase_migrations.schema_migrations keys on it, so the second one
+-- could never be recorded and `db push` failed on the insert every time, after
+-- the statement itself had already run and skipped.
+--
+-- It could not simply be renumbered to the end either. 0027 files prospects
+-- under this value, so on a database built from scratch the value has to exist
+-- by then.
+--
+-- So it lives here, last in the file. The note it carried said it had to be on
+-- its own because Postgres will not use a freshly added enum value inside the
+-- transaction that added it — and nothing above uses crm_specialty at all,
+-- which is what makes this position safe rather than merely convenient.
+alter type crm_specialty add value if not exists 'veterinary';

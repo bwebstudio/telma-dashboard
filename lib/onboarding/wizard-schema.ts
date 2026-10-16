@@ -466,14 +466,45 @@ export function validateComplete(
   // Whatever else arrived is still checked against the same rules -- a partner
   // posting the whole thing at once, or a draft started before the sign-up got
   // shorter. Absent is fine; wrong is not.
+  //
+  // "Absent" has to mean the empty value too, not just a missing key. The form
+  // keeps one initial object for every field it has ever had, so a sign-up that
+  // never shows the services step still posts `services: []`, and an empty
+  // array read as an answer is an answer that fails `min(1)`. That refused the
+  // sign-up over a question nobody was asked, and refused it invisibly: the
+  // error landed on a field that is not on screen, so the page scrolled to the
+  // top and did nothing else.
+  const answered = (v: unknown) =>
+    v !== undefined &&
+    v !== null &&
+    !(typeof v === 'string' && v.trim() === '') &&
+    !(Array.isArray(v) && v.length === 0)
+
   for (const key of ['hours', 'services', 'telma'] as const) {
     const shape = schemas[key]
     const asked = Object.keys(shape instanceof z.ZodObject ? shape.shape : {})
-    if (!asked.some((f) => (data as Record<string, unknown>)?.[f] !== undefined)) continue
+    if (!asked.some((f) => answered((data as Record<string, unknown>)?.[f]))) continue
     const result = shape.safeParse(data)
-    if (result.success) Object.assign(merged, result.data)
-    else Object.assign(errors, fieldErrors(result.error))
+    if (result.success) {
+      Object.assign(merged, result.data)
+    } else {
+      // Against `_form`, not against the field. These groups are not on the
+      // sign-up any more, so there is no input to hang a message under: named
+      // after its field it would be set, and shown nowhere. The whole-form slot
+      // is the one place a reader is certain to see it.
+      for (const message of Object.values(fieldErrors(result.error))) {
+        errors._form = errors._form ? `${errors._form} ${message}` : message
+      }
+    }
   }
+
+  // The groups above can be skipped entirely now, and what reads this expects
+  // a list rather than nothing. A clinic signs up unconfigured and fills these
+  // in on the panel.
+  merged.services ??= []
+  merged.custom_services ??= ''
+  merged.service_prices ??= {}
+  merged.service_durations ??= {}
 
   if (Object.keys(errors).length) return { ok: false, errors }
   return { ok: true, data: merged as WizardData }

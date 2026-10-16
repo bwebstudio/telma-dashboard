@@ -185,7 +185,7 @@ export const pt: Dictionary = {
     leads: {
       hours: 'A Telma só oferece horas dentro destes intervalos. Poderá ajustá-los depois, dia a dia, em Horários.',
       services: 'A Telma só marca consultas para o que estiver nesta lista. Se faltar um serviço, não o poderá marcar.',
-      languages: 'O seu plano inclui mais do que um. A Telma reconhece a língua de quem liga e responde nela, sem ninguém ter de pedir.',
+      languages: 'A Telma atende no idioma que escolher aqui primeiro. Se escolher mais do que um, diz logo na saudação como pedir os outros, e muda quando lhe pedirem.',
       telma: 'O tom com que fala, o que faz perante uma urgência e o que faz quando não consegue resolver a chamada.',
       review: 'Leia-o como o ouviria quem liga. Se algo não estiver correcto, volte atrás e corrija. Tudo continua editável depois de a ligar.',
     },
@@ -220,7 +220,7 @@ export const pt: Dictionary = {
   },
   languagesSection: {
     title: 'Idiomas em que atende',
-    help: 'A Telma reconhece a língua de quem liga e responde nela. O seu plano inclui um número de idiomas: escolha quais.',
+    help: 'A Telma abre a chamada no idioma base e, se houver mais, diz na saudação como pedir cada um. Não adivinha: quem liga pede. O seu plano inclui um número de idiomas.',
     count: '{n} de {max}',
     base: 'incluído sempre',
     soon: 'em breve',

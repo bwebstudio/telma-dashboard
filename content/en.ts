@@ -183,7 +183,7 @@ export const en: Dictionary = {
     leads: {
       hours: 'Telma only offers times inside these ranges. You can adjust them later, day by day, under Hours.',
       services: 'Telma only books appointments for what appears in this list. If a service is missing, she cannot book it.',
-      languages: 'Your plan includes more than one. Telma recognises the language of the person calling and replies in it, without anybody having to ask.',
+      languages: 'Telma answers in whichever language you choose here first. If you choose more than one, the greeting says how to ask for the others, and she switches when asked.',
       telma: 'The tone she speaks in, what she does with an emergency, and what she does when she cannot settle the call.',
       review: 'Read it as the caller would hear it. If something is not right, go back and correct it. Everything stays editable after you turn her on.',
     },
@@ -218,7 +218,7 @@ export const en: Dictionary = {
   },
   languagesSection: {
     title: 'Languages she answers in',
-    help: 'Telma recognises the language of the person calling and replies in it. Your plan includes a number of languages: choose which.',
+    help: 'Telma opens the call in the base language and, when there are more, the greeting says how to ask for each one. She does not guess: the caller asks. Your plan includes a number of languages.',
     count: '{n} of {max}',
     base: 'always included',
     soon: 'coming soon',

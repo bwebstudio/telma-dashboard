@@ -245,9 +245,9 @@
     font-family: var(--font-sans), system-ui, sans-serif;
     font-size: 1rem;
     line-height: 1.6;
-    /* Suisse is drawn tight already and needs no help at reading sizes. The
-       negative tracking DM Sans wanted here closed the counters on this face
-       and cost legibility at 16px, which is the size a receptionist reads a
+    /* Matter is drawn tight already and needs no help at reading sizes. The
+       negative tracking DM Sans wanted here closes the counters on this face
+       and costs legibility at 16px, which is the size a receptionist reads a
        patient's name at. */
     letter-spacing: 0;
     -webkit-font-smoothing: antialiased;
@@ -279,16 +279,22 @@
 @layer components {
   /* --- DISPLAY TYPE ------------------------------------------------------
      With no serif to carry the hierarchy, the weight and the tracking do it.
-     Suisse ships four static weights, so the old 550 has nothing to land on:
-     600 is the one that stays sturdy at 40px on this face. */
+     Matter ships static weights, so the old 550 has nothing to land on: 600
+     is the one that stays sturdy at 40px on this face, and the heaviest the
+     panel loads. */
   .h-display {
     font-weight: 600;
     letter-spacing: -0.02em;
     color: rgb(var(--ink));
   }
 
+  /* Set in the mono, like the site. At this size an uppercase label in Matter
+     is just Matter made small; the mono makes it a different kind of thing —
+     machine furniture rather than something the clinic is being told. Weight
+     stays at 400 because Basis Grotesque Mono ships one cut and uppercase at
+     12px thickens into a smudge anyway. */
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-medium uppercase tracking-label text-brand-accent;
+    @apply inline-flex items-center gap-2 font-mono text-xs uppercase tracking-label text-brand-accent;
   }
   .eyebrow-mark::before {
     content: '/';
@@ -317,8 +323,11 @@
   .btn-secondary {
     @apply btn border border-line-strong bg-surface text-ink shadow-1 hover:border-ink/25;
   }
+  /* Hovering used to send this to --brand-accent, which was the lighter green
+     and read as emphasis. That token is a mid grey now, so the same rule was
+     quietly making the label fainter on hover. It goes to ink instead. */
   .btn-ghost {
-    @apply btn px-4 text-ink-soft hover:text-brand-accent;
+    @apply btn px-4 text-ink-soft hover:text-ink;
   }
   .btn-danger {
     @apply btn border border-danger/30 bg-surface text-danger hover:bg-danger hover:text-white;
@@ -327,8 +336,13 @@
   .field-label {
     @apply mb-1.5 block text-sm font-medium text-ink;
   }
+  /* The focus state is the one place macaw earns its keep in the panel, and
+     it cannot do the job alone: #C0D434 on white is 1.9:1 and a focus
+     indicator owes 3:1. So the ink border carries the contrast at 18.88:1 and
+     the macaw ring sits behind it carrying the brand. Taking the ring away
+     leaves it accessible; taking the border away does not. */
   .field-input {
-    @apply min-h-[3rem] w-full rounded-input border border-line-strong bg-surface px-3.5 text-base text-ink shadow-1 transition-colors duration-fast ease-calm placeholder:text-ink-mute/70 hover:border-ink/20 focus:border-brand-accent focus:outline-none;
+    @apply min-h-[3rem] w-full rounded-input border border-line-strong bg-surface px-3.5 text-base text-ink shadow-1 transition-colors duration-fast ease-calm placeholder:text-ink-mute/70 hover:border-ink/20 focus:border-ink focus:outline-none focus:ring-2 focus:ring-accent;
   }
 
   .badge {
@@ -336,7 +350,7 @@
   }
 
   .label-caps {
-    @apply text-xs font-medium uppercase tracking-label text-ink-mute;
+    @apply font-mono text-xs uppercase tracking-label text-ink-mute;
   }
 
   /* The only motion in the panel: a dialog arriving. Short enough to read as

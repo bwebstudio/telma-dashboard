@@ -104,8 +104,10 @@ const config: Config = {
         mid: '500',
       },
       fontFamily: {
-        // One family for the entire interface, and the only one loaded.
+        // Matter reads to the clinic; the mono is the panel talking about
+        // itself. Two faces, the same pair the site uses.
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       borderRadius: {
         input: 'var(--radius-input)',

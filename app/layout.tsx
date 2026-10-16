@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { sans } from '@/lib/fonts'
+import { mono, sans } from '@/lib/fonts'
 import { getLocale } from '@/lib/i18n'
 import { PwaSetup } from '@/components/PwaSetup'
 import './globals.css'
@@ -43,7 +43,7 @@ export default async function RootLayout({
     // the server HTML and the live DOM legitimately differ on this one node.
     // It suppresses the warning for this node's attributes only: children still
     // hydrate normally, so a real mismatch anywhere in the app still reports.
-    <html lang={locale} className={sans.variable} suppressHydrationWarning>
+    <html lang={locale} className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <body>
         {children}
         <PwaSetup />

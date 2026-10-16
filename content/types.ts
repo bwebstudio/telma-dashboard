@@ -77,6 +77,11 @@ export interface Dictionary {
     signingIn: string
     invalid: string
     forgot: string
+    /** For somebody who followed the sign-in link without having bought yet. */
+    noAccount: string
+    signUp: string
+    /** The one line on the dark half of the sign-in screen. */
+    panelLine: string
     /** The screen that asks for an email. */
     resetTitle: string
     resetLead: string

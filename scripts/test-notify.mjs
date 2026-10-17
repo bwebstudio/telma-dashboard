@@ -22,17 +22,17 @@ const AT = '2026-10-08T16:00:00.000Z'
 // sent to stop somebody arriving at the wrong time, telling them the wrong
 // time, is worse than sending nothing.
 test('the hour is the clinic\'s, not UTC', () => {
-  assert.match(messageFor('confirmada', SORRISO, AT, null), /17:00/)
-  assert.match(messageFor('confirmada', SONRISA, AT, null), /18:00/)
+  assert.match(messageFor('confirmada', SORRISO, AT), /17:00/)
+  assert.match(messageFor('confirmada', SONRISA, AT), /18:00/)
   for (const clinic of [SORRISO, SONRISA]) {
-    assert.doesNotMatch(messageFor('confirmada', clinic, AT, null), /16:00/)
+    assert.doesNotMatch(messageFor('confirmada', clinic, AT), /16:00/)
   }
 })
 
 test('every kind says the clinic, the hour and what to do', () => {
   for (const clinic of [SORRISO, SONRISA]) {
     for (const kind of ['confirmada', 'alterada', 'rejeitada']) {
-      const said = messageFor(kind, clinic, AT, null)
+      const said = messageFor(kind, clinic, AT)
       assert.ok(said.startsWith(clinic.name), `${kind}: does not open with the clinic`)
       assert.match(said, /\d{1,2}:\d{2}/, `${kind}: carries no hour`)
       // A patient who cannot come, or cannot make the new hour, has to be told
@@ -47,26 +47,29 @@ test('every kind says the clinic, the hour and what to do', () => {
 test('a moved appointment does not read like a confirmed one', () => {
   for (const clinic of [SORRISO, SONRISA]) {
     assert.notEqual(
-      messageFor('confirmada', clinic, AT, null),
-      messageFor('alterada', clinic, AT, null)
+      messageFor('confirmada', clinic, AT),
+      messageFor('alterada', clinic, AT)
     )
   }
 })
 
-test('a refusal carries the clinic\'s reason when there is one, and stands without', () => {
+// The reason the clinic typed stays in the panel. It used to be sent, under a
+// field labelled as a record, so whatever a receptionist wrote about a patient
+// was read by that patient.
+test('a refusal never carries the clinic\'s reason', () => {
   const why = { pt: 'Essa hora ficou ocupada', es: 'Esa hora se ha ocupado' }
   for (const [clinic, reason] of [[SORRISO, why.pt], [SONRISA, why.es]]) {
-    assert.ok(messageFor('rejeitada', clinic, AT, reason).includes(reason))
-    const bare = messageFor('rejeitada', clinic, AT, null)
-    assert.ok(bare.length > 40, 'a refusal with no reason came out empty')
-    assert.doesNotMatch(bare, /null|undefined/)
+    const said = messageFor('rejeitada', clinic, AT)
+    assert.ok(!said.includes(reason), 'the reason reached the patient')
+    assert.ok(said.length > 40, 'a refusal came out empty')
+    assert.doesNotMatch(said, /null|undefined/)
   }
 })
 
 // A clinic in neither language must still be readable rather than blank.
 test('an unknown language falls back rather than breaking', () => {
   const odd = { name: 'Clinic', timezone: 'Europe/Lisbon', language: 'en' }
-  const said = messageFor('confirmada', odd, AT, null)
+  const said = messageFor('confirmada', odd, AT)
   assert.ok(said.startsWith('Clinic'))
   assert.match(said, /\d{1,2}:\d{2}/)
 })
@@ -98,8 +101,8 @@ test('the clinic can be its own sender, inside Twilio\'s rules', () => {
 // instruction that cannot be followed.
 test('a message from a name carries the number to ring', () => {
   for (const clinic of [SORRISO, SONRISA]) {
-    const fromName = messageFor('confirmada', clinic, AT, null, true)
-    const fromNumber = messageFor('confirmada', clinic, AT, null, false)
+    const fromName = messageFor('confirmada', clinic, AT, true)
+    const fromNumber = messageFor('confirmada', clinic, AT, false)
     assert.ok(fromName.includes(clinic.assigned_phone), 'no number to ring in a one-way message')
     // And not when it comes from the number itself, which is already in the
     // phone the patient is holding.

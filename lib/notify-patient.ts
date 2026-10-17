@@ -90,7 +90,7 @@ export async function notifyPatient(appointmentId: string, kind: NotifyKind): Pr
       // The clinic's number goes into the text only when the sender is a name,
       // because then there is nothing to reply to. lib/sms.ts decides which.
       text: (withPhone) =>
-        messageFor(kind, clinic, appt.scheduled_at, appt.reject_reason, withPhone),
+        messageFor(kind, clinic, appt.scheduled_at, withPhone),
     })
 
     await record(admin, appointmentId, kind, channel, res.error)

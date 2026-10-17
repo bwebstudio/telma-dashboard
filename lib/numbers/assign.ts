@@ -101,7 +101,10 @@ export async function clinicsAwaitingNumber(): Promise<
     id: string
     name: string
     email: string | null
-    country: string | null
+    /** The region id, as the sign-up stored it: 'pt-lisboa', 'es-madrid'. */
+    region: string | null
+    /** 'PT' or 'ES', derived from the region. */
+    country: 'PT' | 'ES' | null
     phoneSource: string | null
     ownNumber: string | null
     createdAt: string
@@ -120,7 +123,8 @@ export async function clinicsAwaitingNumber(): Promise<
       id: c.id as string,
       name: (c.name as string) ?? '',
       email: (c.contact_email as string) ?? null,
-      country: (c.region as string) ?? null,
+      region: (c.region as string) ?? null,
+      country: regionCountry(c.region as string | null),
       phoneSource: (c.phone_source as string) ?? null,
       ownNumber:
         ((c.porting_details as { current_number?: string } | null)?.current_number ?? null) || null,
@@ -197,4 +201,47 @@ export async function knownNumbers(): Promise<Set<string>> {
     if (r.assigned_phone) known.add(r.assigned_phone.replace(/\s/g, ''))
   }
   return known
+}
+
+/** 'es-madrid' is Spain. Derived here rather than imported, because the
+ *  catalogue knows about regions we do not stock numbers for. */
+function regionCountry(region: string | null): 'PT' | 'ES' | null {
+  if (!region) return null
+  if (region.startsWith('pt-')) return 'PT'
+  if (region.startsWith('es-')) return 'ES'
+  return null
+}
+
+/** Takes a free line off the shelf for this country, preferring its region. */
+export async function claimForClinic(
+  country: 'PT' | 'ES',
+  region: string | null
+): Promise<{ number: string; providerRef: string } | null> {
+  const admin = createAdminClient()
+  for (const withRegion of region ? [true, false] : [false]) {
+    const q = admin
+      .from('phone_stock')
+      .select('id, number, provider_ref')
+      .is('clinic_id', null)
+      .is('claimed_at', null)
+      .eq('country', country)
+    if (withRegion && region) q.eq('region', region)
+
+    const { data } = await q.limit(1).maybeSingle()
+    if (!data) continue
+
+    const { data: taken } = await admin
+      .from('phone_stock')
+      .update({ claimed_at: new Date().toISOString() })
+      .eq('id', (data as { id: string }).id)
+      .is('claimed_at', null)
+      .select('number, provider_ref')
+      .maybeSingle()
+
+    if (taken) {
+      const row = taken as { number: string; provider_ref: string }
+      return { number: row.number, providerRef: row.provider_ref }
+    }
+  }
+  return null
 }

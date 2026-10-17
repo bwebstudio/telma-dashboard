@@ -63,132 +63,28 @@ function countryOf(number) {
   return null
 }
 
-// ── sync: o lote que chegou, todo de uma vez ────────────────────────────────
-// Um pedido de vinte números chega como vinte linhas na conta da Twilio e
-// vinte emails. Pô-los na prateleira à mão é vinte vezes a mesma colagem, e
-// é onde se erra um dígito. Isto lê a conta, vê quais ainda não conhecemos,
-// aponta-os para nós e guarda-os.
+// ── sync: o que a Twilio já entregou ────────────────────────────────────────
+// A mesma função que a tarefa horária corre sozinha. Aqui serve para não
+// esperar pela hora seguinte, e para ver o que aconteceu.
 if (first === 'sync') {
-  const auth = twilioAuth()
-  if (!auth) {
-    console.error('\n  Sem credenciais da Twilio no .env.local.\n')
+  const { syncTwilioNumbers } = await import('../lib/numbers/sync.ts')
+  const r = await syncTwilioNumbers()
+  console.log('')
+  if (r.error) {
+    console.error(`  Não consegui perguntar à Twilio: ${r.error}\n`)
     process.exit(1)
   }
-  const account = await twilioAccountSid(auth)
-  if (!account) {
-    console.error('\n  Não consegui descobrir a conta da Twilio.\n')
-    process.exit(1)
-  }
-
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${account}/IncomingPhoneNumbers.json?PageSize=200`,
-    { headers: { Authorization: `Basic ${auth}` } }
-  )
-  const body = await res.json().catch(() => ({}))
-  const lines = body.incoming_phone_numbers ?? []
-  const known = await knownNumbers()
-
-  // ── UM NÚMERO QUE JÁ APONTA PARA ALGUM LADO ESTÁ A SER USADO ─────────────
-  // A primeira vez que isto correu engoliu a linha de demonstração, que
-  // aponta directamente para a ElevenLabs e é a que mostramos a quem ainda
-  // não é cliente. Teria sido entregue à inscrição seguinte, e a demonstração
-  // passaria a tocar numa clínica.
-  //
-  // A regra: um número já apontado para outro sítio tem dono. Só entram os
-  // que não apontam para lado nenhum, ou que já apontam para nós. `--force`
-  // existe para o dia em que se quer mesmo recuperar um deles.
-  const force = rest.includes('--force')
-  const inUse = []
-  const fresh = lines.filter((n) => {
-    const number = (n.phone_number ?? '').replace(/\s/g, '')
-    if (known.has(number)) return false
-    const url = n.voice_url || ''
-    const mine = !url || (HOOK && url === HOOK)
-    if (!mine && !force) {
-      inUse.push({ number, url })
-      return false
-    }
-    return true
-  })
-
-  for (const n of inUse) {
-    console.log(`\n  ${n.number} ignorado: já aponta para ${n.url}`)
-    console.log('     Se mesmo assim o quer na prateleira: sync --force')
-  }
-  if (!fresh.length) {
-    console.log(`\n  ${lines.length} número(s) na Twilio, nenhum novo.\n`)
-    process.exit(0)
-  }
-
-  console.log(`\n  ${fresh.length} número(s) novo(s):\n`)
-  for (const n of fresh) {
-    const number = (n.phone_number ?? '').replace(/\s/g, '')
-    const country = countryOf(number)
-    if (!country) {
-      console.log(`  ${number}  ignorado: não é PT nem ES`)
-      continue
-    }
-
-    // Apontá-lo para nós antes de o guardar. Um número comprado pelo
-    // formulário não ficou apontado a lado nenhum, e um número que existe e
-    // não toca é pior do que nenhum: a clínica distribui-o.
-    let pointed = 'sem webhook configurado'
-    if (HOOK) {
-      const r = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${account}/IncomingPhoneNumbers/${n.sid}.json`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Basic ${auth}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({ VoiceUrl: HOOK, VoiceMethod: 'POST' }),
-        }
-      )
-      pointed = r.ok ? 'apontado' : `a Twilio recusou (${r.status})`
-    }
-
-    const added = await addToStock({ number, providerRef: n.sid, country })
+  console.log(`  ${r.seen} número(s) na conta da Twilio.`)
+  for (const n of r.shelved) console.log(`  ${n}  na prateleira, apontado para nós`)
+  for (const s of r.skipped) console.log(`  ${s.number}  ignorado: ${s.because}`)
+  for (const a of r.assigned) {
     console.log(
-      `  ${number}  ${country}  ${added.ok ? 'na prateleira' : `NÃO guardado: ${added.error}`}  ·  ${pointed}`
+      `  ${a.number}  entregue a ${a.clinic}  ·  email ${a.emailed ? 'enviado' : 'NÃO SAIU'}`
     )
   }
+  if (!r.shelved.length && !r.assigned.length) console.log('  Nada de novo.')
+  if (r.stillWaiting) console.log(`  ${r.stillWaiting} clínica(s) ainda à espera.`)
   console.log('')
-  process.exit(0)
-}
-
-// ── A PRATELEIRA ────────────────────────────────────────────────────────────
-// `stock`           o que lá está
-// `stock-add ...`   põe lá um número acabado de comprar
-if (first === 'stock') {
-  const rows = await stockLevels()
-  if (!rows.length) {
-    console.log('\n  Prateleira vazia. Encomende em lote pela Private Offering form.\n')
-    process.exit(0)
-  }
-  console.log('\n  Prateleira:\n')
-  for (const r of rows) {
-    const lane = r.region ? `${r.country} ${r.region}` : r.country
-    const warn = r.free === 0 ? '   <- VAZIA' : r.free <= 2 ? '   <- a acabar' : ''
-    console.log(`  ${lane.padEnd(18)} livres ${String(r.free).padStart(3)}   entregues ${String(r.taken).padStart(3)}${warn}`)
-  }
-  console.log('')
-  process.exit(0)
-}
-
-if (first === 'stock-add') {
-  const [num, sid, country, region] = rest
-  if (!num || !sid || !country) {
-    console.error('\n  npx tsx scripts/numero.mjs stock-add <número> <PNsid> <PT|ES> [região]\n')
-    process.exit(1)
-  }
-  const r = await addToStock({ number: num, providerRef: sid, country, region: region ?? null })
-  console.log('')
-  if (!r.ok) {
-    console.error(`  Não foi guardado: ${r.error}\n`)
-    process.exit(1)
-  }
-  console.log(`  ${num} na prateleira (${country}${region ? ' ' + region : ''}).\n`)
   process.exit(0)
 }
 

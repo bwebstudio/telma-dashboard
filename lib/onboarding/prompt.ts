@@ -336,10 +336,28 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     'Passar a chamada à clínica não substitui isso, nem com a clínica aberta.',
     '',
   ],
-  emergencyOpen: (v) =>
-    v.emergency_number
-      ? `A clínica está aberta agora. Passas a chamada imediatamente para ${v.emergency_number}. Dizes que vais passar, e passas.`
-      : 'A clínica está aberta agora. Passas a chamada imediatamente para alguém da clínica. Dizes que vais passar, e passas.',
+  // ── PORQUE É QUE ISTO OLHA PARA O NÚMERO ANTES DE PROMETER ────────────────
+  // A ferramenta de transferência marca `{{emergency_number}}`, e o arranque da
+  // chamada manda string vazia quando a clínica não deu nenhum. A regra antiga
+  // dizia "passas a chamada imediatamente para alguém da clínica" na mesma: a
+  // Telma anunciava uma transferência que a ferramenta não tinha como marcar, e
+  // quem estava com dores ouvia uma promessa e depois nada.
+  //
+  // Com número, transfere. Sem número de urgências mas com transferências
+  // ligadas, serve o número de recurso, que é o que a segunda entrada da
+  // ferramenta marca. Sem nenhum dos dois, não se promete transferência
+  // nenhuma: diz-se o que se vai fazer e faz-se.
+  emergencyOpen: (v) => {
+    const to = v.emergency_number ?? (v.fallback_policy === 'transfer' ? v.fallback_number : null)
+    if (to) {
+      return `A clínica está aberta agora. Passas a chamada imediatamente para ${to}. Dizes que vais passar, e passas.`
+    }
+    return [
+      'A clínica está aberta agora, mas não tens número nenhum para onde passar a chamada: esta clínica não configurou um.',
+      '**Não dizes que vais passar a chamada, nem que alguém vai atender já.** Tomas o nome e o número, repete-lo em voz alta para confirmar, e dizes que a clínica é avisada já a seguir e liga de volta.',
+      'Se for perigo imediato, isso não muda: a primeira coisa continua a ser mandar ligar 112 ou ir às urgências.',
+    ].join('\n')
+  },
   emergencyClosed: (v) => {
     const to = v.after_hours_number ?? v.emergency_number
     if (!v.after_hours_transfer || !to) {
@@ -705,10 +723,17 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     'Pasar la llamada a la clínica no sustituye a eso, ni con la clínica abierta.',
     '',
   ],
-  emergencyOpen: (v) =>
-    v.emergency_number
-      ? `La clínica está abierta ahora. Pasas la llamada inmediatamente al ${v.emergency_number}. Avisas de que vas a pasarla, y la pasas.`
-      : 'La clínica está abierta ahora. Pasas la llamada inmediatamente a alguien de la clínica. Avisas de que vas a pasarla, y la pasas.',
+  emergencyOpen: (v) => {
+    const to = v.emergency_number ?? (v.fallback_policy === 'transfer' ? v.fallback_number : null)
+    if (to) {
+      return `La clínica está abierta ahora. Pasas la llamada inmediatamente al ${to}. Avisas de que vas a pasarla, y la pasas.`
+    }
+    return [
+      'La clínica está abierta ahora, pero no tienes ningún número al que pasar la llamada: esta clínica no ha configurado uno.',
+      '**No dices que vas a pasar la llamada, ni que alguien la va a atender ya.** Tomas el nombre y el número, lo repites en voz alta para confirmarlo, y dices que la clínica queda avisada ahora mismo y llama de vuelta.',
+      'Si hay peligro inmediato, eso no cambia: lo primero sigue siendo decir que llame al 112 o vaya a urgencias.',
+    ].join('\n')
+  },
   emergencyClosed: (v) => {
     const to = v.after_hours_number ?? v.emergency_number
     if (!v.after_hours_transfer || !to) {

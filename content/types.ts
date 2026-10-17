@@ -17,6 +17,15 @@ import type {
 // names, call notes) is stored and shown verbatim, never translated.
 
 export interface Dictionary {
+  /**
+   * What the browser shows: the tab, the bookmark, the installed app's name.
+   * It was written once in Portuguese for everybody, so a clinic working in
+   * Spanish had a Portuguese tab open all day.
+   */
+  meta: {
+    title: string
+    description: string
+  }
   common: {
     appName: string
     loading: string

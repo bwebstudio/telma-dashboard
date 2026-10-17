@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { syncTwilioNumbers } from '@/lib/numbers/sync'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
- * Asks Twilio, every hour, whether the numbers we ordered have arrived.
+ * The once-a-day job: has a number arrived, and is anything past its date.
  *
  * Portuguese and Spanish numbers cannot be bought over the API: they are
  * ordered through a form and delivered days later by a person, who writes an
@@ -11,9 +12,22 @@ import { syncTwilioNumbers } from '@/lib/numbers/sync'
  * and the account answers a question rather than a mailbox needing to be
  * read, filed and parsed.
  *
- * Hourly, because the whole point is that nobody is watching. A clinic that
- * signed up on Monday with an empty shelf is told within the hour of the line
- * existing, on a Thursday, by us, with nobody noticing anything had happened.
+ * Daily, because the plan allows daily. It was hourly, and Vercel refused
+ * every deployment that declared it: a Hobby account gets one run a day per
+ * job, and two jobs in total.
+ *
+ * ── AND WHY RETENTION RIDES ALONG ──────────────────────────────────────────
+ * `purge_expired()` is what makes the retention periods true: audio at seven
+ * days, the caller's number and the summary at ninety, appointments thirty
+ * days after a clinic leaves. It was scheduled with pg_cron inside a migration,
+ * in a block that swallows its own failure, so on a database where pg_cron is
+ * not enabled nothing was ever deleted and nothing said so. A deletion that
+ * may or may not be happening is not a retention policy.
+ *
+ * It runs here instead, on a schedule we can see, because the account has two
+ * cron jobs and both are spoken for. Two unrelated things in one job is the
+ * price of that; the alternative was a third job the plan refuses, or a policy
+ * that exists only in a comment.
  *
  * Same guard as the recalls job: Vercel sends `Authorization: Bearer
  * $CRON_SECRET`, and without that variable this route answers nobody. An open
@@ -34,5 +48,18 @@ export async function GET(request: Request) {
   }
 
   const report = await syncTwilioNumbers()
-  return NextResponse.json({ ok: !report.error, ...report })
+
+  // Never allowed to fail the numbers half: a clinic waiting for its line must
+  // not go another day because a delete did not go through.
+  let purged: unknown = null
+  let purgeError: string | null = null
+  try {
+    const { data, error } = await createAdminClient().rpc('purge_expired')
+    if (error) purgeError = error.message
+    else purged = data
+  } catch (e) {
+    purgeError = e instanceof Error ? e.message : 'purge_failed'
+  }
+
+  return NextResponse.json({ ok: !report.error, ...report, purged, purge_error: purgeError })
 }

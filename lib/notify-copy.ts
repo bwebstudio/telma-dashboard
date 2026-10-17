@@ -7,6 +7,14 @@
  * sentence is a test nobody runs. Everything touching Twilio or Supabase lives
  * in notify-patient.ts.
  *
+ * ── THE REASON FOR A REFUSAL DOES NOT TRAVEL ──────────────────────────────
+ * It used to. The panel asks for "Motivo (opcional)" under a line saying it is
+ * kept on the record, and the text the receptionist typed went out in the SMS
+ * to the patient. Anything written there in the belief that it was internal --
+ * why this patient, what happened last time -- was read by the person it was
+ * about. The reason stays in the panel now; the patient is told the booking
+ * was not confirmed and to ring.
+ *
  * These are read by somebody who asked for an appointment out loud days ago and
  * is now looking at their telephone. The clinic's name comes first, because
  * that is what makes it not spam; then what happened; then what to do about it.
@@ -65,16 +73,16 @@ const COPY = {
       `${c}: a sua marcação está confirmada para ${w}. Se não puder vir, ligue-nos.`,
     alterada: (c: string, w: string) =>
       `${c}: a sua marcação passou para ${w}. Se este horário não lhe der jeito, ligue-nos.`,
-    rejeitada: (c: string, w: string, why: string | null) =>
-      `${c}: não foi possível confirmar a sua marcação de ${w}${why ? `. ${why}` : ''}. Ligue-nos para remarcar.`,
+    rejeitada: (c: string, w: string) =>
+      `${c}: não foi possível confirmar a sua marcação de ${w}. Ligue-nos para remarcar.`,
   },
   es: {
     confirmada: (c: string, w: string) =>
       `${c}: su cita queda confirmada para ${w}. Si no puede venir, llámenos.`,
     alterada: (c: string, w: string) =>
       `${c}: su cita ha pasado al ${w}. Si esa hora no le viene bien, llámenos.`,
-    rejeitada: (c: string, w: string, why: string | null) =>
-      `${c}: no hemos podido confirmar su cita del ${w}${why ? `. ${why}` : ''}. Llámenos para buscar otra hora.`,
+    rejeitada: (c: string, w: string) =>
+      `${c}: no hemos podido confirmar su cita del ${w}. Llámenos para buscar otra hora.`,
   },
 } as const
 
@@ -100,7 +108,6 @@ export function messageFor(
   kind: NotifyKind,
   clinic: NotifiableClinic,
   scheduledAt: string,
-  rejectReason: string | null,
   /**
    * Put the clinic's number in the text.
    *
@@ -115,10 +122,7 @@ export function messageFor(
   const locale = clinic.language === 'es' ? 'es' : 'pt'
   const when = whenIn(scheduledAt, clinic.timezone, locale)
   const t = COPY[locale]
-  const said =
-    kind === 'rejeitada'
-      ? t.rejeitada(clinic.name, when, rejectReason)
-      : t[kind](clinic.name, when)
+  const said = t[kind](clinic.name, when)
   const phone = clinic.assigned_phone?.trim()
   return withPhone && phone ? `${said} ${phone}` : said
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { phoneForAppointment, plausiblePhone } from '@/lib/phone'
+import { phoneForAppointment, plausibleName, plausiblePhone } from '@/lib/phone'
+import { claimSlot, releaseSlot } from '@/lib/slot-claim'
 import {
   canonicalReason,
   resolveDuration,
@@ -12,6 +13,11 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 const RESULTS = ['marcacao', 'transferida', 'informacao', 'nao_resolvida']
+
+/** The conversation id, under either of the two names it arrives with. */
+function externalRefOf(body: Record<string, unknown>): string | null {
+  return (body.call_ref as string | undefined) ?? (body.external_ref as string | undefined) ?? null
+}
 
 function authorized(request: Request): boolean {
   const token = process.env.TELMA_WEBHOOK_TOKEN
@@ -82,7 +88,6 @@ export async function POST(request: Request) {
   const minutesFor = (a: Record<string, unknown>) =>
     resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
 
-
   // Which diary this belongs to.
   //
   // Named, when the caller asked for somebody. Otherwise the diary that was
@@ -136,6 +141,8 @@ export async function POST(request: Request) {
       // Refused while she is still on the line, which is the only moment it can
       // be put right.
       rejected = 'patient_phone_not_plausible'
+    } else if (!plausibleName(appointment.patient_name)) {
+      rejected = 'patient_name_missing'
     } else {
       // Rebuilt field by field rather than passed through.
       //
@@ -168,6 +175,27 @@ export async function POST(request: Request) {
     }
   }
 
+  // ── AND IS THE HOUR STILL FREE? ───────────────────────────────────────────
+  // Last gate before anything is written. See lib/slot-claim.ts: the agent held
+  // this hour while she read it back, that hold lasts three minutes, and a
+  // booking call can run longer. Claiming it again here is what stops two
+  // conversations ending in the same slot.
+  if (usable) {
+    const claim = await claimSlot(admin, {
+      clinicId,
+      scheduledAt: usable.scheduled_at as string,
+      durationMinutes: (usable.duration_minutes as number) ?? null,
+      resourceId: (usable.resource_id as string) ?? null,
+      callRef: externalRefOf(body),
+    })
+    if (!claim.ok && claim.because === 'taken') {
+      rejected = 'slot_taken'
+      usable = null
+    } else if (!claim.ok) {
+      console.error('[call] slot claim failed open', claim.error)
+    }
+  }
+
   // One conversation, one call row, however many times this is asked for.
   //
   // Telma is told to register once at the end and she registered twice: after
@@ -179,8 +207,7 @@ export async function POST(request: Request) {
   // `system__conversation_id` is the same on both attempts, which makes this
   // fixable here rather than by asking the model to be more careful. Retries and
   // dropped responses get the same protection for free.
-  const externalRef =
-    (body.call_ref as string | undefined) ?? (body.external_ref as string | undefined) ?? null
+  const externalRef = externalRefOf(body)
 
   if (externalRef) {
     const { data: seen } = await admin
@@ -195,14 +222,26 @@ export async function POST(request: Request) {
       // The later attempt knows more than the earlier one: it has the whole
       // conversation behind it, so its summary and duration replace what the
       // first one guessed at.
-      await admin
-        .from('calls')
-        .update({
-          duration_seconds: Number(body.duration_seconds) || 0,
-          result: rejected ? 'nao_resolvida' : (result ?? null),
-          summary: (body.summary as string) ?? null,
-        })
-        .eq('id', existing.id)
+      //
+      // Through record_call rather than a direct update, because the minutes
+      // have to move with the duration. The update used to be written here on
+      // its own and `usage` kept whatever the first, shorter delivery had
+      // guessed: a charge too small, which nobody reports. record_call is an
+      // upsert now and moves usage by the difference, so a repeat of the same
+      // duration moves it by nothing and a correction moves it by what changed.
+      await admin.rpc('record_call', {
+        p_clinic_id: clinicId,
+        p_from_phone: (body.from_phone as string) ?? null,
+        p_duration: Number(body.duration_seconds) || 0,
+        p_result: rejected ? 'nao_resolvida' : (result ?? null),
+        p_summary: (body.summary as string) ?? null,
+        p_recording_url: (body.recording_url as string) ?? null,
+        p_external_ref: externalRef,
+        // The bookings of a repeated delivery are handled below, where the ones
+        // already written are known. Two writers of one booking is how a clinic
+        // ends up with three appointments for two patients.
+        p_appointment: null,
+      })
 
       const { data: already } = await admin
         .from('appointments')
@@ -217,6 +256,7 @@ export async function POST(request: Request) {
       const fresh = many
         .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
         .filter((a) => plausiblePhone(a.patient_phone) || plausiblePhone(body.from_phone))
+        .filter((a) => plausibleName(a.patient_name))
         .filter(
           (a) =>
             !seenKeys.has(
@@ -226,6 +266,14 @@ export async function POST(request: Request) {
 
       const rows = []
       for (const a of fresh) {
+        const claim = await claimSlot(admin, {
+          clinicId,
+          scheduledAt: a.scheduled_at as string,
+          durationMinutes: minutesFor(a),
+          resourceId: await diaryFor(a),
+          callRef: externalRef,
+        })
+        if (!claim.ok && claim.because === 'taken') continue
         rows.push({
           clinic_id: clinicId,
           call_id: existing.id,
@@ -240,7 +288,11 @@ export async function POST(request: Request) {
         })
       }
 
-      if (rows.length) await admin.from('appointments').insert(rows)
+      if (rows.length) {
+        await admin.from('appointments').insert(rows)
+        // record_call clears its own hold; these were written straight.
+        for (const r of rows) await releaseSlot(admin, clinicId, r.scheduled_at as string)
+      }
       return NextResponse.json({ ok: true, call_id: existing.id, added: rows.length })
     }
   }
@@ -269,8 +321,17 @@ export async function POST(request: Request) {
     const usableExtras = extras
       .filter((a) => typeof a.scheduled_at === 'string' && !Number.isNaN(Date.parse(a.scheduled_at as string)))
       .filter((a) => plausiblePhone(a.patient_phone) || plausiblePhone(body.from_phone))
+      .filter((a) => plausibleName(a.patient_name))
     const rows = []
     for (const a of usableExtras) {
+      const claim = await claimSlot(admin, {
+        clinicId,
+        scheduledAt: a.scheduled_at as string,
+        durationMinutes: minutesFor(a),
+        resourceId: await diaryFor(a),
+        callRef: externalRef,
+      })
+      if (!claim.ok && claim.because === 'taken') continue
       rows.push({
         clinic_id: clinicId,
         call_id: callId,
@@ -292,6 +353,7 @@ export async function POST(request: Request) {
       // Reported, never fatal: the call and the first booking are already
       // written, and losing them too would turn a partial record into none.
       if (extraErr) console.error('[call] extra appointments', extraErr.message)
+      for (const r of rows) await releaseSlot(admin, clinicId, r.scheduled_at as string)
     }
   }
 
@@ -354,7 +416,11 @@ export async function POST(request: Request) {
         message:
           rejected === 'patient_phone_not_plausible'
             ? 'A chamada ficou registada mas a marcação não: o telefone não parece um número completo. Peça-o outra vez à pessoa, diga quantos algarismos ouviu, e volte a registar. Em Espanha e em Portugal são nove algarismos.'
-            : 'A chamada ficou registada mas a marcação não: scheduled_at tem de ser a hora tal como veio em slot_start, em ISO 8601. Diga à pessoa que a marcação não ficou e que a clínica liga a confirmar.',
+            : rejected === 'patient_name_missing'
+              ? 'A chamada ficou registada mas a marcação não: falta o nome de quem vem. Peça o nome, repita-o para confirmar, e volte a registar.'
+              : rejected === 'slot_taken'
+                ? 'A chamada ficou registada mas a marcação não: essa hora foi ocupada entretanto. Peça desculpa, ofereça outra hora com telma_horas_livres e volte a registar.'
+                : 'A chamada ficou registada mas a marcação não: scheduled_at tem de ser a hora tal como veio em slot_start, em ISO 8601. Diga à pessoa que a marcação não ficou e que a clínica liga a confirmar.',
         ...(data as object),
       },
       { status: 422 }

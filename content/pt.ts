@@ -1,6 +1,10 @@
 import type { Dictionary } from './types'
 
 export const pt: Dictionary = {
+  meta: {
+    title: 'Telma · Painel',
+    description: 'Painel de gestão da Telma: chamadas, marcações e agenda da clínica.',
+  },
   common: {
     appName: 'Telma',
     loading: 'A carregar...',
@@ -320,7 +324,7 @@ export const pt: Dictionary = {
     alterWarning: 'Ao alterar a data ou a hora, é preciso avisar o paciente.',
     newDateTime: 'Nova data e hora',
     rejectReason: 'Motivo (opcional)',
-    rejectReasonHint: 'O motivo fica registado. O paciente não é avisado automaticamente.',
+    rejectReasonHint: 'O motivo fica no painel, para a clínica. O paciente recebe um aviso de que a marcação não ficou confirmada e de que deve ligar, sem o motivo.',
     confirmConfirm: 'Marcar como confirmada',
     visits: 'Marcações anteriores nesta clínica: {n}',
     olderHint: 'Há {n} marcações decididas há mais de {days} dias. Ficam na agenda, no seu dia.',

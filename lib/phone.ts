@@ -39,3 +39,37 @@ export function phoneForAppointment(said: unknown, callerId: unknown): string | 
   if (plausiblePhone(callerId)) return callerId as string
   return null
 }
+
+/**
+ * Somebody has to be expected.
+ *
+ * The prompt asks for the name and reads it back, and that was the whole of the
+ * protection: `record_call` takes whatever arrives, null included, and an
+ * appointment with no name reaches the clinic as an hour with nobody in it.
+ * The receptionist cannot ring to confirm, cannot find the file, and cannot
+ * tell it from a mistake. Refused here, while the agent is still on the line
+ * and can ask again, the same way a phone that is not a phone is refused.
+ *
+ * Deliberately shallow: two characters that are not punctuation. This is not
+ * trying to decide whether a name is a real name, only whether anything was
+ * written down.
+ */
+/**
+ * Somebody has to be expected.
+ *
+ * The prompt asks for the name and reads it back, and that was the whole of the
+ * protection: `record_call` takes whatever arrives, null included, and an
+ * appointment with no name reaches the clinic as an hour with nobody in it.
+ * The receptionist cannot ring to confirm, cannot find the file, and cannot
+ * tell it from a mistake. Refused at the webhook, while the agent is still on
+ * the line and can ask again, the same way a phone that is not a phone is.
+ *
+ * Deliberately shallow: two letters. This is not trying to decide whether a
+ * name is a real name, only whether anything was written down.
+ */
+export function plausibleName(value: unknown): boolean {
+  if (typeof value !== 'string') return false
+  const name = value.trim()
+  if (name.length < 2) return false
+  return /\p{L}{2}/u.test(name)
+}

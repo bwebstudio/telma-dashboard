@@ -1,14 +1,28 @@
 import type { Metadata, Viewport } from 'next'
 import { mono, sans } from '@/lib/fonts'
-import { getLocale } from '@/lib/i18n'
+import { getDict, getLocale } from '@/lib/i18n'
+import { getAppUser } from '@/lib/auth'
 import { PwaSetup } from '@/components/PwaSetup'
 import './globals.css'
 
-export const metadata: Metadata = {
-  title: 'Telma · Painel',
-  description: 'Painel de gestão da Telma.',
+/**
+ * Read per request, not written once at build.
+ *
+ * The tab said "Telma · Painel" to a clinic working in Spanish, because this
+ * was a constant. The layout already awaits the locale to set <html lang>, so
+ * the dictionary is one more await on a render that was never static.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict, locale } = await getDict()
+  // Which installed app this is. A manifest is fetched without credentials and
+  // cannot read the session, so the page that does says so in the URL.
+  const user = await getAppUser()
+  const scope = user?.role === 'comercial' || user?.role === 'interno' ? 'crm' : 'clinica'
+  return {
+  title: dict.meta.title,
+  description: dict.meta.description,
   robots: { index: false, follow: false },
-  manifest: '/manifest.webmanifest',
+  manifest: `/manifest.webmanifest?lang=${locale}&scope=${scope}`,
   applicationName: 'Telma',
   appleWebApp: {
     capable: true,
@@ -19,6 +33,7 @@ export const metadata: Metadata = {
     icon: [{ url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
   },
+  }
 }
 
 export const viewport: Viewport = {

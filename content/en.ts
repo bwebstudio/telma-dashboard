@@ -1,6 +1,10 @@
 import type { Dictionary } from './types'
 
 export const en: Dictionary = {
+  meta: {
+    title: 'Telma · Dashboard',
+    description: 'Telma dashboard: calls, appointments and the clinic schedule.',
+  },
   common: {
     appName: 'Telma',
     loading: 'Loading...',
@@ -318,7 +322,7 @@ export const en: Dictionary = {
     alterWarning: 'When you change the date or time, the patient must be told.',
     newDateTime: 'New date and time',
     rejectReason: 'Reason (optional)',
-    rejectReasonHint: 'The reason is saved. The patient is not notified automatically.',
+    rejectReasonHint: 'The reason stays in the dashboard, for the clinic. The patient is told the appointment was not confirmed and to call, without the reason.',
     confirmConfirm: 'Mark as confirmed',
     visits: 'Previous appointments at this clinic: {n}',
     olderHint: '{n} appointments were decided more than {days} days ago. They stay in the agenda, on their day.',

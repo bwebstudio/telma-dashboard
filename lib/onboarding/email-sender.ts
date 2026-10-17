@@ -121,9 +121,6 @@ interface EmailCopy {
   openPanel: string
 
   // ── AINDA NÃO DESVIE ─────────────────────────────────────────────────
-  forwardTitle: string
-  forwardFirst: string
-  forwardThen: string
 
   // ── OS PASSOS ────────────────────────────────────────────────────────
   stepsLabel: string
@@ -183,11 +180,6 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     accessNote: 'Use esta palavra-passe para entrar da primeira vez. Depois pode alterá-la no painel.',
     openPanel: 'Abrir o painel',
 
-    forwardTitle: 'Ainda não desvie as suas chamadas',
-    forwardFirst:
-      'Primeiro, configure a Telma com as informações da sua clínica e active-a quando estiver pronta. Assim poderá atender os seus doentes correctamente desde a primeira chamada.',
-    forwardThen:
-      'Quando chegar o momento, encontrará no painel os códigos necessários para activar o desvio. Só terá de os marcar no telefone da clínica e demora menos de um minuto.',
 
     stepsLabel: 'O que acontece a seguir',
     stepsKeep: [
@@ -270,11 +262,6 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     accessNote: 'Utilice esta contraseña para acceder por primera vez. Podrá cambiarla después desde el panel.',
     openPanel: 'Abrir el panel',
 
-    forwardTitle: 'Todavía no desvíe sus llamadas',
-    forwardFirst:
-      'Antes, configure a Telma con la información de su clínica y actívela cuando esté lista. Así podrá atender a sus pacientes correctamente desde la primera llamada.',
-    forwardThen:
-      'Cuando llegue el momento, encontrará en el panel los códigos necesarios para activar el desvío. Solo tendrá que marcarlos desde el teléfono de la clínica y tardará menos de un minuto.',
 
     stepsLabel: 'Qué pasa a continuación',
     stepsKeep: [
@@ -607,22 +594,12 @@ export function welcomeHtml(p: WelcomeEmail): string {
     : `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberPendingLabel)}</p>
               <p style="margin:7px 0 0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.numberPendingBody)}</p>`
 
-  // Only for a clinic that kept its own number, and only once the line
-  // exists. Before that the number section already says we are arranging it,
-  // and a second block about not forwarding yet is a warning about something
-  // they could not do anyway.
-  const forwarding =
-    p.temporaryNumber && p.phoneNumber
-      ? `
-          <h2 style="margin:38px 0 10px;font-size:19px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MACAW_WASH};border-left:4px solid ${MACAW};border-radius:0 10px 10px 0">
-            <tr><td style="padding:16px 20px">
-              <p style="margin:0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardFirst)}</p>
-              <p style="margin:10px 0 0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardThen)}</p>
-            </td></tr>
-          </table>`
-      : ''
-
+  // ── THE WARNING CAME OUT ────────────────────────────────────────────
+  // There was a macaw block here saying not to forward the calls yet. It
+  // said the same thing as step three, which already reads "when the line is
+  // ready we will tell you", and the panel says it again beside the codes.
+  // Three warnings about one mistake is a message that sounds worried, and a
+  // clinic reading it wonders what we are so afraid of.
   return shell({
     lang: t.htmlLang,
     title: p.clinicName,
@@ -654,7 +631,6 @@ export function welcomeHtml(p: WelcomeEmail): string {
             <a href="${escapeHtml(p.dashboardUrl)}"
                style="display:inline-block;background:${INK};color:#FFFFFF;text-decoration:none;padding:14px 26px;border-radius:8px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
           </p>
-${forwarding}
         </td></tr>
 ${stepsBlock(t.stepsLabel, steps)}`,
   })
@@ -701,9 +677,6 @@ export function welcomeText(p: WelcomeEmail): string {
     `  ${t.accessPassword}: ${p.password}`,
     `  ${t.accessNote}`,
     `  ${p.dashboardUrl}`,
-    ...(p.temporaryNumber && p.phoneNumber
-      ? ['', `${t.forwardTitle}:`, `  ${t.forwardFirst}`, `  ${t.forwardThen}`]
-      : []),
     '',
     `${t.stepsLabel}:`,
     ...steps.map((x, i) => `  ${i + 1}. ${x.title}: ${x.body}`),

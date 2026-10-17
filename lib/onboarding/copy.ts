@@ -22,6 +22,26 @@ export interface StepMeta {
 
 export interface Copy {
   steps: StepMeta[]
+  /** The screen between the last question and the charge. */
+  summaryTitle: string
+  summaryLead: string
+  summaryPlanLine: (plan: string, cycle: string) => string
+  summaryWhatsapp: string
+  summaryCycleMonthly: string
+  summaryCycleAnnual: string
+  summaryPerMonth: string
+  summaryPerYear: string
+  summarySubtotal: string
+  summaryTaxUnknown: string
+  summaryReverseCharge: string
+  summaryTotal: string
+  summaryTotalNow: string
+  summaryRenews: (cycle: string) => string
+  summaryCancel: string
+  summaryByArrangement: string
+  summaryFailed: string
+  summaryLoading: string
+  summaryBack: string
 
   pageTitle: string
   intro: string
@@ -203,8 +223,29 @@ const pt: Copy = {
   steps: [
     { n: 1, short: 'Plano', title: 'O plano', help: 'Sem permanência. Pode mudar de plano ou cancelar quando quiser.' },
     { n: 2, short: 'Clínica', title: 'A sua clínica', help: 'Quem é e onde está. A Telma aprende o resto no seu painel.' },
-    { n: 3, short: 'Número', title: 'O número e o pagamento', help: 'O número que a Telma vai atender. Fica pronta a configurar logo a seguir.' },
+    { n: 3, short: 'Número', title: 'O número', help: 'O número que a Telma vai atender. Fica pronta a configurar logo a seguir.' },
+    { n: 4, short: 'Resumo', title: 'O que vai pagar', help: 'Confira antes de avançar para o pagamento. Nada é cobrado nesta página.' },
   ],
+  summaryTitle: 'O que vai pagar',
+  summaryLead: 'Confira antes de avançar. O pagamento é feito na Stripe, no passo seguinte.',
+  summaryPlanLine: (plan, cycle) => `Plano ${plan}, ${cycle}`,
+  summaryWhatsapp: 'WhatsApp',
+  summaryCycleMonthly: 'mensal',
+  summaryCycleAnnual: 'anual',
+  summaryPerMonth: 'por mês',
+  summaryPerYear: 'por ano',
+  summarySubtotal: 'Subtotal',
+  summaryTaxUnknown: 'Calculado no pagamento',
+  summaryReverseCharge:
+    'Inversão do sujeito passivo: a fatura sai sem IVA e a sua clínica autoliquida-o na sua declaração. Pedimos-lhe o NIF na página de pagamento.',
+  summaryTotal: 'Total',
+  summaryTotalNow: 'Total a pagar hoje',
+  summaryRenews: (cycle) => `Renova ${cycle === 'annual' ? 'todos os anos' : 'todos os meses'} pelo mesmo valor.`,
+  summaryCancel: 'Sem permanência. Pode cancelar quando quiser a partir do painel.',
+  summaryByArrangement: 'Este plano é orçamentado connosco. Falamos consigo depois da inscrição.',
+  summaryFailed: 'Não foi possível calcular o valor agora. Pode avançar: o valor exato aparece na Stripe antes de confirmar.',
+  summaryLoading: 'A calcular...',
+  summaryBack: 'Corrigir alguma coisa',
 
   pageTitle: 'Inscrição',
   intro: 'A Telma atende o seu telefone',
@@ -400,8 +441,29 @@ const es: Copy = {
   steps: [
     { n: 1, short: 'Plan', title: 'El plan', help: 'Sin permanencia. Puede cambiar de plan o cancelar cuando quiera.' },
     { n: 2, short: 'Clínica', title: 'Su clínica', help: 'Quién es y dónde está. Telma aprende el resto en su panel.' },
-    { n: 3, short: 'Número', title: 'El número y el pago', help: 'El número que Telma va a atender. Queda lista para configurar justo después.' },
+    { n: 3, short: 'Número', title: 'El número', help: 'El número que Telma va a atender. Queda lista para configurar justo después.' },
+    { n: 4, short: 'Resumen', title: 'Lo que va a pagar', help: 'Revíselo antes de ir al pago. En esta página no se cobra nada.' },
   ],
+  summaryTitle: 'Lo que va a pagar',
+  summaryLead: 'Revíselo antes de seguir. El pago se hace en Stripe, en el paso siguiente.',
+  summaryPlanLine: (plan, cycle) => `Plan ${plan}, ${cycle}`,
+  summaryWhatsapp: 'WhatsApp',
+  summaryCycleMonthly: 'mensual',
+  summaryCycleAnnual: 'anual',
+  summaryPerMonth: 'al mes',
+  summaryPerYear: 'al año',
+  summarySubtotal: 'Subtotal',
+  summaryTaxUnknown: 'Se calcula en el pago',
+  summaryReverseCharge:
+    'Inversión del sujeto pasivo: la factura sale sin IVA y su clínica lo autoliquida en su declaración. Le pedimos el NIF en la página de pago.',
+  summaryTotal: 'Total',
+  summaryTotalNow: 'Total a pagar hoy',
+  summaryRenews: (cycle) => `Se renueva ${cycle === 'annual' ? 'cada año' : 'cada mes'} por el mismo importe.`,
+  summaryCancel: 'Sin permanencia. Puede cancelar cuando quiera desde el panel.',
+  summaryByArrangement: 'Este plan se presupuesta con nosotros. Hablamos con usted después del alta.',
+  summaryFailed: 'No hemos podido calcular el importe ahora. Puede seguir: el importe exacto aparece en Stripe antes de confirmar.',
+  summaryLoading: 'Calculando...',
+  summaryBack: 'Corregir algo',
 
   pageTitle: 'Alta',
   intro: 'Telma contesta su teléfono',

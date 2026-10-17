@@ -68,6 +68,95 @@ function checkoutTaxRate(country: 'PT' | 'ES'): string | null {
   return id
 }
 
+/**
+ * What Stripe will actually charge, before anybody is asked to agree to it.
+ *
+ * The `plans` table has prices too, and they are not the same fact. That table
+ * is what the site advertises; these are what the card is debited. They are
+ * kept in step by hand, and a summary screen built from the advertised number
+ * would be a promise the checkout is free to break. So the screen that says
+ * "this is what you will pay" asks the thing that does the charging.
+ */
+export interface QuotedPrice {
+  id: string
+  /** Minor units, as Stripe stores them. */
+  amount: number
+  currency: string
+  interval: 'month' | 'year' | null
+}
+
+export async function quotesByLookupKey(keys: string[]): Promise<Map<string, QuotedPrice>> {
+  const found = new Map<string, QuotedPrice>()
+  if (!stripeConfigured() || keys.length === 0) return found
+
+  const qs = new URLSearchParams({ active: 'true', limit: '100' })
+  keys.forEach((k, i) => qs.set(`lookup_keys[${i}]`, k))
+
+  const res = (await stripeGet(`/prices?${qs}`)) as {
+    data?: {
+      id?: string
+      lookup_key?: string
+      unit_amount?: number | null
+      currency?: string
+      recurring?: { interval?: string } | null
+    }[]
+  }
+  for (const p of res.data ?? []) {
+    if (!p.lookup_key || !p.id || typeof p.unit_amount !== 'number') continue
+    const interval = p.recurring?.interval
+    found.set(p.lookup_key, {
+      id: p.id,
+      amount: p.unit_amount,
+      currency: (p.currency ?? 'eur').toUpperCase(),
+      interval: interval === 'month' || interval === 'year' ? interval : null,
+    })
+  }
+  return found
+}
+
+/**
+ * The tax that will be added, read from the rate the checkout will use.
+ *
+ * Not a percentage written here. The rate lives in Stripe, differs between
+ * test and live, and is the kind of number that gets changed by somebody in a
+ * dashboard on a Tuesday. A screen that quotes it from memory is a screen
+ * that will one day quote the old one.
+ */
+export interface QuotedTax {
+  id: string
+  /** 23 for twenty-three per cent. Zero is a real answer: reverse charge. */
+  percentage: number
+  displayName: string
+  description: string | null
+  /** True when the rate is 0 because the buyer accounts for the VAT itself. */
+  reverseCharge: boolean
+}
+
+export async function taxQuoteFor(country: 'PT' | 'ES'): Promise<QuotedTax | null> {
+  const id = TAX_RATE[country]
+  if (!id || !stripeConfigured()) return null
+  try {
+    const r = (await stripeGet(`/tax_rates/${id}`)) as {
+      id?: string
+      percentage?: number
+      display_name?: string
+      description?: string | null
+    }
+    const percentage = typeof r.percentage === 'number' ? r.percentage : 0
+    return {
+      id: r.id ?? id,
+      percentage,
+      displayName: r.display_name ?? 'IVA',
+      description: r.description ?? null,
+      reverseCharge: percentage === 0,
+    }
+  } catch {
+    // A rate that cannot be read is not a reason to refuse a sign-up. The
+    // summary says the tax is worked out at payment instead of inventing one.
+    return null
+  }
+}
+
 export function stripeConfigured(): boolean {
   return Boolean(SECRET)
 }

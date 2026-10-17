@@ -689,6 +689,35 @@ async function rollback(
  * Returns an empty array when anything is missing, which `createCheckoutSession`
  * reads as "do not charge". Half a basket is worse than none.
  */
+/**
+ * The lookup keys this sign-up will be charged on.
+ *
+ * One definition, read by the checkout and by the summary that promises what
+ * the checkout will do. Two lists would be two lists until the day somebody
+ * adds a second add-on to one of them.
+ */
+export async function lookupKeysForQuote(
+  plan: PlanType,
+  cycle: 'monthly' | 'annual',
+  whatsapp: boolean
+): Promise<string[]> {
+  // An async wrapper because this file is 'use server': every export has to
+  // be awaitable. The quote lives in its own file and needs the same keys the
+  // checkout uses, and copying them there is how the two drift.
+  return lookupKeysFor(plan, cycle, whatsapp)
+}
+
+function lookupKeysFor(
+  plan: PlanType,
+  cycle: 'monthly' | 'annual',
+  whatsapp: boolean
+): string[] {
+  if (plan === 'personalizado') return []
+  const keys = [`${plan}_${cycle}`]
+  if (whatsapp) keys.push(`whatsapp_${cycle}`)
+  return keys
+}
+
 async function priceIdsFor(
   plan: PlanType,
   cycle: 'monthly' | 'annual',
@@ -699,8 +728,7 @@ async function priceIdsFor(
   // `personalizado` is quoted by hand and has no price in Stripe.
   if (plan === 'personalizado') return []
 
-  const wanted = [`${plan}_${cycle}`]
-  if (whatsapp) wanted.push(`whatsapp_${cycle}`)
+  const wanted = lookupKeysFor(plan, cycle, whatsapp)
 
   const found = await pricesByLookupKey(wanted)
 
@@ -765,9 +793,11 @@ export async function signupPlans(): Promise<
     annual: PLAN_PRICE[id] === null ? null : (PLAN_PRICE[id] as number) * 11,
     minutes: PLAN_MINUTES[id],
     locations: id === 'essencial' ? 1 : 3,
-    // Same ladder as 0025 seeds. Repeated only for the demo, which has no
-    // `plans` table to read it from.
-    maxLanguages: id === 'essencial' ? 2 : id === 'clinica' ? 3 : 4,
+    // One, two, three, matching 0054. Repeated only for the demo, which has
+    // no `plans` table to read it from. It said 2 / 3 / 4 until the ceilings
+    // were corrected and nothing pointed here, which is what a fallback does
+    // when it duplicates a number instead of deriving it.
+    maxLanguages: id === 'essencial' ? 1 : id === 'clinica' ? 2 : 3,
   }))
 
   if (isDemo()) return fallback

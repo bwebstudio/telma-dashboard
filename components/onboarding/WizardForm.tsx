@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { completeOnboarding, submitWizardStep } from '@/lib/actions/onboarding'
+import { SummaryStep } from '@/components/onboarding/SummaryStep'
 import type { OnboardingResult } from '@/lib/actions/onboarding'
 import { copyFor } from '@/lib/onboarding/copy'
 import {
@@ -64,6 +65,11 @@ const FIELD_STEP: Record<string, number> = {
 
 /** The earliest step carrying an error, so the reader lands on the first thing
  *  to fix rather than the last. `_form` belongs to wherever they already are. */
+/** The last step that asks anything. The fourth screen is the summary, which
+ *  stores nothing and has no schema: everything that saves or validates
+ *  counts to here, and only the indicator counts to STEPS.length. */
+const DATA_STEPS = 3
+
 function firstStepWithError(errors: Record<string, string>, current: number): number {
   const steps = Object.keys(errors)
     .map((key) => FIELD_STEP[key.split('.')[0]])
@@ -269,7 +275,7 @@ export function WizardForm({
       // never written, and `completeOnboarding` reads the stored draft rather
       // than what the browser sends. The symptom was the final button rejecting
       // a ticked terms box, because the draft had no `terms` in it at all.
-      const saved = await submitWizardStep(STEPS.length, values, token, locale)
+      const saved = await submitWizardStep(DATA_STEPS, values, token, locale)
       if (saved.token) setToken(saved.token)
       if (!saved.ok) {
         setErrors(saved.errors ?? {})
@@ -280,7 +286,7 @@ export function WizardForm({
       const state = await completeOnboarding(saved.token ?? token, values, locale)
       if (!state.ok) {
         setErrors(state.errors)
-        setStep(firstStepWithError(state.errors, STEPS.length))
+        setStep(firstStepWithError(state.errors, DATA_STEPS))
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
@@ -306,6 +312,11 @@ export function WizardForm({
   if (result) return <Done result={result} locale={locale} values={values} />
 
   const meta = STEPS[step - 1]
+  // ── THREE STEPS OF QUESTIONS, FOUR SCREENS ────────────────────────────
+  // The fourth is the summary, and it is not a step: it asks nothing, stores
+  // nothing and has no schema. The validation knows about 1 to 3 and must go
+  // on knowing only that, so the saving below keys off DATA_STEPS and the
+  // indicator keys off STEPS.
   const isLast = step === STEPS.length
 
   // The plan is chosen on step 1, so by the time step 5 asks about languages the
@@ -351,6 +362,13 @@ export function WizardForm({
             which of the two it was supposed to go back to. */}
         {step === 3 && (
           <NumberStep values={values} set={set} errors={errors} locale={locale} demo={demo} />
+        )}
+        {step === 4 && (
+          <SummaryStep
+            values={values}
+            locale={locale}
+            planName={plans.find((p) => p.id === values.plan_id)?.name ?? String(values.plan_id ?? '')}
+          />
         )}
 
         <div className="mt-8 flex flex-wrap items-center gap-3">

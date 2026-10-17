@@ -285,6 +285,11 @@ export async function POST(request: Request) {
       can_book: String(variables.can_book),
       prompt_version: built.version,
       prompt_shape: procedures ? 'core' : 'whole',
+      // The call Twilio is holding, so our own transfer tool can move it. The
+      // platform's transfer cannot: its destination list is fixed per agent and
+      // does not expand variables, which on a real emergency made it dial the
+      // word "emergencynumber" on a keypad. See lib/transfer.ts.
+      call_sid: body.call_sid ?? '',
       // Read by the built-in transfer tool, which needs a number and cannot be
       // given one per clinic any other way: there is a single shared agent, so
       // the destination has to arrive with the call.

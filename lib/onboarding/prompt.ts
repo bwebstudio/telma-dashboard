@@ -350,7 +350,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   emergencyOpen: (v) => {
     const to = v.emergency_number ?? (v.fallback_policy === 'transfer' ? v.fallback_number : null)
     if (to) {
-      return `A clínica está aberta agora. Passas a chamada imediatamente para ${to}. Dizes que vais passar, e passas.`
+      return `A clínica está aberta agora. Passas a chamada imediatamente: dizes que vais passar e **chamas telma_passar_chamada com tipo urgencia**. A ferramenta é que passa; a frase sozinha não passa nada.`
     }
     return [
       'A clínica está aberta agora, mas não tens número nenhum para onde passar a chamada: esta clínica não configurou um.',
@@ -411,6 +411,10 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     '**telma_horas_livres**: diz-te se a clínica faz aquilo E que horas tem. Chamas **antes** de ofereceres qualquer hora, sempre, mesmo quando julgas saber a resposta. Se a pessoa não pediu um dia em concreto, pedes **sete dias** de uma vez e tiras as duas opções de dias diferentes de `days_with_slots`.',
     '**telma_reservar_hora**: seguras a hora **assim que a pessoa a escolhe**, antes de lhe pedires os dados.',
     '**telma_registar_chamada**: uma única vez por chamada, com todas as marcações de uma vez.',
+    // Nomeada como as outras, e pela mesma razão: dizer "passas a chamada" em
+    // prosa fez com que o modelo dissesse que ia passar e não passasse. Uma
+    // transferência é uma ferramenta, como consultar a agenda.
+    '**telma_passar_chamada**: é isto que passa a chamada a uma pessoa. **Dizer que vais passar não passa nada**: chamas a ferramenta. `tipo` é `urgencia` quando a pessoa descreve uma urgência, e `pessoa` quando pede falar com alguém ou há algo que não consegues resolver. Não escolhes o número: a clínica já decidiu qual é. A resposta traz um campo **diga** com o que dizer a seguir, e segue-lo tal e qual.',
     '',
     'Cada hora vem com um campo **say**, já na hora da clínica e por extenso: **é a única coisa que dizes em voz alta**. **slot_start não é uma hora, é um identificador** em UTC: nunca o lês nem fazes contas com ele, devolve-lo tal e qual.',
     '',
@@ -726,7 +730,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   emergencyOpen: (v) => {
     const to = v.emergency_number ?? (v.fallback_policy === 'transfer' ? v.fallback_number : null)
     if (to) {
-      return `La clínica está abierta ahora. Pasas la llamada inmediatamente al ${to}. Avisas de que vas a pasarla, y la pasas.`
+      return `La clínica está abierta ahora. Pasas la llamada inmediatamente: avisas de que vas a pasarla y **llamas a telma_passar_chamada con tipo urgencia**. La herramienta es la que pasa; la frase sola no pasa nada.`
     }
     return [
       'La clínica está abierta ahora, pero no tienes ningún número al que pasar la llamada: esta clínica no ha configurado uno.',
@@ -785,6 +789,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     '**telma_horas_livres**: te dice si la clínica hace eso Y qué horas tiene. La llamas **antes** de ofrecer ninguna hora, siempre, aunque creas saber la respuesta. Si la persona no ha pedido un día concreto, pides **siete días** de una vez y sacas las dos opciones de días distintos de `days_with_slots`.',
     '**telma_reservar_hora**: retienes la hora **en cuanto la persona la elige**, antes de pedirle los datos.',
     '**telma_registar_chamada**: una sola vez por llamada, con todas las citas de una vez.',
+    '**telma_passar_chamada**: es esto lo que pasa la llamada a una persona. **Decir que vas a pasarla no pasa nada**: llamas a la herramienta. `tipo` es `urgencia` cuando la persona describe una urgencia, y `pessoa` cuando pide hablar con alguien o hay algo que no puedes resolver. No eliges el número: la clínica ya decidió cuál es. La respuesta trae un campo **diga** con lo que decir a continuación, y lo sigues tal cual.',
     '',
     'Cada hora viene con un campo **say**, ya en la hora de la clínica y con todas las letras: **es lo único que dices en voz alta**. **slot_start no es una hora, es un identificador** en UTC: nunca lo lees ni haces cuentas con él, lo devuelves tal cual.',
     '',

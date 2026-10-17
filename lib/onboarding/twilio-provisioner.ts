@@ -1,4 +1,11 @@
-import { areaCodeFor, countryOfRegion, DIAL_CODE, NATIONAL_DIGITS, regionLabel } from './catalog'
+import {
+  areaCodeFor,
+  countryOfRegion,
+  DIAL_CODE,
+  NATIONAL_DIGITS,
+  regionLabel,
+  type Country,
+} from './catalog'
 
 /**
  * Buying the number a clinic's patients will ring.
@@ -105,6 +112,21 @@ export async function provisionTwilioNumber(region: string): Promise<Provisioned
     }
   }
 
+  // ── A PRATELEIRA, ANTES DE PERGUNTAR À TWILIO ────────────────────────────
+  // Portugal e Espanha não se compram pela API: a Twilio confirmou por
+  // escrito que é limitação da plataforma, que não há API para submeter nem
+  // acompanhar pedidos, e que Portugal demora 3 a 5 dias úteis.
+  //
+  // O que há é isto: um bundle aprovado serve para mais números do mesmo
+  // tipo e país. Encomendamos em lote, guardamos, e a inscrição tira um da
+  // prateleira. A espera passa a ser nossa e deixa de ser do cliente.
+  //
+  // Primeiro da região da clínica, depois qualquer um do país. Um número de
+  // Madrid numa clínica de Málaga é melhor do que nenhum, e pior do que o de
+  // Málaga: por isso é a segunda escolha e não a única.
+  const fromShelf = await claimFromStock(country, areaCode, region)
+  if (fromShelf) return fromShelf
+
   if (!twilioConfigured()) return placeholder()
 
   // ── A SIGN-UP DOES NOT FAIL OVER SOMETHING THE CLINIC DID NOT CHOOSE ──────
@@ -175,4 +197,65 @@ export async function releaseTwilioNumber(sid: string): Promise<void> {
     `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/IncomingPhoneNumbers/${sid}.json`,
     { method: 'DELETE', headers: { Authorization: auth() } }
   )
+}
+
+/**
+ * Takes a number off the shelf, if there is one.
+ *
+ * Claimed by writing the clinic onto the row, which is also what stops two
+ * sign-ups a second apart from being handed the same line: the update is
+ * conditional on the row still being free, and the one that loses sees no
+ * rows changed and moves on.
+ *
+ * The clinic id is not known yet at this point -- the row does not exist --
+ * so the claim marks it taken with a timestamp and the sign-up writes the id
+ * afterwards. A number claimed and never attached is visible in the stock
+ * listing as taken by nobody, which is the state somebody should go and look
+ * at, not one the code should silently reuse.
+ */
+async function claimFromStock(
+  country: Country,
+  areaCode: string,
+  region: string
+): Promise<ProvisionedNumber | null> {
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const admin = createAdminClient()
+
+  for (const where of [{ country, region }, { country }]) {
+    const query = admin
+      .from('phone_stock')
+      .select('id, number, provider_ref')
+      .is('clinic_id', null)
+      .is('claimed_at', null)
+      .eq('country', where.country)
+    if ('region' in where && where.region) query.eq('region', where.region)
+
+    const { data } = await query.limit(1).maybeSingle()
+    if (!data) continue
+
+    const { data: claimed } = await admin
+      .from('phone_stock')
+      .update({ claimed_at: new Date().toISOString() })
+      .eq('id', (data as { id: string }).id)
+      .is('claimed_at', null)
+      .select('number, provider_ref')
+      .maybeSingle()
+
+    if (claimed) {
+      const row = claimed as { number: string; provider_ref: string }
+      return { number: row.number, sid: row.provider_ref, demo: false }
+    }
+  }
+  return null
+}
+
+/** Attaches a claimed line to the clinic that was being created. */
+export async function attachStockToClinic(providerRef: string, clinicId: string): Promise<void> {
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const admin = createAdminClient()
+  await admin
+    .from('phone_stock')
+    .update({ clinic_id: clinicId })
+    .eq('provider_ref', providerRef)
+    .is('clinic_id', null)
 }

@@ -20,6 +20,7 @@ import { showcaseMode } from '@/lib/demo/config'
 import { seedShowcaseClinic } from '@/lib/onboarding/showcase-seed'
 import { buildSlots } from '@/lib/onboarding/schedule'
 import { isRealProviderRef } from '@/lib/phone-state'
+import { attachStockToClinic } from '@/lib/onboarding/twilio-provisioner'
 import {
   DEFAULT_ONBOARDING_LOCALE,
   isOnboardingLocale,
@@ -457,6 +458,12 @@ export async function completeOnboarding(
       .order('created_at')
       .limit(1)
       .maybeSingle()
+
+    // A linha que veio da prateleira passa a ser desta clínica. Feito depois
+    // do insert, porque até aqui a clínica não tinha id.
+    if (provisioned && !provisioned.demo) {
+      await attachStockToClinic(provisioned.sid, cid)
+    }
 
     const slots = buildSlots(wizard).map((s) => ({
       ...s,

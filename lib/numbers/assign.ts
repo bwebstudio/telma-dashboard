@@ -127,3 +127,57 @@ export async function clinicsAwaitingNumber(): Promise<
       createdAt: (c.created_at as string) ?? '',
     }))
 }
+
+/**
+ * The shelf: numbers bought before anybody needed them.
+ *
+ * Twilio will not sell Portuguese or Spanish numbers over the API, and has no
+ * API to place or track the order either. What it will do is let an approved
+ * regulatory bundle cover more numbers of the same type and country. So the
+ * wait moves to us: we order in batches, days before anybody signs up, and a
+ * sign-up takes one off the shelf in the same second.
+ */
+export async function stockLevels(): Promise<
+  Array<{ country: string; region: string | null; free: number; taken: number }>
+> {
+  const admin = createAdminClient()
+  const { data } = await admin.from('phone_stock').select('country, region, clinic_id, claimed_at')
+  const bucket = new Map<string, { country: string; region: string | null; free: number; taken: number }>()
+  for (const r of (data ?? []) as Array<Record<string, unknown>>) {
+    const key = `${r.country}|${r.region ?? ''}`
+    const row = bucket.get(key) ?? {
+      country: r.country as string,
+      region: (r.region as string) ?? null,
+      free: 0,
+      taken: 0,
+    }
+    if (r.clinic_id || r.claimed_at) row.taken += 1
+    else row.free += 1
+    bucket.set(key, row)
+  }
+  return [...bucket.values()].sort((a, b) => a.country.localeCompare(b.country))
+}
+
+export async function addToStock(input: {
+  number: string
+  providerRef: string
+  country: 'PT' | 'ES'
+  region?: string | null
+}): Promise<{ ok: boolean; error?: string }> {
+  if (!isRealProviderRef(input.providerRef)) {
+    return { ok: false, error: 'O identificador parece um PNdemo: não é uma linha real.' }
+  }
+  const number = input.number.replace(/\s/g, '')
+  if (!/^\+\d{8,15}$/.test(number)) {
+    return { ok: false, error: 'O número tem de vir em E.164, por exemplo +351300602615.' }
+  }
+  const admin = createAdminClient()
+  const { error } = await admin.from('phone_stock').insert({
+    number,
+    provider_ref: input.providerRef,
+    country: input.country,
+    region: input.region ?? null,
+  })
+  if (error) return { ok: false, error: error.message }
+  return { ok: true }
+}

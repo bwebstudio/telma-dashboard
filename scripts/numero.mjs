@@ -27,9 +27,49 @@ for (const line of readFileSync(new URL('../.env.local', import.meta.url), 'utf8
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
 }
 
-const { assignNumberCore, clinicsAwaitingNumber } = await import('../lib/numbers/assign.ts')
+const { assignNumberCore, clinicsAwaitingNumber, stockLevels, addToStock } = await import(
+  '../lib/numbers/assign.ts'
+)
 
-const [, , clinicId, number, providerRef] = process.argv
+const [, , first, ...rest] = process.argv
+
+// ── A PRATELEIRA ────────────────────────────────────────────────────────────
+// `stock`           o que lá está
+// `stock-add ...`   põe lá um número acabado de comprar
+if (first === 'stock') {
+  const rows = await stockLevels()
+  if (!rows.length) {
+    console.log('\n  Prateleira vazia. Encomende em lote pela Private Offering form.\n')
+    process.exit(0)
+  }
+  console.log('\n  Prateleira:\n')
+  for (const r of rows) {
+    const lane = r.region ? `${r.country} ${r.region}` : r.country
+    const warn = r.free === 0 ? '   <- VAZIA' : r.free <= 2 ? '   <- a acabar' : ''
+    console.log(`  ${lane.padEnd(18)} livres ${String(r.free).padStart(3)}   entregues ${String(r.taken).padStart(3)}${warn}`)
+  }
+  console.log('')
+  process.exit(0)
+}
+
+if (first === 'stock-add') {
+  const [num, sid, country, region] = rest
+  if (!num || !sid || !country) {
+    console.error('\n  npx tsx scripts/numero.mjs stock-add <número> <PNsid> <PT|ES> [região]\n')
+    process.exit(1)
+  }
+  const r = await addToStock({ number: num, providerRef: sid, country, region: region ?? null })
+  console.log('')
+  if (!r.ok) {
+    console.error(`  Não foi guardado: ${r.error}\n`)
+    process.exit(1)
+  }
+  console.log(`  ${num} na prateleira (${country}${region ? ' ' + region : ''}).\n`)
+  process.exit(0)
+}
+
+const clinicId = first
+const [number, providerRef] = rest
 
 if (!clinicId) {
   const waiting = await clinicsAwaitingNumber()

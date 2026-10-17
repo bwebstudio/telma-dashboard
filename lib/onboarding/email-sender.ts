@@ -19,8 +19,17 @@ export interface WelcomeEmail {
   clinicName: string
   email: string
   password: string
-  /** E.164, as it will be dialled. */
-  phoneNumber: string
+  /**
+   * E.164, as it will be dialled, or null while there is not one yet.
+   *
+   * Null is the ordinary case on the day of the sign-up. Portuguese numbers
+   * are ordered through Twilio support and take days, so the email that
+   * confirms the payment cannot name the line. It used to name one anyway:
+   * the placeholder the provisioner invents to keep the rest of the system
+   * working, printed under "the number Telma answers", in the first message
+   * a paying clinic receives.
+   */
+  phoneNumber: string | null
   /**
    * True when the clinic kept its own number, so the one above is the number
    * it has to forward to. Not "a placeholder while porting completes", which
@@ -68,6 +77,9 @@ interface EmailCopy {
   leadPending: string
   numberLabel: string
   numberTemp: string
+  /** Shown instead of a number while the line is being bought. */
+  numberPendingLabel: string
+  numberPendingBody: string
   /** The forward is the last step, not the first, so the email explains it
    *  and does not hand over the codes. Those live in the panel, behind the
    *  moment the clinic turns Telma on. */
@@ -80,6 +92,12 @@ interface EmailCopy {
   accessLabel: string
   passwordNote: string
   openPanel: string
+  /** The second email: the line is live. */
+  readySubject: (c: string) => string
+  readyHeading: string
+  readyLeadKeep: string
+  readyLeadNew: string
+  readyNumberLabel: string
   nextTitle: string
   next: string[]
   footer: string
@@ -97,6 +115,9 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     leadPending:
       'O painel já é seu e os acessos estão abaixo. Assim que o pagamento for confirmado, a linha entra ao serviço.',
     numberLabel: 'O número que a Telma atende',
+    numberPendingLabel: 'O número',
+    numberPendingBody:
+      'Estamos a tratar do número da Telma junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver activo. Não tem de fazer nada entretanto.',
     numberTemp:
       'O seu número de sempre fica onde está, na sua operadora. No fim, será desviado para este.',
     forwardTitle: 'E por fim, desviar o seu número',
@@ -107,6 +128,13 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     accessLabel: 'Os seus acessos',
     passwordNote: 'Palavra-passe temporária. Mude-a assim que entrar.',
     openPanel: 'Abrir o painel',
+    readySubject: (c) => `O número da ${c} já está activo`,
+    readyHeading: 'O seu número já está activo',
+    readyLeadKeep:
+      'Já temos o número da Telma. Falta um passo seu: desviar para aqui as chamadas que não conseguir atender. Os códigos estão no painel, já preenchidos, assim que a ligar.',
+    readyLeadNew:
+      'Já temos o seu número. É este que pode pôr nos cartões, no Google e na porta. A Telma atende nele assim que a ligar no painel.',
+    readyNumberLabel: 'O seu número',
     nextTitle: 'O que acontece a seguir',
     next: [
       'Diga à Telma quando a clínica abre e o que faz. São duas respostas no painel.',
@@ -132,6 +160,9 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     leadPending:
       'El panel ya es suyo y los accesos están abajo. En cuanto se confirme el pago, la línea entra en servicio.',
     numberLabel: 'El número que contesta Telma',
+    numberPendingLabel: 'El número',
+    numberPendingBody:
+      'Estamos tramitando el número de Telma con la operadora. Suele tardar entre uno y cinco días laborables y le avisamos por email en cuanto esté activo. Mientras tanto no tiene que hacer nada.',
     numberTemp:
       'Su número de siempre se queda donde está, en su operadora. Al final lo desviará a este.',
     forwardTitle: 'Y por último, desviar su número',
@@ -142,6 +173,13 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     accessLabel: 'Sus accesos',
     passwordNote: 'Contraseña temporal. Cámbiela en cuanto entre.',
     openPanel: 'Abrir el panel',
+    readySubject: (c) => `El número de ${c} ya está activo`,
+    readyHeading: 'Su número ya está activo',
+    readyLeadKeep:
+      'Ya tenemos el número de Telma. Queda un paso suyo: desviar aquí las llamadas que no pueda atender. Los códigos están en el panel, ya rellenos, en cuanto la active.',
+    readyLeadNew:
+      'Ya tenemos su número. Es el que puede poner en las tarjetas, en Google y en la puerta. Telma contesta en él en cuanto la active en el panel.',
+    readyNumberLabel: 'Su número',
     nextTitle: 'Qué pasa a continuación',
     next: [
       'Dígale a Telma cuándo abre la clínica y qué hace. Son dos respuestas en el panel.',
@@ -201,7 +239,7 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
         `  │ Para:     ${payload.email}`,
         `  │ Assunto:  ${subject}`,
         `  │ Clínica:  ${payload.clinicName}`,
-        `  │ Número:   ${payload.phoneNumber}${payload.temporaryNumber ? ' (temporário)' : ''}`,
+        `  │ Número:   ${payload.phoneNumber ?? '(por atribuir)'}`,
         `  │ Acesso:   ${payload.email}`,
         `  │ Password: ${payload.password}`,
         `  │ Painel:   ${payload.dashboardUrl}`,
@@ -212,6 +250,31 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
     return { sent: true, via: 'log' }
   }
 
+  return send({
+    to: payload.email,
+    subject,
+    html: welcomeHtml(payload),
+    text: welcomeText(payload),
+  })
+}
+
+/**
+ * One way out, for every email this file sends.
+ *
+ * The welcome used to carry the fetch inline, so the second message would
+ * have carried its own copy of the headers, the error handling and the
+ * reply-to. Two copies of a sender is two places to forget a header, and the
+ * one people forget is reply_to.
+ */
+async function send(m: {
+  to: string
+  subject: string
+  html: string
+  text: string
+}): Promise<EmailResult> {
+  if (!RESEND_KEY) {
+    return { sent: false, via: 'suppressed', error: 'RESEND_API_KEY não configurada.' }
+  }
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -221,11 +284,11 @@ export async function sendWelcomeEmail(payload: WelcomeEmail): Promise<EmailResu
       },
       body: JSON.stringify({
         from: FROM,
-        to: [payload.email],
+        to: [m.to],
         reply_to: REPLY_TO,
-        subject,
-        html: welcomeHtml(payload),
-        text: welcomeText(payload),
+        subject: m.subject,
+        html: m.html,
+        text: m.text,
       }),
       cache: 'no-store',
     })
@@ -271,7 +334,7 @@ export function welcomeHtml(p: WelcomeEmail): string {
   // So the email explains the step and withholds the digits. They are in the
   // panel, behind the moment the clinic turns her on, which is also the only
   // place they can stay correct if the number ever changes.
-  const forwarding = p.temporaryNumber
+  const forwarding = p.temporaryNumber && p.phoneNumber
     ? `
       <h2 style="margin:36px 0 8px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
       <p style="margin:0 0 10px;font-size:15px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
@@ -311,12 +374,17 @@ export function welcomeHtml(p: WelcomeEmail): string {
 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
             <tr><td style="padding:18px 20px">
-              <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberLabel)}</p>
+              ${
+                p.phoneNumber
+                  ? `<p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberLabel)}</p>
               <p style="margin:6px 0 0;font-size:22px;font-weight:600;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
               ${
                 p.temporaryNumber
                   ? `<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.numberTemp)}</p>`
                   : ''
+              }`
+                  : `<p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberPendingLabel)}</p>
+              <p style="margin:6px 0 0;font-size:15px;line-height:1.6;color:${INK}">${escapeHtml(t.numberPendingBody)}</p>`
               }
             </td></tr>
             <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>
@@ -358,8 +426,12 @@ export function welcomeText(p: WelcomeEmail): string {
   return [
     p.pendingPayment ? t.headingPending(p.clinicName) : t.headingReady(p.clinicName),
     '',
-    `${t.numberLabel}: ${p.phoneNumber}`,
-    ...(p.temporaryNumber ? [`  ${t.numberTemp}`] : []),
+    ...(p.phoneNumber
+      ? [
+          `${t.numberLabel}: ${p.phoneNumber}`,
+          ...(p.temporaryNumber ? [`  ${t.numberTemp}`] : []),
+        ]
+      : [`${t.numberPendingLabel}: ${t.numberPendingBody}`]),
     '',
     `${t.accessLabel}:`,
     `  ${p.email}`,
@@ -367,7 +439,7 @@ export function welcomeText(p: WelcomeEmail): string {
     `  ${t.passwordNote}`,
     `  ${p.dashboardUrl}`,
     '',
-    ...(p.temporaryNumber
+    ...(p.temporaryNumber && p.phoneNumber
       ? [
           '',
           `${t.forwardTitle}:`,
@@ -387,4 +459,76 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+/**
+ * The second email: the line exists now.
+ *
+ * Two messages and not one, because the two facts arrive days apart. The
+ * payment is instant and the number is not: Portuguese lines are ordered
+ * through Twilio support and quoted at three to five working days. Holding
+ * the welcome back until the number lands would leave a clinic that has just
+ * paid with silence; naming a number in it that does not exist yet is worse.
+ *
+ * So the first email confirms the payment and opens the panel, and this one
+ * says the line is live and what to do with it. Whether that is "forward your
+ * number here" or "this is the number to hand out" depends on what they chose,
+ * and getting it the wrong way round would send a clinic to publish a number
+ * nobody should dial.
+ */
+export async function sendNumberReadyEmail(p: {
+  clinicName: string
+  email: string
+  phoneNumber: string
+  /** True when the clinic kept its own number and forwards to this one. */
+  forwarding: boolean
+  dashboardUrl: string
+  locale: OnboardingLocale
+}): Promise<EmailResult> {
+  const t = emailCopy(p.locale)
+  const subject = t.readySubject(p.clinicName)
+  const lead = p.forwarding ? t.readyLeadKeep : t.readyLeadNew
+
+  const html = `<!doctype html>
+<html lang="${t.htmlLang}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>${escapeHtml(p.clinicName)}</title></head>
+<body style="margin:0;padding:0;background:${SUNKEN};font-family:${SANS};color:${INK};-webkit-font-smoothing:antialiased">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(lead)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SUNKEN}">
+    <tr><td align="center" style="padding:32px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border:1px solid ${LINE};border-radius:12px;overflow:hidden">
+        <tr><td style="background:${INK};padding:0;font-size:0;line-height:0">
+          <img src="https://app.telmaatende.com/brand/telma-lockup.png" width="240" height="56" alt="Telma"
+               style="display:block;border:0;width:240px;height:56px;max-width:240px">
+        </td></tr>
+        <tr><td style="background:${MACAW};font-size:0;line-height:0;height:3px">&nbsp;</td></tr>
+        <tr><td style="padding:32px 24px">
+          <h1 style="margin:0 0 12px;font-size:25px;line-height:1.25;font-weight:600;letter-spacing:-0.02em;color:${INK}">${escapeHtml(t.readyHeading)}</h1>
+          <p style="margin:0 0 26px;font-size:16px;line-height:1.6;color:${INK_SOFT}">${escapeHtml(lead)}</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
+            <tr><td style="padding:18px 20px">
+              <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.readyNumberLabel)}</p>
+              <p style="margin:6px 0 0;font-size:22px;font-weight:600;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
+            </td></tr>
+          </table>
+          <p style="margin:24px 0 0">
+            <a href="${escapeHtml(p.dashboardUrl)}"
+               style="display:inline-block;background:${INK};color:#FFFFFF;text-decoration:none;padding:13px 24px;border-radius:8px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:0 24px"><div style="height:1px;background:${LINE}"></div></td></tr>
+        <tr><td style="padding:18px 24px 24px">
+          <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.footer)}</p>
+          <p style="margin:10px 0 0;font-size:13px;color:${INK_MUTE}">Telma, de Bweb Studio</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`
+
+  const text = [t.readyHeading, '', lead, '', `${t.readyNumberLabel}: ${p.phoneNumber}`, '', p.dashboardUrl].join('\n')
+
+  return send({ to: p.email, subject, html, text })
 }

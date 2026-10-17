@@ -49,13 +49,29 @@ export function Done({
       )}
 
       <div className="card divide-y divide-line">
+        {/* The number, when there is one. Portuguese lines are ordered through
+            Twilio support and take days, so on the day of the sign-up there
+            usually is not one. This used to print the placeholder the
+            provisioner invents to keep the rest of the system working, which
+            is a telephone number shown to somebody who has just paid and has
+            no reason to doubt it. */}
         <div className="p-5">
           <p className="label-caps">
-            {result.temporaryNumber ? t.donePorting : t.doneNumber}
+            {result.phoneNumber
+              ? result.temporaryNumber
+                ? t.donePorting
+                : t.doneNumber
+              : t.donePendingTitle}
           </p>
-          <p className="mt-2 text-2xl font-semibold text-ink">{result.phoneNumber}</p>
-          {result.temporaryNumber && (
-            <p className="mt-1 text-sm text-ink-mute">{t.donePortingNote}</p>
+          {result.phoneNumber ? (
+            <>
+              <p className="mt-2 text-2xl font-semibold text-ink">{result.phoneNumber}</p>
+              {result.temporaryNumber && (
+                <p className="mt-1 text-sm text-ink-mute">{t.donePortingNote}</p>
+              )}
+            </>
+          ) : (
+            <p className="mt-2 text-base leading-relaxed text-ink-soft">{t.donePendingBody}</p>
           )}
         </div>
 

@@ -103,6 +103,9 @@ export interface Clinic {
   /** 'provisioned' when we bought the number, 'ported' when the clinic kept
    *  its own and forwards it to ours. */
   phone_source: 'provisioned' | 'ported' | null
+  /** Twilio's id for the line. A `PNdemo...` one is the placeholder the
+   *  provisioner invents while the real number is still being ordered. */
+  phone_provider_ref: string | null
   /** Only for 'ported': the clinic's own number, its operator, which calls it
    *  chose to send over, and whether it says the forward is set. */
   porting_details: {

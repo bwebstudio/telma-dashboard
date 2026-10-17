@@ -199,6 +199,8 @@ export interface Copy {
   doneDemo: string
   doneNumber: string
   donePorting: string
+  donePendingTitle: string
+  donePendingBody: string
   donePortingNote: string
   doneCredentials: string
   donePassword: string
@@ -414,6 +416,9 @@ const pt: Copy = {
     'Modo de demonstração: o número é fictício e não foi cobrado nada. Nada disto chega a um cliente real.',
   doneNumber: 'O número que a Telma atende',
   donePorting: 'O número da Telma, para onde vai desviar o seu',
+  donePendingTitle: 'O número',
+  donePendingBody:
+    'Estamos a tratar do número junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver activo. Entretanto já pode configurar a Telma no painel.',
   donePortingNote: 'O seu número de sempre não muda. Explicamos no painel como desviar para aqui as chamadas que não conseguir atender.',
   doneCredentials: 'Os seus acessos',
   donePassword: 'Palavra-passe temporária',
@@ -634,6 +639,9 @@ const es: Copy = {
     'Modo de demostración: el número es ficticio y no se ha cobrado nada. Nada de esto llega a un cliente real.',
   doneNumber: 'El número que contesta Telma',
   donePorting: 'El número de Telma, al que desviará el suyo',
+  donePendingTitle: 'El número',
+  donePendingBody:
+    'Estamos tramitando el número con la operadora. Suele tardar entre uno y cinco días laborables y le avisamos por email en cuanto esté activo. Mientras tanto ya puede configurar Telma en el panel.',
   donePortingNote: 'Su número de siempre no cambia. En el panel le explicamos cómo desviar aquí las llamadas que no pueda atender.',
   doneCredentials: 'Sus accesos',
   donePassword: 'Contraseña temporal',

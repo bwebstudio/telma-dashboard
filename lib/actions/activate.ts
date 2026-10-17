@@ -23,7 +23,11 @@ export async function activateClinic(): Promise<{ ok: boolean; missing?: string[
   const supabase = await createClient()
 
   const [{ data: clinic }, { count }] = await Promise.all([
-    supabase.from('clinics').select('services, custom_services, status').eq('id', cid).maybeSingle(),
+    supabase
+      .from('clinics')
+      .select('services, custom_services, status, phone_provider_ref')
+      .eq('id', cid)
+      .maybeSingle(),
     // `availability_slots`, which is where the opening hours live. `hours`
     // is not a table: getting this wrong would have left the button disabled
     // for every clinic for ever, and the only symptom would have been nobody

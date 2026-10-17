@@ -19,6 +19,7 @@ import { sendWelcomeEmail } from '@/lib/onboarding/email-sender'
 import { showcaseMode } from '@/lib/demo/config'
 import { seedShowcaseClinic } from '@/lib/onboarding/showcase-seed'
 import { buildSlots } from '@/lib/onboarding/schedule'
+import { isRealProviderRef } from '@/lib/phone-state'
 import {
   DEFAULT_ONBOARDING_LOCALE,
   isOnboardingLocale,
@@ -68,7 +69,8 @@ export interface OnboardingResult {
   email: string
   /** Shown once, on the screen and in the email. Never stored in plain text. */
   password: string
-  phoneNumber: string
+  /** Null while Twilio has not sold us the line yet. */
+  phoneNumber: string | null
   temporaryNumber: boolean
   dashboardUrl: string
   /** Where to send the browser to pay. Null when there is nothing to pay for
@@ -577,7 +579,11 @@ export async function completeOnboarding(
       clinicName: wizard.clinic_name,
       email: wizard.email,
       password,
-      phoneNumber: assignedPhone,
+      // Only when Twilio actually sold us one. The provisioner answers with a
+      // number shaped like a real one so the rest of the system keeps
+      // working, and this email is the one place where showing it would be a
+      // lie told to somebody who has just paid.
+      phoneNumber: isRealProviderRef(provisioned?.sid) ? assignedPhone : null,
       temporaryNumber: wizard.phone_option === 'keep',
       // Which calls they chose to send over. The email prints the codes for
       // that choice, and printing the wrong ones is worse than printing none:
@@ -604,7 +610,7 @@ export async function completeOnboarding(
         clinicName: wizard.clinic_name,
         email: wizard.email,
         password,
-        phoneNumber: assignedPhone,
+        phoneNumber: isRealProviderRef(provisioned?.sid) ? assignedPhone : null,
         temporaryNumber: wizard.phone_option === 'keep',
         dashboardUrl,
         checkoutUrl: checkout.url,

@@ -1,4 +1,5 @@
 import type { Clinic } from '@/lib/types'
+import { isRealProviderRef } from '@/lib/phone-state'
 
 /**
  * What a clinic still has to answer before Telma can take a call for it.
@@ -27,13 +28,17 @@ import type { Clinic } from '@/lib/types'
 
 export interface SetupStep {
   /** Stable id, for the label and for the link. */
-  id: 'hours' | 'services'
+  id: 'hours' | 'services' | 'number'
   done: boolean
+  /** Empty when the step is not theirs to do. */
   href: string
 }
 
 export function setupSteps(
-  clinic: Pick<Clinic, 'services' | 'custom_services'> | null,
+  clinic: Pick<
+    Clinic,
+    'services' | 'custom_services' | 'phone_provider_ref'
+  > | null,
   /** How many days of the week have hours on them. */
   openDays: number
 ): SetupStep[] {
@@ -47,6 +52,16 @@ export function setupSteps(
   return [
     { id: 'hours', done: openDays > 0, href: '/horarios' },
     { id: 'services', done: services.length > 0, href: '/telma' },
+    // ── THE ONE STEP THAT IS NOT THEIRS ───────────────────────────────
+    // Telma cannot answer a line that does not exist, and in Portugal the
+    // line is ordered through Twilio support and takes days. So this gates
+    // activation like the other two, and unlike them there is nowhere to
+    // send the clinic: waiting is the whole of their part.
+    //
+    // It is in the list rather than checked only in the action, because a
+    // disabled button with no reason beside it is a dead end, and "we are
+    // still getting your number" is a reason a person can accept.
+    { id: 'number', done: isRealProviderRef(clinic?.phone_provider_ref), href: '' },
   ]
 }
 

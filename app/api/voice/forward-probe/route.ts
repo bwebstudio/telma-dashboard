@@ -37,9 +37,15 @@ export const runtime = 'nodejs'
 /** The demonstration clinic. The rows have to hang on something. */
 const PROBE_CLINIC = '11111111-1111-1111-1111-111111111111'
 
-function twiml(said: string): Response {
+/**
+ * `hold` keeps the line open afterwards. Two calls at once is one of the
+ * questions, and a probe that hangs up in four seconds cannot be overlapped by
+ * a person dialling a second telephone.
+ */
+function twiml(said: string, hold = 0): Response {
+  const pause = hold > 0 ? `<Pause length="${Math.min(hold, 60)}"/>` : ''
   return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response><Say language="pt-PT">${said}</Say><Hangup/></Response>`,
+    `<?xml version="1.0" encoding="UTF-8"?><Response><Say language="pt-PT">${said}</Say>${pause}<Hangup/></Response>`,
     { headers: { 'Content-Type': 'text/xml' } }
   )
 }
@@ -91,7 +97,8 @@ export async function POST(request: Request) {
   return twiml(
     seen.ForwardedFrom
       ? 'Recebido. A rede passou o número de origem.'
-      : 'Recebido. A rede não passou o número de origem.'
+      : 'Recebido. A rede não passou o número de origem.',
+    Number(url.searchParams.get('hold') ?? 0)
   )
 }
 

@@ -54,9 +54,14 @@ export async function GET(request: Request) {
   let purged: unknown = null
   let purgeError: string | null = null
   try {
-    const { data, error } = await createAdminClient().rpc('purge_expired')
+    const admin = createAdminClient()
+    const { data, error } = await admin.rpc('purge_expired')
     if (error) purgeError = error.message
     else purged = data
+    // The notes the first hop leaves for the second are worthless once the
+    // call has started, and keeping them is keeping a record of who rang which
+    // clinic and when.
+    await admin.rpc('purge_call_routes')
   } catch (e) {
     purgeError = e instanceof Error ? e.message : 'purge_failed'
   }

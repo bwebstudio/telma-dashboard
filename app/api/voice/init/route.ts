@@ -83,7 +83,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'called_number_required' }, { status: 400 })
   }
 
-  const clinicId = dialled ? await clinicIdByPhone(dialled) : (testClinic as string)
+  // ── WHOSE CALL IS THIS ────────────────────────────────────────────────────
+  // The first hop may already have worked it out. A forwarded call carries the
+  // clinic's own number, /api/voice/incoming reads it and writes it down
+  // against this call's id, and that is what lets one Telma number serve every
+  // clinic instead of one each. See migration 0057.
+  //
+  // The number dialled is still the answer when there is no note: a direct call
+  // to a clinic's own Telma line, which is every clinic today and the
+  // demonstration line forever.
+  const routed = await clinicByCallSid(body.call_sid)
+  const clinicId = routed ?? (dialled ? await clinicIdByPhone(dialled) : (testClinic as string))
   if (!clinicId) {
     // A number nobody owns. Answering with somebody else's clinic would put one
     // clinic's patients in another clinic's diary, so this refuses instead and
@@ -317,6 +327,26 @@ export async function POST(request: Request) {
 // Duplicated from /api/clinic-context on purpose: that endpoint answers a
 // different question for a different caller, and coupling the two would mean a
 // change for the agent's benefit could break the panel's.
+
+/**
+ * The note the first hop left, if it left one.
+ *
+ * Deliberately silent on failure. A missing note means "nobody told us", which
+ * is the ordinary case for a direct call, not an error.
+ */
+async function clinicByCallSid(callSid: unknown): Promise<string | null> {
+  if (typeof callSid !== 'string' || !callSid.startsWith('CA')) return null
+  try {
+    const { data } = await createAdminClient()
+      .from('call_routes')
+      .select('clinic_id')
+      .eq('call_sid', callSid)
+      .maybeSingle()
+    return ((data as { clinic_id: string } | null)?.clinic_id) ?? null
+  } catch {
+    return null
+  }
+}
 
 async function clinicIdByPhone(raw: string): Promise<string | null> {
   const digits = raw.replace(/[^\d]/g, '')

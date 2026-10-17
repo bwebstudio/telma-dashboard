@@ -106,6 +106,34 @@ export async function submitWizardStep(
   const checked = validateStep(step as StepNumber, data, locale)
   if (!checked.ok) return { ok: false, errors: checked.errors }
 
+  // ── CAUGHT WHERE IT WAS TYPED ─────────────────────────────────────────
+  // Both of these used to surface at submit, after the plan, the address and
+  // the terms. The email one did not even surface: it failed inside Supabase
+  // Auth and the applicant watched the page scroll and do nothing. A clash
+  // belongs on the step that asked for it, while the field is still on screen
+  // and the answer is still in mind.
+  const answers = checked.data as Record<string, unknown>
+
+  if (step === 2) {
+    const email = String(answers.email ?? '')
+    const taken = email ? await emailTaken(email) : null
+    if (taken) {
+      return {
+        ok: false,
+        errors: { email: taken === 'clinica' ? t.errorEmailTaken : t.errorEmailStaff },
+      }
+    }
+    if (await phoneTaken([String(answers.phone ?? '')])) {
+      return { ok: false, errors: { phone: t.errorPhoneTaken } }
+    }
+  }
+
+  if (step === 3 && answers.phone_option === 'keep') {
+    if (await phoneTaken([String(answers.current_number ?? '')])) {
+      return { ok: false, errors: { current_number: t.errorPhoneTaken } }
+    }
+  }
+
   const activeToken = token || newToken()
 
   try {
@@ -608,6 +636,53 @@ export async function completeOnboarding(
  * lost would pass here and fail later. That case is caught at the insert and
  * turned into the same field error, so the reader never sees the difference.
  */
+/**
+ * Is this telephone already signed up?
+ *
+ * Checked at the step that asks for it, not at submit. A clinic that types the
+ * number it has had for twenty years and is told at the end, after the plan,
+ * the address and the terms, that it cannot continue, has been made to fill in
+ * a form for nothing.
+ *
+ * Three columns, because a number reaches us by three routes and all of them
+ * mean the same clinic: `phone` is what the clinic gave as its own,
+ * `assigned_phone` is the line Telma answers, and `porting_details.
+ * current_number` is the number being forwarded to us. A second sign-up on
+ * any of them is the same telephone arriving twice.
+ *
+ * Compared on digits alone. `+351 220 123 456` and `+351220123456` are one
+ * number, and a clinic that typed it differently the second time is exactly
+ * the case this exists to catch.
+ */
+export async function phoneTaken(numbers: string[]): Promise<boolean> {
+  if (isDemo()) return false
+  const wanted = numbers.map(digitsOf).filter((n) => n.length >= 6)
+  if (!wanted.length) return false
+
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('clinics')
+    .select('phone, assigned_phone, porting_details')
+    .neq('status', 'cancelada')
+
+  for (const row of (data ?? []) as Array<{
+    phone?: string | null
+    assigned_phone?: string | null
+    porting_details?: { current_number?: string } | null
+  }>) {
+    const held = [row.phone, row.assigned_phone, row.porting_details?.current_number]
+      .map((v) => digitsOf(v ?? ''))
+      .filter(Boolean)
+    if (held.some((h) => wanted.includes(h))) return true
+  }
+  return false
+}
+
+/** Digits only, so two spellings of one number compare equal. */
+function digitsOf(v: string): string {
+  return (v ?? '').replace(/\D/g, '')
+}
+
 async function emailTaken(email: string): Promise<string | null> {
   if (isDemo()) return null
   const admin = createAdminClient()

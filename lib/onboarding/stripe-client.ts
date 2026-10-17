@@ -59,6 +59,18 @@ const TAX_RATE: Partial<Record<'PT' | 'ES', string | undefined>> = {
   ES: process.env.STRIPE_TAX_RATE_ES,
 }
 
+/**
+ * Whether Stripe works the tax out itself.
+ *
+ * Off unless asked. It has a price and it has a prerequisite: the account
+ * needs Stripe Tax switched on with a Portuguese registration, and without
+ * that every checkout session is refused. So it is a thing somebody turns on
+ * deliberately, after doing the other half.
+ */
+export function automaticTax(): boolean {
+  return process.env.STRIPE_AUTOMATIC_TAX === '1'
+}
+
 function checkoutTaxRate(country: 'PT' | 'ES'): string | null {
   const id = TAX_RATE[country]
   if (!id) {
@@ -295,12 +307,34 @@ export async function createCheckoutSession(opts: {
     'subscription_data[metadata][clinic_id]': opts.clinicId,
   })
 
-  const taxRate = checkoutTaxRate(opts.country)
-  usable.forEach((price, i) => {
-    form.set(`line_items[${i}][price]`, price)
-    form.set(`line_items[${i}][quantity]`, '1')
-    if (taxRate) form.set(`line_items[${i}][tax_rates][0]`, taxRate)
-  })
+  // ── TWO WAYS TO WORK OUT THE TAX, AND ONLY ONE OF THEM CHECKS THE NIF ──
+  // The fixed rate is applied by country: Portugal pays 23%, Spain is
+  // reverse-charged at 0%. It is right for a Spanish clinic with a valid
+  // VIES number and wrong for one without, because the reverse charge needs
+  // that number to exist. We collect it on Stripe's page but cannot act on
+  // it, since the rate is chosen here, before the clinic has typed it.
+  //
+  // Stripe Tax chooses the rate after the number is typed and validated,
+  // which is the only way the two cases can come out differently. It costs
+  // 0.5% of what it processes, so it is a decision and not a default: unset,
+  // nothing changes. Turn it on in Stripe first -- Settings, Tax, with a
+  // Portuguese registration -- or every session is refused.
+  if (automaticTax()) {
+    form.set('automatic_tax[enabled]', 'true')
+    // Stripe needs the address to decide, and the clinic's own country to
+    // know whether the charge reverses. Both are already collected above.
+    usable.forEach((price, i) => {
+      form.set(`line_items[${i}][price]`, price)
+      form.set(`line_items[${i}][quantity]`, '1')
+    })
+  } else {
+    const taxRate = checkoutTaxRate(opts.country)
+    usable.forEach((price, i) => {
+      form.set(`line_items[${i}][price]`, price)
+      form.set(`line_items[${i}][quantity]`, '1')
+      if (taxRate) form.set(`line_items[${i}][tax_rates][0]`, taxRate)
+    })
+  }
 
   const session = (await stripe('/checkout/sessions', form, `signup_${opts.clinicId}`)) as {
     id?: string

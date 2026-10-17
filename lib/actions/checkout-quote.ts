@@ -1,7 +1,12 @@
 'use server'
 
 import { countryOfRegion } from '@/lib/onboarding/catalog'
-import { quotesByLookupKey, taxQuoteFor, stripeConfigured } from '@/lib/onboarding/stripe-client'
+import {
+  quotesByLookupKey,
+  taxQuoteFor,
+  stripeConfigured,
+  automaticTax,
+} from '@/lib/onboarding/stripe-client'
 import { lookupKeysForQuote } from '@/lib/actions/onboarding'
 import type { PlanType } from '@/lib/types'
 
@@ -86,7 +91,13 @@ export async function checkoutQuote(input: {
   const keys = await lookupKeysForQuote(plan, cycle, input.whatsapp)
   if (!keys.length || !stripeConfigured()) return empty(true)
 
-  const [prices, tax] = await Promise.all([quotesByLookupKey(keys), taxQuoteFor(country)])
+  // With Stripe Tax on, the rate depends on the VAT number the clinic has not
+  // typed yet, so there is no honest figure to show here. The screen says the
+  // tax is worked out at payment, which is exactly what happens.
+  const [prices, tax] = await Promise.all([
+    quotesByLookupKey(keys),
+    automaticTax() ? Promise.resolve(null) : taxQuoteFor(country),
+  ])
 
   // A missing price is the same failure the checkout would hit, and it is
   // better met here, on a screen that can say so, than on a redirect that

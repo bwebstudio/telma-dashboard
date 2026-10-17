@@ -104,7 +104,10 @@ const INITIAL: Values = {
   briefing: '',
   emergency_number: '',
   emergency_protocol: '',
-  phone_option: 'new',
+  // Keeping the number is what almost every clinic wants: it is on the cards,
+  // on the door and in Google. Offering "a new number" first asked a question
+  // whose right answer, for most of them, was the other one.
+  phone_option: 'keep',
   current_number: '',
   operator: '',
   // The one a clinic almost always wants, so it is the one already ticked.

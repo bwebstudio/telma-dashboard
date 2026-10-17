@@ -61,6 +61,7 @@ export interface Copy {
   errorFix: string
   errorSubmit: string
   errorEmailTaken: string
+  errorPhoneTaken: string
   errorEmailStaff: string
 
   clinicName: string
@@ -270,6 +271,8 @@ const pt: Copy = {
     'Já existe uma clínica com este email. Entre em vez de se inscrever, ou use outro email.',
   errorEmailStaff:
     'Este email já está a ser usado por outra conta da Telma. Use um endereço diferente para a clínica.',
+  errorPhoneTaken:
+    'Este número já está inscrito na Telma. Se é da sua clínica, entre no painel em vez de se inscrever outra vez. Se acha que é um engano, escreva-nos.',
 
   clinicName: 'Nome da clínica',
   clinicNameHelp: 'Como a Telma se apresenta ao telefone.',
@@ -488,6 +491,8 @@ const es: Copy = {
     'Ya existe una clínica con este email. Entre en lugar de darse de alta, o use otro email.',
   errorEmailStaff:
     'Este email ya lo usa otra cuenta de Telma. Use una dirección distinta para la clínica.',
+  errorPhoneTaken:
+    'Este número ya está dado de alta en Telma. Si es de su clínica, entre en el panel en lugar de darse de alta otra vez. Si cree que es un error, escríbanos.',
 
   clinicName: 'Nombre de la clínica',
   clinicNameHelp: 'Cómo se presenta Telma al teléfono.',

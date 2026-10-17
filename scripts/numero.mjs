@@ -27,11 +27,135 @@ for (const line of readFileSync(new URL('../.env.local', import.meta.url), 'utf8
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '')
 }
 
-const { assignNumberCore, clinicsAwaitingNumber, stockLevels, addToStock } = await import(
-  '../lib/numbers/assign.ts'
-)
+const { assignNumberCore, clinicsAwaitingNumber, stockLevels, addToStock, knownNumbers } =
+  await import('../lib/numbers/assign.ts')
 
 const [, , first, ...rest] = process.argv
+
+// ── CREDENCIAIS DA TWILIO ───────────────────────────────────────────────────
+// As da aplicação primeiro. A chave de API serve de alternativa para quem
+// corre isto numa máquina que não tem o auth token.
+const ACCOUNT = process.env.TWILIO_ACCOUNT_SID
+const AUTH = process.env.TWILIO_AUTH_TOKEN
+const KEY_SID = process.env.CLAUDE_API_KEY_TWILIO_SID
+const KEY_SECRET = process.env.CLAUDE_API_KEY_TWILIO_SECRET
+const HOOK = process.env.TWILIO_VOICE_WEBHOOK_URL
+
+function twilioAuth() {
+  if (ACCOUNT && AUTH) return Buffer.from(`${ACCOUNT}:${AUTH}`).toString('base64')
+  if (KEY_SID && KEY_SECRET) return Buffer.from(`${KEY_SID}:${KEY_SECRET}`).toString('base64')
+  return null
+}
+
+async function twilioAccountSid(auth) {
+  if (ACCOUNT) return ACCOUNT
+  const res = await fetch('https://api.twilio.com/2010-04-01/Accounts.json?PageSize=1', {
+    headers: { Authorization: `Basic ${auth}` },
+  })
+  const body = await res.json().catch(() => ({}))
+  return body.accounts?.[0]?.sid ?? null
+}
+
+/** +351... é Portugal, +34... é Espanha. Nada mais vendemos. */
+function countryOf(number) {
+  if (number.startsWith('+351')) return 'PT'
+  if (number.startsWith('+34')) return 'ES'
+  return null
+}
+
+// ── sync: o lote que chegou, todo de uma vez ────────────────────────────────
+// Um pedido de vinte números chega como vinte linhas na conta da Twilio e
+// vinte emails. Pô-los na prateleira à mão é vinte vezes a mesma colagem, e
+// é onde se erra um dígito. Isto lê a conta, vê quais ainda não conhecemos,
+// aponta-os para nós e guarda-os.
+if (first === 'sync') {
+  const auth = twilioAuth()
+  if (!auth) {
+    console.error('\n  Sem credenciais da Twilio no .env.local.\n')
+    process.exit(1)
+  }
+  const account = await twilioAccountSid(auth)
+  if (!account) {
+    console.error('\n  Não consegui descobrir a conta da Twilio.\n')
+    process.exit(1)
+  }
+
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${account}/IncomingPhoneNumbers.json?PageSize=200`,
+    { headers: { Authorization: `Basic ${auth}` } }
+  )
+  const body = await res.json().catch(() => ({}))
+  const lines = body.incoming_phone_numbers ?? []
+  const known = await knownNumbers()
+
+  // ── UM NÚMERO QUE JÁ APONTA PARA ALGUM LADO ESTÁ A SER USADO ─────────────
+  // A primeira vez que isto correu engoliu a linha de demonstração, que
+  // aponta directamente para a ElevenLabs e é a que mostramos a quem ainda
+  // não é cliente. Teria sido entregue à inscrição seguinte, e a demonstração
+  // passaria a tocar numa clínica.
+  //
+  // A regra: um número já apontado para outro sítio tem dono. Só entram os
+  // que não apontam para lado nenhum, ou que já apontam para nós. `--force`
+  // existe para o dia em que se quer mesmo recuperar um deles.
+  const force = rest.includes('--force')
+  const inUse = []
+  const fresh = lines.filter((n) => {
+    const number = (n.phone_number ?? '').replace(/\s/g, '')
+    if (known.has(number)) return false
+    const url = n.voice_url || ''
+    const mine = !url || (HOOK && url === HOOK)
+    if (!mine && !force) {
+      inUse.push({ number, url })
+      return false
+    }
+    return true
+  })
+
+  for (const n of inUse) {
+    console.log(`\n  ${n.number} ignorado: já aponta para ${n.url}`)
+    console.log('     Se mesmo assim o quer na prateleira: sync --force')
+  }
+  if (!fresh.length) {
+    console.log(`\n  ${lines.length} número(s) na Twilio, nenhum novo.\n`)
+    process.exit(0)
+  }
+
+  console.log(`\n  ${fresh.length} número(s) novo(s):\n`)
+  for (const n of fresh) {
+    const number = (n.phone_number ?? '').replace(/\s/g, '')
+    const country = countryOf(number)
+    if (!country) {
+      console.log(`  ${number}  ignorado: não é PT nem ES`)
+      continue
+    }
+
+    // Apontá-lo para nós antes de o guardar. Um número comprado pelo
+    // formulário não ficou apontado a lado nenhum, e um número que existe e
+    // não toca é pior do que nenhum: a clínica distribui-o.
+    let pointed = 'sem webhook configurado'
+    if (HOOK) {
+      const r = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${account}/IncomingPhoneNumbers/${n.sid}.json`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ VoiceUrl: HOOK, VoiceMethod: 'POST' }),
+        }
+      )
+      pointed = r.ok ? 'apontado' : `a Twilio recusou (${r.status})`
+    }
+
+    const added = await addToStock({ number, providerRef: n.sid, country })
+    console.log(
+      `  ${number}  ${country}  ${added.ok ? 'na prateleira' : `NÃO guardado: ${added.error}`}  ·  ${pointed}`
+    )
+  }
+  console.log('')
+  process.exit(0)
+}
 
 // ── A PRATELEIRA ────────────────────────────────────────────────────────────
 // `stock`           o que lá está
@@ -97,16 +221,14 @@ if (!number || !providerRef) {
 // Um número comprado e não apontado é pior do que nenhum: a clínica recebe-o,
 // divulga-o, e quem liga ouve silêncio. A Twilio aponta-o na compra quando
 // somos nós a comprar; comprado pelo suporte, ninguém o apontou.
-const ACCOUNT = process.env.TWILIO_ACCOUNT_SID
-const AUTH = process.env.TWILIO_AUTH_TOKEN
-const HOOK = process.env.TWILIO_VOICE_WEBHOOK_URL
-
 async function pointAtUs() {
-  if (!ACCOUNT || !AUTH) return 'sem credenciais da Twilio: aponte o número à mão na consola'
+  const auth = twilioAuth()
+  if (!auth) return 'sem credenciais da Twilio: aponte o número à mão na consola'
   if (!HOOK) return 'TWILIO_VOICE_WEBHOOK_URL não está definida: aponte o número à mão'
-  const auth = Buffer.from(`${ACCOUNT}:${AUTH}`).toString('base64')
+  const account = await twilioAccountSid(auth)
+  if (!account) return 'não consegui descobrir a conta da Twilio'
   const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT}/IncomingPhoneNumbers/${providerRef}.json`,
+    `https://api.twilio.com/2010-04-01/Accounts/${account}/IncomingPhoneNumbers/${providerRef}.json`,
     {
       method: 'POST',
       headers: {

@@ -181,3 +181,20 @@ export async function addToStock(input: {
   if (error) return { ok: false, error: error.message }
   return { ok: true }
 }
+
+/** The numbers we already know about, by E.164, so a sync can skip them. */
+export async function knownNumbers(): Promise<Set<string>> {
+  const admin = createAdminClient()
+  const [stock, clinics] = await Promise.all([
+    admin.from('phone_stock').select('number'),
+    admin.from('clinics').select('assigned_phone'),
+  ])
+  const known = new Set<string>()
+  for (const r of (stock.data ?? []) as Array<{ number?: string }>) {
+    if (r.number) known.add(r.number.replace(/\s/g, ''))
+  }
+  for (const r of (clinics.data ?? []) as Array<{ assigned_phone?: string | null }>) {
+    if (r.assigned_phone) known.add(r.assigned_phone.replace(/\s/g, ''))
+  }
+  return known
+}

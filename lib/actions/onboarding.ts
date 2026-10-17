@@ -596,6 +596,10 @@ export async function completeOnboarding(
       // that choice, and printing the wrong ones is worse than printing none:
       // a clinic that asked for "only the ones nobody answered" and dials the
       // unconditional code stops hearing its own phone ring.
+      // Lo que acaba de contratar, con los importes que Stripe va a cobrar.
+      // Si no se pueden leer, el correo sale sin el resumen en lugar de con
+      // un importe inventado.
+      summary: await contractedSummary(wizard, plan, locale),
       forwardType: wizard.phone_option === 'keep' ? wizard.forward_type : undefined,
       ownNumber: wizard.phone_option === 'keep' ? wizard.current_number : null,
       dashboardUrl,
@@ -994,4 +998,64 @@ export async function maxLanguagesOnOffer(): Promise<number | null> {
   if (!sellable.length) return 4
   if (sellable.some((r) => r.max_languages_included === null)) return null
   return Math.max(...sellable.map((r) => r.max_languages_included ?? 0))
+}
+
+/**
+ * The lines the welcome email opens with, taken from the checkout's own quote.
+ *
+ * Not from the plans table. The table is what the site advertises; the quote
+ * reads the prices Stripe will charge, and a receipt that disagrees with the
+ * card statement is worse than no receipt. Returns undefined rather than
+ * guessing: the email then simply has no summary, which is honest.
+ */
+async function contractedSummary(
+  wizard: WizardData,
+  plan: PlanType,
+  locale: OnboardingLocale
+): Promise<
+  | {
+      planName: string
+      cycle: 'monthly' | 'annual'
+      lines: Array<{ label: string; amount: number }>
+      subtotal: number
+      taxPercentage: number | null
+      taxAmount: number
+      total: number
+      currency: string
+    }
+  | undefined
+> {
+  try {
+    const { checkoutQuote } = await import('@/lib/actions/checkout-quote')
+    const t = copyFor(locale)
+    const cycle = wizard.billing_cycle === 'annual' ? 'annual' : 'monthly'
+    const quote = await checkoutQuote({
+      plan,
+      cycle,
+      whatsapp: Boolean(wizard.addon_whatsapp),
+      region: wizard.region,
+    })
+    if (!quote.ok || !quote.lines.length) return undefined
+
+    const plans = await signupPlans()
+    const planName = plans.find((x) => x.id === plan)?.name ?? plan
+    const cycleWord = cycle === 'annual' ? t.summaryCycleAnnual : t.summaryCycleMonthly
+
+    return {
+      planName,
+      cycle,
+      lines: quote.lines.map((l) => ({
+        label:
+          l.kind === 'whatsapp' ? t.summaryWhatsapp : t.summaryPlanLine(planName, cycleWord),
+        amount: l.amount,
+      })),
+      subtotal: quote.subtotal,
+      taxPercentage: quote.taxPercentage,
+      taxAmount: quote.taxAmount,
+      total: quote.total,
+      currency: quote.currency,
+    }
+  } catch {
+    return undefined
+  }
 }

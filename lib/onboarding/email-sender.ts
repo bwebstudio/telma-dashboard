@@ -20,6 +20,25 @@ export interface WelcomeEmail {
   email: string
   password: string
   /**
+   * What they just contracted, for the summary that opens the email.
+   *
+   * The first message used to lead with "the number Telma answers" and a
+   * telephone number. For a clinic that kept its own, that is a number it has
+   * never seen, presented as if it were theirs, above the one that is. What
+   * somebody wants to see straight after paying is what they bought: the
+   * plan, the cycle, the amount and when it is charged again.
+   */
+  summary?: {
+    planName: string
+    cycle: 'monthly' | 'annual'
+    lines: Array<{ label: string; amount: number }>
+    subtotal: number
+    taxPercentage: number | null
+    taxAmount: number
+    total: number
+    currency: string
+  }
+  /**
    * E.164, as it will be dialled, or null while there is not one yet.
    *
    * Null is the ordinary case on the day of the sign-up. Portuguese numbers
@@ -80,6 +99,21 @@ interface EmailCopy {
   /** Shown instead of a number while the line is being bought. */
   numberPendingLabel: string
   numberPendingBody: string
+  /** The contracted summary at the top of the first email. */
+  summaryLabel: string
+  summaryPlanLine: (plan: string, cycle: string) => string
+  summaryWhatsapp: string
+  summaryCycleMonthly: string
+  summaryCycleAnnual: string
+  summaryTotal: string
+  summaryTaxExcluded: string
+  summaryRenewMonthly: string
+  summaryRenewAnnual: string
+  summaryInvoice: string
+  summaryNoCommitment: string
+  numberSectionLabel: string
+  numberKeepPending: (own: string) => string
+  numberNewPending: string
   /** The forward is the last step, not the first, so the email explains it
    *  and does not hand over the codes. Those live in the panel, behind the
    *  moment the clinic turns Telma on. */
@@ -116,13 +150,29 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     headingReady: (c) => `A ${c} está quase pronta`,
     headingPending: (c) => `A ${c} está quase pronta`,
     leadReady:
-      'Está tudo criado. Abaixo ficam o número que a Telma passa a atender e os seus acessos ao painel.',
+      'Está tudo criado. Abaixo fica o resumo do que contratou e os seus acessos ao painel.',
     leadPending:
       'O painel já é seu e os acessos estão abaixo. Assim que o pagamento for confirmado, a linha entra ao serviço.',
     numberLabel: 'O número que a Telma atende',
     numberPendingLabel: 'O número',
     numberPendingBody:
       'Estamos a tratar do número da Telma junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver activo. Não tem de fazer nada entretanto.',
+    summaryLabel: 'O que contratou',
+    summaryPlanLine: (plan, cycle) => `Plano ${plan}, ${cycle}`,
+    summaryWhatsapp: 'WhatsApp',
+    summaryCycleMonthly: 'mensal',
+    summaryCycleAnnual: 'anual',
+    summaryTotal: 'Total',
+    summaryTaxExcluded: 'mais IVA',
+    summaryRenewMonthly: 'Renova todos os meses pelo mesmo valor, a contar de hoje.',
+    summaryRenewAnnual: 'Renova todos os anos pelo mesmo valor, a contar de hoje.',
+    summaryInvoice: 'A factura chega-lhe por email, enviada pela Stripe, com cada cobrança.',
+    summaryNoCommitment: 'Sem permanência. Pode cancelar quando quiser a partir do painel.',
+    numberSectionLabel: 'O seu número',
+    numberKeepPending: (own) =>
+      `Fica com o ${own}, o número que já tem. Estamos a tratar do número da Telma para onde o vai desviar: costuma demorar entre um e cinco dias úteis e avisamos assim que estiver pronto.`,
+    numberNewPending:
+      'Estamos a tratar do seu número novo junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que for seu.',
     numberTemp:
       'O seu número de sempre fica onde está, na sua operadora. No fim, será desviado para este.',
     forwardTitle: 'E por fim, desviar o seu número',
@@ -163,13 +213,29 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     headingReady: (c) => `${c} está casi lista`,
     headingPending: (c) => `${c} está casi lista`,
     leadReady:
-      'Está todo creado. Abajo tiene el número que pasa a contestar Telma y sus accesos al panel.',
+      'Está todo creado. Abajo tiene el resumen de lo que ha contratado y sus accesos al panel.',
     leadPending:
       'El panel ya es suyo y los accesos están abajo. En cuanto se confirme el pago, la línea entra en servicio.',
     numberLabel: 'El número que contesta Telma',
     numberPendingLabel: 'El número',
     numberPendingBody:
       'Estamos tramitando el número de Telma con la operadora. Suele tardar entre uno y cinco días laborables y le avisamos por email en cuanto esté activo. Mientras tanto no tiene que hacer nada.',
+    summaryLabel: 'Lo que ha contratado',
+    summaryPlanLine: (plan, cycle) => `Plan ${plan}, ${cycle}`,
+    summaryWhatsapp: 'WhatsApp',
+    summaryCycleMonthly: 'mensual',
+    summaryCycleAnnual: 'anual',
+    summaryTotal: 'Total',
+    summaryTaxExcluded: 'más IVA',
+    summaryRenewMonthly: 'Se renueva cada mes por el mismo importe, a partir de hoy.',
+    summaryRenewAnnual: 'Se renueva cada año por el mismo importe, a partir de hoy.',
+    summaryInvoice: 'La factura le llega por email, enviada por Stripe, con cada cobro.',
+    summaryNoCommitment: 'Sin permanencia. Puede cancelar cuando quiera desde el panel.',
+    numberSectionLabel: 'Su número',
+    numberKeepPending: (own) =>
+      `Se queda con el ${own}, el número que ya tiene. Estamos tramitando el número de Telma al que lo desviará: suele tardar entre uno y cinco días laborables y le avisamos en cuanto esté listo.`,
+    numberNewPending:
+      'Estamos tramitando su número nuevo con la operadora. Suele tardar entre uno y cinco días laborables y le avisamos por email en cuanto sea suyo.',
     numberTemp:
       'Su número de siempre se queda donde está, en su operadora. Al final lo desviará a este.',
     forwardTitle: 'Y por último, desviar su número',
@@ -325,6 +391,15 @@ const SUNKEN = '#F5F5F3'
 const MACAW = '#D9EE50'
 const MACAW_WASH = '#F7FDD0'
 const ASSETS = 'https://app.telmaatende.com/brand'
+
+/** Amounts as the clinic's own country writes them. */
+function money(cents: number, currency: string, locale: OnboardingLocale): string {
+  return new Intl.NumberFormat(locale === 'es' ? 'es-ES' : 'pt-PT', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+  }).format(cents / 100)
+}
 const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
 const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 
@@ -397,18 +472,62 @@ export function welcomeHtml(p: WelcomeEmail): string {
           <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(lead)}</p>
 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
+            ${
+              // ── WHAT THEY BOUGHT, FIRST ─────────────────────────────────
+              // This used to open with "the number Telma answers" and a
+              // telephone number. For a clinic that kept its own, that is a
+              // number it has never seen, presented as if it were theirs,
+              // above the one that is. The question somebody has just after
+              // paying is what they bought and when it charges again.
+              p.summary
+                ? `<tr><td style="padding:18px 20px">
+              <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.summaryLabel)}</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                ${p.summary.lines
+                  .map(
+                    (l) => `<tr>
+                  <td style="padding:5px 0;font-size:15px;color:${INK}">${escapeHtml(l.label)}</td>
+                  <td align="right" style="padding:5px 0;font-size:15px;color:${INK}">${money(l.amount, p.summary!.currency, p.locale)}</td>
+                </tr>`
+                  )
+                  .join('\n                ')}
+                <tr><td colspan="2" style="padding:8px 0 0"><div style="height:1px;background:${LINE}"></div></td></tr>
+                <tr>
+                  <td style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${escapeHtml(t.summaryTotal)}</td>
+                  <td align="right" style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${money(p.summary.total, p.summary.currency, p.locale)}${
+                    p.summary.taxPercentage === null || p.summary.taxPercentage === 0
+                      ? ` <span style="font-weight:400;font-size:13px;color:${INK_MUTE}">${escapeHtml(t.summaryTaxExcluded)}</span>`
+                      : ''
+                  }</td>
+                </tr>
+              </table>
+              <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(
+                p.summary.cycle === 'annual' ? t.summaryRenewAnnual : t.summaryRenewMonthly
+              )}<br>${escapeHtml(t.summaryInvoice)}<br>${escapeHtml(t.summaryNoCommitment)}</p>
+            </td></tr>
+            <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>`
+                : ''
+            }
             <tr><td style="padding:18px 20px">
+              <p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(
+                // A clinic that kept its own number is being shown ours, and
+                // calling that "your number" over the top of it is the exact
+                // confusion this section was rewritten to remove.
+                p.temporaryNumber ? t.numberLabel : t.numberSectionLabel
+              )}</p>
               ${
                 p.phoneNumber
-                  ? `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberLabel)}</p>
-              <p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
+                  ? `<p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
               ${
                 p.temporaryNumber
                   ? `<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.numberTemp)}</p>`
                   : ''
               }`
-                  : `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberPendingLabel)}</p>
-              <p style="margin:7px 0 0;font-size:15px;line-height:1.6;color:${INK}">${escapeHtml(t.numberPendingBody)}</p>`
+                  : `<p style="margin:7px 0 0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(
+                      p.temporaryNumber
+                        ? t.numberKeepPending(p.ownNumber ?? '')
+                        : t.numberNewPending
+                    )}</p>`
               }
             </td></tr>
             <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>
@@ -477,12 +596,26 @@ export function welcomeText(p: WelcomeEmail): string {
   return [
     p.pendingPayment ? t.headingPending(p.clinicName) : t.headingReady(p.clinicName),
     '',
-    ...(p.phoneNumber
+    ...(p.summary
       ? [
-          `${t.numberLabel}: ${p.phoneNumber}`,
-          ...(p.temporaryNumber ? [`  ${t.numberTemp}`] : []),
+          '',
+          `${t.summaryLabel}:`,
+          ...p.summary.lines.map(
+            (l) => `  ${l.label}: ${money(l.amount, p.summary!.currency, p.locale)}`
+          ),
+          `  ${t.summaryTotal}: ${money(p.summary.total, p.summary.currency, p.locale)}`,
+          `  ${p.summary.cycle === 'annual' ? t.summaryRenewAnnual : t.summaryRenewMonthly}`,
+          `  ${t.summaryInvoice}`,
+          `  ${t.summaryNoCommitment}`,
         ]
-      : [`${t.numberPendingLabel}: ${t.numberPendingBody}`]),
+      : []),
+    '',
+    `${t.numberSectionLabel}:`,
+    ...(p.phoneNumber
+      ? [`  ${p.phoneNumber}`, ...(p.temporaryNumber ? [`  ${t.numberTemp}`] : [])]
+      : [
+          `  ${p.temporaryNumber ? t.numberKeepPending(p.ownNumber ?? '') : t.numberNewPending}`,
+        ]),
     '',
     `${t.accessLabel}:`,
     `  ${p.email}`,

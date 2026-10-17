@@ -18,7 +18,24 @@ import { welcomeHtml, welcomeText } from '../lib/onboarding/email-sender.ts'
 const OUT = '/tmp/telma-email'
 mkdirSync(OUT, { recursive: true })
 
+// O resumo que o alta calcula a partir dos preços reais da Stripe. Aqui vai
+// escrito à mão, porque esta previsualização não fala com a Stripe.
+const summary = {
+  planName: 'Clínica',
+  cycle: 'monthly',
+  lines: [
+    { label: 'Plan Clínica, mensual', amount: 24900 },
+    { label: 'WhatsApp', amount: 4900 },
+  ],
+  subtotal: 29800,
+  taxPercentage: 0,
+  taxAmount: 0,
+  total: 29800,
+  currency: 'EUR',
+}
+
 const base = {
+  summary,
   clinicName: 'Clínica Miranda',
   email: 'ola@clinicamiranda.pt',
   password: 'Telma-4812-Rx',

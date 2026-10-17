@@ -44,6 +44,8 @@ export default async function TelmaPage() {
       <PageHeader eyebrow={dict.clinicNav.telma} title={dict.telmaSettings.title} subtitle={dict.telmaSettings.lead} />
       <TelmaSettingsForm
         initial={initial}
+        copy={dict.telmaForm}
+        promptCopy={dict.promptPreview}
         locale={onboardingLocale}
         languages={languages}
         readOnly={readOnly}

@@ -657,6 +657,66 @@ export interface Dictionary {
     >
     errors: Record<'forbidden' | 'unavailable' | 'clinic' | 'generic', string>
   }
+  /**
+   * Las cinco superficies que llevaban su propia tabla de copy dentro del
+   * componente, con portugués y español y sin inglés. Viven aquí para que un
+   * idioma nuevo sea un fichero y no una búsqueda por el árbol.
+   */
+  noAccess: {
+    title: string
+    /** Showcase: hay un solo panel, el de la clínica. */
+    demo: string
+    /** Fuera del showcase: la cuenta no tiene panel asociado. */
+    plain: string
+    signUp: string
+    out: string
+  }
+  voiceSimulator: {
+    lead: string
+    knows: string
+    opens: string
+    after: string
+    refresh: string
+    loading: string
+    nothing: string
+    transcript: string
+    inPanel: string
+    booked: string
+    noBooking: string
+    mic: string
+  }
+  telmaForm: {
+    save: string
+    saving: string
+    saved: string
+    unsaved: string
+    failed: string
+    clinic: string
+    services: string
+    telma: string
+    effect: string
+    previewHelp: string
+  }
+  clinicIdentity: {
+    save: string
+    saving: string
+    saved: string
+    failed: string
+  }
+  promptPreview: {
+    title: string
+    help: string
+    greeting: string
+    listen: string
+    listening: string
+    stop: string
+    show: string
+    hide: string
+    errNoKey: string
+    errNoPermission: string
+    errFailed: string
+    errNoVoice: string
+  }
   interno: {
     clinicsTitle: string
     clinicsSubtitle: string

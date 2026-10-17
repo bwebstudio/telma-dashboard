@@ -1,5 +1,7 @@
 'use client'
 
+import type { Dictionary } from '@/content'
+
 import { useState, useTransition } from 'react'
 import { updateClinicProfile } from '@/lib/actions/clinic-settings'
 import { Text, Select } from '@/components/onboarding/FormSections'
@@ -24,22 +26,20 @@ import type { OnboardingLocale } from '@/lib/onboarding/locale'
  * for a clinic in Spain and would buy a number with the wrong dial code.
  */
 
-const COPY = {
-  pt: { save: 'Guardar', saving: 'A guardar...', saved: 'Guardado', failed: 'Não foi possível guardar.' },
-  es: { save: 'Guardar', saving: 'Guardando...', saved: 'Guardado', failed: 'No se ha podido guardar.' },
-} as const
 
 export function ClinicIdentityForm({
   profile,
+  copy,
   locale,
   readOnly,
 }: {
   profile: Record<string, unknown>
+  copy: Dictionary['clinicIdentity']
   locale: OnboardingLocale
   readOnly: boolean
 }) {
   const t = copyFor(locale)
-  const c = COPY[locale] ?? COPY.pt
+  const c = copy
   const [values, setValues] = useState<Record<string, unknown>>(profile)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [dirty, setDirty] = useState(false)

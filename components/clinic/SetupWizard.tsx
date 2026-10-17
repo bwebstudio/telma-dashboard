@@ -208,7 +208,7 @@ export function SetupWizard({
           />
         )}
         {id === 'review' && (
-          <PromptPreview values={values} locale={locale} help={t.reviewHelp} />
+          <PromptPreview values={values} locale={locale} copy={dict.promptPreview} help={t.reviewHelp} />
         )}
       </div>
 

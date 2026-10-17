@@ -44,7 +44,7 @@ export default async function TestCallPage() {
       return (
         <div className="max-w-2xl">
           <PageHeader eyebrow={dict.clinicNav.testCall} title={t.title} subtitle={t.subtitle} />
-          <VoiceSimulator config={config} locale={locale === 'es' ? 'es' : 'pt'} />
+          <VoiceSimulator config={config} copy={dict.voiceSimulator} />
         </div>
       )
     }

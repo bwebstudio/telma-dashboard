@@ -1,5 +1,7 @@
 'use client'
 
+import type { Dictionary } from '@/content'
+
 import { useEffect, useState, useTransition } from 'react'
 import { lastCallOutcome, type CallOutcome, type VoiceConfig } from '@/lib/actions/voice-demo'
 
@@ -16,45 +18,15 @@ import { lastCallOutcome, type CallOutcome, type VoiceConfig } from '@/lib/actio
  * nobody saw arrive. Together they are the argument.
  */
 
-const COPY = {
-  pt: {
-    lead: 'Fale com a Telma como se fosse um paciente. Ela usa a configuração desta clínica.',
-    knows: 'A Telma já sabe',
-    opens: 'Vai atender assim',
-    after: 'Depois de desligar',
-    refresh: 'Ver o que ficou',
-    loading: 'A ler...',
-    nothing: 'Ainda não há nada. Fale com ela e depois carregue aqui.',
-    transcript: 'A conversa',
-    inPanel: 'No painel da clínica',
-    booked: 'Marcação criada',
-    noBooking: 'Esta chamada não deixou marcação.',
-    mic: 'Precisa de dar permissão ao microfone.',
-  },
-  es: {
-    lead: 'Hable con Telma como si fuera un paciente. Usa la configuración de esta clínica.',
-    knows: 'Telma ya sabe',
-    opens: 'Va a contestar así',
-    after: 'Después de colgar',
-    refresh: 'Ver qué ha quedado',
-    loading: 'Leyendo...',
-    nothing: 'Todavía no hay nada. Hable con ella y luego pulse aquí.',
-    transcript: 'La conversación',
-    inPanel: 'En el panel de la clínica',
-    booked: 'Cita creada',
-    noBooking: 'Esta llamada no dejó cita.',
-    mic: 'Tiene que dar permiso al micrófono.',
-  },
-} as const
 
 export function VoiceSimulator({
   config,
-  locale,
+  copy,
 }: {
   config: VoiceConfig
-  locale: 'pt' | 'es'
+  copy: Dictionary['voiceSimulator']
 }) {
-  const t = COPY[locale] ?? COPY.pt
+  const t = copy
   const [outcome, setOutcome] = useState<CallOutcome | null>(null)
   const [pending, startTransition] = useTransition()
 

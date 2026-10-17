@@ -1,5 +1,7 @@
 'use client'
 
+import { dictionaries, type Dictionary } from '@/content'
+
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { previewGreetingAudio, previewSummary, type PromptSummary } from '@/lib/actions/preview'
 import type { OnboardingLocale } from '@/lib/onboarding/locale'
@@ -23,44 +25,16 @@ import type { OnboardingLocale } from '@/lib/onboarding/locale'
  * every patient hears, and hearing it is what makes the rest feel real.
  */
 
-const COPY = {
-  pt: {
-    title: 'O que a Telma vai saber',
-    help: 'Montado a partir das suas respostas. Se alguma coisa não estiver bem, volte atrás e corrija.',
-    greeting: 'Assim atende',
-    listen: 'Ouvir',
-    listening: 'Um momento...',
-    stop: 'Parar',
-    show: 'Ver tudo',
-    hide: 'Fechar',
-    errNoKey: 'A voz ainda não está ligada. Pode continuar: isto não impede a inscrição.',
-    errNoPermission: 'A voz ainda não está ligada. Pode continuar: isto não impede a inscrição.',
-    errFailed: 'Não foi possível ouvir agora. Tente outra vez.',
-    errNoVoice: 'A voz ainda não está escolhida.',
-  },
-  es: {
-    title: 'Lo que Telma va a saber',
-    help: 'Montado a partir de sus respuestas. Si algo no está bien, vuelva atrás y corríjalo.',
-    greeting: 'Así contesta',
-    listen: 'Escuchar',
-    listening: 'Un momento...',
-    stop: 'Parar',
-    show: 'Ver todo',
-    hide: 'Cerrar',
-    errNoKey: 'La voz todavía no está conectada. Puede continuar: esto no impide el alta.',
-    errNoPermission: 'La voz todavía no está conectada. Puede continuar: esto no impide el alta.',
-    errFailed: 'No se ha podido escuchar ahora. Inténtelo otra vez.',
-    errNoVoice: 'Todavía no hay voz elegida.',
-  },
-} as const
 
 export function PromptPreview({
   values,
   locale,
+  copy,
   help,
 }: {
   values: Record<string, unknown>
   locale: OnboardingLocale
+  copy?: Dictionary['promptPreview']
   /**
    * Overrides the line under the title. The default is written for the
    * sign-up, where there are steps to go back to; the panel has none, and
@@ -69,7 +43,10 @@ export function PromptPreview({
    */
   help?: string
 }) {
-  const base = COPY[locale] ?? COPY.pt
+  // The panel hands its own, in the language of whoever is signed in. The
+  // sign-up does not: it is Portuguese or Spanish by design, and there the
+  // dictionary for that language is exactly the right fallback.
+  const base = copy ?? dictionaries[locale].promptPreview
   const t = { ...base, help: help ?? base.help }
   const [summary, setSummary] = useState<PromptSummary | null>(null)
   const [open, setOpen] = useState(false)

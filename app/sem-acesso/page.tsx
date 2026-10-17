@@ -23,23 +23,6 @@ import { showcaseMode } from '@/lib/demo/config'
 
 export const dynamic = 'force-dynamic'
 
-const COPY = {
-  pt: {
-    title: 'Esta conta não abre nada aqui',
-    demo: 'Esta é a demonstração da Telma, e só tem o painel de uma clínica. A sua conta é da equipa, e essas contas ficam no painel verdadeiro.',
-    plain: 'A sua conta entrou, mas não tem nenhum painel associado. Fale connosco e resolvemos.',
-    signUp: 'Inscrever uma clínica',
-    out: 'Sair',
-  },
-  es: {
-    title: 'Esta cuenta no abre nada aquí',
-    demo: 'Esta es la demostración de Telma, y solo tiene el panel de una clínica. Su cuenta es del equipo, y esas cuentas viven en el panel de verdad.',
-    plain: 'Su cuenta ha entrado, pero no tiene ningún panel asociado. Hable con nosotros y lo resolvemos.',
-    signUp: 'Dar de alta una clínica',
-    out: 'Salir',
-  },
-} as const
-
 export default async function SemAcessoPage() {
   const user = await getAppUser()
   if (!user) redirect('/login')
@@ -47,8 +30,8 @@ export default async function SemAcessoPage() {
   const [panel] = panelsFor(user)
   if (panel) redirect('/')
 
-  const { locale } = await getDict()
-  const t = COPY[locale === 'es' ? 'es' : 'pt']
+  const { dict } = await getDict()
+  const t = dict.noAccess
 
   return (
     <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-6 px-5 py-16">

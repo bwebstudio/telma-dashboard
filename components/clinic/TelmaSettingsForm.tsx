@@ -1,5 +1,7 @@
 'use client'
 
+import type { Dictionary } from '@/content'
+
 import { useState, useTransition } from 'react'
 import { updateClinicProfile } from '@/lib/actions/clinic-settings'
 import { ClinicStep, ServicesStep, TelmaStep } from '@/components/onboarding/FormSections'
@@ -22,45 +24,23 @@ import type { OnboardingLocale } from '@/lib/onboarding/locale'
  * a decision leaves Telma announcing a transfer she cannot make.
  */
 
-const COPY = {
-  pt: {
-    save: 'Guardar alterações',
-    saving: 'A guardar...',
-    saved: 'Guardado',
-    unsaved: 'Tem alterações por guardar.',
-    failed: 'Não foi possível guardar. Verifique os campos marcados.',
-    clinic: 'A clínica',
-    services: 'O que faz',
-    telma: 'Como a Telma atende',
-    effect: 'Entra na chamada seguinte.',
-    previewHelp: 'É assim que fica com o que está agora. Se alguma coisa não encaixar, mude aqui em baixo.',
-  },
-  es: {
-    save: 'Guardar cambios',
-    saving: 'Guardando...',
-    saved: 'Guardado',
-    unsaved: 'Tiene cambios sin guardar.',
-    failed: 'No se ha podido guardar. Revise los campos marcados.',
-    clinic: 'La clínica',
-    services: 'Qué hace',
-    telma: 'Cómo contesta Telma',
-    effect: 'Entra en la siguiente llamada.',
-    previewHelp: 'Así queda con lo que hay ahora mismo. Si algo no encaja, cámbielo aquí abajo.',
-  },
-} as const
 
 export function TelmaSettingsForm({
   initial,
+  copy,
+  promptCopy,
   locale,
   languages,
   readOnly,
 }: {
   initial: Record<string, unknown>
+  copy: Dictionary['telmaForm']
+  promptCopy: Dictionary['promptPreview']
   locale: OnboardingLocale
   languages: LanguageOption[]
   readOnly: boolean
 }) {
-  const t = COPY[locale] ?? COPY.pt
+  const t = copy
   const [values, setValues] = useState<Record<string, unknown>>(initial)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [dirty, setDirty] = useState(false)
@@ -101,7 +81,7 @@ export function TelmaSettingsForm({
 
   return (
     <div className="flex flex-col gap-10">
-      <PromptPreview values={values} locale={locale} help={t.previewHelp} />
+      <PromptPreview values={values} locale={locale} copy={promptCopy} help={t.previewHelp} />
 
       <Section title={t.clinic}>
         <ClinicStep {...stepProps} showIdentity={false} />

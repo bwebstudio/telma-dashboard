@@ -70,6 +70,7 @@ export default async function ContaPage() {
             <div className="mt-6 border-t border-line pt-6">
               <ClinicIdentityForm
                 profile={clinicProfileValues(clinic)}
+                copy={dict.clinicIdentity}
                 locale={onboardingLocale}
                 readOnly={readOnly}
               />

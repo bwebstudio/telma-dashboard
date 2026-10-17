@@ -13,7 +13,7 @@
 // deployed. Everything else renders offline.
 
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { welcomeHtml, welcomeText } from '../lib/onboarding/email-sender.ts'
+import { welcomeHtml, welcomeText, numberReadyHtml } from '../lib/onboarding/email-sender.ts'
 
 const OUT = '/tmp/telma-email'
 mkdirSync(OUT, { recursive: true })
@@ -47,6 +47,7 @@ const variants = [
   { name: 'pt-desvio-no-atendidas', locale: 'pt', phoneNumber: '+351 300 500 900', ownNumber: '+351 220 123 456', temporaryNumber: true, forwardType: 'no_answer' },
   { name: 'pt-desvio-todas', locale: 'pt', phoneNumber: '+351 300 500 900', ownNumber: '+351 220 123 456', temporaryNumber: true, forwardType: 'all' },
   { name: 'es-desvio-no-atendidas', locale: 'es', phoneNumber: '+34 910 555 020', ownNumber: '+34 663 886 113', temporaryNumber: true, forwardType: 'no_answer' },
+  { name: 'es-pendiente-numero', locale: 'es', phoneNumber: null, ownNumber: '+34 663 886 113', temporaryNumber: true, forwardType: 'no_answer' },
   { name: 'es-numero-nuevo', locale: 'es', phoneNumber: '+34 910 000 000', temporaryNumber: false },
   { name: 'es-pago-pendiente', locale: 'es', phoneNumber: '+34 910 000 000', temporaryNumber: false, pendingPayment: true },
 ]
@@ -57,4 +58,23 @@ for (const v of variants) {
   writeFileSync(`${OUT}/${v.name}.txt`, welcomeText(p))
   console.log(`  ${OUT}/${v.name}.html`)
 }
+// O segundo email, que chega dias depois com a linha pronta.
+for (const v of [
+  { name: 'es-activo-desvio', locale: 'es', forwarding: true, phoneNumber: '+34 910 555 020' },
+  { name: 'es-activo-numero-novo', locale: 'es', forwarding: false, phoneNumber: '+34 910 555 020' },
+  { name: 'pt-activo-desvio', locale: 'pt', forwarding: true, phoneNumber: '+351 300 602 615' },
+]) {
+  writeFileSync(
+    `${OUT}/${v.name}.html`,
+    numberReadyHtml({
+      clinicName: 'Clínica Miranda',
+      phoneNumber: v.phoneNumber,
+      forwarding: v.forwarding,
+      dashboardUrl: 'https://app.telmaatende.com',
+      locale: v.locale,
+    })
+  )
+  console.log(`  ${OUT}/${v.name}.html`)
+}
+
 console.log(`\n  open ${OUT}`)

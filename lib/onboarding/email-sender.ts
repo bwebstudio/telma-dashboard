@@ -101,14 +101,19 @@ interface EmailCopy {
   nextTitle: string
   next: string[]
   footer: string
+  footerTagline: string
+  stepsLabel: string
   htmlLang: string
 }
 
 const EMAIL: Record<OnboardingLocale, EmailCopy> = {
   pt: {
-    subjectReady: (c) => `A Telma já atende a ${c}`,
+    // Nem uma nem outra diz que a Telma já atende, porque não atende: a
+    // clínica acabou de pagar e ainda não lhe disse nada. Dizia-o, e era a
+    // primeira frase que lhe mandávamos.
+    subjectReady: (c) => `A ${c} está quase pronta`,
     subjectPending: (c) => `A ${c} está quase pronta`,
-    headingReady: (c) => `A Telma já atende a ${c}`,
+    headingReady: (c) => `A ${c} está quase pronta`,
     headingPending: (c) => `A ${c} está quase pronta`,
     leadReady:
       'Está tudo criado. Abaixo ficam o número que a Telma passa a atender e os seus acessos ao painel.',
@@ -148,12 +153,14 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     ],
     footer:
       'Recebeu este email porque inscreveu a sua clínica na Telma. Se não foi você, responda a esta mensagem e tratamos disso.',
+    footerTagline: 'A Telma atende quando ninguém pode.',
+    stepsLabel: 'O que acontece a seguir',
     htmlLang: 'pt',
   },
   es: {
-    subjectReady: (c) => `Telma ya contesta en ${c}`,
+    subjectReady: (c) => `${c} está casi lista`,
     subjectPending: (c) => `${c} está casi lista`,
-    headingReady: (c) => `Telma ya contesta en ${c}`,
+    headingReady: (c) => `${c} está casi lista`,
     headingPending: (c) => `${c} está casi lista`,
     leadReady:
       'Está todo creado. Abajo tiene el número que pasa a contestar Telma y sus accesos al panel.',
@@ -193,6 +200,8 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     ],
     footer:
       'Ha recibido este email porque ha dado de alta su clínica en Telma. Si no ha sido usted, responda a este mensaje y lo resolvemos.',
+    footerTagline: 'Telma atiende cuando nadie puede.',
+    stepsLabel: 'Qué pasa a continuación',
     htmlLang: 'es',
   },
 }
@@ -314,16 +323,19 @@ const INK_MUTE = '#706E6E'
 const LINE = '#E7EAE8'
 const SUNKEN = '#F5F5F3'
 const MACAW = '#D9EE50'
+const MACAW_WASH = '#F7FDD0'
+const ASSETS = 'https://app.telmaatende.com/brand'
 const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
 const SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 
 export function welcomeHtml(p: WelcomeEmail): string {
   const t = emailCopy(p.locale)
   const lead = p.pendingPayment ? t.leadPending : t.leadReady
+  const heading = p.pendingPayment
+    ? t.headingPending(p.clinicName)
+    : t.headingReady(p.clinicName)
+  const steps = p.temporaryNumber ? t.nextKeep : t.next
 
-  // The forwarding block only exists for a clinic that kept its own number.
-  // For one that bought a new number there is nothing to forward, and a set of
-  // codes it must not dial is worse than no block at all.
   // No codes here, on purpose. They used to be printed in full, and a clinic
   // that dialled them the day it signed up pointed a real telephone at a Telma
   // who had not been told the opening hours yet: she answers anyway, with
@@ -334,17 +346,17 @@ export function welcomeHtml(p: WelcomeEmail): string {
   // So the email explains the step and withholds the digits. They are in the
   // panel, behind the moment the clinic turns her on, which is also the only
   // place they can stay correct if the number ever changes.
-  const forwarding = p.temporaryNumber && p.phoneNumber
+  const forwarding = p.temporaryNumber
     ? `
-      <h2 style="margin:36px 0 8px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
-      <p style="margin:0 0 10px;font-size:15px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
-        t.forwardWhat.replace('{own}', p.ownNumber ?? '—')
-      )}</p>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:3px solid ${MACAW};background:${SUNKEN};border-radius:0 12px 12px 0">
-        <tr><td style="padding:14px 18px">
-          <p style="margin:0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardNotYet)}</p>
-        </td></tr>
-      </table>`
+          <h2 style="margin:38px 0 10px;font-size:19px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
+          <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
+            t.forwardWhat.replace('{own}', p.ownNumber ?? '—')
+          )}</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MACAW_WASH};border-left:4px solid ${MACAW};border-radius:0 10px 10px 0">
+            <tr><td style="padding:16px 20px">
+              <p style="margin:0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardNotYet)}</p>
+            </td></tr>
+          </table>`
     : ''
 
   return `<!doctype html>
@@ -356,64 +368,103 @@ export function welcomeHtml(p: WelcomeEmail): string {
   <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(lead)}</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SUNKEN}">
     <tr><td align="center" style="padding:32px 16px">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border:1px solid ${LINE};border-radius:12px;overflow:hidden">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:14px;overflow:hidden">
 
-        <tr><td style="background:${INK};padding:0;font-size:0;line-height:0">
-          <img src="https://app.telmaatende.com/brand/telma-lockup.png" width="240" height="56" alt="Telma"
-               style="display:block;border:0;width:240px;height:56px;max-width:240px">
+        <!-- ── THE HEAD CARRIES THE SENTENCE, NOT JUST THE MARK ──────────
+             A strip with a logo on it is a letterhead. The clinic's own name
+             in display type on the brand's black, with the mark above it and
+             the cloud of letters behind, is the product introducing itself. -->
+        <tr><td style="background:${INK};padding:0">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:28px 0 30px 24px;vertical-align:top">
+                <img src="${ASSETS}/telma-lockup.png" width="118" height="28" alt="Telma"
+                     style="display:block;border:0;width:118px;height:28px">
+                <p style="margin:22px 0 0;font-size:26px;line-height:1.2;font-weight:600;letter-spacing:-0.02em;color:#FFFFFF">${escapeHtml(heading)}</p>
+              </td>
+              <!-- Decorative. Mail clients that block images show nothing
+                   here, and nothing is what it is worth. -->
+              <td width="150" style="padding:0;font-size:0;line-height:0;vertical-align:top" align="right">
+                <img src="${ASSETS}/telma-letters.png" width="150" height="82" alt=""
+                     style="display:block;border:0;width:150px;height:82px">
+              </td>
+            </tr>
+          </table>
         </td></tr>
-        <tr><td style="background:${MACAW};font-size:0;line-height:0;height:3px">&nbsp;</td></tr>
+        <tr><td style="background:${MACAW};font-size:0;line-height:0;height:4px">&nbsp;</td></tr>
 
-        <tr><td style="padding:32px 24px">
-          <h1 style="margin:0 0 12px;font-size:25px;line-height:1.25;font-weight:600;letter-spacing:-0.02em;color:${INK}">${
-            p.pendingPayment
-              ? escapeHtml(t.headingPending(p.clinicName))
-              : escapeHtml(t.headingReady(p.clinicName))
-          }</h1>
-          <p style="margin:0 0 26px;font-size:16px;line-height:1.6;color:${INK_SOFT}">${escapeHtml(lead)}</p>
+        <tr><td style="padding:30px 24px 8px">
+          <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(lead)}</p>
 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
             <tr><td style="padding:18px 20px">
               ${
                 p.phoneNumber
-                  ? `<p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberLabel)}</p>
-              <p style="margin:6px 0 0;font-size:22px;font-weight:600;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
+                  ? `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberLabel)}</p>
+              <p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
               ${
                 p.temporaryNumber
                   ? `<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.numberTemp)}</p>`
                   : ''
               }`
-                  : `<p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberPendingLabel)}</p>
-              <p style="margin:6px 0 0;font-size:15px;line-height:1.6;color:${INK}">${escapeHtml(t.numberPendingBody)}</p>`
+                  : `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberPendingLabel)}</p>
+              <p style="margin:7px 0 0;font-size:15px;line-height:1.6;color:${INK}">${escapeHtml(t.numberPendingBody)}</p>`
               }
             </td></tr>
             <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>
             <tr><td style="padding:18px 20px">
-              <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.accessLabel)}</p>
-              <p style="margin:6px 0 0;font-size:16px;color:${INK}">${escapeHtml(p.email)}</p>
-              <p style="margin:4px 0 0;font-size:17px;font-weight:600;font-family:${MONO};color:${INK}">${escapeHtml(p.password)}</p>
+              <p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.accessLabel)}</p>
+              <p style="margin:7px 0 0;font-size:16px;color:${INK}">${escapeHtml(p.email)}</p>
+              <p style="margin:4px 0 0;font-size:17px;font-weight:600;font-family:${MONO};letter-spacing:0.01em;color:${INK}">${escapeHtml(p.password)}</p>
               <p style="margin:8px 0 0;font-size:14px;color:${INK_MUTE}">${escapeHtml(t.passwordNote)}</p>
             </td></tr>
           </table>
 
           <p style="margin:24px 0 0">
             <a href="${escapeHtml(p.dashboardUrl)}"
-               style="display:inline-block;background:${INK};color:#FFFFFF;text-decoration:none;padding:13px 24px;border-radius:8px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
+               style="display:inline-block;background:${INK};color:#FFFFFF;text-decoration:none;padding:14px 26px;border-radius:8px;font-size:16px;font-weight:500">${escapeHtml(t.openPanel)}</a>
           </p>
 ${forwarding}
-
-          <h2 style="margin:36px 0 10px;font-size:17px;font-weight:600;color:${INK}">${escapeHtml(t.nextTitle)}</h2>
-          <ol style="margin:0;padding-left:20px;font-size:16px;line-height:1.7;color:${INK_SOFT}">
-            ${(p.temporaryNumber ? t.nextKeep : t.next)
-              .map((l) => `<li style="margin:0 0 6px">${escapeHtml(l)}</li>`)
-              .join('\n            ')}
-          </ol>
         </td></tr>
 
-        <tr><td style="padding:0 24px"><div style="height:1px;background:${LINE}"></div></td></tr>
-        <tr><td style="padding:18px 24px 24px">
+        <!-- ── THE THREE STEPS, AS THREE THINGS ───────────────────────────
+             A numbered list runs down the page and reads as instructions. In
+             a row, under a macaw rule each, they read as a short path with an
+             end, which is the thing somebody needs to see before they start. -->
+        <tr><td style="padding:34px 24px 0">
+          <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.stepsLabel)}</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              ${steps
+                .map(
+                  (line, i) => `<td width="33%" style="padding:0 ${i === 2 ? '0' : '14px'} 0 0;vertical-align:top">
+                <div style="height:3px;background:${MACAW};border-radius:2px"></div>
+                <p style="margin:10px 0 0;font-size:13px;font-weight:600;font-family:${MONO};color:${INK_MUTE}">0${i + 1}</p>
+                <p style="margin:4px 0 0;font-size:14px;line-height:1.5;color:${INK}">${escapeHtml(line)}</p>
+              </td>`
+                )
+                .join('\n              ')}
+            </tr>
+          </table>
+        </td></tr>
+
+        <tr><td style="padding:30px 24px 26px">
           <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.footer)}</p>
-          <p style="margin:10px 0 0;font-size:13px;color:${INK_MUTE}">Telma, de Bweb Studio</p>
+        </td></tr>
+
+        <tr><td style="background:${INK};padding:22px 24px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="vertical-align:middle">
+                <img src="${ASSETS}/telma-lockup.png" width="100" height="23" alt="Telma"
+                     style="display:block;border:0;width:100px;height:23px">
+                <p style="margin:10px 0 0;font-size:13px;color:rgba(255,255,255,0.62)">${escapeHtml(t.footerTagline)}</p>
+              </td>
+              <td align="right" style="vertical-align:middle">
+                <a href="https://www.telmaatende.com" style="font-size:13px;color:rgba(255,255,255,0.62);text-decoration:none">telmaatende.com</a>
+              </td>
+            </tr>
+          </table>
         </td></tr>
       </table>
     </td></tr>

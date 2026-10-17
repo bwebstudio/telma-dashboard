@@ -171,6 +171,16 @@ export interface Dictionary {
     copy: string
     copied: string
     undo: string
+    /**
+     * The one condition the whole thing rests on, said where the forward is
+     * set up rather than in a paragraph somebody read a week ago.
+     *
+     * Telma now answers for every clinic on one number, and what tells her
+     * whose call it is, is the number the call was forwarded from. A clinic
+     * that forwards from a line we do not have on file reaches the number but
+     * not its own Telma.
+     */
+    mustMatch: string
     fixedLine: string
     markDone: string
     savingDone: string

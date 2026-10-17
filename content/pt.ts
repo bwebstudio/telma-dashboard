@@ -170,6 +170,8 @@ export const pt: Dictionary = {
     copy: 'Copiar',
     copied: 'Copiado',
     undo: 'Para desfazer tudo, marque {code}.',
+    mustMatch:
+      'O desvio tem de partir deste número, {own}. É por ele que a Telma sabe que a chamada é da sua clínica. Se desviar a partir de outra linha, diga-nos qual é para a registarmos.',
     fixedLine:
       'Se o número da clínica é fixo, estes códigos não servem: o desvio pede-se à operadora ou faz-se na área de cliente. Escreva-nos e tratamos disso consigo.',
     markDone: 'Já marquei os códigos',

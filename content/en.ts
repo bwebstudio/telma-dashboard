@@ -168,6 +168,8 @@ export const en: Dictionary = {
     copy: 'Copy',
     copied: 'Copied',
     undo: 'To undo all of it, dial {code}.',
+    mustMatch:
+      'The forward has to come from this number, {own}. It is how Telma knows the call is from your clinic. If you forward from another line, tell us which one so we can register it.',
     fixedLine:
       'On a landline these codes do nothing: the forward is set by the operator or in their customer area. Write to us and we will do it with you.',
     markDone: 'I have dialled the codes',

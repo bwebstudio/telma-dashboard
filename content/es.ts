@@ -168,6 +168,8 @@ export const es: Dictionary = {
     copy: 'Copiar',
     copied: 'Copiado',
     undo: 'Para deshacerlo todo, marque {code}.',
+    mustMatch:
+      'El desvío tiene que salir de este número, {own}. Es por él como Telma sabe que la llamada es de su clínica. Si desvía desde otra línea, díganos cuál es para registrarla.',
     fixedLine:
       'Si el número de la clínica es fijo, estos códigos no sirven: el desvío se pide a la operadora o se hace en el área de cliente. Escríbanos y lo vemos con usted.',
     markDone: 'Ya he marcado los códigos',

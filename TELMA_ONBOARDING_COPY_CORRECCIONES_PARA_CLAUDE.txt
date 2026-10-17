@@ -1,0 +1,133 @@
+TELMA — CORRECCIONES DE COPY DEL ONBOARDING PARA CLAUDE
+
+OBJETIVO
+Aplicar una última pasada de copy y localización al alta pública de Telma (/inscricao) y a los dos correos derivados del alta, usando como fuente TELMA_ONBOARDING_COPY_AUDIT_SOURCE.md.
+
+Esta ronda es de copy/i18n. No cambiar producto, precios, Stripe, telefonía, rutas, estados, IDs, variables ni lógica comercial salvo el mínimo wiring necesario para localizar correctamente una cadena visible.
+
+VOZ EDITORIAL
+Telma habla de forma clara, profesional y tranquila. Sin burocracia ni jerga innecesaria; primero qué ocurre y después qué significa; PT = portugués europeo natural; ES = español de España con usted/su; no prometer plazos o capacidades no verificadas.
+
+1. ALCANCE
+Modificar: lib/onboarding/copy.ts (claves visibles), wizard-schema.ts (copy de validaciones), email-sender.ts, app/inscricao/layout.tsx, placeholders de FormSections.tsx y presentación localizada de descripciones de planes.
+No modificar: puesta en marcha del panel salvo claves compartidas, /telma, prompt telefónico, Stripe/telefonía/aprovisionamiento/precios/minutos/impuestos/IDs/lógica, inglés, 14 claves sin uso, nombres comerciales de planes.
+
+2. P0 — CUATRO PASOS, NO SEIS
+Eliminar toda referencia visible a “seis preguntas / seis passos”.
+intro: mantener “A Telma atende o seu telefone” / “Telma contesta su teléfono”.
+introLead PT: “Em poucos passos, indique os dados essenciais da sua clínica. Depois, configura no painel os horários, os serviços e a forma como a Telma atende.”
+introLead ES: “En pocos pasos, indique los datos esenciales de su clínica. Después podrá configurar en el panel los horarios, los servicios y cómo atiende Telma.”
+Metadata PT: title “Inscrição · Telma”; description “Inscreva a sua clínica na Telma em poucos passos.”
+Metadata ES: title “Alta · Telma”; description “Dé de alta su clínica en Telma en pocos pasos.”
+
+3. PASO PLAN
+steps[0].help puede mantenerse si la cancelación está realmente disponible.
+includedMinutes, si son minutos facturables: PT “minutos de chamadas por mês”; ES “minutos de llamadas al mes”.
+planTooFewLanguages PT: “Este plano inclui menos idiomas do que os que escolheu.” ES: “Este plan incluye menos idiomas de los que ha elegido.”
+addonWhatsapp PT: “Adicionar a Telma ao WhatsApp”; ES: “Añadir Telma a WhatsApp”.
+addonWhatsappHelp PT: “A Telma também responde no WhatsApp e pode marcar consultas. 49 €/mês.” ES: “Telma también responde por WhatsApp y puede dar citas. 49 €/mes.” VERIFY_PRODUCT capacidad y precio.
+
+4. PASO CLÍNICA
+steps[1].help PT: “Os dados básicos da clínica. Os horários, os serviços e os restantes detalhes configuram-se depois no painel.”
+ES: “Los datos básicos de la clínica. Los horarios, los servicios y el resto de detalles se configuran después en el panel.”
+clinicNameHelp PT: “É este o nome que a Telma usa ao atender.” ES: “Es el nombre que Telma utiliza al contestar.”
+Email: cambiar a Email de acesso / Email de acceso solo si realmente es la cuenta principal. Helper PT: “É para este email que enviamos os acessos e as comunicações sobre a conta.” ES: “A este email enviaremos los accesos y las comunicaciones sobre la cuenta.”
+phoneHelp PT: “O número de contacto da clínica. Usamo-lo se precisarmos de falar consigo sobre a configuração ou o serviço.” ES: “El número de contacto de la clínica. Lo utilizaremos si necesitamos hablar con usted sobre la configuración o el servicio.”
+addressHelp: el actual es erróneo. Si Telma usa la dirección en llamadas: PT “A morada que a Telma pode indicar a quem liga.” ES “La dirección que Telma puede indicar a quien llama.” Si no está demostrado, usar “A morada da clínica.” / “La dirección de la clínica.”
+Placeholders: PT geral@clinicaserrano.pt; ES recepcion@clinicaserrano.es.
+
+5. PASO NÚMERO — CRÍTICO
+No prometer aprovisionamiento inmediato.
+steps[2].help PT: “Escolha se quer manter o número atual da clínica ou usar um número novo.” ES: “Elija si quiere conservar el número actual de la clínica o utilizar uno nuevo.”
+keepNumberHelp: eliminar “cinco minutos” y “sin interrumpir servicio” salvo garantía. PT: “Mantém o número que os seus pacientes já conhecem. Quando a linha da Telma estiver pronta, ajudamo-lo a configurar o desvio das chamadas.” ES equivalente: “Mantiene el número que sus pacientes ya conocen. Cuando la línea de Telma esté lista, le ayudaremos a configurar el desvío de llamadas.”
+newNumberHelp: ELIMINAR “activo el mismo día”. PT: “Pedimos um número da região que escolher. Avisamos por email assim que estiver ativo.” ES: “Solicitamos un número de la zona que elija. Le avisaremos por email en cuanto esté activo.” NO poner 1–5 días hasta cerrar proveedor/plazo real.
+forwardNoAnswer PT: “Só as que não forem atendidas”; ES “Solo las que no se atiendan”.
+forwardNoAnswerHelp PT: “O telefone da clínica toca primeiro. Se estiver ocupado ou ninguém atender, a chamada passa para a Telma.” ES: “El teléfono de la clínica suena primero. Si está ocupado o nadie contesta, la llamada pasa a Telma.” VERIFY_PRODUCT busy/no-answer.
+forwardAllHelp PT: “As chamadas passam diretamente para a Telma e o telefone da clínica não toca primeiro. Esta opção utiliza mais minutos do plano.” ES equivalente.
+portingNote: dejar claro que no es portabilidad. PT: “O seu número atual continua na mesma operadora. A Telma terá um número próprio para receber as chamadas desviadas. Quando a linha estiver pronta, explicamos no painel como configurar o desvio.” ES equivalente.
+areaRegion PT “Região do novo número”; ES “Zona del nuevo número”.
+paymentNote PT: “O pagamento é feito na página segura da Stripe. Os dados do cartão não passam pela Telma.” ES: “El pago se realiza en la página segura de Stripe. Los datos de la tarjeta no pasan por Telma.”
+
+6. PASO RESUMEN
+steps[3].help PT “Confira os dados antes de avançar para o pagamento.” ES “Revise los datos antes de continuar con el pago.”
+summaryLead PT “Confira o plano e o valor. O pagamento é feito na Stripe no passo seguinte.” ES “Revise el plan y el importe. El pago se realiza en Stripe en el paso siguiente.”
+summaryFailed PT “Não foi possível calcular o valor neste momento. Pode continuar: verá o valor exato na Stripe antes de confirmar o pagamento.” ES equivalente.
+summaryByArrangement PT “Este plano requer um orçamento personalizado. Entraremos em contacto consigo depois da inscrição.” ES “Este plan requiere un presupuesto personalizado. Nos pondremos en contacto con usted después del alta.”
+summaryTaxUnknown PT “Calculado no pagamento”; ES “Se calcula al pagar”.
+summaryReverseCharge: VERIFY_LEGAL; no alterar lógica fiscal sin validar.
+summaryRenews: eliminar “mismo importe” salvo garantía. PT “A subscrição renova mensalmente/anualmente.” ES “La suscripción se renueva mensualmente/anualmente.”
+
+7. GUARDADO Y ERRORES
+savedNotice puede mantenerse, pero VERIFY_PRODUCT persistencia real.
+startOverConfirm PT: “Isto apaga as respostas que já guardou e volta ao primeiro passo. Quer continuar?” ES: “Esto borra las respuestas que ya ha guardado y vuelve al primer paso. ¿Quiere continuar?”
+errorEmailTaken PT “Já existe uma clínica com este email. Entre na sua conta ou use outro email.” ES “Ya existe una clínica con este email. Acceda a su cuenta o utilice otro email.”
+errorEmailStaff PT “Este email já está associado a outra conta da Telma. Use um email diferente para a clínica.” ES equivalente.
+errorPhoneTaken PT “Este número já está associado a uma clínica na Telma. Se for a sua, entre no painel. Se achar que é um erro, fale connosco.” ES equivalente formal.
+errorSubmit: mantener “nada cobrado” solo si backend lo garantiza; si no, PT “Não foi possível concluir a inscrição. Tente novamente ou fale connosco.” ES “No se ha podido completar el alta. Inténtelo de nuevo o hable con nosotros.”
+
+8. VALIDACIONES
+nameShort PT “O nome da clínica deve ter pelo menos 3 caracteres.” ES “El nombre de la clínica debe tener al menos 3 caracteres.”
+region PT “Escolha o distrito.” ES “Elija la provincia.”
+areaRegion PT “Escolha a região do novo número.” ES “Elija la zona del número nuevo.”
+terms PT “Aceite os termos para continuar.” ES “Acepte los términos para continuar.”
+
+9. PANTALLA FINAL
+Jerarquía: clínica creada → accesos → estado línea → siguiente acción.
+doneLead PT “Enviámos os acessos para {email}. Guarde esta página até entrar no painel pela primeira vez.” ES “Hemos enviado los accesos a {email}. Guarde esta página hasta que acceda al panel por primera vez.”
+donePendingBody PT “Estamos a tratar da ativação do número com a operadora. Avisamos por email assim que estiver ativo. Entretanto, já pode configurar a Telma no painel.” ES equivalente. Retirar por ahora 1–5 días.
+donePortingNote PT “O número habitual da clínica não muda. Quando a linha da Telma estiver pronta, explicamos no painel como desviar as chamadas que quiser que ela atenda.” ES equivalente.
+donePasswordHelp PT “Esta palavra-passe só é mostrada uma vez. Altere-a depois de entrar.” ES “Esta contraseña solo se muestra una vez. Cámbiela después de acceder.”
+doneNext: base común: configurar clínica; cuando línea esté lista, activar Telma y llamada de prueba. Si conserva número, tercer paso de desvío. Si nuevo número, tercer paso para empezar a utilizar/publicar el nuevo número.
+
+10. VUELTA DE STRIPE
+thanksLead PT: “Obrigado. A sua clínica está criada. Enviámos por email os acessos ao painel e a palavra-passe temporária.” ES: “Gracias. Su clínica está creada. Le hemos enviado por email los accesos al panel y la contraseña temporal.”
+
+11. PLANES EN ESPAÑOL
+Antes de cambiar, comprobar tabla plans de producción: extracción viene de migraciones y puede no reflejar cambios manuales.
+No traducir silenciosamente nombres Essencial / Clínica / Rede.
+Sí localizar descripciones:
+Essencial PT “Para consultórios pequenos”; ES “Para clínicas pequeñas”.
+Clínica PT “Mais escolhido. Voz personalizada e relatório mensal incluídos.”; ES “El más elegido. Voz personalizada e informe mensual incluidos.”
+Rede PT “Para grupos com várias clínicas. Painel unificado e um número próprio por sede.”; ES “Para grupos con varias clínicas. Panel unificado y un número propio por sede.”
+Si DB no soporta locale, usar capa de presentación localizada; no duplicar IDs/precios/lógica.
+
+12. CORREO DE BIENVENIDA
+Ready y pending no pueden afirmar ambos “suscripción confirmada”.
+subjectReady PT “Subscrição confirmada — {clínica}”; ES “Suscripción confirmada — {clínica}”. La raya no es un problema.
+subjectPending PT “Recebemos a inscrição da {clínica}”; ES “Hemos recibido el alta de {clínica}”.
+Heading ready PT “A sua subscrição está confirmada.” ES “Su suscripción está confirmada.”
+Heading pending PT “Recebemos a sua inscrição.” ES “Hemos recibido su alta.”
+leadReady PT “A sua subscrição está confirmada. Estamos a ativar a linha da clínica e avisamos por email assim que estiver pronta. Entretanto, já pode configurar a Telma no painel.” ES equivalente.
+leadPending: si activación solo empieza al confirmar pago: PT “Recebemos a sua inscrição. Assim que o pagamento estiver confirmado, avançamos com a ativação da linha. Entretanto, já pode configurar a Telma no painel.” ES equivalente. Si flujo real distinto, adaptar a realidad.
+Facturación: eliminar “mismo importe” salvo garantía. Renovación mensual/anual a partir de hoy.
+invoices PT “Pode consultar e descarregar as suas faturas em Conta, no painel.” ES “Puede consultar y descargar sus facturas en Cuenta, dentro del panel.”
+
+13. CORREO DE NÚMERO LISTO
+readyLeadKeep PT “A linha da Telma está pronta. O número habitual da sua clínica não muda. Falta apenas configurar o desvio das chamadas que quer que a Telma atenda.” ES equivalente.
+No afirmar “códigos ya preparados” si depende de operadora. Preferir PT “Consulte no painel as instruções de desvio para a sua linha.” ES “Consulte en el panel las instrucciones de desvío para su línea.”
+Prueba keep: PT “Ligue para o número habitual da clínica e confirme que a Telma atende quando deve.” ES “Llame al número habitual de la clínica y compruebe que Telma contesta cuando corresponde.”
+Prueba new: PT “Ligue para o novo número e confirme que a Telma atende corretamente.” ES “Llame al nuevo número y compruebe que Telma contesta correctamente.”
+
+14. PIE DE EMAILS
+“Lê-o uma pessoa / Lo lee una persona” no es un error, pero es más ingenioso que el sistema. Preferencia PT “Se tiver alguma dúvida, responda a este email. A nossa equipa ajuda-o.” ES “Si tiene alguna duda, responda a este email. Nuestro equipo le ayudará.” Puede mantenerse el actual si se desea ese gesto humano.
+Mantener tagline: “A Telma atende quando ninguém pode.” / “Telma atiende cuando nadie puede.”
+
+15. PUESTA EN MARCHA DEL PANEL
+No reescribir en este commit. Si una clave compartida obliga a tocarla, comprobar que el panel no empeora.
+
+16. VERIFY_PRODUCT / VERIFY_LEGAL ANTES DE DEPLOY
+1) plazo real de aprovisionamiento por país/proveedor/tipo; 2) modalidades de desvío; 3) códigos por operadora/línea; 4) disponibilidad real de número regional; 5) WhatsApp y 49 €/mes; 6) definición de minutos; 7) cancelación desde panel; 8) renovación y “mismo importe”; 9) persistencia del alta; 10) cuándo puede garantizarse “no se ha cobrado nada”; 11) cuándo comienza activación con pago pendiente; 12) reverse charge/IVA; 13) descripciones reales de plans en producción; 14) retirar 1–5 días si no es universal.
+Si algo no puede verificarse, reducir la promesa a algo demostrable en vez de inventar.
+
+17. QA FINAL
+Recorrer cuatro pantallas PT/ES; cero tuteo; cero PT visible en ES; buscar “seis”, “seis passos”, “seis preguntas”; buscar “activo el mismo día”, “cinco minutos”; buscar referencias 1–5 días; comprobar ready/pending; comprobar que IDs/precios/nombres/lógica no cambiaron; interpolaciones; typecheck/lint/build; desktop/móvil.
+
+No commit, push ni deploy hasta reportar el resultado.
+
+RESULTADO ESPERADO
+La experiencia debe entenderse así:
+ELIGE PLAN → DEJA DATOS BÁSICOS → DECIDE QUÉ HACER CON EL NÚMERO → REVISA Y PAGA → CONFIGURA TELMA MIENTRAS SE PREPARA LA LÍNEA.
+
+No debe parecer que el número se aprovisiona instantáneamente ni que Telma está completamente operativa al terminar el formulario si todavía existe una fase de activación.
+
+Al terminar, reportar archivos modificados, cambios aplicados, VERIFY_PRODUCT/LEGAL resueltos/no resueltos, QA y discrepancias entre el audit source, migraciones y producción. No hacer commit/push/deploy hasta nueva autorización.

@@ -112,7 +112,13 @@ export function ForwardingCard({
         ))}
       </ol>
 
-      <p className="mt-4 max-w-prose text-sm text-ink-soft">{t.reassure}</p>
+      {/* Before the reassurance, because it is the one thing that stops the
+          forward working at all. */}
+      <p className="mt-4 max-w-prose text-sm text-ink">
+        {t.mustMatch.replace('{own}', ownNumber ?? '—')}
+      </p>
+
+      <p className="mt-3 max-w-prose text-sm text-ink-soft">{t.reassure}</p>
       <p className="mt-1 text-sm text-ink-mute">{t.undo.replace('{code}', FORWARD_UNDO)}</p>
       <p className="mt-3 max-w-prose text-sm text-ink-mute">{t.fixedLine}</p>
 

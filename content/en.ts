@@ -225,6 +225,13 @@ export const en: Dictionary = {
     full: 'You have reached your plan\u2019s maximum. Remove one to choose another, or move up a plan.',
     tooMany: 'You have chosen more languages than your plan includes.',
   },
+  billingPortal: {
+    title: 'Invoices and payment',
+    help: 'Your invoices, the card you pay with and cancellation, in one place.',
+    open: 'Open invoices and payment',
+    opening: 'Opening...',
+    failed: 'Could not open it just now. Try again or write to us.',
+  },
   agenda: {
     title: 'Agenda',
     elsewhereOnePending: '1 booking to confirm on another day.',

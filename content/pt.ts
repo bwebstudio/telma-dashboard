@@ -227,6 +227,13 @@ export const pt: Dictionary = {
     full: 'Chegou ao máximo do seu plano. Retire um para escolher outro, ou suba de plano.',
     tooMany: 'Escolheu mais idiomas do que o seu plano inclui.',
   },
+  billingPortal: {
+    title: 'Facturas e pagamento',
+    help: 'As suas facturas, o cartão com que paga e o cancelamento, num só sítio.',
+    open: 'Abrir facturas e pagamento',
+    opening: 'A abrir...',
+    failed: 'Não foi possível abrir agora. Tente outra vez ou escreva-nos.',
+  },
   agenda: {
     title: 'Agenda',
     elsewhereOnePending: '1 marcação por confirmar noutro dia.',

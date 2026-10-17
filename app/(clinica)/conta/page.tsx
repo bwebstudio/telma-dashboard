@@ -10,6 +10,7 @@ import { BrandingForm } from '@/components/clinic/BrandingForm'
 import { BillingLive } from '@/components/clinic/BillingLive'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
 import { ForwardingCard } from '@/components/clinic/ForwardingCard'
+import { BillingPortalButton } from '@/components/clinic/BillingPortalButton'
 import { PlanSection } from '@/components/clinic/PlanSection'
 import { PreAppointmentHoldConfig } from '@/components/clinic/PreAppointmentHoldConfig'
 import { AddonsSection } from '@/components/clinic/AddonsSection'
@@ -107,6 +108,21 @@ export default async function ContaPage() {
             a receptionist who cancelled every forward on the line by dialling
             ##002# for an unrelated reason. On the agenda it is a task and goes
             away; here it is reference and stays. */}
+        {/* Invoices, card and cancellation: one door, hosted by Stripe and
+            wearing our name. Building the invoice screen ourselves would be a
+            second version of a legal document, and the first time it
+            disagreed with theirs it would be in front of an accountant. */}
+        <section className="card p-6">
+          <SectionTitle>{dict.billingPortal.title}</SectionTitle>
+          <p className="mb-4 max-w-prose text-base text-ink-soft">{dict.billingPortal.help}</p>
+          <BillingPortalButton
+            label={dict.billingPortal.open}
+            opening={dict.billingPortal.opening}
+            failed={dict.billingPortal.failed}
+            readOnly={readOnly}
+          />
+        </section>
+
         {clinic?.phone_source === 'ported' && clinic.assigned_phone && (
           <ForwardingCard
             telmaNumber={clinic.assigned_phone}

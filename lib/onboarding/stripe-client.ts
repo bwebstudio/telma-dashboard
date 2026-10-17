@@ -410,3 +410,39 @@ function timingSafeEqual(a: string, b: string): boolean {
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
   return diff === 0
 }
+
+/**
+ * A door into the clinic's own billing, hosted by Stripe and wearing our name.
+ *
+ * ── WHY NOT BUILD THE SCREEN ──────────────────────────────────────────────
+ * Invoices are a legal document and a moving target: credit notes, tax ids,
+ * proration when somebody changes plan mid-month, the VAT line that depends
+ * on a number validated at checkout. Stripe already renders all of it, keeps
+ * it for seven years and will keep it correct when the rules change. A table
+ * of our own would be a second version of the truth, and the first time the
+ * two disagreed it would be in front of an accountant.
+ *
+ * The portal also carries the payment method and the cancellation, which are
+ * the other two things a clinic goes looking for and the two we would
+ * otherwise have to build and guard.
+ *
+ * It is branded in the Stripe dashboard, so what the clinic sees is Telma.
+ * The customer-facing copy never says Stripe for the same reason it does not
+ * say which bank we use: it is ours to deal with, not theirs.
+ */
+export async function billingPortalUrl(
+  customerId: string,
+  returnTo: string
+): Promise<string | null> {
+  if (!stripeConfigured() || !customerId) return null
+  const form = new URLSearchParams({ customer: customerId, return_url: returnTo })
+  try {
+    const session = (await stripe('/billing_portal/sessions', form)) as { url?: string }
+    return session.url ?? null
+  } catch (e) {
+    // A clinic that cannot reach its invoices is a support email, not a
+    // reason for the account page to fail to render.
+    console.error('[stripe] billing portal', e)
+    return null
+  }
+}

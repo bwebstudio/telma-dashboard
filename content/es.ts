@@ -225,6 +225,13 @@ export const es: Dictionary = {
     full: 'Ha llegado al máximo de su plan. Quite uno para elegir otro, o suba de plan.',
     tooMany: 'Ha elegido más idiomas de los que incluye su plan.',
   },
+  billingPortal: {
+    title: 'Facturas y pago',
+    help: 'Sus facturas, la tarjeta con la que paga y la cancelación, en un solo sitio.',
+    open: 'Abrir facturas y pago',
+    opening: 'Abriendo...',
+    failed: 'No se ha podido abrir ahora. Inténtelo otra vez o escríbanos.',
+  },
   agenda: {
     title: 'Agenda',
     elsewhereOnePending: '1 cita por confirmar en otro día.',

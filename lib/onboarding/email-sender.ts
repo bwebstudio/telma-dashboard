@@ -166,7 +166,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     summaryTaxExcluded: 'mais IVA',
     summaryRenewMonthly: 'Renova todos os meses pelo mesmo valor, a contar de hoje.',
     summaryRenewAnnual: 'Renova todos os anos pelo mesmo valor, a contar de hoje.',
-    summaryInvoice: 'A factura chega-lhe por email, enviada pela Stripe, com cada cobrança.',
+    summaryInvoice: 'As facturas ficam sempre no seu painel, em Conta, e pode descarregá-las quando quiser.',
     summaryNoCommitment: 'Sem permanência. Pode cancelar quando quiser a partir do painel.',
     numberSectionLabel: 'O seu número',
     numberKeepPending: (own) =>
@@ -229,7 +229,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     summaryTaxExcluded: 'más IVA',
     summaryRenewMonthly: 'Se renueva cada mes por el mismo importe, a partir de hoy.',
     summaryRenewAnnual: 'Se renueva cada año por el mismo importe, a partir de hoy.',
-    summaryInvoice: 'La factura le llega por email, enviada por Stripe, con cada cobro.',
+    summaryInvoice: 'Las facturas están siempre en su panel, en Cuenta, y puede descargarlas cuando quiera.',
     summaryNoCommitment: 'Sin permanencia. Puede cancelar cuando quiera desde el panel.',
     numberSectionLabel: 'Su número',
     numberKeepPending: (own) =>

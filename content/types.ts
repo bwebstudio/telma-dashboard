@@ -214,6 +214,15 @@ export interface Dictionary {
     full: string
     tooMany: string
   }
+  /** The door to Stripe's customer portal: invoices, card, cancellation.
+   *  Never named to the clinic, which sees our brand on the page. */
+  billingPortal: {
+    title: string
+    help: string
+    open: string
+    opening: string
+    failed: string
+  }
   setup: {
     eyebrow: string
     title: string

@@ -222,14 +222,26 @@ export async function POST(request: Request) {
       // The later attempt knows more than the earlier one: it has the whole
       // conversation behind it, so its summary and duration replace what the
       // first one guessed at.
-      await admin
-        .from('calls')
-        .update({
-          duration_seconds: Number(body.duration_seconds) || 0,
-          result: rejected ? 'nao_resolvida' : (result ?? null),
-          summary: (body.summary as string) ?? null,
-        })
-        .eq('id', existing.id)
+      //
+      // Through record_call rather than a direct update, because the minutes
+      // have to move with the duration. The update used to be written here on
+      // its own and `usage` kept whatever the first, shorter delivery had
+      // guessed: a charge too small, which nobody reports. record_call is an
+      // upsert now and moves usage by the difference, so a repeat of the same
+      // duration moves it by nothing and a correction moves it by what changed.
+      await admin.rpc('record_call', {
+        p_clinic_id: clinicId,
+        p_from_phone: (body.from_phone as string) ?? null,
+        p_duration: Number(body.duration_seconds) || 0,
+        p_result: rejected ? 'nao_resolvida' : (result ?? null),
+        p_summary: (body.summary as string) ?? null,
+        p_recording_url: (body.recording_url as string) ?? null,
+        p_external_ref: externalRef,
+        // The bookings of a repeated delivery are handled below, where the ones
+        // already written are known. Two writers of one booking is how a clinic
+        // ends up with three appointments for two patients.
+        p_appointment: null,
+      })
 
       const { data: already } = await admin
         .from('appointments')

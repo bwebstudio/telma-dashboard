@@ -24,7 +24,8 @@
     "test:middleware": "node --experimental-strip-types --test scripts/test-middleware.mjs",
     "test:agenda-facts": "node --experimental-strip-types --test scripts/test-agenda-facts.mjs",
     "test:booking-guard": "node --experimental-strip-types --test scripts/test-booking-guard.mjs",
-    "test:no-access": "node --experimental-strip-types --test scripts/test-no-access.mjs"
+    "test:no-access": "node --experimental-strip-types --test scripts/test-no-access.mjs",
+    "test:idempotency": "node scripts/test-idempotency.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

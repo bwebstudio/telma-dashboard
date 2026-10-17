@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { mono, sans } from '@/lib/fonts'
 import { getDict, getLocale } from '@/lib/i18n'
+import { getAppUser } from '@/lib/auth'
 import { PwaSetup } from '@/components/PwaSetup'
 import './globals.css'
 
@@ -12,12 +13,16 @@ import './globals.css'
  * the dictionary is one more await on a render that was never static.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const { dict } = await getDict()
+  const { dict, locale } = await getDict()
+  // Which installed app this is. A manifest is fetched without credentials and
+  // cannot read the session, so the page that does says so in the URL.
+  const user = await getAppUser()
+  const scope = user?.role === 'comercial' || user?.role === 'interno' ? 'crm' : 'clinica'
   return {
   title: dict.meta.title,
   description: dict.meta.description,
   robots: { index: false, follow: false },
-  manifest: '/manifest.webmanifest',
+  manifest: `/manifest.webmanifest?lang=${locale}&scope=${scope}`,
   applicationName: 'Telma',
   appleWebApp: {
     capable: true,

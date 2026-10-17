@@ -24,7 +24,7 @@ const summary = {
   planName: 'Clínica',
   cycle: 'monthly',
   lines: [
-    { label: 'Plan Clínica, mensual', amount: 24900 },
+    { label: 'Clínica', amount: 24900 },
     { label: 'WhatsApp', amount: 4900 },
   ],
   subtotal: 29800,

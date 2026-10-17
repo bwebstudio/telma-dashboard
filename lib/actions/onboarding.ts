@@ -1027,7 +1027,6 @@ async function contractedSummary(
 > {
   try {
     const { checkoutQuote } = await import('@/lib/actions/checkout-quote')
-    const t = copyFor(locale)
     const cycle = wizard.billing_cycle === 'annual' ? 'annual' : 'monthly'
     const quote = await checkoutQuote({
       plan,
@@ -1039,14 +1038,15 @@ async function contractedSummary(
 
     const plans = await signupPlans()
     const planName = plans.find((x) => x.id === plan)?.name ?? plan
-    const cycleWord = cycle === 'annual' ? t.summaryCycleAnnual : t.summaryCycleMonthly
 
     return {
       planName,
       cycle,
+      // Just the name. The cycle rides on the amount ("249 €/mes"), which
+      // reads once instead of twice and stopped a Portuguese email from
+      // saying "Plan Clínica, mensual" in Spanish.
       lines: quote.lines.map((l) => ({
-        label:
-          l.kind === 'whatsapp' ? t.summaryWhatsapp : t.summaryPlanLine(planName, cycleWord),
+        label: l.kind === 'whatsapp' ? 'WhatsApp' : planName,
         amount: l.amount,
       })),
       subtotal: quote.subtotal,

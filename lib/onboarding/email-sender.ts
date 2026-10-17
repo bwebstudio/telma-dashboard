@@ -90,217 +90,236 @@ export interface EmailResult {
 interface EmailCopy {
   subjectReady: (c: string) => string
   subjectPending: (c: string) => string
-  headingReady: (c: string) => string
-  headingPending: (c: string) => string
+  heading: string
   leadReady: string
   leadPending: string
-  numberLabel: string
-  numberTemp: string
-  /** Shown instead of a number while the line is being bought. */
+
+  // ── O QUE CONTRATOU ──────────────────────────────────────────────────
+  planLabel: string
+  whatsapp: string
+  perMonth: string
+  perYear: string
+  totalLabel: string
+  taxExcluded: string
+  billingMonthly: string
+  billingAnnual: string
+  invoices: string
+  noCommitment: string
+
+  // ── O NÚMERO ─────────────────────────────────────────────────────────
+  telmaNumberLabel: string
+  telmaNumberKeep: string
+  telmaNumberNew: string
   numberPendingLabel: string
   numberPendingBody: string
-  /** The contracted summary at the top of the first email. */
-  summaryLabel: string
-  summaryPlanLine: (plan: string, cycle: string) => string
-  summaryWhatsapp: string
-  summaryCycleMonthly: string
-  summaryCycleAnnual: string
-  summaryTotal: string
-  summaryTaxExcluded: string
-  summaryRenewMonthly: string
-  summaryRenewAnnual: string
-  summaryInvoice: string
-  summaryNoCommitment: string
-  numberSectionLabel: string
-  numberKeepPending: (own: string) => string
-  numberNewPending: string
-  /** The forward is the last step, not the first, so the email explains it
-   *  and does not hand over the codes. Those live in the panel, behind the
-   *  moment the clinic turns Telma on. */
-  forwardTitle: string
-  forwardWhat: string
-  forwardNotYet: string
-  /** Steps for a clinic that kept its number: three, ending in the forward.
-   *  `next` stays for one that bought a new number and has nothing to forward. */
-  nextKeep: Array<{ title: string; body: string }>
+
+  // ── ACESSO ───────────────────────────────────────────────────────────
   accessLabel: string
-  passwordNote: string
+  accessEmail: string
+  accessPassword: string
+  accessNote: string
   openPanel: string
-  /** The second email: the line is live. */
+
+  // ── AINDA NÃO DESVIE ─────────────────────────────────────────────────
+  forwardTitle: string
+  forwardFirst: string
+  forwardThen: string
+
+  // ── OS PASSOS ────────────────────────────────────────────────────────
+  stepsLabel: string
+  stepsKeep: Array<{ title: string; body: string }>
+  stepsNew: Array<{ title: string; body: string }>
+  stepsPendingKeep: Array<{ title: string; body: string }>
+  stepsPendingNew: Array<{ title: string; body: string }>
+
+  // ── O SEGUNDO EMAIL ──────────────────────────────────────────────────
   readySubject: (c: string) => string
   readyHeading: string
   readyLeadKeep: string
   readyLeadNew: string
-  readyNumberLabel: string
-  readyNumberLabelNew: string
   readyStepsLabel: string
   readyStepsKeep: Array<{ title: string; body: string }>
   readyStepsNew: Array<{ title: string; body: string }>
-  nextTitle: string
-  /** A title and one line each: a step with a name is a thing somebody can
-   *  decide to do, and a sentence on its own is a sentence. */
-  next: Array<{ title: string; body: string }>
+
+  support: string
   footer: string
   footerTagline: string
-  support: string
-  stepsLabel: string
   htmlLang: string
 }
 
 const EMAIL: Record<OnboardingLocale, EmailCopy> = {
   pt: {
-    // Nem uma nem outra diz que a Telma já atende, porque não atende: a
-    // clínica acabou de pagar e ainda não lhe disse nada. Dizia-o, e era a
-    // primeira frase que lhe mandávamos.
     subjectReady: (c) => `Subscrição confirmada — ${c}`,
     subjectPending: (c) => `Subscrição confirmada — ${c}`,
-    headingReady: () => 'Obrigado. A sua subscrição está confirmada.',
-    headingPending: () => 'Obrigado. A sua subscrição está confirmada.',
+    heading: 'A sua subscrição está confirmada.',
     leadReady:
-      'Estamos a activar o serviço da sua clínica. Costuma demorar entre um e cinco dias úteis, e avisamos por email assim que a linha estiver pronta. Entretanto o painel já é seu: pode deixar a Telma preparada para o primeiro dia.',
+      'Estamos a activar a linha da sua clínica. O processo costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver pronta. Entretanto, o painel já está disponível: pode configurar a Telma e deixá-la preparada para atender desde o primeiro dia.',
     leadPending:
-      'Estamos a activar o serviço da sua clínica. Assim que o pagamento for confirmado e a linha estiver pronta, avisamos por email. Entretanto o painel já é seu: pode deixar a Telma preparada para o primeiro dia.',
-    numberLabel: 'O número que a Telma atende',
-    numberPendingLabel: 'O número',
+      'Estamos a activar a linha da sua clínica. Assim que o pagamento estiver confirmado e a linha pronta, avisamos por email. Entretanto, o painel já está disponível: pode configurar a Telma e deixá-la preparada para atender desde o primeiro dia.',
+
+    planLabel: 'O seu plano',
+    whatsapp: 'WhatsApp',
+    perMonth: '/mês',
+    perYear: '/ano',
+    totalLabel: 'Total',
+    taxExcluded: 'mais IVA',
+    billingMonthly: 'A cobrança é mensal, pelo mesmo valor, a contar de hoje.',
+    billingAnnual: 'A cobrança é anual, pelo mesmo valor, a contar de hoje.',
+    invoices: 'Pode consultar e descarregar as suas facturas em Conta, no painel.',
+    noCommitment: 'Sem permanência. Pode cancelar a subscrição a partir do painel quando quiser.',
+
+    telmaNumberLabel: 'O número da Telma',
+    telmaNumberKeep:
+      'Este é o número para o qual serão desviadas as chamadas atendidas pela Telma. O número habitual da sua clínica não muda e continuará a ser o seu número de contacto.',
+    telmaNumberNew:
+      'Este é o número da sua clínica. A Telma atende nele assim que a activar no painel.',
+    numberPendingLabel: 'A sua linha',
     numberPendingBody:
-      'Estamos a tratar do número da Telma junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver activo. Não tem de fazer nada entretanto.',
-    summaryLabel: 'O que contratou',
-    summaryPlanLine: (plan, cycle) => `Plano ${plan}, ${cycle}`,
-    summaryWhatsapp: 'WhatsApp',
-    summaryCycleMonthly: 'mensal',
-    summaryCycleAnnual: 'anual',
-    summaryTotal: 'Total',
-    summaryTaxExcluded: 'mais IVA',
-    summaryRenewMonthly: 'Cobrança mensal. Renova todos os meses pelo mesmo valor, a contar de hoje.',
-    summaryRenewAnnual: 'Cobrança anual. Renova todos os anos pelo mesmo valor, a contar de hoje.',
-    summaryInvoice: 'As facturas ficam no painel, em Conta, prontas a descarregar.',
-    summaryNoCommitment: 'Sem permanência: pode cancelar a partir do painel.',
-    numberSectionLabel: 'O seu número',
-    numberKeepPending: (own) =>
-      `Fica com o ${own}, o número que já tem. Estamos a tratar do número da Telma para onde o vai desviar: costuma demorar entre um e cinco dias úteis e avisamos assim que estiver pronto.`,
-    numberNewPending:
-      'Estamos a tratar do seu número novo junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que for seu.',
-    numberTemp:
-      'O seu número de sempre fica onde está, na sua operadora. No fim, será desviado para este.',
-    forwardTitle: 'E por fim, desviar o seu número',
-    forwardWhat:
-      'O seu número de sempre, {own}, continua a ser o seu e não muda. No fim, diz-se à sua operadora que passe para a Telma as chamadas que não conseguir atender. São três códigos marcados no telefone da clínica e demora um minuto.',
-    forwardNotYet:
-      'Ainda não, por esta ordem: primeiro diga à Telma quando abre e o que faz, e ligue-a. Antes disso ela não conhece a clínica e não conseguiria atender quem liga. Os códigos aparecem no painel, já preenchidos, assim que a ligar.',
-    accessLabel: 'Os seus acessos',
-    passwordNote: 'Palavra-passe temporária. Mude-a assim que entrar.',
+      'Estamos a activá-la junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver pronta.',
+
+    accessLabel: 'Acesso ao painel',
+    accessEmail: 'Email',
+    accessPassword: 'Palavra-passe temporária',
+    accessNote: 'Use esta palavra-passe para entrar da primeira vez. Depois pode alterá-la no painel.',
     openPanel: 'Abrir o painel',
+
+    forwardTitle: 'Ainda não desvie as suas chamadas',
+    forwardFirst:
+      'Primeiro, configure a Telma com as informações da sua clínica e active-a quando estiver pronta. Assim poderá atender os seus doentes correctamente desde a primeira chamada.',
+    forwardThen:
+      'Quando chegar o momento, encontrará no painel os códigos necessários para activar o desvio. Só terá de os marcar no telefone da clínica e demora menos de um minuto.',
+
+    stepsLabel: 'O que acontece a seguir',
+    stepsKeep: [
+      { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
+      { title: 'Active a Telma', body: 'Quando terminar, o painel indica que está pronta para começar a atender.' },
+      { title: 'Desvie as suas chamadas', body: 'Encontrará no painel os códigos necessários, já preparados para o seu número.' },
+    ],
+    stepsNew: [
+      { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
+      { title: 'Active a Telma', body: 'O painel indica quando está pronta para começar a atender.' },
+      { title: 'Comece a usar o seu número', body: 'Pode acrescentá-lo ao site, ao Google, aos cartões e aos restantes contactos.' },
+    ],
+    stepsPendingKeep: [
+      { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
+      { title: 'Deixe a Telma preparada', body: 'Pode concluir toda a configuração enquanto activamos a sua linha.' },
+      { title: 'Active o desvio', body: 'Quando a linha estiver pronta, avisamos. Os códigos ficam à sua espera no painel.' },
+    ],
+    stepsPendingNew: [
+      { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
+      { title: 'Deixe a Telma preparada', body: 'Pode concluir toda a configuração enquanto activamos a sua linha.' },
+      { title: 'Comece a usar o número', body: 'Quando estiver pronto, avisamos por email para o poder divulgar.' },
+    ],
+
     readySubject: (c) => `O serviço da ${c} já está activo`,
     readyHeading: 'O seu serviço já está activo.',
     readyLeadKeep:
-      'A linha da Telma está pronta. O seu número de sempre não muda: o que falta é dizer à sua operadora que lhe passe as chamadas que não conseguir atender. São três códigos, marcados uma vez no telefone da clínica, e estão no painel já preenchidos.',
+      'A linha da Telma está pronta. O número habitual da sua clínica não muda: falta apenas indicar à sua operadora que lhe passe as chamadas que não conseguir atender.',
     readyLeadNew:
-      'O número da sua clínica está pronto. É este que pode pôr nos cartões, no Google e na porta: a Telma atende nele assim que a ligar no painel.',
-    readyNumberLabel: 'O número da Telma',
-    readyNumberLabelNew: 'O seu número',
+      'O número da sua clínica está pronto. A Telma atende nele assim que a activar no painel.',
     readyStepsLabel: 'O que falta',
     readyStepsKeep: [
-      { title: 'Ligue a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
-      { title: 'Marque os códigos', body: 'Estão no painel, já com este número.' },
-      { title: 'Faça uma chamada', body: 'Ligue para o seu próprio número e ouça-a atender.' },
+      { title: 'Active a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
+      { title: 'Marque os códigos', body: 'Encontra-os no painel, já preparados para este número.' },
+      { title: 'Faça uma chamada', body: 'Ligue para o número da clínica e ouça-a atender.' },
     ],
     readyStepsNew: [
-      { title: 'Ligue a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
-      { title: 'Divulgue o número', body: 'Nos cartões, no Google e na porta.' },
+      { title: 'Active a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
+      { title: 'Comece a usar o número', body: 'No site, no Google, nos cartões e nos restantes contactos.' },
       { title: 'Faça uma chamada', body: 'Ligue para o número e ouça-a atender.' },
     ],
-    nextTitle: 'O que acontece a seguir',
-    next: [
-      { title: 'Configure a clínica', body: 'Horários, serviços e idiomas. São alguns minutos no painel.' },
-      { title: 'Ligue a Telma', body: 'Quando o painel indicar que está pronta para atender.' },
-      { title: 'Divulgue o número', body: 'Assim que for seu, nos cartões e no Google.' },
-    ],
-    nextKeep: [
-      { title: 'Configure a clínica', body: 'Horários, serviços e idiomas. São alguns minutos no painel.' },
-      { title: 'Ligue a Telma', body: 'Quando o painel indicar que está pronta para atender.' },
-      { title: 'Desvie o seu número', body: 'Os códigos esperam no painel, já preenchidos.' },
-    ],
+
+    support: 'Qualquer dúvida, responda a este email. Lê-o uma pessoa.',
     footer:
       'Recebeu este email porque inscreveu a sua clínica na Telma. Se não foi você, responda a esta mensagem e tratamos disso.',
     footerTagline: 'A Telma atende quando ninguém pode.',
-    support: 'Qualquer dúvida, responda a este email. Lê-o uma pessoa.',
-    stepsLabel: 'O que acontece a seguir',
     htmlLang: 'pt',
   },
   es: {
     subjectReady: (c) => `Suscripción confirmada — ${c}`,
     subjectPending: (c) => `Suscripción confirmada — ${c}`,
-    headingReady: () => 'Gracias. Su suscripción está confirmada.',
-    headingPending: () => 'Gracias. Su suscripción está confirmada.',
+    heading: 'Su suscripción está confirmada.',
     leadReady:
-      'Estamos activando el servicio de su clínica. Suele tardar entre uno y cinco días laborables, y le avisamos por email en cuanto la línea esté lista. Mientras tanto el panel ya es suyo: puede dejar a Telma preparada para el primer día.',
+      'Estamos activando la línea de su clínica. El proceso suele tardar entre uno y cinco días laborables y le avisaremos por email en cuanto esté lista. Mientras tanto, su panel ya está disponible: puede configurar a Telma y dejarla preparada para atender desde el primer día.',
     leadPending:
-      'Estamos activando el servicio de su clínica. En cuanto se confirme el pago y la línea esté lista, le avisamos por email. Mientras tanto el panel ya es suyo: puede dejar a Telma preparada para el primer día.',
-    numberLabel: 'El número que contesta Telma',
-    numberPendingLabel: 'El número',
+      'Estamos activando la línea de su clínica. En cuanto se confirme el pago y la línea esté lista, le avisaremos por email. Mientras tanto, su panel ya está disponible: puede configurar a Telma y dejarla preparada para atender desde el primer día.',
+
+    planLabel: 'Su plan',
+    whatsapp: 'WhatsApp',
+    perMonth: '/mes',
+    perYear: '/año',
+    totalLabel: 'Total',
+    taxExcluded: 'más IVA',
+    billingMonthly: 'El cobro se realiza cada mes por el mismo importe, a partir de hoy.',
+    billingAnnual: 'El cobro se realiza cada año por el mismo importe, a partir de hoy.',
+    invoices: 'Puede consultar y descargar sus facturas desde Cuenta, en el panel.',
+    noCommitment: 'Sin permanencia. Puede cancelar su suscripción desde el panel cuando quiera.',
+
+    telmaNumberLabel: 'El número de Telma',
+    telmaNumberKeep:
+      'Este es el número al que se desviarán las llamadas que atienda Telma. Su número habitual no cambia y seguirá siendo el número de contacto de su clínica.',
+    telmaNumberNew:
+      'Este es el número de su clínica. Telma contesta en él en cuanto la active en el panel.',
+    numberPendingLabel: 'Su línea',
     numberPendingBody:
-      'Estamos tramitando el número de Telma con la operadora. Suele tardar entre uno y cinco días laborables y le avisamos por email en cuanto esté activo. Mientras tanto no tiene que hacer nada.',
-    summaryLabel: 'Lo que ha contratado',
-    summaryPlanLine: (plan, cycle) => `Plan ${plan}, ${cycle}`,
-    summaryWhatsapp: 'WhatsApp',
-    summaryCycleMonthly: 'mensual',
-    summaryCycleAnnual: 'anual',
-    summaryTotal: 'Total',
-    summaryTaxExcluded: 'más IVA',
-    summaryRenewMonthly: 'Cobro mensual. Se renueva cada mes por el mismo importe, a partir de hoy.',
-    summaryRenewAnnual: 'Cobro anual. Se renueva cada año por el mismo importe, a partir de hoy.',
-    summaryInvoice: 'Las facturas quedan en el panel, en Cuenta, listas para descargar.',
-    summaryNoCommitment: 'Sin permanencia: puede cancelar desde el panel.',
-    numberSectionLabel: 'Su número',
-    numberKeepPending: (own) =>
-      `Se queda con el ${own}, el número que ya tiene. Estamos tramitando el número de Telma al que lo desviará: suele tardar entre uno y cinco días laborables y le avisamos en cuanto esté listo.`,
-    numberNewPending:
-      'Estamos tramitando su número nuevo con la operadora. Suele tardar entre uno y cinco días laborables y le avisamos por email en cuanto sea suyo.',
-    numberTemp:
-      'Su número de siempre se queda donde está, en su operadora. Al final lo desviará a este.',
-    forwardTitle: 'Y por último, desviar su número',
-    forwardWhat:
-      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Al final se le dice a su operadora que pase a Telma las llamadas que usted no pueda atender. Son tres códigos que se marcan en el teléfono de la clínica y se tarda un minuto.',
-    forwardNotYet:
-      'Todavía no, y en este orden: primero dígale a Telma cuándo abre y qué hace, y actívela. Antes de eso no conoce la clínica y no podría atender a quien llame. Los códigos aparecen en el panel, ya rellenos, en cuanto la active.',
-    accessLabel: 'Sus accesos',
-    passwordNote: 'Contraseña temporal. Cámbiela en cuanto entre.',
+      'La estamos activando con la operadora. Suele tardar entre uno y cinco días laborables y le avisaremos por email en cuanto esté lista.',
+
+    accessLabel: 'Acceso al panel',
+    accessEmail: 'Email',
+    accessPassword: 'Contraseña temporal',
+    accessNote: 'Utilice esta contraseña para acceder por primera vez. Podrá cambiarla después desde el panel.',
     openPanel: 'Abrir el panel',
+
+    forwardTitle: 'Todavía no desvíe sus llamadas',
+    forwardFirst:
+      'Antes, configure a Telma con la información de su clínica y actívela cuando esté lista. Así podrá atender a sus pacientes correctamente desde la primera llamada.',
+    forwardThen:
+      'Cuando llegue el momento, encontrará en el panel los códigos necesarios para activar el desvío. Solo tendrá que marcarlos desde el teléfono de la clínica y tardará menos de un minuto.',
+
+    stepsLabel: 'Qué pasa a continuación',
+    stepsKeep: [
+      { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
+      { title: 'Active a Telma', body: 'Cuando haya terminado, el panel le indicará que está lista para empezar a atender.' },
+      { title: 'Desvíe sus llamadas', body: 'Encontrará en el panel los códigos necesarios, ya preparados para su número.' },
+    ],
+    stepsNew: [
+      { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
+      { title: 'Active a Telma', body: 'El panel le indicará cuándo está lista para empezar a atender.' },
+      { title: 'Empiece a utilizar su número', body: 'Puede añadirlo a su web, a Google, a sus tarjetas y al resto de canales.' },
+    ],
+    stepsPendingKeep: [
+      { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
+      { title: 'Deje a Telma preparada', body: 'Puede completar toda la configuración mientras activamos su línea.' },
+      { title: 'Active el desvío', body: 'Cuando la línea esté lista, le avisaremos. Los códigos le esperan en el panel.' },
+    ],
+    stepsPendingNew: [
+      { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
+      { title: 'Deje a Telma preparada', body: 'Puede completar toda la configuración mientras activamos su línea.' },
+      { title: 'Empiece a utilizar su número', body: 'Cuando esté listo, le avisaremos por email para que pueda difundirlo.' },
+    ],
+
     readySubject: (c) => `El servicio de ${c} ya está activo`,
     readyHeading: 'Su servicio ya está activo.',
     readyLeadKeep:
-      'La línea de Telma ya está lista. Su número de siempre no cambia: lo que falta es decirle a su operadora que le pase las llamadas que usted no pueda atender. Son tres códigos, marcados una vez en el teléfono de la clínica, y están en el panel ya rellenos.',
+      'La línea de Telma ya está lista. Su número habitual no cambia: solo falta indicarle a su operadora que le pase las llamadas que usted no pueda atender.',
     readyLeadNew:
-      'El número de su clínica ya está listo. Es el que puede poner en las tarjetas, en Google y en la puerta: Telma contesta en él en cuanto la active en el panel.',
-    readyNumberLabel: 'El número de Telma',
-    readyNumberLabelNew: 'Su número',
+      'El número de su clínica ya está listo. Telma contesta en él en cuanto la active en el panel.',
     readyStepsLabel: 'Lo que falta',
     readyStepsKeep: [
       { title: 'Active a Telma', body: 'Si aún no lo ha hecho. El panel le indica cuándo está lista.' },
-      { title: 'Marque los códigos', body: 'Están en el panel, ya con este número.' },
-      { title: 'Haga una llamada', body: 'Llame a su propio número y escúchela contestar.' },
+      { title: 'Marque los códigos', body: 'Los encontrará en el panel, ya preparados para este número.' },
+      { title: 'Haga una llamada', body: 'Llame al número de su clínica y escúchela contestar.' },
     ],
     readyStepsNew: [
       { title: 'Active a Telma', body: 'Si aún no lo ha hecho. El panel le indica cuándo está lista.' },
-      { title: 'Difunda el número', body: 'En las tarjetas, en Google y en la puerta.' },
+      { title: 'Empiece a utilizar su número', body: 'En su web, en Google, en sus tarjetas y en el resto de canales.' },
       { title: 'Haga una llamada', body: 'Llame al número y escúchela contestar.' },
     ],
-    nextTitle: 'Qué pasa a continuación',
-    next: [
-      { title: 'Configure la clínica', body: 'Horarios, servicios e idiomas. Son unos minutos en el panel.' },
-      { title: 'Active a Telma', body: 'Cuando el panel le indique que está lista para atender.' },
-      { title: 'Difunda el número', body: 'En cuanto sea suyo, en sus tarjetas y en Google.' },
-    ],
-    nextKeep: [
-      { title: 'Configure la clínica', body: 'Horarios, servicios e idiomas. Son unos minutos en el panel.' },
-      { title: 'Active a Telma', body: 'Cuando el panel le indique que está lista para atender.' },
-      { title: 'Desvíe su número', body: 'Los códigos le esperan en el panel, ya rellenos.' },
-    ],
+
+    support: 'Cualquier duda, responda a este email. Lo lee una persona.',
     footer:
       'Ha recibido este email porque ha dado de alta su clínica en Telma. Si no ha sido usted, responda a este mensaje y lo resolvemos.',
     footerTagline: 'Telma atiende cuando nadie puede.',
-    support: 'Cualquier duda, responda a este email. Lo lee una persona.',
-    stepsLabel: 'Qué pasa a continuación',
     htmlLang: 'es',
   },
 }
@@ -534,136 +553,100 @@ function stepsBlock(label: string, steps: Array<{ title: string; body: string }>
 export function welcomeHtml(p: WelcomeEmail): string {
   const t = emailCopy(p.locale)
   const lead = p.pendingPayment ? t.leadPending : t.leadReady
-  const heading = p.pendingPayment
-    ? t.headingPending(p.clinicName)
-    : t.headingReady(p.clinicName)
-  const steps = p.temporaryNumber ? t.nextKeep : t.next
+  const per = p.summary?.cycle === 'annual' ? t.perYear : t.perMonth
 
-  // No codes here, on purpose. They used to be printed in full, and a clinic
-  // that dialled them the day it signed up pointed a real telephone at a Telma
-  // who had not been told the opening hours yet: she answers anyway, with
-  // `can_book: false`, so patients got a receptionist who could not say when
-  // the clinic opens and took a message instead. Silently, because nothing
-  // tells the clinic that is what happened.
-  //
-  // So the email explains the step and withholds the digits. They are in the
-  // panel, behind the moment the clinic turns her on, which is also the only
-  // place they can stay correct if the number ever changes.
-  const forwarding = p.temporaryNumber
-    ? `
-          <h2 style="margin:38px 0 10px;font-size:19px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
-          <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
-            t.forwardWhat.replace('{own}', p.ownNumber ?? '—')
-          )}</p>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MACAW_WASH};border-left:4px solid ${MACAW};border-radius:0 10px 10px 0">
-            <tr><td style="padding:16px 20px">
-              <p style="margin:0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardNotYet)}</p>
-            </td></tr>
-          </table>`
-    : ''
+  // Four shapes, because the right third step depends on two things: whether
+  // the line exists yet, and whether they kept their own number. Telling a
+  // clinic to turn Telma on before there is a line to turn on is an
+  // instruction it cannot follow.
+  const steps = p.phoneNumber
+    ? p.temporaryNumber
+      ? t.stepsKeep
+      : t.stepsNew
+    : p.temporaryNumber
+      ? t.stepsPendingKeep
+      : t.stepsPendingNew
 
-  return `<!doctype html>
-<html lang="${t.htmlLang}"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light only">
-<title>${escapeHtml(p.clinicName)}</title></head>
-<body style="margin:0;padding:0;background:${SUNKEN};font-family:${SANS};color:${INK};-webkit-font-smoothing:antialiased">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(lead)}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${SUNKEN}">
-    <tr><td align="center" style="padding:32px 16px">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:14px;overflow:hidden">
+  const row = (label: string, value: string) => `<tr>
+                  <td style="padding:5px 0;font-size:15px;color:${INK}">${escapeHtml(label)}</td>
+                  <td align="right" style="padding:5px 0;font-size:15px;color:${INK}">${value}</td>
+                </tr>`
 
-        <!-- ── THE HEAD CARRIES THE SENTENCE, NOT JUST THE MARK ──────────
-             A strip with a logo on it is a letterhead. The clinic's own name
-             in display type on the brand's black, with the mark above it and
-             the cloud of letters behind, is the product introducing itself. -->
-        <tr><td style="background:${INK};padding:0">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="padding:28px 0 30px 24px;vertical-align:top">
-                <img src="${ASSETS}/telma-lockup.png" width="118" height="28" alt="Telma"
-                     style="display:block;border:0;width:118px;height:28px">
-                <p style="margin:22px 0 0;font-size:26px;line-height:1.2;font-weight:600;letter-spacing:-0.02em;color:#FFFFFF">${escapeHtml(heading)}</p>
-              </td>
-              <!-- Decorative. Mail clients that block images show nothing
-                   here, and nothing is what it is worth. -->
-              <td width="150" style="padding:0;font-size:0;line-height:0;vertical-align:top" align="right">
-                <img src="${ASSETS}/telma-letters.png" width="150" height="82" alt=""
-                     style="display:block;border:0;width:150px;height:82px">
-              </td>
-            </tr>
-          </table>
-        </td></tr>
-        <tr><td style="background:${MACAW};font-size:0;line-height:0;height:4px">&nbsp;</td></tr>
-
-        <tr><td style="padding:30px 24px 8px">
-          <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(lead)}</p>
-
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
-            ${
-              // ── WHAT THEY BOUGHT, FIRST ─────────────────────────────────
-              // This used to open with "the number Telma answers" and a
-              // telephone number. For a clinic that kept its own, that is a
-              // number it has never seen, presented as if it were theirs,
-              // above the one that is. The question somebody has just after
-              // paying is what they bought and when it charges again.
-              p.summary
-                ? `<tr><td style="padding:18px 20px">
-              <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.summaryLabel)}</p>
+  const plan = p.summary
+    ? `<tr><td style="padding:18px 20px">
+              <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.planLabel)}</p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 ${p.summary.lines
-                  .map(
-                    (l) => `<tr>
-                  <td style="padding:5px 0;font-size:15px;color:${INK}">${escapeHtml(l.label)}</td>
-                  <td align="right" style="padding:5px 0;font-size:15px;color:${INK}">${money(l.amount, p.summary!.currency, p.locale)}</td>
-                </tr>`
+                  .map((l) =>
+                    row(l.label, `${money(l.amount, p.summary!.currency, p.locale)}${escapeHtml(per)}`)
                   )
                   .join('\n                ')}
                 <tr><td colspan="2" style="padding:8px 0 0"><div style="height:1px;background:${LINE}"></div></td></tr>
                 <tr>
-                  <td style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${escapeHtml(t.summaryTotal)}</td>
-                  <td align="right" style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${money(p.summary.total, p.summary.currency, p.locale)}${
+                  <td style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${escapeHtml(t.totalLabel)}</td>
+                  <td align="right" style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${money(p.summary.total, p.summary.currency, p.locale)}${escapeHtml(per)}${
                     p.summary.taxPercentage === null || p.summary.taxPercentage === 0
-                      ? ` <span style="font-weight:400;font-size:13px;color:${INK_MUTE}">${escapeHtml(t.summaryTaxExcluded)}</span>`
+                      ? ` <span style="font-weight:400;font-size:13px;color:${INK_MUTE}">${escapeHtml(t.taxExcluded)}</span>`
                       : ''
                   }</td>
                 </tr>
               </table>
               <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(
-                p.summary.cycle === 'annual' ? t.summaryRenewAnnual : t.summaryRenewMonthly
-              )}<br>${escapeHtml(t.summaryInvoice)}<br>${escapeHtml(t.summaryNoCommitment)}</p>
+                p.summary.cycle === 'annual' ? t.billingAnnual : t.billingMonthly
+              )} ${escapeHtml(t.invoices)}<br>${escapeHtml(t.noCommitment)}</p>
             </td></tr>
             <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>`
-                : ''
-            }
+    : ''
+
+  const number = p.phoneNumber
+    ? `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.telmaNumberLabel)}</p>
+              <p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
+              <p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(
+                p.temporaryNumber ? t.telmaNumberKeep : t.telmaNumberNew
+              )}</p>`
+    : `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberPendingLabel)}</p>
+              <p style="margin:7px 0 0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.numberPendingBody)}</p>`
+
+  // Only for a clinic that kept its own number, and only once the line
+  // exists. Before that the number section already says we are arranging it,
+  // and a second block about not forwarding yet is a warning about something
+  // they could not do anyway.
+  const forwarding =
+    p.temporaryNumber && p.phoneNumber
+      ? `
+          <h2 style="margin:38px 0 10px;font-size:19px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(t.forwardTitle)}</h2>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${MACAW_WASH};border-left:4px solid ${MACAW};border-radius:0 10px 10px 0">
+            <tr><td style="padding:16px 20px">
+              <p style="margin:0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardFirst)}</p>
+              <p style="margin:10px 0 0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.forwardThen)}</p>
+            </td></tr>
+          </table>`
+      : ''
+
+  return shell({
+    lang: t.htmlLang,
+    title: p.clinicName,
+    preheader: lead,
+    heading: t.heading,
+    footer: t.footer,
+    tagline: t.footerTagline,
+    support: t.support,
+    body: `        <tr><td style="padding:30px 24px 8px">
+          <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(lead)}</p>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
+            ${plan}
             <tr><td style="padding:18px 20px">
-              <p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(
-                // A clinic that kept its own number is being shown ours, and
-                // calling that "your number" over the top of it is the exact
-                // confusion this section was rewritten to remove.
-                p.temporaryNumber ? t.numberLabel : t.numberSectionLabel
-              )}</p>
-              ${
-                p.phoneNumber
-                  ? `<p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
-              ${
-                p.temporaryNumber
-                  ? `<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.numberTemp)}</p>`
-                  : ''
-              }`
-                  : `<p style="margin:7px 0 0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(
-                      p.temporaryNumber
-                        ? t.numberKeepPending(p.ownNumber ?? '')
-                        : t.numberNewPending
-                    )}</p>`
-              }
+              ${number}
             </td></tr>
             <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>
             <tr><td style="padding:18px 20px">
-              <p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.accessLabel)}</p>
-              <p style="margin:7px 0 0;font-size:16px;color:${INK}">${escapeHtml(p.email)}</p>
-              <p style="margin:4px 0 0;font-size:17px;font-weight:600;font-family:${MONO};letter-spacing:0.01em;color:${INK}">${escapeHtml(p.password)}</p>
-              <p style="margin:8px 0 0;font-size:14px;color:${INK_MUTE}">${escapeHtml(t.passwordNote)}</p>
+              <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.accessLabel)}</p>
+              <p style="margin:0;font-size:13px;color:${INK_MUTE}">${escapeHtml(t.accessEmail)}</p>
+              <p style="margin:2px 0 0;font-size:16px;color:${INK}">${escapeHtml(p.email)}</p>
+              <p style="margin:12px 0 0;font-size:13px;color:${INK_MUTE}">${escapeHtml(t.accessPassword)}</p>
+              <p style="margin:2px 0 0;font-size:17px;font-weight:600;font-family:${MONO};letter-spacing:0.01em;color:${INK}">${escapeHtml(p.password)}</p>
+              <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.accessNote)}</p>
             </td></tr>
           </table>
 
@@ -673,125 +656,60 @@ export function welcomeHtml(p: WelcomeEmail): string {
           </p>
 ${forwarding}
         </td></tr>
-
-        <!-- ── THE THREE STEPS, AS THREE THINGS ───────────────────────────
-             A numbered list runs down the page and reads as instructions. In
-             a row, under a macaw rule each, they read as a short path with an
-             end, which is the thing somebody needs to see before they start. -->
-        <tr><td style="padding:34px 24px 0">
-          <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.stepsLabel)}</p>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              ${steps
-                .map(
-                  (step, i) => `<td width="33%" style="padding:0 ${i === 2 ? '0' : '14px'} 0 0;vertical-align:top">
-                <div style="height:3px;background:${MACAW};border-radius:2px"></div>
-                <p style="margin:10px 0 0;font-size:12px;font-weight:600;font-family:${MONO};color:${INK_MUTE}">0${i + 1}</p>
-                <p style="margin:5px 0 0;font-size:15px;font-weight:600;line-height:1.35;color:${INK}">${escapeHtml(step.title)}</p>
-                <p style="margin:3px 0 0;font-size:14px;line-height:1.5;color:${INK_SOFT}">${escapeHtml(step.body)}</p>
-              </td>`
-                )
-                .join('\n              ')}
-            </tr>
-          </table>
-        </td></tr>
-
-        <tr><td style="padding:30px 24px 26px">
-          <p style="margin:0 0 10px;font-size:14px;line-height:1.6;color:${INK_SOFT}">${escapeHtml(t.support)}</p>
-          <p style="margin:0;font-size:13px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(t.footer)}</p>
-        </td></tr>
-
-        <tr><td style="background:${INK};padding:22px 24px">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="vertical-align:middle">
-                <img src="${ASSETS}/telma-lockup.png" width="100" height="23" alt="Telma"
-                     style="display:block;border:0;width:100px;height:23px">
-                <p style="margin:10px 0 0;font-size:13px;color:rgba(255,255,255,0.62)">${escapeHtml(t.footerTagline)}</p>
-              </td>
-              <td align="right" style="vertical-align:middle">
-                <a href="https://www.telmaatende.com" style="font-size:13px;color:rgba(255,255,255,0.62);text-decoration:none">telmaatende.com</a>
-              </td>
-            </tr>
-          </table>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
+${stepsBlock(t.stepsLabel, steps)}`,
+  })
 }
 
 export function welcomeText(p: WelcomeEmail): string {
   const t = emailCopy(p.locale)
+  const per = p.summary?.cycle === 'annual' ? t.perYear : t.perMonth
+  const steps = p.phoneNumber
+    ? p.temporaryNumber
+      ? t.stepsKeep
+      : t.stepsNew
+    : p.temporaryNumber
+      ? t.stepsPendingKeep
+      : t.stepsPendingNew
+
   return [
-    p.pendingPayment ? t.headingPending(p.clinicName) : t.headingReady(p.clinicName),
+    t.heading,
     '',
+    p.pendingPayment ? t.leadPending : t.leadReady,
     ...(p.summary
       ? [
           '',
-          `${t.summaryLabel}:`,
+          `${t.planLabel}:`,
           ...p.summary.lines.map(
-            (l) => `  ${l.label}: ${money(l.amount, p.summary!.currency, p.locale)}`
+            (l) => `  ${l.label}: ${money(l.amount, p.summary!.currency, p.locale)}${per}`
           ),
-          `  ${t.summaryTotal}: ${money(p.summary.total, p.summary.currency, p.locale)}`,
-          `  ${p.summary.cycle === 'annual' ? t.summaryRenewAnnual : t.summaryRenewMonthly}`,
-          `  ${t.summaryInvoice}`,
-          `  ${t.summaryNoCommitment}`,
+          `  ${t.totalLabel}: ${money(p.summary.total, p.summary.currency, p.locale)}${per}`,
+          `  ${p.summary.cycle === 'annual' ? t.billingAnnual : t.billingMonthly}`,
+          `  ${t.invoices}`,
+          `  ${t.noCommitment}`,
         ]
       : []),
     '',
-    `${t.numberSectionLabel}:`,
     ...(p.phoneNumber
-      ? [`  ${p.phoneNumber}`, ...(p.temporaryNumber ? [`  ${t.numberTemp}`] : [])]
-      : [
-          `  ${p.temporaryNumber ? t.numberKeepPending(p.ownNumber ?? '') : t.numberNewPending}`,
-        ]),
+      ? [
+          `${t.telmaNumberLabel}: ${p.phoneNumber}`,
+          `  ${p.temporaryNumber ? t.telmaNumberKeep : t.telmaNumberNew}`,
+        ]
+      : [`${t.numberPendingLabel}: ${t.numberPendingBody}`]),
     '',
     `${t.accessLabel}:`,
-    `  ${p.email}`,
-    `  ${p.password}`,
-    `  ${t.passwordNote}`,
+    `  ${t.accessEmail}: ${p.email}`,
+    `  ${t.accessPassword}: ${p.password}`,
+    `  ${t.accessNote}`,
     `  ${p.dashboardUrl}`,
-    '',
     ...(p.temporaryNumber && p.phoneNumber
-      ? [
-          '',
-          `${t.forwardTitle}:`,
-          `  ${t.forwardWhat.replace('{own}', p.ownNumber ?? '-')}`,
-          `  ${t.forwardNotYet}`,
-        ]
+      ? ['', `${t.forwardTitle}:`, `  ${t.forwardFirst}`, `  ${t.forwardThen}`]
       : []),
     '',
-    `${t.nextTitle}:`,
-    ...(p.temporaryNumber ? t.nextKeep : t.next).map(
-      (s, i) => `  ${i + 1}. ${s.title}: ${s.body}`
-    ),
+    `${t.stepsLabel}:`,
+    ...steps.map((x, i) => `  ${i + 1}. ${x.title}: ${x.body}`),
   ].join('\n')
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-/**
- * The second email: the line exists now.
- *
- * Two messages and not one, because the two facts arrive days apart. The
- * payment is instant and the number is not: Portuguese lines are ordered
- * through Twilio support and quoted at three to five working days. Holding
- * the welcome back until the number lands would leave a clinic that has just
- * paid with silence; naming a number in it that does not exist yet is worse.
- *
- * So the first email confirms the payment and opens the panel, and this one
- * says the line is live and what to do with it. Whether that is "forward your
- * number here" or "this is the number to hand out" depends on what they chose,
- * and getting it the wrong way round would send a clinic to publish a number
- * nobody should dial.
- */
 export interface NumberReadyEmail {
   clinicName: string
   email?: string
@@ -824,7 +742,7 @@ export function numberReadyHtml(p: NumberReadyEmail): string {
                 // Calling that "your number" over the head of the one that is
                 // theirs is the confusion the first email was rewritten to
                 // remove, and it would arrive here instead.
-                p.forwarding ? t.readyNumberLabel : t.readyNumberLabelNew
+                t.telmaNumberLabel
               )}</p>
               <p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
             </td></tr>
@@ -851,7 +769,7 @@ export async function sendNumberReadyEmail(
     '',
     lead,
     '',
-    `${p.forwarding ? t.readyNumberLabel : t.readyNumberLabelNew}: ${p.phoneNumber}`,
+    `${t.telmaNumberLabel}: ${p.phoneNumber}`,
     '',
     `${t.readyStepsLabel}:`,
     ...steps.map((x, i) => `  ${i + 1}. ${x.title}: ${x.body}`),
@@ -865,4 +783,12 @@ export async function sendNumberReadyEmail(
     html: numberReadyHtml(p),
     text,
   })
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }

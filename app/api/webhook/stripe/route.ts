@@ -104,25 +104,46 @@ export async function POST(request: Request) {
             ? object.amount_total / 100
             : (PLAN_PRICE[plan] ?? 0)
 
-        await admin.from('purchases').insert({
-          clinic_id: clinicId,
-          purchase_type: 'plan_upgrade',
-          item_id: plan,
-          item_name: `Plano ${plan}`,
-          quantity: 1,
-          unit_price_eur: amount,
-          total_price_eur: amount,
-          final_price_eur: amount,
-          payment_method: 'stripe',
-          payment_status: 'completed',
-          stripe_invoice_id: (object.invoice as string) ?? null,
-        })
+        // ── THE SAME EVENT, TWICE ──────────────────────────────────────
+        // Stripe delivers at least once, so this handler has to be able to
+        // run twice on one payment. It could not: a redelivered event wrote
+        // a second `purchases` row and the clinic's billing screen showed
+        // the same 249 EUR charged twice. 0062 made the invoice line unique
+        // and this asks for the row back, so the one that lost the race
+        // writes nothing and says nothing.
+        const { data: written } = await admin
+          .from('purchases')
+          .upsert(
+            {
+              clinic_id: clinicId,
+              purchase_type: 'plan_upgrade',
+              item_id: plan,
+              item_name: `Plano ${plan}`,
+              quantity: 1,
+              unit_price_eur: amount,
+              total_price_eur: amount,
+              final_price_eur: amount,
+              payment_method: 'stripe',
+              payment_status: 'completed',
+              stripe_invoice_id: (object.invoice as string) ?? null,
+            },
+            { onConflict: 'clinic_id,stripe_invoice_id,item_id', ignoreDuplicates: true }
+          )
+          .select('id')
 
-        await admin.from('activity_log').insert({
-          clinic_id: clinicId,
-          type: 'payment_received',
-          message: `Primeiro pagamento confirmado. A clínica está ativa.`,
-        })
+        // Only for the delivery that actually recorded it. A clinic reading
+        // its own activity should not see its first payment confirmed twice.
+        if (written?.length) {
+          await admin.from('activity_log').insert({
+            clinic_id: clinicId,
+            type: 'payment_received',
+            // Not "the clinic is active": it is 'por_configurar' at this
+            // point and stays there until the clinic itself activates Telma.
+            // Saying otherwise sent somebody looking for a line that was
+            // never going to ring yet.
+            message: `Primeiro pagamento confirmado.`,
+          })
+        }
         break
       }
 

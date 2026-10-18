@@ -75,12 +75,20 @@ export function spanishSignup(suffix: string): Values {
     region: 'es-madrid',
     area_region: 'es-madrid',
     locale: 'es',
-    // A Barcelona clinic answering in Spanish and Catalan, which is two of the
-    // three its plan includes. No language is compulsory: it never chose
-    // Portuguese and nothing adds it.
-    selected_languages: ['es', 'ca'],
-    greeting_language: 'ca',
-    address: 'Carrer de Gràcia 8, Barcelona',
+    // Spanish all the way down. It used to inherit the Portuguese fixture's
+    // forwarding number and MEO as its operator, which passed validation --
+    // the operator enum is both countries at once -- and produced a Madrid
+    // clinic forwarding a Lisbon line through a Portuguese operator. The
+    // whole point of this run is that the country is carried through.
+    current_number: '+34911234567',
+    operator: 'Movistar',
+    // One language, and it is not Portuguese: no language is compulsory and
+    // nothing adds Portuguese behind the clinic's back. It greeted in Catalan
+    // until now, which the sign-up does offer and the voice platform cannot
+    // speak, so the run created a clinic Telma could not say hello for.
+    selected_languages: ['es'],
+    greeting_language: 'es',
+    address: 'Calle de Alcalá 48, Madrid',
   }
 }
 

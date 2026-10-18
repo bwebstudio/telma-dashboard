@@ -383,5 +383,64 @@ export const OPERATORS = [
 // Plans on offer at sign-up -------------------------------------------------
 // 'personalizado' is deliberately absent: it has no price, so it cannot be
 // bought from a form. That path is a conversation, and the wizard says so.
-export const SIGNUP_PLANS = ['essencial', 'clinica', 'rede'] as const
+//
+// ── AND 'rede' IS ABSENT FOR NOW ──────────────────────────────────────────
+// Rede is sold as several locations under one contract, each with its own
+// number and its own agenda, all in one panel. None of that exists: a user
+// belongs to one clinic, a clinic is one row with one number and one agenda,
+// and there is no table of locations, no grouping, and no way to see two
+// clinics at once. Selling it from a form would take 599 EUR a month for a
+// thing we cannot deliver, and the extra-location upsell would take 149 EUR
+// more for each one.
+//
+// So it leaves the form and becomes a conversation, like 'personalizado'.
+// Nothing else about it is removed: the price is in the `plans` table, the
+// copy is in the website's content, and the day there are real locations this
+// list is where it comes back.
+export const SIGNUP_PLANS = ['essencial', 'clinica'] as const
+
+/** Everything the `plans` table holds a price for, in the order it is shown.
+ *  Not the same as what can be bought from the form: see above. */
+export const PRICED_PLANS = ['essencial', 'clinica', 'rede'] as const
+
+/**
+ * Whether the WhatsApp add-on can be bought.
+ *
+ * Not yet. It was sold as Telma answering and booking on WhatsApp, and nothing
+ * receives a WhatsApp message: the add-on only switches the outgoing
+ * confirmations to WhatsApp, and only once Meta has approved a template. Off,
+ * the sign-up does not offer it, the checkout cannot add its price even from an
+ * old draft with the box ticked, and /conta shows it as coming soon
+ * (`COMING_SOON` in lib/purchase-utils.ts). The code behind it stays: turning
+ * it back on is this line and that list.
+ */
+export const WHATSAPP_ON_SALE = false
+
+/**
+ * Whether the sign-up can promise a new Telma number.
+ *
+ * Not today, and not because of a price. Twilio's inventory on this account
+ * covers 52 countries and neither Portugal nor Spain is among them: no local,
+ * no national, no mobile. A sign-up that offers a new number takes the money,
+ * writes a placeholder into `assigned_phone`, flags the row for attention and
+ * leaves the clinic waiting for something nobody can say the date of. It was
+ * also the option selected by default, so a clinic that read neither card got
+ * the one we cannot deliver.
+ *
+ * The way back is a business regulatory bundle, submitted with the owner's
+ * Portuguese activity declaration and waiting on Twilio's KYC review. Twilio's
+ * own alternative, a mobile number, is 135 USD per month per number, which is
+ * more than the Essencial plan costs.
+ *
+ * Meanwhile the product does not need it. A clinic that keeps its own number
+ * forwards to the one Telma line we already hold, and the call carries the
+ * number it was originally dialled on, so one line serves every clinic. That
+ * is the normal case and it is the only one on sale.
+ *
+ * Off, the form offers one option instead of two, the schema refuses the other
+ * one so an old draft or a direct post cannot get through, and a clinic that
+ * really wants a new number is sent to us. On, everything comes back: nothing
+ * about provisioning has been removed.
+ */
+export const NEW_NUMBERS_ON_SALE = false
 export type SignupPlan = (typeof SIGNUP_PLANS)[number]

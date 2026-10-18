@@ -5,6 +5,7 @@ import {
   COUNTRIES,
   COUNTRY_LABEL,
   countryOfRegion,
+  NEW_NUMBERS_ON_SALE,
   OPERATORS_BY_COUNTRY,
   PHONE_EXAMPLE,
   regionsFor,
@@ -14,6 +15,7 @@ import {
   SPECIALTIES,
   type Country,
   type Specialty,
+  WHATSAPP_ON_SALE,
 } from '@/lib/onboarding/catalog'
 import { copyFor } from '@/lib/onboarding/copy'
 import type { OnboardingLocale } from '@/lib/onboarding/locale'
@@ -50,6 +52,9 @@ export interface SignupPlan {
  */
 
 export type Values = Record<string, any>
+
+/** The "other" entry of each country's operator list (catalog.ts). */
+const OTHER_OPERATOR = new Set(['Outra', 'Otra'])
 
 export interface StepProps {
   values: Values
@@ -353,7 +358,7 @@ export function ClinicStep({
           type="email"
           inputMode="email"
           autoComplete="email"
-          placeholder="geral@clinicaserrano.pt"
+          placeholder={t.emailPlaceholder}
         />
       )}
 
@@ -1251,31 +1256,45 @@ export function NumberStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values.region])
   const country = countryOf(values, locale)
-  const option = values.phone_option ?? 'new'
+  // Keeping your own number is the only thing on offer, so it is also the
+  // default: the old default was a new number, which meant a clinic that read
+  // neither card chose the one we cannot deliver. See NEW_NUMBERS_ON_SALE.
+  const option = values.phone_option ?? (NEW_NUMBERS_ON_SALE ? 'new' : 'keep')
+
+  useEffect(() => {
+    if (!NEW_NUMBERS_ON_SALE && values.phone_option === 'new') set({ phone_option: 'keep' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.phone_option])
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2.5">
-        <OptionCard
-          name="phone_option"
-          value="keep"
-          checked={option === 'keep'}
-          onSelect={() => set({ phone_option: 'keep' })}
-          title={t.keepNumber}
-        >
-          {t.keepNumberHelp}
-        </OptionCard>
+      {NEW_NUMBERS_ON_SALE ? (
+        <div className="flex flex-col gap-2.5">
+          <OptionCard
+            name="phone_option"
+            value="keep"
+            checked={option === 'keep'}
+            onSelect={() => set({ phone_option: 'keep' })}
+            title={t.keepNumber}
+          >
+            {t.keepNumberHelp}
+          </OptionCard>
 
-        <OptionCard
-          name="phone_option"
-          value="new"
-          checked={option === 'new'}
-          onSelect={() => set({ phone_option: 'new' })}
-          title={t.newNumber}
-        >
-          {t.newNumberHelp}
-        </OptionCard>
-      </div>
+          <OptionCard
+            name="phone_option"
+            value="new"
+            checked={option === 'new'}
+            onSelect={() => set({ phone_option: 'new' })}
+            title={t.newNumber}
+          >
+            {t.newNumberHelp}
+          </OptionCard>
+        </div>
+      ) : (
+        // One option is not a choice, so it is not drawn as one. The sentence
+        // underneath is for the reader who came looking for the other one.
+        <p className="text-base text-ink-soft">{t.keepOnlyHelp}</p>
+      )}
 
       {option === 'keep' ? (
         <div className="flex flex-col gap-5 rounded-card border border-line bg-surface p-4">
@@ -1283,6 +1302,9 @@ export function NumberStep({
             <Text
               name="current_number"
               label={t.currentNumber}
+              // The single answer the whole forward hangs on, so the reason is
+              // beside the box and not three screens later in the panel.
+              hint={t.currentNumberHelp}
               error={errors.current_number}
               value={values.current_number}
               onChange={(v) => set({ current_number: v })}
@@ -1300,7 +1322,9 @@ export function NumberStep({
               <option value="">{t.choose}</option>
               {OPERATORS_BY_COUNTRY[country].map((o) => (
                 <option key={o} value={o}>
-                  {o}
+                  {/* The value stays the country's own word, which is what is
+                      stored and validated; only the label follows the reader. */}
+                  {OTHER_OPERATOR.has(o) ? t.operatorOther : o}
                 </option>
               ))}
             </Select>
@@ -1430,6 +1454,10 @@ export function PlanStep({
           // Clínica, so the plan that cannot carry the choice says so here
           // rather than failing on submit.
           const fits = plan.maxLanguages === null || chosenLanguages <= plan.maxLanguages
+          // The table's description is Portuguese only; the copy has one per
+          // language. The table's is kept for a plan the copy does not know.
+          const description =
+            t.planDescriptions[plan.id as keyof typeof t.planDescriptions] ?? plan.description
           return (
             <OptionCard
               key={plan.id}
@@ -1448,9 +1476,10 @@ export function PlanStep({
               }
             >
               {plan.minutes} {t.includedMinutes}
-              {plan.maxLanguages !== null && ` · ${plan.maxLanguages} ${t.planLanguages}`}
+              {plan.maxLanguages !== null &&
+                ` · ${plan.maxLanguages} ${plan.maxLanguages === 1 ? t.planLanguage : t.planLanguages}`}
               {plan.locations > 1 && ` · ${plan.locations} ${t.locations}`}
-              {plan.description && ` · ${plan.description}`}
+              {description && ` · ${description}`}
               {!fits && (
                 <span className="mt-1 block font-medium text-warn">
                   {t.planTooFewLanguages}
@@ -1475,16 +1504,21 @@ export function PlanStep({
         .
       </p>
 
-      <div className="rule" />
+      {/* Not on sale until it does what it was sold as. See catalog.ts. */}
+      {WHATSAPP_ON_SALE && (
+        <>
+          <div className="rule" />
 
-      <Checkbox
-        name="addon_whatsapp"
-        checked={values.addon_whatsapp}
-        onChange={(v) => set({ addon_whatsapp: v })}
-      >
-        {t.addonWhatsapp}
-        <span className="mt-0.5 block text-sm text-ink-mute">{t.addonWhatsappHelp}</span>
-      </Checkbox>
+          <Checkbox
+            name="addon_whatsapp"
+            checked={values.addon_whatsapp}
+            onChange={(v) => set({ addon_whatsapp: v })}
+          >
+            {t.addonWhatsapp}
+            <span className="mt-0.5 block text-sm text-ink-mute">{t.addonWhatsappHelp}</span>
+          </Checkbox>
+        </>
+      )}
 
     </div>
   )

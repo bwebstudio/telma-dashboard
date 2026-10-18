@@ -138,15 +138,20 @@ export const pt: Dictionary = {
   setup: {
     eyebrow: 'Falta pouco',
     title: 'Prepare a Telma para atender a sua clínica',
-    lead: 'Ainda não atende. Responda a estas duas coisas no seu painel e active-a quando quiser. O número já é seu.',
+    lead: 'Ainda não atende. Complete o que falta no seu painel e active-a quando quiser.',
     leadKeep:
-      'Ainda não atende. Responda a estas duas coisas no seu painel e active-a quando quiser. O seu número continua a ser o seu e não muda: só no fim é que passa as chamadas para a Telma.',
+      'Ainda não atende. Complete o que falta no seu painel e active-a quando quiser. O seu número continua a ser o seu e não muda: só no fim é que passa as chamadas para a Telma.',
     go: 'Configurar',
     activate: 'Activar a Telma',
     activating: 'A activar...',
-    notYet: 'Complete os dois passos para poder activar.',
+    notYet: 'Falta algo da lista para poder activar.',
+    waitingNumber: 'Estamos a consegui-lo. Avisamos por email assim que estiver activo.',
     failed: 'Não foi possível activar. Tente novamente.',
-    steps: { hours: 'Defina o horário da clínica', services: 'Adicione os serviços da clínica' },
+    steps: {
+      hours: 'Defina o horário da clínica',
+      services: 'Adicione os serviços da clínica',
+      number: 'O seu número da Telma',
+    },
     thenForward:
       'Depois de ativar a Telma, falta configurar o desvio de chamadas do número da clínica para o número da Telma. Mostraremos aqui os códigos necessários, já preenchidos, e explicaremos como os marcar.',
   },
@@ -202,6 +207,8 @@ export const pt: Dictionary = {
     activate: 'Activar a Telma',
     activating: 'A activar...',
     activateFailed: 'Não foi possível activar. Tente novamente.',
+    activateNoNumber:
+      'A Telma ainda não pode atender porque o seu número ainda não está activo. Estamos a consegui-lo e avisamos por email assim que estiver. Tudo o que configurou fica guardado.',
     hoursAlready: 'Estes são os horários que já tem. Se estiverem bem, continue.',
     saveFailed: 'Não foi possível guardar. Tente novamente.',
     tooManyLanguages: 'Escolheu mais idiomas do que o seu plano inclui.',

@@ -7,6 +7,7 @@ import {
   lookupPurchasableItem,
   validateCoupon,
 } from '@/lib/clinic-utils'
+import { COMING_SOON } from '@/lib/purchase-utils'
 import type { Purchase, PurchaseType } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -74,6 +75,12 @@ export async function POST(request: Request) {
       },
       { status: 409 }
     )
+  }
+
+  // The same refusal the panel's own action makes: an add-on that is coming
+  // soon is not sold, whichever door the request comes through.
+  if (purchaseType === 'addon' && COMING_SOON.includes(itemId)) {
+    return NextResponse.json({ error: 'coming_soon', item_id: itemId }, { status: 409 })
   }
 
   if (purchaseType === 'addon' && context.addons.includes(itemId)) {

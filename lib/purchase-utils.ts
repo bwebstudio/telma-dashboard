@@ -31,7 +31,9 @@ export const COUPONS: CouponDefinition[] = [
 // panel can show what is coming, and refused at the till so nobody activates a
 // language Telma cannot speak yet. Moves to a column on `addons` the day one of
 // them ships and the other does not.
-export const COMING_SOON: string[] = ['language_en', 'language_es']
+// WhatsApp: not on sale until something receives the messages. See
+// WHATSAPP_ON_SALE in lib/onboarding/catalog.ts.
+export const COMING_SOON: string[] = ['language_en', 'language_es', 'whatsapp']
 
 export function normalizeCoupon(raw: string | null | undefined): string {
   return (raw ?? '').trim().toUpperCase()

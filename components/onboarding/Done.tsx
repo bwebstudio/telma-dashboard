@@ -36,7 +36,7 @@ export function Done({
     <div className="flex flex-col gap-8">
       <div>
         <p className="eyebrow eyebrow-mark mb-3">{t.doneEyebrow}</p>
-        <h2 className="h-display text-3xl sm:text-4xl">{t.doneTitle}</h2>
+        <h1 className="h-display text-3xl sm:text-4xl">{t.doneTitle}</h1>
         <p className="mt-3 max-w-lead text-lg text-ink-soft">
           {t.doneLead.replace('{email}', result.email)}
         </p>
@@ -49,6 +49,19 @@ export function Done({
       )}
 
       <div className="card divide-y divide-line">
+        <div className="p-5">
+          <p className="label-caps">{t.doneCredentials}</p>
+          <Copyable label={t.email} value={result.email} copyLabel={t.copy} copiedLabel={t.copied} />
+          <Copyable
+            label={t.donePassword}
+            value={result.password}
+            copyLabel={t.copy}
+            copiedLabel={t.copied}
+            mono
+          />
+          <p className="mt-2 text-sm text-ink-mute">{t.donePasswordHelp}</p>
+        </div>
+
         {/* The number, when there is one. Portuguese lines are ordered through
             Twilio support and take days, so on the day of the sign-up there
             usually is not one. This used to print the placeholder the
@@ -74,19 +87,6 @@ export function Done({
             <p className="mt-2 text-base leading-relaxed text-ink-soft">{t.donePendingBody}</p>
           )}
         </div>
-
-        <div className="p-5">
-          <p className="label-caps">{t.doneCredentials}</p>
-          <Copyable label={t.email} value={result.email} copyLabel={t.copy} copiedLabel={t.copied} />
-          <Copyable
-            label={t.donePassword}
-            value={result.password}
-            copyLabel={t.copy}
-            copiedLabel={t.copied}
-            mono
-          />
-          <p className="mt-2 text-sm text-ink-mute">{t.donePasswordHelp}</p>
-        </div>
       </div>
 
       <div>
@@ -98,12 +98,12 @@ export function Done({
       {/* The same panel as step 5. It is worth repeating here because this is
           the screen somebody keeps open, and because the prompt is what gets
           pasted into the agent to test what Telma would answer. */}
-      <PromptPreview values={values} locale={locale} />
+      <PromptPreview values={values} locale={locale} help={t.donePreviewHelp} />
 
       <div>
         <h3 className="text-lg font-semibold text-ink">{t.doneNextTitle}</h3>
         <ol className="mt-3 flex flex-col gap-2.5">
-          {t.doneNext.map((line, i) => (
+          {[...t.doneNext, result.temporaryNumber ? t.doneNextKeep : t.doneNextNew].map((line, i) => (
             <li key={line} className="flex gap-3 text-base text-ink-soft">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-pill bg-brand-wash text-sm font-medium text-brand-accent">
                 {i + 1}

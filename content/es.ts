@@ -136,15 +136,20 @@ export const es: Dictionary = {
   setup: {
     eyebrow: 'Falta poco',
     title: 'Prepare a Telma para atender su clínica',
-    lead: 'Todavía no atiende. Responda a estas dos cosas en su panel y actívela cuando quiera. El número ya es suyo.',
+    lead: 'Todavía no atiende. Complete lo que falta en su panel y actívela cuando quiera.',
     leadKeep:
-      'Todavía no atiende. Responda a estas dos cosas en su panel y actívela cuando quiera. Su número sigue siendo el suyo y no cambia: solo al final le pasará las llamadas a Telma.',
+      'Todavía no atiende. Complete lo que falta en su panel y actívela cuando quiera. Su número sigue siendo el suyo y no cambia: solo al final le pasará las llamadas a Telma.',
     go: 'Configurar',
     activate: 'Activar a Telma',
     activating: 'Activando...',
-    notYet: 'Complete los dos pasos para poder activar.',
+    notYet: 'Falta algo de la lista para poder activar.',
+    waitingNumber: 'Lo estamos consiguiendo. Le avisaremos por email en cuanto esté activo.',
     failed: 'No se ha podido activar. Inténtelo de nuevo.',
-    steps: { hours: 'Defina el horario de la clínica', services: 'Añada los servicios de la clínica' },
+    steps: {
+      hours: 'Defina el horario de la clínica',
+      services: 'Añada los servicios de la clínica',
+      number: 'Su número de Telma',
+    },
     thenForward:
       'Después de activar Telma, solo falta configurar el desvío de llamadas del número de la clínica al número de Telma. Aquí aparecerán los códigos necesarios, ya preparados, con las instrucciones para marcarlos.',
   },
@@ -200,6 +205,8 @@ export const es: Dictionary = {
     activate: 'Activar a Telma',
     activating: 'Activando...',
     activateFailed: 'No se ha podido activar. Inténtelo de nuevo.',
+    activateNoNumber:
+      'Telma todavía no puede atender porque su número aún no está activo. Lo estamos consiguiendo y le avisaremos por email en cuanto lo esté. Todo lo que ha configurado queda guardado.',
     hoursAlready: 'Estos son los horarios que ya tiene. Si están bien, continúe.',
     saveFailed: 'No se ha podido guardar. Inténtelo de nuevo.',
     tooManyLanguages: 'Ha elegido más idiomas de los que incluye su plan.',

@@ -36,7 +36,9 @@ export default async function ObrigadoPage({
       <div className="card p-5">
         <h2 className="text-lg font-semibold text-ink">{t.doneNextTitle}</h2>
         <ol className="mt-3 flex flex-col gap-2.5">
-          {t.doneNext.map((line, i) => (
+          {/* This page does not know which number they chose, so the third
+              step names both. */}
+          {[...t.doneNext, t.doneNextEither].map((line, i) => (
             <li key={line} className="flex gap-3 text-base text-ink-soft">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-pill bg-brand-wash text-sm font-medium text-brand-accent">
                 {i + 1}

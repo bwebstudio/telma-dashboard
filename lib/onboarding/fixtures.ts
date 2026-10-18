@@ -1,4 +1,5 @@
 import type { Values } from '@/components/onboarding/FormSections'
+import type { SchemaSection } from './wizard-schema'
 
 /**
  * A sign-up that should go all the way through, and several that should not.
@@ -41,7 +42,14 @@ export function validSignup(suffix: string): Values {
     price_info: 'Primeira consulta 40 €.',
     briefing: 'Estacionamento na rua de trás.',
 
-    phone_option: 'new',
+    // The only branch on sale: a clinic keeps its own line and forwards it.
+    // It was 'new' until Twilio stopped being able to sell a number in either
+    // country; see NEW_NUMBERS_ON_SALE in ./catalog. `newNumberSignup` below
+    // keeps the other branch ready for the day it comes back.
+    phone_option: 'keep',
+    current_number: '+351212345678',
+    operator: 'MEO',
+    forward_type: 'no_answer',
     area_region: 'lisboa',
 
     plan_id: 'clinica',
@@ -76,13 +84,37 @@ export function spanishSignup(suffix: string): Values {
   }
 }
 
-/** The other branch of step 5: a clinic keeping the number it already has. */
+/**
+ * The expensive forward: everything, not just what nobody picked up.
+ *
+ * Worth its own run because the two are not a preference. 'no_answer' sends
+ * Telma the overflow; 'all' stops the clinic's own telephone ringing and sends
+ * her every call, which spends a 250 minute plan in days. It used to be the
+ * only fixture with `phone_option: 'keep'` and it carried no `forward_type` at
+ * all, so it had been failing step 3 on a required field.
+ */
 export function portingSignup(suffix: string): Values {
   return {
     ...validSignup(suffix),
-    phone_option: 'keep',
-    current_number: '+351212345678',
-    operator: 'MEO',
+    operator: 'Vodafone',
+    forward_type: 'all',
+  }
+}
+
+/**
+ * A clinic asking for a number of its own.
+ *
+ * Refused while NEW_NUMBERS_ON_SALE is off, which is what the invalid case
+ * below checks. Kept here, and kept correct, so turning the option back on is
+ * one constant and not an archaeology exercise.
+ */
+export function newNumberSignup(suffix: string): Values {
+  return {
+    ...validSignup(suffix),
+    phone_option: 'new',
+    current_number: '',
+    operator: '',
+    area_region: 'lisboa',
   }
 }
 
@@ -94,25 +126,30 @@ export function portingSignup(suffix: string): Values {
  * there to exercise.
  */
 export const INVALID_CASES: Array<{
-  step: number
+  /** Which part of the rules this exercises. It used to be a step number from
+   *  one to six; the sign-up has had three steps since the hours, the services
+   *  and the way Telma answers moved to the panel, so six of these were being
+   *  run against the wrong schema (and passing) and the rest were crashing on
+   *  a step that no longer exists. */
+  where: SchemaSection
   what: string
   expect: string
   values: Values
 }> = [
   {
-    step: 1,
+    where: 2,
     what: 'Nome com dois caracteres',
     expect: 'clinic_name',
     values: { ...validSignup('x'), clinic_name: 'Dr' },
   },
   {
-    step: 1,
+    where: 2,
     what: 'Telefone em formato nacional, sem +351',
     expect: 'phone',
     values: { ...validSignup('x'), phone: '211234567' },
   },
   {
-    step: 2,
+    where: 'hours',
     what: 'Fecha antes de abrir',
     expect: 'weekdays.close',
     values: {
@@ -121,7 +158,7 @@ export const INVALID_CASES: Array<{
     },
   },
   {
-    step: 2,
+    where: 'hours',
     what: 'Fechada todos os dias',
     expect: 'weekdays',
     values: {
@@ -132,37 +169,47 @@ export const INVALID_CASES: Array<{
     },
   },
   {
-    step: 3,
+    where: 'services',
     what: 'Nenhum serviço escolhido',
     expect: 'services',
     values: { ...validSignup('x'), services: [] },
   },
   {
-    step: 3,
+    where: 'services',
     what: 'Serviço que não existe no catálogo',
     expect: 'services',
     values: { ...validSignup('x'), services: ['dent_teletransporte'] },
   },
   {
-    step: 4,
-    what: 'Voz que não existe',
-    expect: 'voice_id',
-    values: { ...validSignup('x'), voice_id: 'voz-inventada' },
+    where: 'telma',
+    // Was "a voice that does not exist", checking a `voice_id` the browser
+    // used to send. It stopped being a question: the voice is derived on the
+    // server from the language the clinic greets in, so there was no rule left
+    // for the case to catch and it passed every run.
+    what: 'O mesmo idioma escolhido duas vezes',
+    expect: 'selected_languages',
+    values: { ...validSignup('x'), selected_languages: ['pt', 'pt'] },
   },
   {
-    step: 5,
+    where: 3,
     what: 'Quer manter o número mas não diz qual',
     expect: 'current_number',
-    values: { ...validSignup('x'), phone_option: 'keep', operator: 'MEO' },
+    values: { ...validSignup('x'), phone_option: 'keep', operator: 'MEO', current_number: '' },
   },
   {
-    step: 6,
+    where: 3,
+    what: 'Pede um número novo, que não estamos a atribuir',
+    expect: 'phone_option',
+    values: newNumberSignup('x'),
+  },
+  {
+    where: 3,
     what: 'Não aceitou os termos',
     expect: 'terms',
     values: { ...validSignup('x'), terms: false },
   },
   {
-    step: 6,
+    where: 1,
     what: 'Plano personalizado, que não se compra num formulário',
     expect: 'plan_id',
     values: { ...validSignup('x'), plan_id: 'personalizado' },

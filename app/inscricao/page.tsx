@@ -57,12 +57,6 @@ export default async function InscricaoPage({
         next={initialPlan ? `/inscricao?plano=${initialPlan}` : '/inscricao'}
       />
 
-      <div>
-        <p className="eyebrow eyebrow-mark mb-3">{t.pageTitle}</p>
-        <h1 className="h-display text-3xl sm:text-4xl">{t.intro}</h1>
-        <p className="mt-3 max-w-lead text-lg text-ink-soft">{t.introLead}</p>
-      </div>
-
       {/* No rule here. The step indicator under it is already a horizontal
           line with the steps drawn on it, so a hairline directly above was
           two separators stacked and the heading ended up fenced off from the
@@ -74,6 +68,13 @@ export default async function InscricaoPage({
         locale={locale}
         languages={languages}
         maxLanguages={maxLanguages}
+        intro={
+          <div>
+            <p className="eyebrow eyebrow-mark mb-3">{t.pageTitle}</p>
+            <h1 className="h-display text-3xl sm:text-4xl">{t.intro}</h1>
+            <p className="mt-3 max-w-lead text-lg text-ink-soft">{t.introLead}</p>
+          </div>
+        }
       />
     </div>
   )

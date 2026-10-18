@@ -136,15 +136,20 @@ export const en: Dictionary = {
   setup: {
     eyebrow: 'Almost there',
     title: 'Set Telma up for your clinic',
-    lead: 'She is not answering yet. Answer these two things in your dashboard and turn her on when you want. The number is already yours.',
+    lead: 'She is not answering yet. Finish what is left in your dashboard and turn her on when you want.',
     leadKeep:
-      'She is not answering yet. Answer these two things in your dashboard and turn her on when you want. Your own number stays yours and does not change: only at the end does it start passing calls to Telma.',
+      'She is not answering yet. Finish what is left in your dashboard and turn her on when you want. Your own number stays yours and does not change: only at the end does it start passing calls to Telma.',
     go: 'Set up',
     activate: 'Turn Telma on',
     activating: 'Turning on...',
-    notYet: 'Finish both steps to turn her on.',
+    notYet: 'Something on the list is still missing.',
+    waitingNumber: 'We are getting it. We will email you as soon as it is live.',
     failed: 'Could not turn her on. Try again.',
-    steps: { hours: "Set the clinic's opening hours", services: "Add the clinic's services" },
+    steps: {
+      hours: "Set the clinic's opening hours",
+      services: "Add the clinic's services",
+      number: 'Your Telma number',
+    },
     thenForward:
       "After activating Telma, the final step is to set up call forwarding from your clinic number to Telma's number. The required codes will appear here, ready to use, with instructions.",
   },
@@ -200,6 +205,8 @@ export const en: Dictionary = {
     activate: 'Turn Telma on',
     activating: 'Turning on...',
     activateFailed: 'Could not turn her on. Try again.',
+    activateNoNumber:
+      'Telma cannot answer yet because your number is not live. We are getting it and will email you as soon as it is. Everything you set up is saved.',
     hoursAlready: 'These are the hours you already have. If they are right, carry on.',
     saveFailed: 'Could not save. Try again.',
     tooManyLanguages: 'You have chosen more languages than your plan includes.',

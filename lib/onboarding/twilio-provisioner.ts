@@ -33,6 +33,10 @@ export interface ProvisionedNumber {
    *  before the account is funded. Kept so "the line is not live" comes with
    *  the reason attached instead of somebody going to look for it. */
   unavailable?: string
+  /** True when this is the line every forwarding clinic shares, rather than a
+   *  number bought for this clinic. It is nobody's to give back: releasing it
+   *  on a rollback would delete the only line we have. */
+  shared?: boolean
 }
 
 export class ProvisioningError extends Error {
@@ -193,6 +197,32 @@ export async function provisionTwilioNumber(region: string): Promise<Provisioned
  */
 export async function releaseTwilioNumber(sid: string): Promise<void> {
   if (!twilioConfigured() || sid.startsWith('PNdemo')) return
+  // ── NEVER THE SHARED LINE ────────────────────────────────────────────────
+  // A sign-up that fails half way gives its number back, which is right for a
+  // number bought for that clinic and catastrophic for the one every other
+  // clinic forwards to: Twilio will not sell this account another Portuguese
+  // number, so deleting it takes the product off the air for everybody and
+  // there is no undo. Checked here, against the database, rather than trusting
+  // every caller to remember.
+  try {
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from('phone_stock')
+      .select('number')
+      .eq('provider_ref', sid)
+      .eq('shared', true)
+      .maybeSingle()
+    if (data) {
+      console.warn('[twilio] refused to release the shared line', sid)
+      return
+    }
+  } catch (e) {
+    // Cannot tell whether it is shared, so do not delete it. A number left
+    // alive costs a few euros a month; the other mistake has no price.
+    console.error('[twilio] could not check whether the number is shared; keeping it', e)
+    return
+  }
   await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/IncomingPhoneNumbers/${sid}.json`,
     { method: 'DELETE', headers: { Authorization: auth() } }
@@ -258,4 +288,27 @@ export async function attachStockToClinic(providerRef: string, clinicId: string)
     .update({ clinic_id: clinicId })
     .eq('provider_ref', providerRef)
     .is('clinic_id', null)
+}
+
+/**
+ * The line every clinic that keeps its own number forwards to.
+ *
+ * Not bought here and not claimed: it is a row in `phone_stock` marked
+ * `shared`, which means it stays on the shelf for ever because it serves
+ * everybody. Null when the country has none, and then the caller falls back to
+ * buying, which is the behaviour this replaced rather than removed.
+ *
+ * Why this is safe, when two clinics on one number used to be the thing the
+ * schema most wanted to prevent: a forwarded call carries the number it was
+ * originally dialled on, so /api/voice/incoming knows whose call it is before
+ * the agent answers. What it does not cover is a call dialled straight at this
+ * line, and that is why exactly one clinic may claim those. See 0059.
+ */
+export async function sharedLineFor(country: Country): Promise<ProvisionedNumber | null> {
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const admin = createAdminClient()
+  const { data } = await admin.rpc('shared_line_for', { p_country: country })
+  const row = (data as Array<{ number: string; provider_ref: string }> | null)?.[0]
+  if (!row?.number || !row.provider_ref) return null
+  return { number: row.number, sid: row.provider_ref, demo: false, shared: true }
 }

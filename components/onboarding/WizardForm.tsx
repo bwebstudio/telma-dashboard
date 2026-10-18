@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, type ReactNode } from 'react'
 import { completeOnboarding, submitWizardStep } from '@/lib/actions/onboarding'
 import { SummaryStep } from '@/components/onboarding/SummaryStep'
 import type { OnboardingResult } from '@/lib/actions/onboarding'
 import { copyFor } from '@/lib/onboarding/copy'
+import { loadDone, saveDone } from '@/lib/onboarding/done-state'
 import {
   DEFAULT_ONBOARDING_LOCALE,
   type OnboardingLocale,
@@ -133,7 +134,11 @@ export function WizardForm({
   locale = DEFAULT_ONBOARDING_LOCALE,
   languages,
   maxLanguages,
+  intro,
 }: {
+  /** The page's heading. Drawn only while the form is being filled in: once
+   *  the clinic exists, "in a few steps" is a sentence about the past. */
+  intro?: ReactNode
   plans: SignupPlan[]
   demo: boolean
   /** Everything the platform can speak, from `available_languages`. */
@@ -190,6 +195,15 @@ export function WizardForm({
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
+    // A sign-up finished in this tab comes back as the final screen, not as
+    // step 1. Changing language reloads the page, and without this the reload
+    // threw away the one screen that shows the password. See done-state.ts.
+    const done = loadDone<OnboardingResult, Values>(window.sessionStorage)
+    if (done) {
+      setValues(done.values)
+      setResult(done.result)
+      return
+    }
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY)
       if (raw) {
@@ -308,6 +322,7 @@ export function WizardForm({
         window.location.assign(state.result.checkoutUrl)
         return
       }
+      saveDone(window.sessionStorage, state.result, values)
       setResult(state.result)
     })
   }
@@ -328,87 +343,90 @@ export function WizardForm({
     plans.find((p) => p.id === values.plan_id)?.maxLanguages ?? maxLanguages
 
   return (
-    <div className="flex flex-col gap-8">
-      <StepIndicator current={step} locale={locale} />
+    <>
+      {intro}
+      <div className="flex flex-col gap-8">
+        <StepIndicator current={step} locale={locale} />
 
-      <div>
-        <h2 className="h-display text-2xl sm:text-3xl">{meta.title}</h2>
-        <p className="mt-2 max-w-lead text-base text-ink-soft">{meta.help}</p>
-      </div>
-
-      {errors._form && (
-        <p
-          role="alert"
-          className="rounded-card border border-danger/30 bg-danger-soft px-4 py-3 text-base font-medium text-danger"
-        >
-          {errors._form}
-        </p>
-      )}
-
-      {/* A form element, so Enter submits the step rather than doing nothing.
-          On the last step Enter must not sign the clinic up: that one asks for
-          a deliberate click on a button that says what it does. */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (!isLast && !pending) next()
-        }}
-      >
-        {step === 1 && (
-          <PlanStep values={values} set={set} errors={errors} locale={locale} plans={plans} />
-        )}
-        {step === 2 && <ClinicStep values={values} set={set} errors={errors} locale={locale} />}
-        {/* Three steps, and the third is the number. The hours, the services
-            and everything about how Telma answers left the sign-up: they are
-            configured in the panel, which is where they were also configured
-            before, and asking in both places is what made a clinic wonder
-            which of the two it was supposed to go back to. */}
-        {step === 3 && (
-          <NumberStep values={values} set={set} errors={errors} locale={locale} demo={demo} />
-        )}
-        {step === 4 && (
-          <SummaryStep
-            values={values}
-            locale={locale}
-            planName={plans.find((p) => p.id === values.plan_id)?.name ?? String(values.plan_id ?? '')}
-          />
-        )}
-
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          {step > 1 && (
-            <button type="button" onClick={back} disabled={pending} className="btn-secondary">
-              {t.back}
-            </button>
-          )}
-
-          {isLast ? (
-            <button type="button" onClick={submit} disabled={pending} className="btn-primary">
-              {pending ? t.submitting : t.submit}
-            </button>
-          ) : (
-            <button type="submit" disabled={pending} className="btn-primary">
-              {t.next}
-            </button>
-          )}
-
-          <span className="text-sm text-ink-mute">{t.savedNotice}</span>
-          {/* ── AND A WAY OUT OF THEM ────────────────────────────────────
-              The draft surviving a closed browser is the point of the line
-              beside this one, and there was no way to be rid of it. Somebody
-              who started a sign-up for one clinic and came back for another,
-              or filled half of it in to see what it asked, met their own old
-              answers with no way to clear them short of the developer console.
-              A promise to remember is only comfortable next to a way to
-              forget. */}
-          <button
-            type="button"
-            onClick={startOver}
-            className="text-sm text-ink-mute underline underline-offset-2 hover:text-ink"
-          >
-            {t.startOver}
-          </button>
+        <div>
+          <h2 className="h-display text-2xl sm:text-3xl">{meta.title}</h2>
+          <p className="mt-2 max-w-lead text-base text-ink-soft">{meta.help}</p>
         </div>
-      </form>
-    </div>
+
+        {errors._form && (
+          <p
+            role="alert"
+            className="rounded-card border border-danger/30 bg-danger-soft px-4 py-3 text-base font-medium text-danger"
+          >
+            {errors._form}
+          </p>
+        )}
+
+        {/* A form element, so Enter submits the step rather than doing nothing.
+            On the last step Enter must not sign the clinic up: that one asks for
+            a deliberate click on a button that says what it does. */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!isLast && !pending) next()
+          }}
+        >
+          {step === 1 && (
+            <PlanStep values={values} set={set} errors={errors} locale={locale} plans={plans} />
+          )}
+          {step === 2 && <ClinicStep values={values} set={set} errors={errors} locale={locale} />}
+          {/* Three steps, and the third is the number. The hours, the services
+              and everything about how Telma answers left the sign-up: they are
+              configured in the panel, which is where they were also configured
+              before, and asking in both places is what made a clinic wonder
+              which of the two it was supposed to go back to. */}
+          {step === 3 && (
+            <NumberStep values={values} set={set} errors={errors} locale={locale} demo={demo} />
+          )}
+          {step === 4 && (
+            <SummaryStep
+              values={values}
+              locale={locale}
+              planName={plans.find((p) => p.id === values.plan_id)?.name ?? String(values.plan_id ?? '')}
+            />
+          )}
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            {step > 1 && (
+              <button type="button" onClick={back} disabled={pending} className="btn-secondary">
+                {t.back}
+              </button>
+            )}
+
+            {isLast ? (
+              <button type="button" onClick={submit} disabled={pending} className="btn-primary">
+                {pending ? t.submitting : t.submit}
+              </button>
+            ) : (
+              <button type="submit" disabled={pending} className="btn-primary">
+                {t.next}
+              </button>
+            )}
+
+            <span className="text-sm text-ink-mute">{t.savedNotice}</span>
+            {/* ── AND A WAY OUT OF THEM ────────────────────────────────────
+                The draft surviving a closed browser is the point of the line
+                beside this one, and there was no way to be rid of it. Somebody
+                who started a sign-up for one clinic and came back for another,
+                or filled half of it in to see what it asked, met their own old
+                answers with no way to clear them short of the developer console.
+                A promise to remember is only comfortable next to a way to
+                forget. */}
+            <button
+              type="button"
+              onClick={startOver}
+              className="text-sm text-ink-mute underline underline-offset-2 hover:text-ink"
+            >
+              {t.startOver}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   )
 }

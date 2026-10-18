@@ -72,8 +72,8 @@ export function ClinicIdentityForm({
     <div className="flex flex-col gap-5">
       <Text
         name="email"
-        label={t.email}
-        hint={t.emailHelp}
+        label={t.contactEmail}
+        hint={t.contactEmailHelp}
         error={errors.email}
         value={(values.email as string) ?? ''}
         onChange={(v) => set({ email: v })}

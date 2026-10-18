@@ -433,15 +433,16 @@ const pt: Copy = {
   newNumber: 'Quero um número novo da Telma',
   newNumberHelp: 'Pedimos um número da região que escolher. Avisamos por email assim que estiver ativo.',
   currentNumber: 'Número da clínica',
-  currentNumberHelp:
-    'O número que os seus pacientes já marcam, e o que vai desviar para a Telma. É também por ele que a Telma sabe que uma chamada é da sua clínica, por isso tem de ser mesmo a linha de onde fizer o desvio. Se vier a desviar de outra linha, diga-nos para a registarmos.',
+  currentNumberHelp: 'O número habitual da sua clínica, para onde os pacientes ligam.',
   operator: 'Operadora atual',
   operatorOther: 'Outra',
   forwardTitle: 'Que chamadas passam para a Telma',
-  forwardNoAnswer: 'Só as que não forem atendidas',
-  forwardNoAnswerHelp: 'O telefone da clínica toca primeiro. Se estiver ocupado ou ninguém atender, a chamada passa para a Telma.',
-  forwardAll: 'Todas',
-  forwardAllHelp: 'As chamadas passam diretamente para a Telma e o telefone da clínica não toca primeiro. Esta opção utiliza mais minutos do plano.',
+  forwardNoAnswer: 'Só as chamadas não atendidas',
+  forwardNoAnswerHelp:
+    'O telefone da clínica toca primeiro. Se estiver ocupado ou ninguém atender, a Telma atende.',
+  forwardAll: 'Todas as chamadas',
+  forwardAllHelp:
+    'As chamadas vão diretamente para a Telma, sem tocar primeiro na clínica. Esta opção utiliza mais minutos do plano.',
   areaRegion: 'Região do novo número',
   portingNote:
     'O seu número atual continua na mesma operadora. A Telma terá um número próprio para receber as chamadas desviadas. Quando a linha estiver pronta, explicamos no painel como configurar o desvio.',
@@ -678,15 +679,16 @@ const es: Copy = {
   newNumber: 'Quiero un número nuevo de Telma',
   newNumberHelp: 'Solicitamos un número de la zona que elija. Le avisaremos por email en cuanto esté activo.',
   currentNumber: 'Número de la clínica',
-  currentNumberHelp:
-    'El número que sus pacientes ya marcan, y el que va a desviar a Telma. Es también por donde Telma sabe que una llamada es de su clínica, así que tiene que ser exactamente la línea desde la que haga el desvío. Si acaba desviando desde otra línea, díganoslo y la registramos.',
+  currentNumberHelp: 'El número habitual de su clínica, al que llaman los pacientes.',
   operator: 'Operadora actual',
   operatorOther: 'Otra',
   forwardTitle: 'Qué llamadas pasan a Telma',
-  forwardNoAnswer: 'Solo las que no se atiendan',
-  forwardNoAnswerHelp: 'El teléfono de la clínica suena primero. Si está ocupado o nadie contesta, la llamada pasa a Telma.',
-  forwardAll: 'Todas',
-  forwardAllHelp: 'Las llamadas pasan directamente a Telma y el teléfono de la clínica no suena primero. Esta opción utiliza más minutos del plan.',
+  forwardNoAnswer: 'Solo las llamadas no atendidas',
+  forwardNoAnswerHelp:
+    'El teléfono de la clínica suena primero. Si está ocupado o nadie contesta, atiende Telma.',
+  forwardAll: 'Todas las llamadas',
+  forwardAllHelp:
+    'Las llamadas van directamente a Telma, sin sonar primero en la clínica. Esta opción utiliza más minutos del plan.',
   areaRegion: 'Zona del nuevo número',
   portingNote:
     'Su número actual sigue en la misma operadora. Telma tendrá un número propio para recibir las llamadas desviadas. Cuando la línea esté lista, le explicaremos en el panel cómo configurar el desvío.',

@@ -605,8 +605,14 @@ export async function completeOnboarding(
       // is derived from it rather than asked for a second time.
       country: countryOfRegion(wizard.region),
       locale,
-      successUrl: `${dashboardUrl}/inscricao/obrigado?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${dashboardUrl}/inscricao?retomar=1`,
+      // ── THE LANGUAGE HAS TO TRAVEL ───────────────────────────────────
+      // Coming back from Stripe is a navigation from another site, so the
+      // page that greets them cannot rely on a cookie being there. It reads
+      // `lang` first and falls back to one, and the fallback is Portuguese:
+      // a clinic that signed up in Spanish, paid on a Spanish page, was
+      // thanked in Portuguese. We know the language here, so we say it.
+      successUrl: `${dashboardUrl}/inscricao/obrigado?session_id={CHECKOUT_SESSION_ID}&lang=${locale}`,
+      cancelUrl: `${dashboardUrl}/inscricao?retomar=1&lang=${locale}`,
     })
 
     if (draftToken) await markCompleted(draftToken, cid)

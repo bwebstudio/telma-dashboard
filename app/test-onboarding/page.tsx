@@ -41,7 +41,7 @@ export default async function TestOnboardingPage() {
       <p className="eyebrow eyebrow-mark mb-3">Ferramenta interna</p>
       <h1 className="h-display text-3xl sm:text-4xl">Testar a inscrição</h1>
       <p className="mt-3 max-w-lead text-lg text-ink-soft">
-        Corre os seis passos contra as mesmas server actions que o formulário usa, conclui a
+        Corre os passos contra as mesmas server actions que o formulário usa, conclui a
         inscrição e depois lê a base de dados para confirmar o que ficou lá. Cria linhas a sério.
       </p>
 

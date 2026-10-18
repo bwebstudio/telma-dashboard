@@ -111,6 +111,11 @@ interface EmailCopy {
 
   // ── O NÚMERO ─────────────────────────────────────────────────────────
   telmaNumberLabel: string
+  /** For a clinic keeping its own line: the number shown is theirs, not
+   *  ours. Ours is shared between every forwarding clinic and is nobody's
+   *  to publish; printed large in a welcome email it ends up on a door. */
+  ownNumberLabel: string
+  ownNumberBody: string
   telmaNumberKeep: string
   telmaNumberNew: string
   numberPendingLabel: string
@@ -171,6 +176,9 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     noCommitment: 'Sem permanência. Pode cancelar a subscrição a partir do painel quando quiser.',
 
     telmaNumberLabel: 'O número da Telma',
+    ownNumberLabel: 'O número da sua clínica',
+    ownNumberBody:
+      'Este é o número que a Telma atende. O número habitual da sua clínica não muda e continuará a ser o seu número de contacto.',
     telmaNumberKeep:
       'Este é o número para o qual serão desviadas as chamadas atendidas pela Telma. O número habitual da sua clínica não muda e continuará a ser o seu número de contacto.',
     telmaNumberNew:
@@ -255,6 +263,9 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     noCommitment: 'Sin permanencia. Puede cancelar su suscripción desde el panel cuando quiera.',
 
     telmaNumberLabel: 'El número de Telma',
+    ownNumberLabel: 'El número de su clínica',
+    ownNumberBody:
+      'Este es el número que atiende Telma. Su número habitual no cambia y seguirá siendo el número de contacto de su clínica.',
     telmaNumberKeep:
       'Este es el número al que se desviarán las llamadas que atienda Telma. Su número habitual no cambia y seguirá siendo el número de contacto de su clínica.',
     telmaNumberNew:
@@ -630,11 +641,23 @@ export function welcomeHtml(p: WelcomeEmail): string {
             <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>`
     : ''
 
-  const number = p.phoneNumber
-    ? `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.telmaNumberLabel)}</p>
-              <p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(p.phoneNumber)}</p>
+  // ── WHICH NUMBER THIS EMAIL PRINTS ──────────────────────────────────
+  // A clinic keeping its own line sees its own number here, not ours. Ours
+  // is one line shared by every forwarding clinic: printed large in a
+  // welcome email it reads as "your new number", and from there it goes on
+  // the door, into Google and onto the cards. The clinic does need it, once,
+  // to set the forward, and the panel gives it there with the codes beside
+  // it and the explanation around it.
+  const keepsOwn = p.temporaryNumber && Boolean(p.ownNumber)
+  const shown = keepsOwn ? (p.ownNumber as string) : p.phoneNumber
+
+  const number = shown
+    ? `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(
+                keepsOwn ? t.ownNumberLabel : t.telmaNumberLabel
+              )}</p>
+              <p style="margin:7px 0 0;font-size:24px;font-weight:600;letter-spacing:-0.01em;color:${INK}">${escapeHtml(shown)}</p>
               <p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(
-                p.temporaryNumber ? t.telmaNumberKeep : t.telmaNumberNew
+                keepsOwn ? t.ownNumberBody : t.telmaNumberNew
               )}</p>`
     : `<p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.numberPendingLabel)}</p>
               <p style="margin:7px 0 0;font-size:15px;line-height:1.65;color:${INK}">${escapeHtml(t.numberPendingBody)}</p>`
@@ -684,6 +707,7 @@ ${stepsBlock(t.stepsLabel, steps)}`,
 export function welcomeText(p: WelcomeEmail): string {
   const t = emailCopy(p.locale)
   const per = p.summary?.cycle === 'annual' ? t.perYear : t.perMonth
+  const textKeepsOwn = p.temporaryNumber && Boolean(p.ownNumber)
   const steps = p.phoneNumber
     ? p.temporaryNumber
       ? t.stepsKeep
@@ -722,10 +746,14 @@ export function welcomeText(p: WelcomeEmail): string {
         ]
       : []),
     '',
-    ...(p.phoneNumber
+    // Their own number when they keep it, ours only when it is theirs to
+    // publish. Same reasoning as the HTML above.
+    ...(textKeepsOwn || p.phoneNumber
       ? [
-          `${t.telmaNumberLabel}: ${p.phoneNumber}`,
-          `  ${p.temporaryNumber ? t.telmaNumberKeep : t.telmaNumberNew}`,
+          `${textKeepsOwn ? t.ownNumberLabel : t.telmaNumberLabel}: ${
+            textKeepsOwn ? p.ownNumber : p.phoneNumber
+          }`,
+          `  ${textKeepsOwn ? t.ownNumberBody : t.telmaNumberNew}`,
         ]
       : [`${t.numberPendingLabel}: ${t.numberPendingBody}`]),
     '',

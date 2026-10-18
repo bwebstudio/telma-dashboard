@@ -275,6 +275,9 @@ export async function createCheckoutSession(opts: {
   priceIds: string[]
   /** Decides the VAT treatment. Comes from the clinic's region. */
   country: 'PT' | 'ES'
+  /** The language the sign-up was read in. Only the page's language: it
+   *  changes no amount and no tax. */
+  locale: 'pt' | 'es'
   successUrl: string
   cancelUrl: string
 }): Promise<CheckoutSession> {
@@ -298,7 +301,9 @@ export async function createCheckoutSession(opts: {
     'tax_id_collection[enabled]': 'true',
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
-    locale: 'pt',
+    // The sign-up's own language. It was fixed to Portuguese, so a clinic that
+    // signed up in Spanish paid on a Portuguese page.
+    locale: opts.locale === 'es' ? 'es' : 'pt',
     // The clinic id travels with the session so the webhook can find the row it
     // belongs to without matching on an email somebody may have mistyped.
     'metadata[clinic_id]': opts.clinicId,

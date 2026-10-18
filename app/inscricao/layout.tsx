@@ -14,12 +14,16 @@ import { resolveOnboardingLocale } from '@/lib/onboarding/locale-server'
  * re-read the price list should not have to use the back button.
  */
 
-export const metadata: Metadata = {
-  title: 'Inscrição · Telma',
-  description: 'Inscreva a sua clínica na Telma em seis passos.',
-  // Not indexed. The landing sells; this is the thing the landing links to,
-  // and a wizard in search results is a wizard entered from the middle.
-  robots: { index: false, follow: false },
+// In the reader's language, decided the same way as the shell below.
+export async function generateMetadata(): Promise<Metadata> {
+  const t = copyFor(await resolveOnboardingLocale())
+  return {
+    title: t.metaTitle,
+    description: t.metaDescription,
+    // Not indexed. The landing sells; this is the thing the landing links to,
+    // and a wizard in search results is a wizard entered from the middle.
+    robots: { index: false, follow: false },
+  }
 }
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://telmaatende.com'

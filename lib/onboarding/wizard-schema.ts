@@ -1,5 +1,12 @@
 import { z } from 'zod'
-import { ALL_SERVICE_IDS, OPERATORS, REGION_IDS, SIGNUP_PLANS, SPECIALTIES } from './catalog'
+import {
+  ALL_SERVICE_IDS,
+  NEW_NUMBERS_ON_SALE,
+  OPERATORS,
+  REGION_IDS,
+  SIGNUP_PLANS,
+  SPECIALTIES,
+} from './catalog'
 import { DEFAULT_ONBOARDING_LOCALE, type OnboardingLocale } from './locale'
 
 /**
@@ -65,18 +72,21 @@ interface Messages {
   operator: string
   forwardType: string
   areaRegion: string
+  /** Not a validation failure the reader can fix by typing: we cannot buy a
+   *  number in either country today. It says what to do instead. */
+  newNumberUnavailable: string
   plan: string
   terms: string
 }
 
 const MESSAGES: Record<OnboardingLocale, Messages> = {
   pt: {
-    nameShort: 'O nome da clínica precisa de pelo menos 3 caracteres.',
+    nameShort: 'O nome da clínica deve ter pelo menos 3 caracteres.',
     nameLong: 'O nome da clínica é demasiado longo.',
     email: 'Indique um email válido.',
     phone: 'Indique o número em formato internacional, por exemplo +351211234567 ou +34911234567.',
     specialty: 'Escolha a área da clínica.',
-    region: 'Escolha a região.',
+    region: 'Escolha o distrito.',
     time: 'Use o formato 24 horas, por exemplo 09:00.',
     closeBeforeOpen: 'A hora de fecho tem de ser depois da hora de abertura.',
     pauseEndBeforeStart: 'O fim da pausa tem de ser depois do início.',
@@ -104,11 +114,13 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     operator: 'Escolha a operadora atual.',
     forwardType: 'Diga que chamadas passam para a Telma.',
     areaRegion: 'Escolha a região do novo número.',
+    newNumberUnavailable:
+      'De momento não estamos a atribuir números novos. Escolha manter o seu número, ou fale connosco e tratamos do caso.',
     plan: 'Escolha um plano.',
-    terms: 'É preciso aceitar os termos para continuar.',
+    terms: 'Aceite os termos para continuar.',
   },
   es: {
-    nameShort: 'El nombre de la clínica necesita al menos 3 caracteres.',
+    nameShort: 'El nombre de la clínica debe tener al menos 3 caracteres.',
     nameLong: 'El nombre de la clínica es demasiado largo.',
     email: 'Indique un email válido.',
     phone: 'Indique el número en formato internacional, por ejemplo +34911234567 o +351211234567.',
@@ -140,9 +152,11 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     afterHoursNumberRequired: 'Indique adónde va la llamada fuera de horario, aquí o en el número de urgencias.',
     operator: 'Elija la operadora actual.',
     forwardType: 'Diga qué llamadas pasan a Telma.',
-    areaRegion: 'Elija la provincia del número nuevo.',
+    areaRegion: 'Elija la zona del número nuevo.',
+    newNumberUnavailable:
+      'Ahora mismo no estamos asignando números nuevos. Elija conservar su número, o hable con nosotros y lo vemos.',
     plan: 'Elija un plan.',
-    terms: 'Hay que aceptar los términos para continuar.',
+    terms: 'Acepte los términos para continuar.',
   },
 }
 
@@ -341,6 +355,14 @@ function build(m: Messages) {
     ]),
     z.object({ terms: z.literal(true, { error: m.terms }) })
   )
+    // ── THE OPTION WE CANNOT HONOUR ──────────────────────────────────────
+    // Checked here and not only in the form, because the form is a courtesy:
+    // a draft saved before this changed, or a POST straight to the API, must
+    // meet the same answer. See NEW_NUMBERS_ON_SALE in ./catalog.
+    .refine((v) => NEW_NUMBERS_ON_SALE || v.phone_option !== 'new', {
+      error: m.newNumberUnavailable,
+      path: ['phone_option'],
+    })
 
   // ── THREE STEPS, NOT SIX ──────────────────────────────────────────────
   // The sign-up identifies the clinic and buys it a number. It does not set
@@ -417,6 +439,29 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
     if (!(key in out)) out[key] = issue.message
   }
   return out
+}
+
+/**
+ * Which part of the rules a payload is being checked against.
+ *
+ * 1, 2 and 3 are the steps the sign-up still asks. The three named ones are
+ * the questions it stopped asking -- the hours, the services and how Telma
+ * answers, all now edited in the panel -- whose schemas are still enforced at
+ * submit time for a draft or a partner that sends them. Naming them is what
+ * lets a test say which rule it is exercising, instead of a step number that
+ * stopped meaning anything when six steps became three.
+ */
+export type SchemaSection = StepNumber | 'hours' | 'services' | 'telma'
+
+/** Runs one section's schema. `validateStep` is this, restricted to a step. */
+export function validateSection(
+  section: SchemaSection,
+  data: unknown,
+  locale: OnboardingLocale = DEFAULT_ONBOARDING_LOCALE
+): { ok: true; data: unknown } | { ok: false; errors: Record<string, string> } {
+  const result = wizardSchemas(locale)[section].safeParse(data)
+  if (result.success) return { ok: true, data: result.data }
+  return { ok: false, errors: fieldErrors(result.error) }
 }
 
 /** Runs one step's schema and reports it the way the form and the API both want. */

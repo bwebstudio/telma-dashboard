@@ -13,7 +13,7 @@ import { countryOfRegion, TIMEZONE } from '@/lib/onboarding/catalog'
 import type { OnboardingLocale } from '@/lib/onboarding/locale'
 import { buildSlots } from '@/lib/onboarding/schedule'
 import { newToken } from '@/lib/onboarding/sessions'
-import { validateStep, type StepNumber } from '@/lib/onboarding/wizard-schema'
+import { validateSection, validateStep, type StepNumber } from '@/lib/onboarding/wizard-schema'
 import { completeOnboarding, submitWizardStep } from './onboarding'
 
 /**
@@ -59,10 +59,13 @@ export async function runValidationChecks(): Promise<CheckLine[]> {
   if (blocked) return [{ label: 'Guarda', ok: false, detail: blocked }]
 
   return INVALID_CASES.map((c) => {
-    const result = validateStep(c.step as StepNumber, c.values)
+    // By section and not by step number. Three of these rules are no longer
+    // asked at any step: they are enforced when the draft is submitted.
+    const where = typeof c.where === 'number' ? `Passo ${c.where}` : c.where
+    const result = validateSection(c.where, c.values)
     if (result.ok) {
       return {
-        label: `Passo ${c.step}: ${c.what}`,
+        label: `${where}: ${c.what}`,
         ok: false,
         detail: 'Passou na validação e não devia.',
       }
@@ -70,7 +73,7 @@ export async function runValidationChecks(): Promise<CheckLine[]> {
     const keys = Object.keys(result.errors)
     const hit = keys.includes(c.expect)
     return {
-      label: `Passo ${c.step}: ${c.what}`,
+      label: `${where}: ${c.what}`,
       ok: hit,
       detail: hit
         ? `Rejeitado em "${c.expect}": ${result.errors[c.expect]}`

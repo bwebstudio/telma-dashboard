@@ -149,7 +149,15 @@ export function SetupWizard({
       // The page is a server component keyed on the clinic's status, so a
       // successful activation re-renders it as the agenda. Nothing to do here
       // but refresh; `activateClinic` revalidates.
-      if (!r.ok) setFailed(t.activateFailed)
+      //
+      // ── ONE REFUSAL IS NOT A FAILURE ──────────────────────────────────
+      // The action also gates on the number being real, and that is the one
+      // thing on its list that the clinic cannot do and that retrying cannot
+      // fix. "Try again" sent a clinic round a loop it could not leave, at
+      // the end of five steps it had just done properly, so say which it is.
+      if (!r.ok) {
+        setFailed(r.missing?.includes('number') ? t.activateNoNumber : t.activateFailed)
+      }
     })
   }
 

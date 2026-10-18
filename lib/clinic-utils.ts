@@ -72,7 +72,7 @@ function fallbackPlan(id: PlanType): Plan {
     price_monthly_eur: PLAN_PRICE[id],
     price_annual_eur: null,
     max_minutes_per_month: PLAN_MINUTES[id] ?? null,
-    max_locations: id === 'essencial' ? 1 : 3,
+    max_locations: id === 'rede' ? 3 : 1,
     max_concurrent_calls: 1,
     price_extra_location_eur: null,
     features: {},

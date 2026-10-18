@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { checkoutQuote, type CheckoutQuote } from '@/lib/actions/checkout-quote'
 import { copyFor } from '@/lib/onboarding/copy'
+import { WHATSAPP_ON_SALE } from '@/lib/onboarding/catalog'
 import type { OnboardingLocale } from '@/lib/onboarding/locale'
 
 /**
@@ -43,8 +44,11 @@ export function SummaryStep({
 
   const plan = String(values.plan_id ?? '')
   const cycle = values.billing_cycle === 'annual' ? 'annual' : 'monthly'
-  const whatsapp = values.addon_whatsapp === true
+  const whatsapp = values.addon_whatsapp === true && WHATSAPP_ON_SALE
   const region = String(values.region ?? '')
+  // Only for a clinic keeping its own line; nobody else has one to forward.
+  const ownNumber =
+    values.phone_option === 'keep' ? String(values.current_number ?? '').trim() : ''
 
   useEffect(() => {
     let live = true
@@ -115,9 +119,11 @@ export function SummaryStep({
 
           <tr className="border-b border-line">
             <td className="py-3 pr-4 text-ink-soft">
-              {quote.taxPercentage === null
-                ? (quote.taxLabel ?? 'IVA')
-                : `${quote.taxLabel ?? 'IVA'} ${quote.taxPercentage}%`}
+              {/* "IVA" in both languages, not the Stripe rate's own name: that
+                  one is written once, in Portuguese ("IVA autoliquidação"),
+                  and appeared as is on the Spanish screen. The reverse charge
+                  is explained under the table. */}
+              {quote.taxPercentage === null ? 'IVA' : `IVA ${quote.taxPercentage}%`}
             </td>
             <td className="py-3 text-right tabular-nums text-ink-soft">
               {quote.taxPercentage === null
@@ -140,6 +146,21 @@ export function SummaryStep({
         <p className="max-w-prose rounded-card bg-surface-sunken px-4 py-3 text-sm leading-relaxed text-ink-soft">
           {t.summaryReverseCharge}
         </p>
+      )}
+
+      {/* ── THE ONE ANSWER WORTH READING TWICE ────────────────────────────
+          The number the clinic will forward from is what tells Telma whose
+          call she is answering, and it was typed on the step before and never
+          shown again until a forwarding card weeks later. A wrong digit here
+          is not a wrong record: it is calls that arrive belonging to nobody.
+          So it is repeated where everything else is confirmed, with what it
+          is for, while going back to change it still costs one click. */}
+      {ownNumber && (
+        <div className="max-w-prose rounded-card border border-line px-4 py-3">
+          <p className="text-sm text-ink-mute">{t.summaryForwardFromLabel}</p>
+          <p className="mt-1 text-lg font-medium tabular-nums text-ink">{ownNumber}</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink-soft">{t.summaryForwardFrom}</p>
+        </div>
       )}
 
       <div className="flex flex-col gap-1 text-sm text-ink-mute">

@@ -91,6 +91,8 @@ interface EmailCopy {
   subjectReady: (c: string) => string
   subjectPending: (c: string) => string
   heading: string
+  /** The heading while the payment is not confirmed yet. */
+  headingPending: string
   leadReady: string
   leadPending: string
 
@@ -99,6 +101,7 @@ interface EmailCopy {
   whatsapp: string
   perMonth: string
   perYear: string
+  subtotalLabel: string
   totalLabel: string
   taxExcluded: string
   billingMonthly: string
@@ -147,32 +150,34 @@ interface EmailCopy {
 const EMAIL: Record<OnboardingLocale, EmailCopy> = {
   pt: {
     subjectReady: (c) => `Subscrição confirmada — ${c}`,
-    subjectPending: (c) => `Subscrição confirmada — ${c}`,
-    heading: 'A sua subscrição está confirmada.',
+    subjectPending: (c) => `Recebemos a inscrição da ${c}`,
+    heading: 'A sua subscrição está confirmada',
+    headingPending: 'Recebemos a sua inscrição',
     leadReady:
-      'Estamos a activar a linha da sua clínica. O processo costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver pronta. Entretanto, o painel já está disponível: pode configurar a Telma e deixá-la preparada para atender desde o primeiro dia.',
+      'Estamos a ativar a linha da clínica e avisamos por email assim que estiver pronta. Entretanto, já pode configurar a Telma no painel.',
     leadPending:
-      'Estamos a activar a linha da sua clínica. Assim que o pagamento estiver confirmado e a linha pronta, avisamos por email. Entretanto, o painel já está disponível: pode configurar a Telma e deixá-la preparada para atender desde o primeiro dia.',
+      'O seu painel já está disponível para configurar a Telma. Avisamos por email assim que a linha da clínica estiver pronta.',
 
     planLabel: 'O seu plano',
     whatsapp: 'WhatsApp',
     perMonth: '/mês',
     perYear: '/ano',
+    subtotalLabel: 'Subtotal',
     totalLabel: 'Total',
     taxExcluded: 'mais IVA',
-    billingMonthly: 'A cobrança é mensal, pelo mesmo valor, a contar de hoje.',
-    billingAnnual: 'A cobrança é anual, pelo mesmo valor, a contar de hoje.',
-    invoices: 'Pode consultar e descarregar as suas facturas em Conta, no painel.',
+    billingMonthly: 'A subscrição renova mensalmente, a contar de hoje.',
+    billingAnnual: 'A subscrição renova anualmente, a contar de hoje.',
+    invoices: 'Pode consultar e descarregar as suas faturas em Conta, no painel.',
     noCommitment: 'Sem permanência. Pode cancelar a subscrição a partir do painel quando quiser.',
 
     telmaNumberLabel: 'O número da Telma',
     telmaNumberKeep:
       'Este é o número para o qual serão desviadas as chamadas atendidas pela Telma. O número habitual da sua clínica não muda e continuará a ser o seu número de contacto.',
     telmaNumberNew:
-      'Este é o número da sua clínica. A Telma atende nele assim que a activar no painel.',
+      'Este é o número da sua clínica. A Telma atende nele assim que a ativar no painel.',
     numberPendingLabel: 'A sua linha',
     numberPendingBody:
-      'Estamos a activá-la junto da operadora. Costuma demorar entre um e cinco dias úteis e avisamos por email assim que estiver pronta.',
+      'Estamos a ativá-la junto da operadora e avisamos por email assim que estiver pronta.',
 
     accessLabel: 'Acesso ao painel',
     accessEmail: 'Email',
@@ -184,44 +189,44 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     stepsLabel: 'O que acontece a seguir',
     stepsKeep: [
       { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
-      { title: 'Active a Telma', body: 'Quando terminar, o painel indica que está pronta para começar a atender.' },
-      { title: 'Desvie as suas chamadas', body: 'Encontrará no painel os códigos necessários, já preparados para o seu número.' },
+      { title: 'Ative a Telma', body: 'Quando terminar, o painel indica que está pronta para começar a atender.' },
+      { title: 'Desvie as suas chamadas', body: 'Consulte no painel as instruções de desvio para a sua linha.' },
     ],
     stepsNew: [
       { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
-      { title: 'Active a Telma', body: 'O painel indica quando está pronta para começar a atender.' },
+      { title: 'Ative a Telma', body: 'O painel indica quando está pronta para começar a atender.' },
       { title: 'Comece a usar o seu número', body: 'Pode acrescentá-lo ao site, ao Google, aos cartões e aos restantes contactos.' },
     ],
     stepsPendingKeep: [
       { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
-      { title: 'Deixe a Telma preparada', body: 'Pode concluir toda a configuração enquanto activamos a sua linha.' },
-      { title: 'Active o desvio', body: 'Quando a linha estiver pronta, avisamos. Os códigos ficam à sua espera no painel.' },
+      { title: 'Deixe a Telma preparada', body: 'Pode concluir toda a configuração enquanto ativamos a sua linha.' },
+      { title: 'Ative o desvio', body: 'Quando a linha estiver pronta, avisamos. As instruções de desvio estão no painel.' },
     ],
     stepsPendingNew: [
       { title: 'Configure a sua clínica', body: 'Adicione os horários, serviços e idiomas. Demora apenas alguns minutos.' },
-      { title: 'Deixe a Telma preparada', body: 'Pode concluir toda a configuração enquanto activamos a sua linha.' },
+      { title: 'Deixe a Telma preparada', body: 'Pode concluir toda a configuração enquanto ativamos a sua linha.' },
       { title: 'Comece a usar o número', body: 'Quando estiver pronto, avisamos por email para o poder divulgar.' },
     ],
 
-    readySubject: (c) => `O serviço da ${c} já está activo`,
-    readyHeading: 'O seu serviço já está activo.',
+    readySubject: (c) => `O serviço da ${c} já está ativo`,
+    readyHeading: 'O seu serviço já está ativo',
     readyLeadKeep:
-      'A linha da Telma está pronta. O número habitual da sua clínica não muda: falta apenas indicar à sua operadora que lhe passe as chamadas que não conseguir atender.',
+      'A linha da Telma está pronta. O número habitual da sua clínica não muda. Falta apenas configurar o desvio das chamadas que quer que a Telma atenda.',
     readyLeadNew:
-      'O número da sua clínica está pronto. A Telma atende nele assim que a activar no painel.',
+      'O número da sua clínica está pronto. A Telma atende nele assim que a ativar no painel.',
     readyStepsLabel: 'O que falta',
     readyStepsKeep: [
-      { title: 'Active a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
-      { title: 'Marque os códigos', body: 'Encontra-os no painel, já preparados para este número.' },
-      { title: 'Faça uma chamada', body: 'Ligue para o número da clínica e ouça-a atender.' },
+      { title: 'Ative a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
+      { title: 'Configure o desvio', body: 'Consulte no painel as instruções de desvio para a sua linha.' },
+      { title: 'Faça uma chamada', body: 'Ligue para o número habitual da clínica e confirme que a Telma atende quando deve.' },
     ],
     readyStepsNew: [
-      { title: 'Active a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
+      { title: 'Ative a Telma', body: 'Se ainda não o fez. O painel indica quando está pronta.' },
       { title: 'Comece a usar o número', body: 'No site, no Google, nos cartões e nos restantes contactos.' },
-      { title: 'Faça uma chamada', body: 'Ligue para o número e ouça-a atender.' },
+      { title: 'Faça uma chamada', body: 'Ligue para o novo número e confirme que a Telma atende corretamente.' },
     ],
 
-    support: 'Qualquer dúvida, responda a este email. Lê-o uma pessoa.',
+    support: 'Se tiver alguma dúvida, responda a este email. A nossa equipa ajuda-o.',
     footer:
       'Recebeu este email porque inscreveu a sua clínica na Telma. Se não foi você, responda a esta mensagem e tratamos disso.',
     footerTagline: 'A Telma atende quando ninguém pode.',
@@ -229,22 +234,24 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
   },
   es: {
     subjectReady: (c) => `Suscripción confirmada — ${c}`,
-    subjectPending: (c) => `Suscripción confirmada — ${c}`,
-    heading: 'Su suscripción está confirmada.',
+    subjectPending: (c) => `Hemos recibido el alta de ${c}`,
+    heading: 'Su suscripción está confirmada',
+    headingPending: 'Hemos recibido su alta',
     leadReady:
-      'Estamos activando la línea de su clínica. El proceso suele tardar entre uno y cinco días laborables y le avisaremos por email en cuanto esté lista. Mientras tanto, su panel ya está disponible: puede configurar a Telma y dejarla preparada para atender desde el primer día.',
+      'Estamos activando la línea de la clínica y le avisaremos por email en cuanto esté lista. Mientras tanto, ya puede configurar Telma en el panel.',
     leadPending:
-      'Estamos activando la línea de su clínica. En cuanto se confirme el pago y la línea esté lista, le avisaremos por email. Mientras tanto, su panel ya está disponible: puede configurar a Telma y dejarla preparada para atender desde el primer día.',
+      'Su panel ya está disponible para que pueda configurar Telma. Le avisaremos por email en cuanto la línea de la clínica esté lista.',
 
     planLabel: 'Su plan',
     whatsapp: 'WhatsApp',
     perMonth: '/mes',
     perYear: '/año',
+    subtotalLabel: 'Subtotal',
     totalLabel: 'Total',
     taxExcluded: 'más IVA',
-    billingMonthly: 'El cobro se realiza cada mes por el mismo importe, a partir de hoy.',
-    billingAnnual: 'El cobro se realiza cada año por el mismo importe, a partir de hoy.',
-    invoices: 'Puede consultar y descargar sus facturas desde Cuenta, en el panel.',
+    billingMonthly: 'La suscripción se renueva mensualmente a partir de hoy.',
+    billingAnnual: 'La suscripción se renueva anualmente a partir de hoy.',
+    invoices: 'Puede consultar y descargar sus facturas en Cuenta, dentro del panel.',
     noCommitment: 'Sin permanencia. Puede cancelar su suscripción desde el panel cuando quiera.',
 
     telmaNumberLabel: 'El número de Telma',
@@ -254,7 +261,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
       'Este es el número de su clínica. Telma contesta en él en cuanto la active en el panel.',
     numberPendingLabel: 'Su línea',
     numberPendingBody:
-      'La estamos activando con la operadora. Suele tardar entre uno y cinco días laborables y le avisaremos por email en cuanto esté lista.',
+      'La estamos activando con la operadora y le avisaremos por email en cuanto esté lista.',
 
     accessLabel: 'Acceso al panel',
     accessEmail: 'Email',
@@ -267,7 +274,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     stepsKeep: [
       { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
       { title: 'Active a Telma', body: 'Cuando haya terminado, el panel le indicará que está lista para empezar a atender.' },
-      { title: 'Desvíe sus llamadas', body: 'Encontrará en el panel los códigos necesarios, ya preparados para su número.' },
+      { title: 'Desvíe sus llamadas', body: 'Consulte en el panel las instrucciones de desvío para su línea.' },
     ],
     stepsNew: [
       { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
@@ -277,7 +284,7 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     stepsPendingKeep: [
       { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
       { title: 'Deje a Telma preparada', body: 'Puede completar toda la configuración mientras activamos su línea.' },
-      { title: 'Active el desvío', body: 'Cuando la línea esté lista, le avisaremos. Los códigos le esperan en el panel.' },
+      { title: 'Active el desvío', body: 'Cuando la línea esté lista, le avisaremos. Las instrucciones de desvío están en el panel.' },
     ],
     stepsPendingNew: [
       { title: 'Configure su clínica', body: 'Añada sus horarios, servicios e idiomas. Solo le llevará unos minutos.' },
@@ -286,24 +293,24 @@ const EMAIL: Record<OnboardingLocale, EmailCopy> = {
     ],
 
     readySubject: (c) => `El servicio de ${c} ya está activo`,
-    readyHeading: 'Su servicio ya está activo.',
+    readyHeading: 'Su servicio ya está activo',
     readyLeadKeep:
-      'La línea de Telma ya está lista. Su número habitual no cambia: solo falta indicarle a su operadora que le pase las llamadas que usted no pueda atender.',
+      'La línea de Telma ya está lista. El número habitual de su clínica no cambia. Solo falta configurar el desvío de las llamadas que quiere que atienda Telma.',
     readyLeadNew:
       'El número de su clínica ya está listo. Telma contesta en él en cuanto la active en el panel.',
     readyStepsLabel: 'Lo que falta',
     readyStepsKeep: [
       { title: 'Active a Telma', body: 'Si aún no lo ha hecho. El panel le indica cuándo está lista.' },
-      { title: 'Marque los códigos', body: 'Los encontrará en el panel, ya preparados para este número.' },
-      { title: 'Haga una llamada', body: 'Llame al número de su clínica y escúchela contestar.' },
+      { title: 'Configure el desvío', body: 'Consulte en el panel las instrucciones de desvío para su línea.' },
+      { title: 'Haga una llamada', body: 'Llame al número habitual de la clínica y compruebe que Telma contesta cuando corresponde.' },
     ],
     readyStepsNew: [
       { title: 'Active a Telma', body: 'Si aún no lo ha hecho. El panel le indica cuándo está lista.' },
       { title: 'Empiece a utilizar su número', body: 'En su web, en Google, en sus tarjetas y en el resto de canales.' },
-      { title: 'Haga una llamada', body: 'Llame al número y escúchela contestar.' },
+      { title: 'Haga una llamada', body: 'Llame al nuevo número y compruebe que Telma contesta correctamente.' },
     ],
 
-    support: 'Cualquier duda, responda a este email. Lo lee una persona.',
+    support: 'Si tiene alguna duda, responda a este email. Nuestro equipo le ayudará.',
     footer:
       'Ha recibido este email porque ha dado de alta su clínica en Telma. Si no ha sido usted, responda a este mensaje y lo resolvemos.',
     footerTagline: 'Telma atiende cuando nadie puede.',
@@ -465,6 +472,14 @@ function shell(o: {
 <html lang="${o.lang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only">
+<style>
+  /* Where media queries are read (Apple Mail, Gmail): the steps take the
+     full width once stacked. Elsewhere they still stack, at a third. */
+  @media only screen and (max-width: 520px) {
+    .tl-step { display: block !important; max-width: 100% !important; }
+    .tl-step-in { padding: 0 0 22px 0 !important; }
+  }
+</style>
 <title>${escapeHtml(o.title)}</title></head>
 <body style="margin:0;padding:0;background:${SUNKEN};font-family:${SANS};color:${INK};-webkit-font-smoothing:antialiased">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(o.preheader)}</div>
@@ -516,23 +531,32 @@ ${o.body}
 </body></html>`
 }
 
-/** The three steps, in a row under macaw rules. */
+/**
+ * The three steps, in a row under macaw rules on a wide screen and one under
+ * the other on a narrow one.
+ *
+ * Inline blocks a third of the width, so a screen too narrow for three wraps
+ * them onto their own lines without needing a media query; the query in the
+ * head then lets them take the full width where it is read. Outlook on the
+ * desktop ignores both and gets a three-cell table instead.
+ */
 function stepsBlock(label: string, steps: Array<{ title: string; body: string }>): string {
+  const cell = (step: { title: string; body: string }, i: number) => `<div class="tl-step" style="display:inline-block;width:100%;max-width:170px;vertical-align:top">
+                <div class="tl-step-in" style="padding:0 ${i === steps.length - 1 ? '0' : '14px'} 0 0">
+                  <div style="height:3px;background:${MACAW};border-radius:2px;font-size:0;line-height:0">&nbsp;</div>
+                  <p style="margin:10px 0 0;font-size:12px;line-height:1.4;font-weight:600;font-family:${MONO};color:${INK_MUTE}">0${i + 1}</p>
+                  <p style="margin:5px 0 0;font-size:15px;font-weight:600;line-height:1.35;color:${INK}">${escapeHtml(step.title)}</p>
+                  <p style="margin:3px 0 0;font-size:14px;line-height:1.5;color:${INK_SOFT}">${escapeHtml(step.body)}</p>
+                </div>
+              </div>`
   return `        <tr><td style="padding:34px 24px 0">
           <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(label)}</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              ${steps
-                .map(
-                  (step, i) => `<td width="33%" style="padding:0 ${i === 2 ? '0' : '14px'} 0 0;vertical-align:top">
-                <div style="height:3px;background:${MACAW};border-radius:2px"></div>
-                <p style="margin:10px 0 0;font-size:12px;font-weight:600;font-family:${MONO};color:${INK_MUTE}">0${i + 1}</p>
-                <p style="margin:5px 0 0;font-size:15px;font-weight:600;line-height:1.35;color:${INK}">${escapeHtml(step.title)}</p>
-                <p style="margin:3px 0 0;font-size:14px;line-height:1.5;color:${INK_SOFT}">${escapeHtml(step.body)}</p>
-              </td>`
-                )
-                .join('\n              ')}
-            </tr>
+            <tr><td style="font-size:0;line-height:0;text-align:left">
+              <!--[if mso]><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="33%" valign="top"><![endif]-->
+              ${steps.map(cell).join('\n              <!--[if mso]></td><td width="33%" valign="top"><![endif]-->\n              ')}
+              <!--[if mso]></td></tr></table><![endif]-->
+            </td></tr>
           </table>
         </td></tr>`
 }
@@ -559,6 +583,20 @@ export function welcomeHtml(p: WelcomeEmail): string {
                   <td align="right" style="padding:5px 0;font-size:15px;color:${INK}">${value}</td>
                 </tr>`
 
+  // Subtotal and tax on their own rows whenever a rate was applied, so the
+  // lines above add up to the total below. Same figures the total is made
+  // of (checkout-quote.ts): nothing here is recomputed.
+  const taxed = Boolean(p.summary && p.summary.taxPercentage)
+  const taxRows = taxed
+    ? [
+        row(t.subtotalLabel, `${money(p.summary!.subtotal, p.summary!.currency, p.locale)}${escapeHtml(per)}`),
+        row(
+          `IVA ${p.summary!.taxPercentage}%`,
+          `${money(p.summary!.taxAmount, p.summary!.currency, p.locale)}${escapeHtml(per)}`
+        ),
+      ].join('\n                ')
+    : ''
+
   const plan = p.summary
     ? `<tr><td style="padding:18px 20px">
               <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${INK_MUTE}">${escapeHtml(t.planLabel)}</p>
@@ -569,18 +607,25 @@ export function welcomeHtml(p: WelcomeEmail): string {
                   )
                   .join('\n                ')}
                 <tr><td colspan="2" style="padding:8px 0 0"><div style="height:1px;background:${LINE}"></div></td></tr>
+                ${taxRows}
                 <tr>
                   <td style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${escapeHtml(t.totalLabel)}</td>
                   <td align="right" style="padding:10px 0 0;font-size:16px;font-weight:600;color:${INK}">${money(p.summary.total, p.summary.currency, p.locale)}${escapeHtml(per)}${
-                    p.summary.taxPercentage === null || p.summary.taxPercentage === 0
+                    // Only when the rate is not known yet. At 0% nothing is added
+                    // on top, and saying so would be false.
+                    p.summary.taxPercentage === null
                       ? ` <span style="font-weight:400;font-size:13px;color:${INK_MUTE}">${escapeHtml(t.taxExcluded)}</span>`
                       : ''
                   }</td>
                 </tr>
               </table>
-              <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(
-                p.summary.cycle === 'annual' ? t.billingAnnual : t.billingMonthly
-              )} ${escapeHtml(t.invoices)}<br>${escapeHtml(t.noCommitment)}</p>
+              ${
+                p.pendingPayment
+                  ? ''
+                  : `<p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:${INK_MUTE}">${escapeHtml(
+                      p.summary.cycle === 'annual' ? t.billingAnnual : t.billingMonthly
+                    )} ${escapeHtml(t.invoices)}<br>${escapeHtml(t.noCommitment)}</p>`
+              }
             </td></tr>
             <tr><td style="padding:0 20px"><div style="height:1px;background:${LINE}"></div></td></tr>`
     : ''
@@ -604,7 +649,7 @@ export function welcomeHtml(p: WelcomeEmail): string {
     lang: t.htmlLang,
     title: p.clinicName,
     preheader: lead,
-    heading: t.heading,
+    heading: p.pendingPayment ? t.headingPending : t.heading,
     footer: t.footer,
     tagline: t.footerTagline,
     support: t.support,
@@ -648,7 +693,7 @@ export function welcomeText(p: WelcomeEmail): string {
       : t.stepsPendingNew
 
   return [
-    t.heading,
+    p.pendingPayment ? t.headingPending : t.heading,
     '',
     p.pendingPayment ? t.leadPending : t.leadReady,
     ...(p.summary
@@ -658,10 +703,22 @@ export function welcomeText(p: WelcomeEmail): string {
           ...p.summary.lines.map(
             (l) => `  ${l.label}: ${money(l.amount, p.summary!.currency, p.locale)}${per}`
           ),
+          ...(p.summary.taxPercentage
+            ? [
+                `  ${t.subtotalLabel}: ${money(p.summary.subtotal, p.summary.currency, p.locale)}${per}`,
+                `  IVA ${p.summary.taxPercentage}%: ${money(p.summary.taxAmount, p.summary.currency, p.locale)}${per}`,
+              ]
+            : []),
           `  ${t.totalLabel}: ${money(p.summary.total, p.summary.currency, p.locale)}${per}`,
-          `  ${p.summary.cycle === 'annual' ? t.billingAnnual : t.billingMonthly}`,
-          `  ${t.invoices}`,
-          `  ${t.noCommitment}`,
+          // Not before the payment exists: nothing renews and there is no
+          // invoice yet.
+          ...(p.pendingPayment
+            ? []
+            : [
+                `  ${p.summary.cycle === 'annual' ? t.billingAnnual : t.billingMonthly}`,
+                `  ${t.invoices}`,
+                `  ${t.noCommitment}`,
+              ]),
         ]
       : []),
     '',

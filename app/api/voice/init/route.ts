@@ -348,21 +348,24 @@ async function clinicByCallSid(callSid: unknown): Promise<string | null> {
   }
 }
 
+/**
+ * Whose clinic a call dialled straight at a Telma line is.
+ *
+ * Only reached when there was no forward to read, so the number dialled is the
+ * entire evidence. On a line a clinic has to itself that is enough and always
+ * was. On the shared line it is not: several clinics answer there, and the one
+ * the caller meant is whichever declared itself the owner of direct calls.
+ *
+ * Null when nobody has. Guessing would book a patient into another clinic's
+ * diary, and the agent's own fallback -- take a message -- is a better wrong
+ * answer than a confident one. The rule is a unique index, not a convention:
+ * see 0059.
+ */
 async function clinicIdByPhone(raw: string): Promise<string | null> {
-  const digits = raw.replace(/[^\d]/g, '')
-  if (digits.length < 8) return null
-  const candidates = digits.startsWith('00') ? [digits.slice(2), digits] : [digits, `00${digits}`]
-
+  if (raw.replace(/[^\d]/g, '').length < 8) return null
   const admin = createAdminClient()
-  for (const candidate of candidates) {
-    const { data } = await admin
-      .from('clinics')
-      .select('id')
-      .eq('assigned_phone_digits', candidate)
-      .maybeSingle()
-    if (data?.id) return data.id as string
-  }
-  return null
+  const { data } = await admin.rpc('clinic_by_dialled_number', { p_number: raw })
+  return (data as string | null) ?? null
 }
 
 async function openingHours(

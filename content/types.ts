@@ -200,6 +200,9 @@ export interface Dictionary {
     activate: string
     activating: string
     activateFailed: string
+    /** The one refusal that is not the clinic's fault and is not worth
+     *  retrying: the number is not live yet. */
+    activateNoNumber: string
     hoursAlready: string
     saveFailed: string
     tooManyLanguages: string
@@ -253,8 +256,12 @@ export interface Dictionary {
     activate: string
     activating: string
     notYet: string
+    /** Beside the one step that is not the clinic's to do. The number is
+     *  ordered by us and in Portugal it takes days, so the list says so
+     *  instead of offering a link to nowhere. */
+    waitingNumber: string
     failed: string
-    steps: { hours: string; services: string }
+    steps: { hours: string; services: string; number: string }
     /** Shown only to a clinic that kept its own number: the forward comes
      *  after activation, and this screen has to say so. */
     thenForward: string

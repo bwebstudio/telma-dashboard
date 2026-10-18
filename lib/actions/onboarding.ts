@@ -11,7 +11,9 @@ import {
   regionLabel,
   SPECIALTY_LABEL,
   TIMEZONE,
+  SIGNUP_PLANS,
   type Specialty,
+  WHATSAPP_ON_SALE,
 } from '@/lib/onboarding/catalog'
 import { copyFor } from '@/lib/onboarding/copy'
 import { planFits, type LanguageOption } from '@/lib/onboarding/languages'
@@ -35,6 +37,7 @@ import {
 import {
   provisionTwilioNumber,
   releaseTwilioNumber,
+  sharedLineFor,
   type ProvisionedNumber,
 } from '@/lib/onboarding/twilio-provisioner'
 import { agentId } from '@/lib/onboarding/elevenlabs'
@@ -297,9 +300,32 @@ export async function completeOnboarding(
     // operator: a local number in its own province is a national call and
     // usually inside a business tariff, and one bought in another country is
     // an international call per patient.
-    provisioned = await provisionTwilioNumber(
-      wizard.phone_option === 'new' ? wizard.area_region : wizard.region
-    )
+    // ── AND KEEPING YOUR OWN NUMBER NEEDS NO NUMBER BOUGHT ───────────────
+    // Nobody dials this line: it is the hidden end of the clinic's forward,
+    // and the forward carries the number it came from, so one line can serve
+    // every clinic that keeps its own. Buying one each was a number per
+    // clinic in the country where numbers are hardest to get, for nothing.
+    //
+    // It matters right now and not in theory: Twilio's inventory on this
+    // account covers 52 countries and neither Portugal nor Spain is among
+    // them, so the alternative is not a slower number, it is a placeholder
+    // that looks real, a forwarding card pointing at nothing, and a clinic
+    // that finds out from a patient.
+    const shared =
+      wizard.phone_option === 'keep'
+        ? await sharedLineFor(countryOfRegion(wizard.region))
+        : null
+
+    provisioned =
+      shared ??
+      // The region comes from the clinic itself when it is not buying a
+      // public number, because the forwarded leg is billed to the clinic by
+      // its own operator: a local number in its own province is a national
+      // call and usually inside a business tariff, and one bought in another
+      // country is an international call per patient.
+      (await provisionTwilioNumber(
+        wizard.phone_option === 'new' ? wizard.area_region : wizard.region
+      ))
 
     const assignedPhone = provisioned.number
 
@@ -337,9 +363,9 @@ export async function completeOnboarding(
         // is one of these, sold exactly like WhatsApp.
         // Languages are no longer add-ons: they are included, up to the number
         // the plan allows, and live in their own column.
-        active_addons: wizard.addon_whatsapp ? ['whatsapp'] : [],
+        active_addons: wizard.addon_whatsapp && WHATSAPP_ON_SALE ? ['whatsapp'] : [],
         selected_languages: chosenLanguages,
-        addon_whatsapp: Boolean(wizard.addon_whatsapp),
+        addon_whatsapp: Boolean(wizard.addon_whatsapp) && WHATSAPP_ON_SALE,
         specialty: wizard.specialty,
         region: wizard.region,
         services: wizard.services ?? [],
@@ -381,6 +407,11 @@ export async function completeOnboarding(
         assigned_phone: assignedPhone,
         phone_source: wizard.phone_option === 'new' ? 'provisioned' : 'ported',
         phone_provider_ref: provisioned?.sid ?? null,
+        // On the shared line, and not the clinic a direct call belongs to:
+        // that one is declared, once, and the database holds it to one. A
+        // sign-up never claims it. See 0059.
+        assigned_phone_shared: Boolean(shared),
+        answers_direct_calls: false,
         porting_details:
           wizard.phone_option === 'keep'
             ? {
@@ -573,6 +604,7 @@ export async function completeOnboarding(
       // The region the clinic picked decides the VAT treatment, so the country
       // is derived from it rather than asked for a second time.
       country: countryOfRegion(wizard.region),
+      locale,
       successUrl: `${dashboardUrl}/inscricao/obrigado?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${dashboardUrl}/inscricao?retomar=1`,
     })
@@ -744,7 +776,9 @@ async function rollback(
       /* the cascade takes the slots and the log with it, or nothing does */
     }
   }
-  if (provisioned && !provisioned.demo) {
+  // Not the shared line. It was never bought for this clinic and giving it
+  // back would delete the only number every other clinic forwards to.
+  if (provisioned && !provisioned.demo && !provisioned.shared) {
     try {
       await releaseTwilioNumber(provisioned.sid)
     } catch {
@@ -806,7 +840,7 @@ function lookupKeysFor(
 ): string[] {
   if (plan === 'personalizado') return []
   const keys = [`${plan}_${cycle}`]
-  if (whatsapp) keys.push(`whatsapp_${cycle}`)
+  if (whatsapp && WHATSAPP_ON_SALE) keys.push(`whatsapp_${cycle}`)
   return keys
 }
 
@@ -877,14 +911,19 @@ export async function signupPlans(): Promise<
     maxLanguages: number | null
   }>
 > {
-  const fallback = (['essencial', 'clinica', 'rede'] as PlanType[]).map((id) => ({
+  // What the form offers, which since Rede left is not everything the `plans`
+  // table prices. One list, so putting Rede back is one line in catalog.ts.
+  const fallback = ([...SIGNUP_PLANS] as PlanType[]).map((id) => ({
     id,
     name: id === 'essencial' ? 'Essencial' : id === 'clinica' ? 'Clínica' : 'Rede',
     description: null,
     monthly: PLAN_PRICE[id],
-    annual: PLAN_PRICE[id] === null ? null : (PLAN_PRICE[id] as number) * 11,
+    // Ten months: what the Stripe annual prices charge, what the site shows
+    // and what "two months free" promises. It said eleven.
+    annual: PLAN_PRICE[id] === null ? null : (PLAN_PRICE[id] as number) * 10,
     minutes: PLAN_MINUTES[id],
-    locations: id === 'essencial' ? 1 : 3,
+    // Only Rede is sold for more than one location (0055).
+    locations: id === 'rede' ? 3 : 1,
     // One, two, three, matching 0054. Repeated only for the demo, which has
     // no `plans` table to read it from. It said 2 / 3 / 4 until the ceilings
     // were corrected and nothing pointed here, which is what a fallback does
@@ -898,7 +937,7 @@ export async function signupPlans(): Promise<
   const { data } = await admin
     .from('plans')
     .select('id, name, description, price_monthly_eur, price_annual_eur, max_minutes_per_month, max_locations, max_languages_included')
-    .in('id', ['essencial', 'clinica', 'rede'])
+    .in('id', [...SIGNUP_PLANS])
 
   if (!data?.length) return fallback
 
@@ -916,7 +955,7 @@ export async function signupPlans(): Promise<
     max_languages_included: number | null
   }
 
-  const order: PlanType[] = ['essencial', 'clinica', 'rede']
+  const order: PlanType[] = [...SIGNUP_PLANS] as PlanType[]
   return (data as PlanRow[])
     .map((p) => ({
       id: p.id as PlanType,

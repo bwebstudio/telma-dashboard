@@ -219,8 +219,12 @@ export interface Dictionary {
     next: string
     done: string
     step: string
+    /** The last stop is not a place in the sidebar. The password everybody
+     *  starts with was emailed to them, and the only moment they are certain
+     *  to be looking is the first minute in the panel. */
+    changePassword: string
     steps: Record<
-      'hoje' | 'marcacoes' | 'conversas' | 'horarios' | 'telma',
+      'hoje' | 'marcacoes' | 'conversas' | 'horarios' | 'telma' | 'password',
       { title: string; body: string }
     >
   }

@@ -29,8 +29,27 @@ import { markWelcomed } from '@/lib/actions/welcome'
  * tomorrow is the product arguing with them.
  */
 
-const STEP_IDS = ['hoje', 'marcacoes', 'conversas', 'horarios', 'telma'] as const
-type StepId = (typeof STEP_IDS)[number]
+// The five places in the sidebar, each with a `data-tour` attribute to point
+// at, and then one stop that is not a place at all.
+const NAV_IDS = ['hoje', 'marcacoes', 'conversas', 'horarios', 'telma'] as const
+
+/**
+ * The last card: change the password you were emailed.
+ *
+ * It has nothing to highlight, which is why it is kept apart from the five
+ * above rather than added to them: `measure` finds no element, the bubble
+ * falls back to its own position, and the card carries a link instead of a
+ * "next". The moment is chosen rather than convenient -- the first minute in
+ * the panel is the one time somebody is certainly looking, and the password
+ * they are using arrived in an email and is still sitting in that inbox.
+ */
+const PASSWORD_STEP = 'password' as const
+
+/** Where it is actually changed. Not described in the copy: the button goes
+ *  there, so nobody has to remember a path. */
+const PASSWORD_URL = '/nova-palavra-passe'
+
+type StepId = (typeof NAV_IDS)[number] | typeof PASSWORD_STEP
 
 interface Box {
   top: number
@@ -58,7 +77,13 @@ export function WelcomeTour({ dict, clinicName }: { dict: Dictionary; clinicName
   // screens.
   useEffect(() => {
     setMounted(true)
-    setSteps(STEP_IDS.filter((id) => document.querySelector(`[data-tour="${id}"]`)))
+    setSteps([
+      ...NAV_IDS.filter((id) => document.querySelector(`[data-tour="${id}"]`)),
+      // Always. On a phone the sidebar is not on screen and the five stops
+      // above drop out, which used to leave no tour at all; the password is
+      // worth one card on its own.
+      PASSWORD_STEP,
+    ])
   }, [])
 
   /** Remembered once, whether they walked it or left on the first card. */
@@ -189,20 +214,43 @@ export function WelcomeTour({ dict, clinicName }: { dict: Dictionary; clinicName
               {t.steps[steps[at]].body}
             </p>
             <div className="mt-4 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={next}
-                className="btn-primary min-h-0 px-4 py-2 text-sm"
-              >
-                {at + 1 >= steps.length ? t.done : t.next}
-              </button>
-              <button
-                type="button"
-                onClick={finish}
-                className="btn-ghost min-h-0 px-2 py-2 text-sm"
-              >
-                {t.skip}
-              </button>
+              {steps[at] === PASSWORD_STEP ? (
+                <>
+                  {/* Marked welcomed before leaving, or the tour is waiting
+                      again on the other side of changing the password. */}
+                  <a
+                    href={PASSWORD_URL}
+                    onClick={finish}
+                    className="btn-primary min-h-0 px-4 py-2 text-sm"
+                  >
+                    {t.changePassword}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={finish}
+                    className="btn-ghost min-h-0 px-2 py-2 text-sm"
+                  >
+                    {t.done}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={next}
+                    className="btn-primary min-h-0 px-4 py-2 text-sm"
+                  >
+                    {t.next}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={finish}
+                    className="btn-ghost min-h-0 px-2 py-2 text-sm"
+                  >
+                    {t.skip}
+                  </button>
+                </>
+              )}
             </div>
           </Bubble>
         </>

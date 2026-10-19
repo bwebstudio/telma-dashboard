@@ -502,6 +502,9 @@ export const pt: Dictionary = {
   },
   conta: {
     title: 'A minha clínica',
+    accessTitle: 'Acesso',
+    accessHelp: 'A palavra-passe com que entra no painel. Se ainda usa a temporária que lhe enviámos por email, altere-a.',
+    changePassword: 'Alterar palavra-passe',
     clinicData: 'Dados da clínica',
     plan: 'Plano',
     addon: 'Telma no WhatsApp',

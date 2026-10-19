@@ -500,6 +500,9 @@ export const es: Dictionary = {
   },
   conta: {
     title: 'Mi clínica',
+    accessTitle: 'Acceso',
+    accessHelp: 'La contraseña con la que entra en el panel. Si todavía usa la temporal que le enviamos por email, cámbiela.',
+    changePassword: 'Cambiar contraseña',
     clinicData: 'Datos de la clínica',
     plan: 'Plan',
     addon: 'Telma en WhatsApp',

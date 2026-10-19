@@ -275,6 +275,16 @@ export async function createCheckoutSession(opts: {
   priceIds: string[]
   /** Decides the VAT treatment. Comes from the clinic's region. */
   country: 'PT' | 'ES'
+  /**
+   * Days before the first charge. Zero for everybody except a clinic that
+   * arrived through an implementation link.
+   *
+   * Not a discount and deliberately not written as one: the invoice simply
+   * starts a week later, with no line saying somebody was given something.
+   * Stripe still takes the card now, so the first charge goes out by itself
+   * and nobody has to chase a clinic on the seventh day.
+   */
+  trialDays?: number
   /** The language the sign-up was read in. Only the page's language: it
    *  changes no amount and no tax. */
   locale: 'pt' | 'es'
@@ -310,6 +320,11 @@ export async function createCheckoutSession(opts: {
     'metadata[plan]': opts.plan,
     'metadata[billing_cycle]': opts.billingCycle,
     'subscription_data[metadata][clinic_id]': opts.clinicId,
+    // The promotion code box on Stripe's own page. Ours to switch on, theirs
+    // to render, validate and total up: a code typed into our form would have
+    // to be re-checked here anyway, and the figure the reader needs to see is
+    // the one on the page where the card goes in.
+    allow_promotion_codes: 'true',
   })
 
   // ── TWO WAYS TO WORK OUT THE TAX, AND ONLY ONE OF THEM CHECKS THE NIF ──
@@ -324,6 +339,10 @@ export async function createCheckoutSession(opts: {
   // 0.5% of what it processes, so it is a decision and not a default: unset,
   // nothing changes. Turn it on in Stripe first -- Settings, Tax, with a
   // Portuguese registration -- or every session is refused.
+  if (opts.trialDays && opts.trialDays > 0) {
+    form.set('subscription_data[trial_period_days]', String(Math.floor(opts.trialDays)))
+  }
+
   if (automaticTax()) {
     form.set('automatic_tax[enabled]', 'true')
     // Stripe needs the address to decide, and the clinic's own country to

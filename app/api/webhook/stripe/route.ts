@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { PLAN_PRICE } from '@/lib/plans'
 import type { PlanType } from '@/lib/types'
 import { verifyWebhookSignature } from '@/lib/onboarding/stripe-client'
 
@@ -71,6 +70,9 @@ export async function POST(request: Request) {
             stripe_customer_id: (object.customer as string) ?? null,
             stripe_subscription_id: (object.subscription as string) ?? null,
             billing_cycle: cycle,
+            // A guess until the invoice says otherwise. With a week of
+            // implementation in front of it this is a week short, and the
+            // invoice event below corrects it with Stripe's own period end.
             plan_renews_at: renewalDate(cycle),
           })
           .eq('id', clinicId)
@@ -96,21 +98,37 @@ export async function POST(request: Request) {
           .eq('id', clinicId)
           .eq('status', 'pausada')
 
-        // The receipt, in our own table. Stripe has the authoritative copy; this
-        // is the one the clinic's own billing screen reads, and it must exist
-        // whether or not anyone can reach Stripe's dashboard.
-        const amount =
-          typeof object.amount_total === 'number'
-            ? object.amount_total / 100
-            : (PLAN_PRICE[plan] ?? 0)
+        // ── THE RECEIPT MOVED ────────────────────────────────────────
+        // It used to be written here, because finishing the checkout and
+        // being charged were the same moment. They are not any more: a
+        // clinic on an implementation week finishes now and pays in seven
+        // days, and the session's total today is zero. A purchase row
+        // written here would say 0 EUR and the real charge would never
+        // appear at all, because nothing was listening for it.
+        //
+        // So the receipt is written where the money is: in
+        // `invoice.payment_succeeded`, which also means a renewal finally
+        // shows up in the clinic's own billing history. It never did.
+        break
+      }
 
-        // ── THE SAME EVENT, TWICE ──────────────────────────────────────
-        // Stripe delivers at least once, so this handler has to be able to
-        // run twice on one payment. It could not: a redelivered event wrote
-        // a second `purchases` row and the clinic's billing screen showed
-        // the same 249 EUR charged twice. 0062 made the invoice line unique
-        // and this asks for the row back, so the one that lost the race
-        // writes nothing and says nothing.
+      case 'invoice.payment_succeeded': {
+        // Money, actually. Not the end of a checkout, which is a different
+        // moment and since the implementation week not even the same day.
+        //
+        // Idempotent by the invoice: 0062 made (clinic, invoice, item)
+        // unique and the upsert asks for the row back, so a redelivered
+        // event writes nothing and logs nothing. Webhooks arrive at least
+        // once and this is the table with the money in it.
+        const plan = (metadata.plan || 'essencial') as PlanType
+        const paid = typeof object.amount_paid === 'number' ? object.amount_paid / 100 : 0
+
+        // Nothing was charged: the first invoice of a subscription that
+        // starts with an implementation week is zero and is not a receipt.
+        if (paid <= 0) {
+          return NextResponse.json({ received: true, ignored: 'zero_invoice' })
+        }
+
         const { data: written } = await admin
           .from('purchases')
           .upsert(
@@ -120,28 +138,43 @@ export async function POST(request: Request) {
               item_id: plan,
               item_name: `Plano ${plan}`,
               quantity: 1,
-              unit_price_eur: amount,
-              total_price_eur: amount,
-              final_price_eur: amount,
+              unit_price_eur: paid,
+              total_price_eur: paid,
+              final_price_eur: paid,
               payment_method: 'stripe',
               payment_status: 'completed',
-              stripe_invoice_id: (object.invoice as string) ?? null,
+              stripe_invoice_id: (object.id as string) ?? null,
             },
             { onConflict: 'clinic_id,stripe_invoice_id,item_id', ignoreDuplicates: true }
           )
           .select('id')
 
-        // Only for the delivery that actually recorded it. A clinic reading
-        // its own activity should not see its first payment confirmed twice.
+        // Stripe's own period end, rather than a month counted from today.
+        // With a week in front of it, counting from today is a week wrong,
+        // and the panel shows this date to the clinic.
+        const periodEnd =
+          typeof (object as { period_end?: unknown }).period_end === 'number'
+            ? new Date((object.period_end as number) * 1000).toISOString().slice(0, 10)
+            : null
+        if (periodEnd) {
+          await admin.from('clinics').update({ plan_renews_at: periodEnd }).eq('id', clinicId)
+        }
+
+        // A clinic whose first charge lands after a week of implementation
+        // has been waiting in 'pausada' since it signed up. Same guard as
+        // the checkout: only from 'pausada', so a renewal cannot take a
+        // working clinic off the telephone.
+        await admin
+          .from('clinics')
+          .update({ status: 'por_configurar' })
+          .eq('id', clinicId)
+          .eq('status', 'pausada')
+
         if (written?.length) {
           await admin.from('activity_log').insert({
             clinic_id: clinicId,
             type: 'payment_received',
-            // Not "the clinic is active": it is 'por_configurar' at this
-            // point and stays there until the clinic itself activates Telma.
-            // Saying otherwise sent somebody looking for a line that was
-            // never going to ring yet.
-            message: `Primeiro pagamento confirmado.`,
+            message: `Pagamento de ${paid.toFixed(2)} € confirmado.`,
           })
         }
         break

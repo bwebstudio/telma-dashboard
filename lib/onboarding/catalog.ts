@@ -444,3 +444,27 @@ export const WHATSAPP_ON_SALE = false
  */
 export const NEW_NUMBERS_ON_SALE = false
 export type SignupPlan = (typeof SIGNUP_PLANS)[number]
+
+// The implementation week ---------------------------------------------------
+/**
+ * A week before the first charge, for a clinic we chose.
+ *
+ * Not a trial and not a discount. Setting a clinic up takes a few days of our
+ * time and theirs -- the hours, the services, the forward, a test call -- and
+ * charging for a week nobody could use yet is the kind of small unfairness a
+ * first customer remembers. The invoice simply starts seven days later, with
+ * no line on it saying anything was given away.
+ *
+ * Reached by a link rather than a box on the form: it is for clinics we pick,
+ * and a visible field would have to be explained to everybody who does not
+ * have a code. Domingos sends `/inscricao?implantacao=<code>` to that clinic
+ * and nobody else sees that anything exists.
+ *
+ * Checked on the server, where the answer cannot be edited in a browser.
+ */
+export const IMPLEMENTATION_CODE = 'SEMANA-TELMA'
+export const IMPLEMENTATION_DAYS = 7
+
+export function implementationDaysFor(code: string | null | undefined): number {
+  return (code ?? '').trim().toUpperCase() === IMPLEMENTATION_CODE ? IMPLEMENTATION_DAYS : 0
+}

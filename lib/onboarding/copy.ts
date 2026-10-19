@@ -39,6 +39,9 @@ export interface Copy {
   summaryForwardFrom: string
   summaryTotal: string
   summaryTotalNow: string
+  /** When an implementation week comes first, nothing is charged today
+   *  and the figure above is what starts a week later. */
+  summaryTrialNote: (days: number) => string
   summaryRenews: (cycle: string) => string
   summaryCancel: string
   summaryByArrangement: string
@@ -284,6 +287,8 @@ const pt: Copy = {
     'É deste número que vai desviar as chamadas, e é por ele que a Telma sabe que são da sua clínica. Confirme que está certo: se o desvio sair de outra linha, as chamadas chegam sem dizer de quem são. Pode voltar atrás e corrigi-lo agora.',
   summaryTotal: 'Total',
   summaryTotalNow: 'Total a pagar hoje',
+  summaryTrialNote: (d: number) =>
+    `Hoje não paga nada. A primeira cobrança é daqui a ${d} dias, depois da semana de implementação. O cartão fica guardado para isso.`,
   summaryRenews: (cycle) => `A subscrição renova ${cycle === 'annual' ? 'anualmente' : 'mensalmente'}.`,
   summaryCancel: 'Sem permanência. Pode cancelar quando quiser a partir do painel.',
   summaryByArrangement: 'Este plano requer um orçamento personalizado. Entraremos em contacto consigo depois da inscrição.',
@@ -531,6 +536,8 @@ const es: Copy = {
     'Es desde este número desde donde va a desviar las llamadas, y es por él como Telma sabe que son de su clínica. Confirme que es correcto: si el desvío sale de otra línea, las llamadas llegan sin decir de quién son. Puede volver atrás y corregirlo ahora.',
   summaryTotal: 'Total',
   summaryTotalNow: 'Total a pagar hoy',
+  summaryTrialNote: (d: number) =>
+    `Hoy no se cobra nada. El primer cargo es dentro de ${d} días, después de la semana de implementación. La tarjeta queda guardada para entonces.`,
   summaryRenews: (cycle) => `La suscripción se renueva ${cycle === 'annual' ? 'anualmente' : 'mensualmente'}.`,
   summaryCancel: 'Sin permanencia. Puede cancelar cuando quiera desde el panel.',
   summaryByArrangement: 'Este plan requiere un presupuesto personalizado. Nos pondremos en contacto con usted después del alta.',

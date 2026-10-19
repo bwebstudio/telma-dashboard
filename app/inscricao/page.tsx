@@ -23,9 +23,9 @@ export const dynamic = 'force-dynamic'
 export default async function InscricaoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plano?: string; lang?: string }>
+  searchParams: Promise<{ plano?: string; lang?: string; implantacao?: string }>
 }) {
-  const { plano, lang } = await searchParams
+  const { plano, lang, implantacao } = await searchParams
   // `?lang=` wins, then this browser's saved choice, then Accept-Language.
   const locale = await resolveOnboardingLocale(lang)
   const t = copyFor(locale)
@@ -52,9 +52,19 @@ export default async function InscricaoPage({
       {/* Above the title, because somebody reading a heading in a language they
           do not speak has already decided about this page by the time a switch
           further down would have reached them. */}
+      {/* The implementation code rides along: changing language reloads this
+          page, and losing it there would quietly take the week away from a
+          clinic that was promised one. */}
       <LocaleToggle
         locale={locale}
-        next={initialPlan ? `/inscricao?plano=${initialPlan}` : '/inscricao'}
+        next={`/inscricao${
+          [
+            initialPlan ? `plano=${initialPlan}` : '',
+            implantacao ? `implantacao=${encodeURIComponent(implantacao)}` : '',
+          ]
+            .filter(Boolean)
+            .reduce((q, part, i) => (i === 0 ? `?${part}` : `${q}&${part}`), '')
+        }`}
       />
 
       {/* No rule here. The step indicator under it is already a horizontal
@@ -65,6 +75,7 @@ export default async function InscricaoPage({
         plans={plans}
         demo={demo}
         initialPlan={initialPlan}
+        implementationCode={implantacao ?? null}
         locale={locale}
         languages={languages}
         maxLanguages={maxLanguages}

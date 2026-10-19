@@ -83,9 +83,15 @@ export default async function ClinicaLayout({
       {isDemo() && <DemoBar role="clinica" />}
       {/* Once per person, and never to an administrator looking at somebody
           else's clinic: a tour of a panel that is not theirs, on a visit they
-          will not repeat, and it would burn the real owner's one welcome. */}
-      {!viewingAs && user.welcomed_at === null && (
-        <WelcomeTour dict={dict} clinicName={clinicName} />
+          will not repeat, and it would burn the real owner's one welcome.
+          Whether it opens is the tour's own decision now, because `?tour=1`
+          asks for it again and a layout does not get the query string. */}
+      {!viewingAs && (
+        <WelcomeTour
+          dict={dict}
+          clinicName={clinicName}
+          welcomed={user.welcomed_at !== null}
+        />
       )}
       {children}
     </Shell>

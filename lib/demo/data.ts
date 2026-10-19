@@ -7,6 +7,7 @@ import type {
   Call,
   Usage,
   ActivityEvent,
+  Purchase,
   UserRole,
 } from '@/lib/types'
 import { demoAppointments, demoConversations } from './clinic'
@@ -53,6 +54,10 @@ export interface DemoStore {
   calls: Call[]
   usage: Usage[]
   activity_log: ActivityEvent[]
+  /** What the clinic has been charged. The real table is read on the account
+   *  screen; without it here that screen says "no purchases yet" to somebody
+   *  being shown the product, which reads as a feature that does not work. */
+  purchases: Purchase[]
   // Sales CRM. Separate tables from the client ones on purpose.
   crm_reps: CrmRep[]
   crm_prospects: CrmProspect[]
@@ -128,6 +133,8 @@ const seed: DemoStore = {
       logo_url: null,
       accent: 'brand',
       pre_appointment_auto_expires: true,
+      // The screen prints "next renewal" and had nothing to print.
+      plan_renews_at: iso(60 * 24 * 20),
       created_at: iso(-60 * 24 * 40),
       updated_at: iso(-60),
     },
@@ -239,6 +246,104 @@ const seed: DemoStore = {
     // near limit warning.
     { id: 'usage-1', clinic_id: DEMO_CLINIC_ID, month: monthKey, calls_count: 205, minutes: 520.5 },
     { id: 'usage-2', clinic_id: CLINIC_2, month: monthKey, calls_count: 84, minutes: 213.5 },
+  ],
+  // ── WHAT THIS CLINIC HAS PAID ───────────────────────────────────────────
+  // Forty days of a real account: two months of the plan, the WhatsApp extra
+  // the clinic has switched on, and a pack of minutes bought in a busy week.
+  // The first month carries the welcome discount, because a line with a
+  // discount under it is the one worth seeing before sending a real invoice.
+  //
+  // Every line is `completed`. A failed charge is a state this table draws and
+  // it is not one to put in front of somebody being shown the product.
+  purchases: [
+    {
+      id: 'demo-purchase-4',
+      clinic_id: DEMO_CLINIC_ID,
+      purchase_type: 'minute_pack',
+      item_id: 'pack_100',
+      item_name: 'Pacote de 100 minutos',
+      quantity: 1,
+      unit_price_eur: 29,
+      total_price_eur: 29,
+      coupon_code: null,
+      discount_eur: 0,
+      discount_percent: 0,
+      final_price_eur: 29,
+      payment_method: 'Visa ****4242',
+      payment_status: 'completed',
+      stripe_invoice_id: 'in_demo000000004',
+      stripe_charge_id: 'ch_demo000000004',
+      purchased_at: iso(-60 * 24 * 6),
+      expires_at: null,
+      created_at: iso(-60 * 24 * 6),
+      updated_at: iso(-60 * 24 * 6),
+    },
+    {
+      id: 'demo-purchase-3',
+      clinic_id: DEMO_CLINIC_ID,
+      purchase_type: 'plan_upgrade',
+      item_id: 'clinica',
+      item_name: 'Plano Clínica',
+      quantity: 1,
+      unit_price_eur: 249,
+      total_price_eur: 249,
+      coupon_code: null,
+      discount_eur: 0,
+      discount_percent: 0,
+      final_price_eur: 249,
+      payment_method: 'Visa ****4242',
+      payment_status: 'completed',
+      stripe_invoice_id: 'in_demo000000003',
+      stripe_charge_id: 'ch_demo000000003',
+      purchased_at: iso(-60 * 24 * 10),
+      expires_at: null,
+      created_at: iso(-60 * 24 * 10),
+      updated_at: iso(-60 * 24 * 10),
+    },
+    {
+      id: 'demo-purchase-2',
+      clinic_id: DEMO_CLINIC_ID,
+      purchase_type: 'addon',
+      item_id: 'whatsapp',
+      item_name: 'WhatsApp',
+      quantity: 1,
+      unit_price_eur: 19,
+      total_price_eur: 19,
+      coupon_code: null,
+      discount_eur: 0,
+      discount_percent: 0,
+      final_price_eur: 19,
+      payment_method: 'Visa ****4242',
+      payment_status: 'completed',
+      stripe_invoice_id: 'in_demo000000002',
+      stripe_charge_id: 'ch_demo000000002',
+      purchased_at: iso(-60 * 24 * 10),
+      expires_at: null,
+      created_at: iso(-60 * 24 * 10),
+      updated_at: iso(-60 * 24 * 10),
+    },
+    {
+      id: 'demo-purchase-1',
+      clinic_id: DEMO_CLINIC_ID,
+      purchase_type: 'plan_upgrade',
+      item_id: 'clinica',
+      item_name: 'Plano Clínica',
+      quantity: 1,
+      unit_price_eur: 249,
+      total_price_eur: 249,
+      coupon_code: 'BEMVINDO15',
+      discount_eur: 37.35,
+      discount_percent: 15,
+      final_price_eur: 211.65,
+      payment_method: 'Visa ****4242',
+      payment_status: 'completed',
+      stripe_invoice_id: 'in_demo000000001',
+      stripe_charge_id: 'ch_demo000000001',
+      purchased_at: iso(-60 * 24 * 40),
+      expires_at: null,
+      created_at: iso(-60 * 24 * 40),
+      updated_at: iso(-60 * 24 * 40),
+    },
   ],
   activity_log: [
     { id: 'act-1', clinic_id: DEMO_CLINIC_ID, type: 'call_received', message: 'A Telma atendeu uma chamada', created_at: atToday(11, 20) },

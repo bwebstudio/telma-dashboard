@@ -23,10 +23,18 @@ export function DemoBar({ role }: { role: UserRole }) {
         <span className="label-caps mr-2">Demo</span>
         Sem Supabase configurado. Os dados são de exemplo e ficam só nesta sessão.
       </p>
-      <div className="inline-flex items-center gap-1 rounded-full border border-line-strong bg-surface p-1">
-        <Btn value="clinica" label="Clínica" />
-        <Btn value="interno" label="Interno" />
-        <Btn value="comercial" label="Comercial" />
+      <div className="inline-flex flex-wrap items-center gap-3">
+        {/* The first minute in the panel, on demand. It is shown once to a
+            real clinic and then never again, which leaves nobody -- us
+            included -- able to look at it a second time. */}
+        <a href="/hoje?tour=1" className="text-sm font-medium text-brand-accent hover:text-brand-hover">
+          Ver o tour
+        </a>
+        <div className="inline-flex items-center gap-1 rounded-full border border-line-strong bg-surface p-1">
+          <Btn value="clinica" label="Clínica" />
+          <Btn value="interno" label="Interno" />
+          <Btn value="comercial" label="Comercial" />
+        </div>
       </div>
     </div>
   )

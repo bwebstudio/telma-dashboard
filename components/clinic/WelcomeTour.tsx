@@ -27,6 +27,13 @@ import { markWelcomed } from '@/lib/actions/welcome'
  * in the same place. A tour somebody cannot get out of is a worse first
  * minute than no tour. Leaving counts as having seen it: being shown it again
  * tomorrow is the product arguing with them.
+ *
+ * ── AND WHY IT CAN BE ASKED FOR AGAIN ─────────────────────────────────────
+ * `?tour=1` opens it whoever asked. Once seen it was gone for ever, which is
+ * right as a default and wrong as the only behaviour: somebody who closed it
+ * in their first minute, a second person at the same desk, or us showing the
+ * panel to a clinic that has not bought it yet all want the same minute back,
+ * and there was no way to have it short of editing a row.
  */
 
 // The five places in the sidebar, each with a `data-tour` attribute to point
@@ -75,11 +82,21 @@ interface Box {
   height: number
 }
 
-export function WelcomeTour({ dict, clinicName }: { dict: Dictionary; clinicName: string }) {
+export function WelcomeTour({
+  dict,
+  clinicName,
+  welcomed = false,
+}: {
+  dict: Dictionary
+  clinicName: string
+  /** True for somebody who has already been offered it. They see nothing,
+   *  unless they asked for it again with `?tour=1`. */
+  welcomed?: boolean
+}) {
   const t = dict.welcome
   // -1 is the welcome card; 0 and up are the steps.
   const [at, setAt] = useState(-1)
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [box, setBox] = useState<Box | null>(null)
   const [mounted, setMounted] = useState(false)
   const [steps, setSteps] = useState<StepId[]>([])
@@ -94,6 +111,11 @@ export function WelcomeTour({ dict, clinicName }: { dict: Dictionary; clinicName
   // screens.
   useEffect(() => {
     setMounted(true)
+    // Read here and not with useSearchParams: this component renders inside a
+    // layout, and the hook there turns the whole panel into a client
+    // navigation boundary for the sake of one parameter read once.
+    const asked = new URLSearchParams(window.location.search).get('tour') === '1'
+    setOpen(!welcomed || asked)
     setSteps([
       ...NAV_IDS.filter((id) => document.querySelector(`[data-tour="${id}"]`)),
       // Always. On a phone the sidebar is not on screen and the five stops
@@ -101,7 +123,7 @@ export function WelcomeTour({ dict, clinicName }: { dict: Dictionary; clinicName
       // worth one card on its own.
       PASSWORD_STEP,
     ])
-  }, [])
+  }, [welcomed])
 
   /** Remembered once, whether they walked it or left on the first card. */
   const finish = useCallback(() => {

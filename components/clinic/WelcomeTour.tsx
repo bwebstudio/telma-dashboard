@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { Dictionary } from '@/content'
 import { TelmaMark } from '@/components/TelmaMark'
@@ -317,9 +317,30 @@ export function WelcomeTour({
 function Bubble({ box, children }: { box: Box | null; children: React.ReactNode }) {
   const W = 320
   const GAP = 14
+  const EDGE = 16
+  const card = useRef<HTMLDivElement>(null)
+  // ── IT HAS TO KNOW HOW TALL IT IS ──────────────────────────────────────
+  // The clamp below used a fixed 220, which is about the height of a short
+  // card. The last stop is not short -- a longer sentence and two buttons --
+  // and it points at the foot of the sidebar, so on a desktop screen it was
+  // positioned from a height it does not have and ran off the bottom with the
+  // button on it. Measured after it draws, which is the only moment the
+  // number is true.
+  const [height, setHeight] = useState(220)
+  // Keyed on the children, so it measures again when the card's text changes
+  // -- which is every step -- and not on every render. The guard stops the
+  // one update it would otherwise chain into.
+  useLayoutEffect(() => {
+    const h = card.current?.offsetHeight
+    if (h && Math.abs(h - height) > 1) setHeight(h)
+  }, [children, height])
+
   if (!box) {
     return (
-      <div className="absolute inset-x-4 bottom-6 mx-auto max-w-sm rounded-card bg-surface p-5 shadow-3">
+      <div
+        ref={card}
+        className="absolute inset-x-4 bottom-6 mx-auto max-w-sm rounded-card bg-surface p-5 shadow-3"
+      >
         {children}
       </div>
     )
@@ -327,12 +348,16 @@ function Bubble({ box, children }: { box: Box | null; children: React.ReactNode 
   const vw = typeof window === 'undefined' ? 1200 : window.innerWidth
   const vh = typeof window === 'undefined' ? 800 : window.innerHeight
   const rightRoom = vw - (box.left + box.width) > W + GAP * 2
-  const left = rightRoom ? box.left + box.width + GAP : Math.max(16, Math.min(box.left, vw - W - 16))
-  const top = rightRoom
-    ? Math.max(16, Math.min(box.top, vh - 220))
-    : Math.max(16, Math.min(box.top + box.height + GAP, vh - 220))
+  const left = rightRoom ? box.left + box.width + GAP : Math.max(EDGE, Math.min(box.left, vw - W - EDGE))
+  // Beside the target when there is room, under it otherwise, and never past
+  // the bottom edge: the floor wins over the alignment, because a card whose
+  // buttons are off screen is a tour that cannot be finished.
+  const wanted = rightRoom ? box.top : box.top + box.height + GAP
+  const floor = vh - height - EDGE
+  const top = Math.max(EDGE, Math.min(wanted, floor))
   return (
     <div
+      ref={card}
       className="absolute rounded-card bg-surface p-5 shadow-3"
       style={{ top, left, width: W }}
     >

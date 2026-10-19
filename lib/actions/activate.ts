@@ -53,6 +53,11 @@ export async function activateClinic(): Promise<{ ok: boolean; missing?: string[
     .eq('status', 'por_configurar')
   if (error) return { ok: false }
 
+  // ── AND THE SCREEN THE BUTTON WAS ON ──────────────────────────────────
+  // The set-up moved to /comecar, which sends an active clinic to the agenda.
+  // Without revalidating it, pressing activate left the clinic looking at the
+  // form it had just finished, with nothing to say it had worked.
+  revalidatePath('/comecar')
   revalidatePath('/hoje')
   revalidatePath('/telma')
   revalidatePath('/horarios')

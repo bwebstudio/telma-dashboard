@@ -243,3 +243,16 @@ export function IconSimulate({ className }: P) {
     </svg>
   )
 }
+
+/** The set-up. A flag, because this is where a clinic starts rather than
+ *  another drawer it has to open: it is the one entry that goes away.
+ *  Built on `base` like every other icon here, which is what carries the
+ *  size: written by hand it came out as tall as the sidebar entry. */
+export function IconSetup({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 20.5V4" />
+      <path d="M6 4.5h10l-2 3.25L16 11H6" />
+    </svg>
+  )
+}

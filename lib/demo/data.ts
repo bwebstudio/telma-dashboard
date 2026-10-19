@@ -7,6 +7,8 @@ import type {
   Call,
   Usage,
   ActivityEvent,
+  Patient,
+  PatientRecall,
   Purchase,
   UserRole,
 } from '@/lib/types'
@@ -55,6 +57,14 @@ export interface DemoStore {
   calls: Call[]
   usage: Usage[]
   activity_log: ActivityEvent[]
+  /** The people. Missing until now, and the patients screen reads it first:
+   *  the query threw, the page caught it and drew "something went wrong", so
+   *  the demo had a broken screen in the middle of the sidebar. */
+  patients: Patient[]
+  /** With the patient already attached. The screen reads it from a join, and
+   *  the demo's stand-in for Supabase does not join, so the row carries what
+   *  the join would have brought. */
+  patient_recalls: Array<PatientRecall & { patients?: { id: string; name: string } }>
   /** What the clinic has been charged. The real table is read on the account
    *  screen; without it here that screen says "no purchases yet" to somebody
    *  being shown the product, which reads as a feature that does not work. */
@@ -263,6 +273,170 @@ const seed: DemoStore = {
     { id: 'usage-1', clinic_id: DEMO_CLINIC_ID, month: monthKey, calls_count: 205, minutes: 520.5 },
     { id: 'usage-2', clinic_id: CLINIC_2, month: monthKey, calls_count: 84, minutes: 213.5 },
   ],
+  // ── AS PESSOAS ──────────────────────────────────────────────────────────
+  // The same names the diary already carries, so opening a booking and opening
+  // a record lead to the same person. The note on a record is the clinic's
+  // own and is the one field Telma is never given.
+  patients: [
+    {
+      id: 'demo-patient-1',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Ana Martins',
+      phone: '+351 912 345 678',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'ana martins',
+      notes: 'Vem desde 2019. Prefere a Dra. Sofia.',
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 3),
+      created_at: iso(-60 * 24 * 63),
+    },
+    {
+      id: 'demo-patient-2',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Carlos Nunes',
+      phone: '+351 913 887 220',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'carlos nunes',
+      notes: null,
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 9),
+      created_at: iso(-60 * 24 * 69),
+    },
+    {
+      id: 'demo-patient-3',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Sofia Ramos',
+      phone: '+351 917 004 115',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'sofia ramos',
+      notes: 'Pede sempre a primeira hora da manhã.',
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 12),
+      created_at: iso(-60 * 24 * 72),
+    },
+    {
+      id: 'demo-patient-4',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Hélder Braga',
+      phone: '+351 918 220 441',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'hélder braga',
+      notes: null,
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 20),
+      created_at: iso(-60 * 24 * 80),
+    },
+    {
+      id: 'demo-patient-5',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Marta Lopes',
+      phone: '+351 915 663 902',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'marta lopes',
+      notes: null,
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 27),
+      created_at: iso(-60 * 24 * 87),
+    },
+    {
+      id: 'demo-patient-6',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Tiago Ferreira',
+      phone: '+351 911 448 073',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'tiago ferreira',
+      notes: 'Primeira consulta marcada pela Telma.',
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 34),
+      created_at: iso(-60 * 24 * 94),
+    },
+    {
+      id: 'demo-patient-7',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Beatriz Nogueira',
+      phone: '+351 916 775 318',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'beatriz nogueira',
+      notes: null,
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 41),
+      created_at: iso(-60 * 24 * 101),
+    },
+    {
+      id: 'demo-patient-8',
+      clinic_id: DEMO_CLINIC_ID,
+      name: 'Inês Cardoso',
+      phone: '+351 914 092 657',
+      other_digits: null,
+      tax_id: null,
+      tax_key: null,
+      name_key: 'inês cardoso',
+      notes: null,
+      reminders_opt_out_at: null,
+      marketing_consent_at: null,
+      marketing_consent_source: null,
+      last_seen_at: iso(-60 * 24 * 55),
+      created_at: iso(-60 * 24 * 115),
+    },
+  ],
+
+  // Two reminders due, which is what makes the queue at the top of the screen
+  // worth drawing at all.
+  patient_recalls: [
+    {
+      id: 'demo-recall-1',
+      clinic_id: DEMO_CLINIC_ID,
+      patient_id: 'demo-patient-2',
+      patients: { id: 'demo-patient-2', name: 'Carlos Nunes' },
+      kind: 'aviso',
+      due_on: new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10),
+      state: 'agendado',
+      note: null,
+      error: null,
+      created_at: iso(-60 * 24 * 30),
+    },
+    {
+      id: 'demo-recall-2',
+      clinic_id: DEMO_CLINIC_ID,
+      patient_id: 'demo-patient-5',
+      patients: { id: 'demo-patient-5', name: 'Marta Lopes' },
+      kind: 'aviso',
+      due_on: new Date(Date.now() + 5 * 86400_000).toISOString().slice(0, 10),
+      state: 'agendado',
+      note: 'Pediu para ligarmos de manhã.',
+      error: null,
+      created_at: iso(-60 * 24 * 20),
+    },
+  ],
+
   // ── WHAT THIS CLINIC HAS PAID ───────────────────────────────────────────
   // Forty days of a real account: two months of the plan, the WhatsApp extra
   // the clinic has switched on, and a pack of minutes bought in a busy week.

@@ -11,6 +11,7 @@ import {
   IconHours,
   IconCalls,
   IconTelma,
+  IconSetup,
 } from '@/components/icons'
 import { DemoBar } from '@/components/DemoBar'
 import { WelcomeTour } from '@/components/clinic/WelcomeTour'
@@ -39,9 +40,25 @@ export default async function ClinicaLayout({
   // before there was a telephone, and there is a telephone now, so on a panel
   // a clinic looks at it is one more thing to explain and one more way to put
   // an invented booking in a real diary. The route still exists.
+  const awaitingSetup = clinic?.status === 'por_configurar'
   const day = dict.clinicNav.groupDay
   const setup = dict.clinicNav.groupSetup
   const nav: NavItem[] = [
+    // ── WHILE THERE IS STILL SOMETHING TO SET UP ────────────────────────
+    // First, in a group of its own, and gone the moment the clinic activates.
+    // A new clinic was being asked to work out from a six item sidebar which
+    // of them was its job today; this says it, and takes itself away rather
+    // than becoming one more entry nobody opens again.
+    ...(awaitingSetup
+      ? [
+          {
+            href: '/comecar',
+            label: dict.comecar.navItem,
+            icon: <IconSetup />,
+            group: dict.comecar.navGroup,
+          },
+        ]
+      : []),
     { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday />, group: day, tour: 'hoje' },
     { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings />, group: day, tour: 'marcacoes' },
     // Beside the bookings, not down with the settings. A record is looked at
@@ -98,7 +115,14 @@ export default async function ClinicaLayout({
         <WelcomeTour
           dict={dict}
           clinicName={clinicName}
-          welcomed={user.welcomed_at !== null}
+          // ── NOT WHILE THEY ARE STILL SETTING UP ───────────────────────
+          // The tour is a walk round a panel, and a clinic in the middle of
+          // the set-up has no day, no bookings and no conversations to be
+          // walked round: it opened over the form and described screens that
+          // were empty. Held back until she is answering, which is also the
+          // moment it is worth having -- the first thing after activating is
+          // the panel they just bought.
+          welcomed={user.welcomed_at !== null || awaitingSetup}
         />
       )}
       {children}

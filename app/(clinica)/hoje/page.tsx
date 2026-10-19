@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { AgendaDay } from '@/components/clinic/AgendaDay'
@@ -9,9 +10,6 @@ import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { LiveBar } from '@/components/clinic/LiveBar'
 import { DayTally } from '@/components/clinic/DayTally'
 import { DayLoad } from '@/components/clinic/DayLoad'
-import { SetupWizard } from '@/components/clinic/SetupWizard'
-import { clinicProfileValues } from '@/lib/clinic-profile'
-import { signupLanguages } from '@/lib/actions/onboarding'
 import { isOnboardingLocale, DEFAULT_ONBOARDING_LOCALE } from '@/lib/onboarding/locale'
 import { ForwardingCard } from '@/components/clinic/ForwardingCard'
 import type { ForwardType } from '@/lib/forwarding'
@@ -31,7 +29,6 @@ import {
   weekdayIn,
 } from '@/lib/time'
 import { dayFacts } from '@/lib/agenda-facts'
-import { slotsToSimple } from '@/lib/onboarding/schedule'
 import { clinicLanguageSettings } from '@/lib/actions/clinic-settings'
 import { startsIn } from '@/lib/slots'
 import type { Appointment, AvailabilitySlot, BlockedDay, Call } from '@/lib/types'
@@ -192,12 +189,6 @@ export default async function AgendaPage({
   // broken rather than one that has not been started. This is the whole screen
   // until it is done, and then it is never seen again.
   const awaitingSetup = clinic?.status === 'por_configurar'
-  const { count: openDays } = awaitingSetup
-    ? await supabase
-        .from('availability_slots')
-        .select('*', { count: 'exact', head: true })
-        .eq('clinic_id', clinicId)
-    : { count: 0 }
 
   // A clinic that kept its own number has to point it at ours, and nothing in
   // the product told it how until now. It stays on the agenda until the clinic
@@ -222,36 +213,13 @@ export default async function AgendaPage({
     ? billing.minutes.exhausted || percentUsed(billing.minutes.used, billing.minutes.allowance) >= 80
     : false
 
-  if (awaitingSetup) {
-    return (
-      <>
-        <div className="mb-6">
-          <h1 className="h-display text-3xl sm:text-4xl">{t.title}</h1>
-        </div>
-        {/* No forwarding card here, deliberately. A clinic on this screen has
-            no hours and no services, and Telma answers anyway with
-            `can_book: false`: she picks up, cannot say when the clinic opens
-            or what it does, and takes a message. Handing over the codes at
-            this point sends a clinic's real patients to that, silently. The
-            forward is the last step, not the first. */}
-        <SetupWizard
-          // The profile plus the timetable. `clinicProfileValues` maps the
-          // clinic row, and the hours are not on it: they are rows in
-          // availability_slots, read back into the three groups this screen
-          // asks about. Without this the first step opens blank and saving it
-          // would wipe the week the sign-up created.
-          initial={{ ...clinicProfileValues(clinic!), ...slotsToSimple((slotsRes.data ?? []) as AvailabilitySlot[]) }}
-          locale={isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE}
-          languages={await signupLanguages(
-            isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE
-          )}
-          languageSettings={await clinicLanguageSettings(clinicId)}
-          dict={dict}
-          hasHours={(openDays ?? 0) > 0}
-        />
-      </>
-    )
-  }
+  // ── THE SET-UP HAS ITS OWN ADDRESS NOW ────────────────────────────────
+  // It used to render here: a clinic that had just paid opened the panel,
+  // read "Agenda" at the top and found "when is the clinic open?" underneath.
+  // Every screen makes one promise and the agenda's is what is happening
+  // today; a form is not that. /comecar is where it lives, and it is where
+  // this lands until there is a day to show.
+  if (awaitingSetup) redirect('/comecar')
 
   return (
     <>

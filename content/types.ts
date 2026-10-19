@@ -604,6 +604,21 @@ export interface Dictionary {
     noAudio: string
     duration: string
   }
+  comecar: {
+    navGroup: string
+    navItem: string
+    eyebrow: string
+    greeting: string
+    title: string
+    lead: string
+    statusOff: string
+    statusOffHelp: string
+    progress: string
+    stepDone: string
+    stepTodo: string
+    stepWaiting: string
+    steps: Record<'hours' | 'services' | 'number', { title: string; body: string }>
+  }
   conta: {
     title: string
     /** The three doors behind the clinic's name in the sidebar. */

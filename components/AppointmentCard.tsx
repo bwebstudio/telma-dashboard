@@ -12,6 +12,7 @@ import {
   confirmAppointment,
   markCopied,
   alterAppointment,
+  cancelAppointment,
   rejectAppointment,
 } from '@/lib/actions/appointments'
 
@@ -193,10 +194,26 @@ export function AppointmentCard({
             </button>
           )}
           {(appt.status === 'confirmada' || appt.status === 'copiada') && (
-            <button className="btn-primary" onClick={copyDetails} disabled={pending}>
-              {copied ? <IconCheck className="h-5 w-5" /> : <IconCopy className="h-5 w-5" />}
-              {copied ? dict.common.copied : m.copyData}
-            </button>
+            <>
+              <button className="btn-primary" onClick={copyDetails} disabled={pending}>
+                {copied ? <IconCheck className="h-5 w-5" /> : <IconCopy className="h-5 w-5" />}
+                {copied ? dict.common.copied : m.copyData}
+              </button>
+              {/* A confirmed booking had one button, "copy the details", and
+                  anything after that happened in somebody else's software with
+                  the patient none the wiser. The clinic closes for a funeral,
+                  a dentist is ill: the slot is gone and the only person who
+                  does not know is the one who will turn up. */}
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  if (confirm(m.cancelApptConfirm)) run(() => cancelAppointment(appt.id))
+                }}
+                disabled={pending}
+              >
+                {m.cancelAppt}
+              </button>
+            </>
           )}
           {appt.status === 'pendente' && (
             <>

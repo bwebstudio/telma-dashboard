@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { phoneForAppointment, plausibleName, plausiblePhone } from '@/lib/phone'
 import { claimSlot, releaseSlot } from '@/lib/slot-claim'
+import { notifyPatient } from '@/lib/notify-patient'
 import {
   canonicalReason,
   resolveDuration,
@@ -81,10 +82,13 @@ export async function POST(request: Request) {
   // written down blocks exactly what was held.
   const { data: lengths } = await admin
     .from('clinics')
-    .select('service_durations, appointment_duration_minutes, slot_minutes, services, custom_services, language')
+    .select(
+      'service_durations, appointment_duration_minutes, slot_minutes, services, custom_services, language, appointments_auto_confirmed'
+    )
     .eq('id', clinicId)
     .maybeSingle()
   const clinicLengths = (lengths ?? {}) as DurationSource
+  const clinic = (lengths ?? {}) as { appointments_auto_confirmed?: boolean | null }
   const minutesFor = (a: Record<string, unknown>) =>
     resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
 
@@ -404,6 +408,36 @@ export async function POST(request: Request) {
     // Never fatal. The clinic has its booking either way, and the only thing
     // lost is that Telma asks this person their name again next time.
     console.error('[call] remember_patient', e instanceof Error ? e.message : e)
+  }
+
+  // ── THE CLINIC THAT CONFIRMS NOTHING ──────────────────────────────────────
+  // Telma books, confirms and tells the patient, all inside the call. For the
+  // clinics that chose it, a booking that waits for somebody to press a button
+  // is the work they were trying to hand over.
+  //
+  // Here and not inside `record_call`: the SMS cannot be sent from SQL, and a
+  // status written without the message going out would be the same silence as
+  // before with a different word on the screen.
+  //
+  // Everything in this block is best effort. The booking is already written
+  // and the call is already recorded; a telephone network that will not take
+  // an SMS must not turn a booking into an error.
+  if (clinic.appointments_auto_confirmed && callId) {
+    try {
+      const { data: justBooked } = await admin
+        .from('appointments')
+        .update({ status: 'confirmada', decided_at: new Date().toISOString() })
+        .eq('clinic_id', clinicId)
+        .eq('call_id', callId)
+        .eq('status', 'pendente')
+        .select('id')
+
+      for (const row of (justBooked ?? []) as Array<{ id: string }>) {
+        await notifyPatient(row.id, 'confirmada')
+      }
+    } catch (e) {
+      console.error('[call] auto-confirm', e instanceof Error ? e.message : e)
+    }
   }
 
   if (rejected) {

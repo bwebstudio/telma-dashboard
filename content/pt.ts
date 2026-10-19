@@ -327,6 +327,8 @@ export const pt: Dictionary = {
     help: 'Aqui ficam as marcações feitas pela Telma. Confirme, altere ou rejeite cada pedido e, se necessário, passe-o para o software da clínica. As marcações por confirmar permanecem visíveis até serem tratadas.',
     empty: 'Não há marcações neste momento.',
     confirm: 'Confirmar',
+    cancelAppt: 'Cancelar marcação',
+    cancelApptConfirm: 'Cancelar esta marcação? O paciente é avisado por SMS.',
     alter: 'Alterar',
     reject: 'Rejeitar',
     copyData: 'Copiar dados do paciente',

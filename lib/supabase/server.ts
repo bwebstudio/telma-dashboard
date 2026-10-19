@@ -1,8 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { isDemo, DEMO_ROLE_COOKIE } from '@/lib/demo/config'
+import { isDemo, DEMO_ROLE_COOKIE, DEMO_STAGE_COOKIE, readDemoStage } from '@/lib/demo/config'
 import { createDemoClient } from '@/lib/demo/client'
-import { DEMO_CLINIC_ID, DEMO_REP_PT } from '@/lib/demo/data'
+import { applyDemoStage, DEMO_CLINIC_ID, DEMO_REP_PT } from '@/lib/demo/data'
 import { supabaseUrl, supabaseAnonKey } from './env'
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
@@ -16,6 +16,9 @@ export async function createClient() {
   // Only a clinic user is scoped to one clinic; internal roles see everything.
   if (isDemo()) {
     const role = cookieStore.get(DEMO_ROLE_COOKIE)?.value ?? 'clinica'
+    // Before anything reads a row. The store is one object for the whole
+    // process and the cookie is what says which morning it should be holding.
+    applyDemoStage(readDemoStage(cookieStore.get(DEMO_STAGE_COOKIE)?.value))
     return createDemoClient(
       role === 'clinica' ? DEMO_CLINIC_ID : undefined,
       role === 'comercial' ? DEMO_REP_PT : undefined

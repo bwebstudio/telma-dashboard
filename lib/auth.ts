@@ -2,8 +2,8 @@ import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { createClient } from './supabase/server'
 import { canOpenPanel, isAdmin } from './access'
-import { isDemo, DEMO_ROLE_COOKIE } from './demo/config'
-import { getDemoUser } from './demo/data'
+import { isDemo, DEMO_ROLE_COOKIE, DEMO_STAGE_COOKIE, readDemoStage } from './demo/config'
+import { applyDemoStage, getDemoUser } from './demo/data'
 import type { AppUser, UserRole } from './types'
 
 // The authenticated app user, joined with their clinic (null for internal).
@@ -14,6 +14,9 @@ export const getAppUser = cache(async function getAppUser(): Promise<AppUser | n
   if (isDemo()) {
     const store = await cookies()
     const role = (store.get(DEMO_ROLE_COOKIE)?.value ?? 'clinica') as UserRole
+    // Here too, and not only in createClient: whether this person has been
+    // welcomed is read straight off the store, and the tour turns on it.
+    applyDemoStage(readDemoStage(store.get(DEMO_STAGE_COOKIE)?.value))
     return getDemoUser(role)
   }
 

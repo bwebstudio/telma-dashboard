@@ -10,6 +10,7 @@ import type {
   Purchase,
   UserRole,
 } from '@/lib/types'
+import type { DemoStage } from './config'
 import { demoAppointments, demoConversations } from './clinic'
 import type {
   CrmActivity,
@@ -572,6 +573,88 @@ const STORE_KEY = Symbol.for('telma.demo.store')
 const globalStore = globalThis as unknown as Record<symbol, DemoStore | undefined>
 
 export const store: DemoStore = (globalStore[STORE_KEY] ??= seed)
+
+// ── THE TWO MORNINGS ────────────────────────────────────────────────────────
+// The seed above is a clinic weeks into using Telma. That is the right panel
+// for showing what the product does and the wrong one for the question a
+// clinic actually asks before buying, which is what the first morning looks
+// like. So the store can be rewound to the morning after the sign-up.
+//
+// A pristine copy is kept because rewinding has to be reversible: the demo bar
+// switches both ways, and a mutated store cannot reconstruct itself. Cloned
+// rather than re-seeded, because `seed` is one object built once and every
+// date in it is relative to the moment the module loaded.
+const PRISTINE: DemoStore = structuredClone(seed)
+
+/** Which morning the store is currently showing. Undefined until the first
+ *  request decides, which is why every entry point asks. */
+let current: DemoStage | undefined
+
+/**
+ * Put the store into the morning asked for.
+ *
+ * Idempotent and cheap on the common path: a request that wants the morning
+ * already on screen compares one string and returns. Only a change rewrites,
+ * and a rewrite is a clone of a few hundred rows held in memory.
+ *
+ * Mutates the store's arrays in place rather than replacing the object:
+ * `store` is imported by name in a dozen modules and reassigning it would
+ * leave half the panel reading yesterday's copy.
+ */
+export function applyDemoStage(stage: DemoStage): void {
+  if (current === stage) return
+  current = stage
+
+  Object.assign(store, structuredClone(PRISTINE))
+  if (stage === 'trabalho') return
+
+  // ── TEN MINUTES AFTER THE SIGN-UP ─────────────────────────────────────────
+  // Everything the clinic has not done yet, undone. The hours stay, because
+  // the sign-up writes a week; the services do not, because it stopped asking
+  // and the wizard is where they are chosen. The status is the one the
+  // sign-up writes, which is what puts the wizard on the screen instead of an
+  // agenda, and hides the forwarding codes until Telma can actually answer.
+  const clinic = store.clinics.find((c) => c.id === DEMO_CLINIC_ID)
+  if (clinic) {
+    clinic.status = 'por_configurar'
+    clinic.created_at = iso(-12)
+    clinic.updated_at = iso(-12)
+    clinic.plan_renews_at = iso(60 * 24 * 30)
+    // Kept its own number and is waiting to point it at ours. The card with
+    // the codes is deliberately not drawn until the clinic is active, so this
+    // is what it has to become before that card means anything.
+    clinic.phone_source = 'ported'
+    clinic.porting_details = {
+      current_number: clinic.phone ?? undefined,
+      forward_type: 'no_answer',
+      operator: 'MEO',
+    }
+  }
+
+  // Nobody has rung yet, so there is nothing to have happened.
+  store.appointments = store.appointments.filter((a) => a.clinic_id !== DEMO_CLINIC_ID)
+  store.calls = store.calls.filter((c) => c.clinic_id !== DEMO_CLINIC_ID)
+  store.usage = store.usage.map((u) =>
+    u.clinic_id === DEMO_CLINIC_ID ? { ...u, minutes: 0 } : u
+  )
+
+  // One charge, which is the one they have just made. A first morning with
+  // four invoices on it is not a first morning.
+  store.purchases = store.purchases
+    .filter((p) => p.clinic_id === DEMO_CLINIC_ID && p.purchase_type === 'plan_upgrade')
+    .slice(-1)
+    .map((p) => ({ ...p, purchased_at: iso(-12), created_at: iso(-12), updated_at: iso(-12) }))
+
+  store.activity_log = store.activity_log.filter(
+    (e) => e.clinic_id !== DEMO_CLINIC_ID || e.type === 'clinic_created'
+  )
+
+  // The welcome has not been given. This is the whole reason the tour exists
+  // and the one thing the demo could never show.
+  for (const user of store.users) {
+    if (user.clinic_id === DEMO_CLINIC_ID) user.welcomed_at = null
+  }
+}
 
 export function getDemoUser(role: UserRole): AppUser {
   if (role === 'interno' || role === 'comercial') {

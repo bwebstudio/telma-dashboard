@@ -15,6 +15,28 @@ export function isDemo(): boolean {
 export const DEMO_ROLE_COOKIE = 'telma_demo_role'
 
 /**
+ * Which morning the demo is showing.
+ *
+ * 'nova' is a clinic that finished the sign-up ten minutes ago: the welcome,
+ * the set-up wizard, an empty agenda and one invoice. 'trabalho' is the same
+ * clinic weeks later, with a day in it.
+ *
+ * Two, and not one, because they answer different questions. "What does a
+ * clinic see on the first morning" cannot be answered by a panel full of
+ * bookings, and "what does the product do" cannot be answered by an empty one.
+ */
+export type DemoStage = 'nova' | 'trabalho'
+export const DEMO_STAGE_COOKIE = 'telma_demo_stage'
+
+/** The first morning, because that is the one somebody has to be convinced
+ *  is not frightening. The other is one click away in the demo bar. */
+export const DEFAULT_DEMO_STAGE: DemoStage = 'nova'
+
+export function readDemoStage(value: string | undefined): DemoStage {
+  return value === 'trabalho' || value === 'nova' ? value : DEFAULT_DEMO_STAGE
+}
+
+/**
  * Um ambiente para mostrar, não para servir pacientes.
  *
  * Diferente de `isDemo()`: aquilo é não haver base de dados nenhuma; isto é uma

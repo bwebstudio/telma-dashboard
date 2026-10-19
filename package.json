@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "demo": "NEXT_DIST_DIR=.next-demo NEXT_PUBLIC_DEMO=1 next dev -p 3100",
     "test:prompt": "node --experimental-strip-types --test scripts/test-prompt.mjs",
     "test": "npm run test:prompt && npm run test:notify && npm run test:recall-copy && npm run test:agenda-facts && npm run test:middleware && npm run test:content && npm run test:duration && npm run test:booking-guard && npm run test:no-access && npm run test:onboarding-done && npm run test:setup-gate && npm run test:on-sale && npm run test:signup-rules && npm run test:implementation-week && npm run test:hold-and-mode",
     "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs",

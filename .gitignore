@@ -1,5 +1,7 @@
 /node_modules
 /.next/
+# A second dev server, for the demo, writing somewhere of its own.
+/.next-demo/
 /out/
 /build
 .DS_Store

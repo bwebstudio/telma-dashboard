@@ -52,7 +52,7 @@ export function SetupGate({
           <li key={s.id} className="flex flex-wrap items-center gap-3">
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                s.done ? 'bg-ok text-white' : 'border border-line-strong text-ink-mute'
+                s.done ? 'bg-ok text-on-ink' : 'border border-line-strong text-ink-mute'
               }`}
               aria-hidden
             >

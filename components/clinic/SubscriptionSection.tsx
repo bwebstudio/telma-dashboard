@@ -325,7 +325,7 @@ function Confirm({
         type="button"
         aria-label={backLabel}
         onClick={onBack}
-        className="absolute inset-0 cursor-default bg-ink/55"
+        className="absolute inset-0 cursor-default bg-dark/55"
       />
       <div
         role="dialog"

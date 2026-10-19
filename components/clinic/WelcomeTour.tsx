@@ -186,7 +186,7 @@ export function WelcomeTour({
             type="button"
             aria-label={t.skip}
             onClick={finish}
-            className="absolute inset-0 cursor-default bg-ink/55 backdrop-blur-[2px]"
+            className="absolute inset-0 cursor-default bg-dark/55 backdrop-blur-[2px]"
           />
           <div className="absolute inset-0 flex items-center justify-center p-4">
             <div className="w-full max-w-lg overflow-hidden rounded-hero bg-surface shadow-3">

@@ -68,7 +68,7 @@ export function Modal({
 
   return (
     <div
-      className="modal-backdrop fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-6"
+      className="modal-backdrop fixed inset-0 z-50 flex items-end justify-center bg-dark/40 p-0 sm:items-center sm:p-6"
       onMouseDown={(event) => {
         // Only a click that both starts and ends on the backdrop closes it, so
         // a drag that began inside the panel does not dismiss the form.

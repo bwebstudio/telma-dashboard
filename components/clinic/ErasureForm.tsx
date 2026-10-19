@@ -107,7 +107,7 @@ export function ErasureForm({ dict }: { dict: Dictionary }) {
                 type="button"
                 onClick={erase}
                 disabled={pending}
-                className="mt-4 rounded-card bg-danger px-4 py-2.5 text-base font-medium text-white"
+                className="mt-4 rounded-card bg-danger px-4 py-2.5 text-base font-medium text-on-ink"
               >
                 {t.erase}
               </button>

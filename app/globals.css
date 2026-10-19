@@ -181,78 +181,6 @@
     --dur-slow: 600ms;
   }
 
-  /* --- The dark theme ------------------------------------------------------
-     Set by the clinic, on the same element as the accent, and written as a
-     redefinition of the same tokens rather than as a second set of rules: no
-     component knows which theme it is in, exactly as none of them knows which
-     accent they are in.
-
-     Three things invert rather than darken:
-
-       --ink and --brand       near-white now, so the primary button is a pale
-                               block with dark type on it, and --on-ink is the
-                               dark type. Keeping ink dark would have meant
-                               black text on a black card.
-
-       the status colours      --ok, --warn and --danger were taken down until
-                               they read on white; here they are taken up until
-                               they read on near-black, and the softs become
-                               dim grounds instead of pale ones.
-
-       the category pastels    they carry ink text inside a chip, and ink is
-                               near-white here, so a pale pastel would have
-                               been white on cream. They become dim versions of
-                               the same eight hues, still distinguishable from
-                               each other and still carrying readable text.
-
-     The shadows stay as they are and mostly disappear, which is correct: depth
-     on a dark ground comes from the surface being lighter than the page, and
-     that is what --surface does. */
-  [data-theme='dark'] {
-    --bg: 13 13 13;
-    --surface: 26 26 26;
-    --surface-sunken: 35 35 35;
-    --border: 51 51 51;
-    --border-strong: 74 74 74;
-
-    --ink: 240 240 238;
-    --ink-soft: 180 180 176;
-    --ink-mute: 138 138 134;
-    --on-ink: 17 17 17;
-
-    --brand: 240 240 238;
-    --brand-hover: 214 214 211;
-    --brand-accent: 170 170 166;
-    --brand-wash: 42 42 42;
-    --brand-wash-strong: 56 56 56;
-
-    /* Measured as text on --surface: ok 7.4:1, warn 7.1:1, danger 6.4:1. */
-    --ok: 173 194 92;
-    --ok-soft: 38 44 20;
-    --warn: 226 168 92;
-    --warn-soft: 51 39 22;
-    --danger: 240 140 128;
-    --danger-soft: 56 30 28;
-
-    --cat-1: 30 44 70;
-    --cat-2: 68 44 24;
-    --cat-3: 28 54 40;
-    --cat-4: 58 36 62;
-    --cat-5: 62 54 22;
-    --cat-6: 26 52 56;
-    --cat-7: 44 42 72;
-    --cat-8: 64 34 44;
-
-    /* The dark blocks of the light theme have nowhere left to go, so they
-       lift instead: a header that was near-black on white is a shade lighter
-       than the page here, which is what keeps it a block at all. */
-    --dark: 32 32 32;
-    --dark-soft: 44 44 44;
-    --dark-line: 62 62 62;
-
-    color-scheme: dark;
-  }
-
   /* --- Clinic accents -----------------------------------------------------
      A clinic picks a name, never a colour value.
 
@@ -350,6 +278,99 @@
       transition-duration: 0.001ms !important;
     }
   }
+
+  /* --- The dark theme ------------------------------------------------------
+     Set by the clinic, on the same element as the accent, and written as a
+     redefinition of the same tokens rather than as a second set of rules: no
+     component knows which theme it is in, exactly as none of them knows which
+     accent they are in.
+
+     Three things invert rather than darken:
+
+       --ink and --brand       near-white now, so the primary button is a pale
+                               block with dark type on it, and --on-ink is the
+                               dark type. Keeping ink dark would have meant
+                               black text on a black card.
+
+       the status colours      --ok, --warn and --danger were taken down until
+                               they read on white; here they are taken up until
+                               they read on near-black, and the softs become
+                               dim grounds instead of pale ones.
+
+       the category pastels    they carry ink text inside a chip, and ink is
+                               near-white here, so a pale pastel would have
+                               been white on cream. They become dim versions of
+                               the same eight hues, still distinguishable from
+                               each other and still carrying readable text.
+
+     The shadows stay as they are and mostly disappear, which is correct: depth
+     on a dark ground comes from the surface being lighter than the page, and
+     that is what --surface does.
+
+     ── AND WHY IT IS THE LAST BLOCK IN THIS FILE ──────────────────────────
+     A clinic carries both attributes on the same element, so [data-accent]
+     and [data-theme] have the same specificity and the later one wins. The
+     accent repoints the same wash tokens this does, and with the accent last
+     a clinic on ocean or plum got light washes back under a dark panel. The
+     theme is the stronger statement of the two: it decides whether a ground
+     is light or dark at all. */
+  [data-theme='dark'] {
+    --bg: 13 13 13;
+    --surface: 26 26 26;
+    --surface-sunken: 35 35 35;
+    --border: 51 51 51;
+    --border-strong: 74 74 74;
+
+    --ink: 240 240 238;
+    --ink-soft: 180 180 176;
+    --ink-mute: 138 138 134;
+    --on-ink: 17 17 17;
+
+    --brand: 240 240 238;
+    --brand-hover: 214 214 211;
+    --brand-accent: 170 170 166;
+    --brand-wash: 42 42 42;
+    --brand-wash-strong: 56 56 56;
+
+    /* The accent ramp is four light values -- it is a set of grounds, and a
+       ground that stays light under near-white text is a cream block nobody
+       can read. The hue survives in --accent, which is a mark and not a
+       ground; the two washes become dim and keep only a trace of it. */
+    --accent: var(--macaw-400);
+    --accent-strong: var(--macaw);
+    --accent-soft: 58 60 34;
+    --accent-wash: 44 46 28;
+
+    /* Measured as text on --surface: ok 7.4:1, warn 7.1:1, danger 6.4:1. */
+    --ok: 173 194 92;
+    --ok-soft: 38 44 20;
+    --warn: 226 168 92;
+    --warn-soft: 51 39 22;
+    --danger: 240 140 128;
+    --danger-soft: 56 30 28;
+
+    --cat-1: 30 44 70;
+    --cat-2: 68 44 24;
+    --cat-3: 28 54 40;
+    --cat-4: 58 36 62;
+    --cat-5: 62 54 22;
+    --cat-6: 26 52 56;
+    --cat-7: 44 42 72;
+    --cat-8: 64 34 44;
+
+    /* The dark blocks of the light theme have nowhere left to go, so they
+       lift instead: a header that was near-black on white is a shade lighter
+       than the page here, which is what keeps it a block at all.
+
+       --dark is also what every backdrop veils with, in both themes, which is
+       why it may not be lifted far: `bg-ink/55` cannot do that job here,
+       because ink is near-white and the veil came out as bleach. */
+    --dark: 20 20 20;
+    --dark-soft: 44 44 44;
+    --dark-line: 62 62 62;
+
+    color-scheme: dark;
+  }
 }
 
 @layer components {
@@ -399,7 +420,7 @@
     @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-input px-5 text-base font-medium transition-all duration-fast ease-calm disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand text-white shadow-brand hover:bg-brand-hover;
+    @apply btn bg-brand text-on-ink shadow-brand hover:bg-brand-hover;
   }
   .btn-secondary {
     @apply btn border border-line-strong bg-surface text-ink shadow-1 hover:border-ink/25;
@@ -420,7 +441,7 @@
   }
 
   .btn-danger {
-    @apply btn border border-danger/30 bg-surface text-danger hover:bg-danger hover:text-white;
+    @apply btn border border-danger/30 bg-surface text-danger hover:bg-danger hover:text-on-ink;
   }
 
   .field-label {

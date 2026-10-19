@@ -178,7 +178,7 @@ function Tab({
       }`}
     >
       {children}
-      <span className={active ? 'text-white/70' : 'text-ink-mute'}>{count}</span>
+      <span className={active ? 'text-on-ink/70' : 'text-ink-mute'}>{count}</span>
     </Link>
   )
 }

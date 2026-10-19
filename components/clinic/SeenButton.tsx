@@ -34,7 +34,7 @@ export function SeenButton({ id, label }: { id: string; label: string }) {
             }
           })
         }}
-        className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-pill border border-warn/40 bg-surface px-4 text-base font-medium text-warn transition-colors hover:bg-warn hover:text-white disabled:opacity-50"
+        className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-pill border border-warn/40 bg-surface px-4 text-base font-medium text-warn transition-colors hover:bg-warn hover:text-on-ink disabled:opacity-50"
       >
         <IconCheck className="h-4 w-4" />
         {label}

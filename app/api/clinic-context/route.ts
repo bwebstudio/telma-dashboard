@@ -166,7 +166,17 @@ export async function GET(request: Request) {
       custom_services: clinic.custom_services ?? null,
       appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,
       min_interval_minutes: clinic.min_interval_minutes ?? 30,
-      opening_hours: hours,
+      // ── TWO SHAPES, ON PURPOSE ────────────────────────────────────
+      // `spans` is the truth: a day can have a break in it. `opens` and
+      // `closes` are the outer edges, kept because this endpoint is served to
+      // the voice platform and anything already reading those two fields
+      // would otherwise stop finding them the moment this deployed.
+      opening_hours: hours.map((h) => ({
+        weekday: h.weekday,
+        opens: h.spans[0]?.opens ?? null,
+        closes: h.spans[h.spans.length - 1]?.closes ?? null,
+        spans: h.spans,
+      })),
     },
     plan: {
       id: plan.id,

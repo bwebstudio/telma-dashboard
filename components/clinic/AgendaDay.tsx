@@ -8,6 +8,7 @@ import { resolveDuration, type DurationSource } from '@/lib/service-duration'
 import { Badge, APPOINTMENT_TONE } from '@/components/ui'
 import { IconPhone, IconWhatsApp } from '@/components/icons'
 import { ConfirmButton } from './ConfirmButton'
+import { PreAppointmentCountdown } from './PreAppointmentCountdown'
 import { SeenButton } from './SeenButton'
 
 /**
@@ -36,12 +37,17 @@ import { SeenButton } from './SeenButton'
 export function AgendaDay({
   appointments,
   clinic,
+  serverNow,
   dict,
   locale,
   tz,
   readOnly = false,
 }: {
   appointments: Appointment[]
+  /** When the server drew the page. The zero of the hold countdown's clock,
+   *  so a laptop running five minutes fast cannot expire a booking that still
+   *  has time left on it. */
+  serverNow: string
   /** What the clinic offers, to colour a booking by what it is for. The week
    *  has had this since it existed and the day had not, so the same booking
    *  was a coloured chip on Tuesday's card and a plain row on Tuesday. */
@@ -69,7 +75,15 @@ export function AgendaDay({
         // day with twelve rows in it. `scroll-mt` keeps the row clear of the
         // header it would otherwise land under.
         <li key={appt.id} id={`a-${appt.id}`} className="scroll-mt-24 target:bg-brand-wash">
-          <Row appt={appt} clinic={clinic} dict={dict} locale={locale} tz={tz} readOnly={readOnly} />
+          <Row
+            appt={appt}
+            clinic={clinic}
+            serverNow={serverNow}
+            dict={dict}
+            locale={locale}
+            tz={tz}
+            readOnly={readOnly}
+          />
         </li>
       ))}
     </ol>
@@ -80,6 +94,7 @@ export function AgendaDay({
 function Row({
   appt,
   clinic,
+  serverNow,
   dict,
   locale,
   tz,
@@ -87,6 +102,7 @@ function Row({
 }: {
   appt: Appointment
   clinic: DurationSource
+  serverNow: string
   dict: Dictionary
   locale: Locale
   tz: string
@@ -192,6 +208,23 @@ function Row({
           <div className="mt-1">
             <ConfirmButton id={appt.id} label={dict.marcacoes.confirm} />
           </div>
+        )}
+        {/* How long that button has left. This is the screen a clinic keeps
+            open, so it is also what notices a hold running out: reaching zero
+            is what lets the hour go and tells the patient that the booking did
+            not happen. Drawn for a visitor too, who should see the same day
+            the clinic sees. */}
+        {appt.status === 'pendente' && (
+          <PreAppointmentCountdown
+            appointment={appt}
+            serverNow={serverNow}
+            labels={{
+              confirmIn: dict.agenda.holdConfirmIn,
+              critical: dict.agenda.holdCritical,
+              expired: dict.agenda.holdExpired,
+              aria: dict.agenda.holdAria,
+            }}
+          />
         )}
         {/* A cancellation asks for nothing except to be read, and stays in the
             warm tint until somebody says so. */}

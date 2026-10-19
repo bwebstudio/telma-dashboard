@@ -13,6 +13,7 @@ import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
 import { ForwardingCard } from '@/components/clinic/ForwardingCard'
 import { BillingPortalButton } from '@/components/clinic/BillingPortalButton'
 import { PlanSection } from '@/components/clinic/PlanSection'
+import { ConfirmationModeConfig } from '@/components/clinic/ConfirmationModeConfig'
 import { PreAppointmentHoldConfig } from '@/components/clinic/PreAppointmentHoldConfig'
 import { AddonsSection } from '@/components/clinic/AddonsSection'
 import { LanguagesSection } from '@/components/clinic/LanguagesSection'
@@ -29,7 +30,7 @@ export default async function ContaPage() {
   const onboardingLocale = isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE
   const supabase = await createClient()
 
-  const [billing, pack, purchasesRes] = await Promise.all([
+  const [billing, pack, purchasesRes, pendingRes] = await Promise.all([
     getClinicWithPlan(clinicId),
     getMinutePackOffer(),
     // Through the session client, not the service role: this is the clinic
@@ -41,10 +42,19 @@ export default async function ContaPage() {
       .eq('clinic_id', clinicId)
       .order('purchased_at', { ascending: false })
       .limit(50),
+    // Only how many. The switch to automatic confirmation is blocked while
+    // anybody is still waiting for an answer, and the number is what the
+    // explanation says out loud. See ConfirmationModeConfig.
+    supabase
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('clinic_id', clinicId)
+      .eq('status', 'pendente'),
   ])
 
   const addons = billing ? await listAddonOffers(billing) : []
   const purchases = (purchasesRes.data ?? []) as Purchase[]
+  const pendingCount = pendingRes.count ?? 0
   const languageSettings = await clinicLanguageSettings(clinicId)
 
   return (
@@ -152,12 +162,31 @@ export default async function ContaPage() {
 
         {clinic && (
           <section className="card p-6">
-            <SectionTitle>{dict.conta.holdTitle}</SectionTitle>
-            <PreAppointmentHoldConfig
-              autoExpires={clinic.pre_appointment_auto_expires ?? true}
+            <SectionTitle>{dict.conta.modeTitle}</SectionTitle>
+            <ConfirmationModeConfig
+              autoConfirm={clinic.appointments_auto_confirmed ?? false}
+              pendingCount={pendingCount}
               readOnly={readOnly}
               dict={dict}
             />
+
+            {/* ── ONLY WHILE SOMEBODY IS WAITING ────────────────────────
+                What happens to a booking that has not been answered is a
+                question about a wait. With Telma confirming there is no
+                wait, and the section sat here configuring one: a setting
+                that does nothing is worse than a setting that is missing,
+                because somebody changes it and believes something. */}
+            {!clinic.appointments_auto_confirmed && (
+              <div className="mt-6 border-t border-line pt-6">
+                <SectionTitle>{dict.conta.holdTitle}</SectionTitle>
+                <PreAppointmentHoldConfig
+                  autoExpires={clinic.pre_appointment_auto_expires ?? true}
+                  holdMinutes={clinic.pre_appointment_hold_minutes ?? 30}
+                  readOnly={readOnly}
+                  dict={dict}
+                />
+              </div>
+            )}
           </section>
         )}
 

@@ -598,6 +598,20 @@ export interface Dictionary {
     accents: Record<'brand' | 'ocean' | 'plum' | 'clay' | 'slate', string>
     // What happens to a pre-marcação nobody has answered yet. `{minutes}` is
     // replaced with the length of the hold.
+    /** Who says a booking is real: Telma inside the call, or a person in
+     *  the panel. The second half of the same screen, how long an
+     *  unanswered booking holds its hour, only applies to the latter. */
+    modeTitle: string
+    modeHelp: string
+    modeAutoTitle: string
+    modeAutoHelp: string
+    modeManualTitle: string
+    modeManualHelp: string
+    modeBlocked: string
+    holdMinutesTitle: string
+    holdMinutesHelp: string
+    holdMinutesOption: string
+    holdHoursOption: string
     holdTitle: string
     holdHelp: string
     holdAutoTitle: string

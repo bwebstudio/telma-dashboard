@@ -3,8 +3,8 @@ import { authorizedWebhook } from '@/lib/api-auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   CRITICAL_SECONDS,
-  HOLD_SECONDS,
   getPreAppointmentTimeRemaining,
+  holdLengthSeconds,
   holdPercentage,
 } from '@/lib/appointment-hold'
 import type { Appointment } from '@/lib/types'
@@ -33,7 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const admin = createAdminClient()
   const { data } = await admin
     .from('appointments')
-    .select('id, clinic_id, status, expires_at, scheduled_at')
+    .select('id, clinic_id, status, expires_at, scheduled_at, created_at')
     .eq('id', id)
     .maybeSingle()
 
@@ -48,6 +48,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const secondsRemaining = getPreAppointmentTimeRemaining(appointment)
+  // This booking's own window, not the default: since 0065 each clinic sets
+  // its own, and a caller comparing against thirty minutes would be wrong.
+  const holdSeconds = holdLengthSeconds(appointment)
 
   return NextResponse.json({
     appointment_id: appointment.id,
@@ -58,8 +61,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     // being changed underneath a clinic that is already working through them.
     expires_at: appointment.expires_at ?? null,
     seconds_remaining: secondsRemaining,
-    percentage: secondsRemaining === null ? null : holdPercentage(secondsRemaining),
+    percentage: secondsRemaining === null ? null : holdPercentage(secondsRemaining, holdSeconds),
     is_critical: secondsRemaining !== null && secondsRemaining > 0 && secondsRemaining <= CRITICAL_SECONDS,
-    hold_seconds: HOLD_SECONDS,
+    hold_seconds: holdSeconds,
   })
 }

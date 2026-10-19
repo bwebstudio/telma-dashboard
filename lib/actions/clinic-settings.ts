@@ -1,5 +1,6 @@
 'use server'
 
+import { HOLD_CHOICES } from '@/lib/appointment-hold'
 import { keepChosen } from '@/lib/service-duration'
 import { revalidatePath } from 'next/cache'
 import { getAppUser } from '@/lib/auth'
@@ -31,6 +32,11 @@ async function ownClinicId(): Promise<string> {
 
 export async function updatePreAppointmentHoldConfig(formData: FormData): Promise<void> {
   const autoExpires = String(formData.get('auto_expires')) === 'true'
+  // A list and not a free number: fifteen minutes and four hours are both
+  // real answers, and 7 or 100000 are neither. Checked here because a form
+  // field is a thing anybody can retype.
+  const asked = Number(formData.get('hold_minutes'))
+  const holdMinutes = (HOLD_CHOICES as readonly number[]).includes(asked) ? asked : null
   const clinicId = await ownClinicId()
 
   if (isDemo()) {
@@ -58,7 +64,10 @@ export async function updatePreAppointmentHoldConfig(formData: FormData): Promis
   const admin = createAdminClient()
   await admin
     .from('clinics')
-    .update({ pre_appointment_auto_expires: autoExpires })
+    .update({
+      pre_appointment_auto_expires: autoExpires,
+      ...(holdMinutes ? { pre_appointment_hold_minutes: holdMinutes } : {}),
+    })
     .eq('id', clinicId)
 
   // Turning it off releases the bookings already counting down. Turning it on
@@ -74,6 +83,54 @@ export async function updatePreAppointmentHoldConfig(formData: FormData): Promis
   }
 
   // The countdown is drawn on the agenda, not only on this screen.
+  revalidatePath('/', 'layout')
+}
+
+/**
+ * Who says a booking is real.
+ *
+ * Two answers, both right for somebody. Telma can take the booking, confirm it
+ * and tell the patient inside the call, which is what a clinic with nobody
+ * free to watch a panel wants. Or she leaves it pending and a person decides,
+ * which is what a clinic with somebody at the desk wants, and which the
+ * website sells.
+ *
+ * ── WHY IT REFUSES WHILE SOMETHING IS PENDING ──────────────────────────────
+ * Because the pending ones would be stranded. Nothing confirms them after the
+ * switch -- Telma confirms what she takes from then on, not what is already
+ * waiting -- so they would sit there until somebody noticed, holding hours.
+ *
+ * The alternative was to confirm them all on the way through, and that sends
+ * a burst of SMS to real patients as a side effect of changing a preference,
+ * which cannot be taken back. So the clinic answers them first, either way,
+ * and then switches.
+ */
+export async function updateConfirmationMode(formData: FormData): Promise<void> {
+  const auto = String(formData.get('auto_confirm')) === 'true'
+  const clinicId = await ownClinicId()
+
+  if (isDemo()) {
+    writeClinicOverride(clinicId, { appointments_auto_confirmed: auto })
+    const demoClinic = store.clinics.find((c) => c.id === clinicId)
+    if (demoClinic) demoClinic.appointments_auto_confirmed = auto
+    revalidatePath('/', 'layout')
+    return
+  }
+
+  const admin = createAdminClient()
+
+  // Checked here and not only hidden in the form: the button is a courtesy,
+  // this is the rule, and a form is a thing anybody can post.
+  if (auto) {
+    const { count } = await admin
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('clinic_id', clinicId)
+      .eq('status', 'pendente')
+    if ((count ?? 0) > 0) return
+  }
+
+  await admin.from('clinics').update({ appointments_auto_confirmed: auto }).eq('id', clinicId)
   revalidatePath('/', 'layout')
 }
 

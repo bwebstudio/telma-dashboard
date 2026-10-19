@@ -8,6 +8,7 @@ import {
   CRITICAL_SECONDS,
   formatTimeRemaining,
   getPreAppointmentTimeRemaining,
+  holdLengthSeconds,
   holdPercentage,
 } from '@/lib/appointment-hold'
 import type { Appointment } from '@/lib/types'
@@ -45,7 +46,7 @@ export function PreAppointmentCountdown({
   labels,
   onExpired,
 }: {
-  appointment: Pick<Appointment, 'status' | 'expires_at'>
+  appointment: Pick<Appointment, 'status' | 'expires_at' | 'created_at'>
   /** When the server rendered the page. The zero of the local clock. */
   serverNow: string
   labels: CountdownLabels
@@ -96,7 +97,7 @@ export function PreAppointmentCountdown({
 
   const expired = remaining <= 0
   const critical = !expired && remaining <= CRITICAL_SECONDS
-  const percent = holdPercentage(remaining)
+  const percent = holdPercentage(remaining, holdLengthSeconds(appointment))
   const tone = expired ? 'text-ink-mute' : critical ? 'text-danger' : 'text-ink-soft'
   const fill = expired ? 'bg-line-strong' : critical ? 'bg-danger' : 'bg-brand-accent'
 

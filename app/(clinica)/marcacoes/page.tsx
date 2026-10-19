@@ -38,6 +38,10 @@ export default async function MarcacoesPage({
   // Older than that is not lost, it is elsewhere: in the agenda, on its day.
   // Which is also why the cards can stay cards. They are right *because* the
   // list is meant to be short.
+  // One instant for the whole page, so twenty countdowns on screen agree with
+  // each other and with the server that drew them.
+  const serverNow = new Date().toISOString()
+
   const RECENT_DAYS = 30
   const since = new Date(Date.now() - RECENT_DAYS * 86400_000).toISOString()
 
@@ -186,6 +190,7 @@ export default async function MarcacoesPage({
                       // is noise on the days when it is true and wrong on the
                       // days the record simply has not caught up.
                       visits={appt.patient_id ? (visits.get(appt.patient_id) ?? 0) : 0}
+                      serverNow={serverNow}
                       dict={dict}
                       locale={locale}
                       readOnly={readOnly}

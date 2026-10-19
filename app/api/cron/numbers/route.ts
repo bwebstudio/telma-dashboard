@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { syncTwilioNumbers } from '@/lib/numbers/sync'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { notifyPatient } from '@/lib/notify-patient'
 
 /**
  * The once-a-day job: has a number arrived, and is anything past its date.
@@ -53,6 +54,7 @@ export async function GET(request: Request) {
   // not go another day because a delete did not go through.
   let purged: unknown = null
   let purgeError: string | null = null
+  let expired = 0
   try {
     const admin = createAdminClient()
     const { data, error } = await admin.rpc('purge_expired')
@@ -62,9 +64,32 @@ export async function GET(request: Request) {
     // call has started, and keeping them is keeping a record of who rang which
     // clinic and when.
     await admin.rpc('purge_call_routes')
+
+    // ── THE HOLDS NOBODY WAS WATCHING ───────────────────────────────────
+    // A lapsed booking is swept by the panel, when a countdown on screen
+    // reaches zero. That covers a clinic with the panel open, which is most
+    // of the working day and none of the evening: a booking taken at eight
+    // whose window closes at half past stays 'pendente', holding its hour,
+    // until somebody opens a browser the next morning.
+    //
+    // This is the backstop, not the mechanism. Daily is as often as the
+    // account's two cron jobs allow, so a patient whose booking lapsed
+    // overnight hears in the morning rather than at the half hour. Late is
+    // worse than prompt and far better than never, which is what it was.
+    try {
+      const { data: lapsed } = await admin.rpc('expire_stale_preappointments', {
+        p_clinic_id: null,
+      })
+      for (const row of ((lapsed ?? []) as Array<{ id: string }>)) {
+        await notifyPatient(row.id, 'expirada')
+      }
+      expired = ((lapsed ?? []) as unknown[]).length
+    } catch (e) {
+      console.error('[cron] expiry sweep', e instanceof Error ? e.message : e)
+    }
   } catch (e) {
     purgeError = e instanceof Error ? e.message : 'purge_failed'
   }
 
-  return NextResponse.json({ ok: !report.error, ...report, purged, purge_error: purgeError })
+  return NextResponse.json({ ok: !report.error, ...report, purged, expired, purge_error: purgeError })
 }

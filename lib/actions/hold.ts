@@ -5,6 +5,7 @@ import { getAppUser } from '@/lib/auth'
 import { getVisitingClinic } from '@/lib/clinic-context'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isDemo } from '@/lib/demo/config'
+import { notifyPatient } from '@/lib/notify-patient'
 
 /**
  * Apply the deadline that has already passed.
@@ -31,9 +32,26 @@ export async function expireLapsedPreAppointments(): Promise<{ expired: number }
   })
   if (error) return { expired: 0 }
 
-  const expired = Number(data ?? 0) || 0
-  if (expired > 0) revalidatePath('/', 'layout')
-  return { expired }
+  const lapsed = (data ?? []) as Array<{ id: string }>
+
+  // ── AND THE PERSON WHO ASKED FOR IT ─────────────────────────────────────
+  // The hour went back on sale and the only one who still believed they had
+  // an appointment was the patient. They would have turned up. The sweep is
+  // the gate: only a booking that was 'pendente' a moment ago is in this
+  // list, so each one is told exactly once however many times this runs.
+  //
+  // After the status, never before, and never fatal: a message that will not
+  // send must not leave the hour held.
+  for (const row of lapsed) {
+    try {
+      await notifyPatient(row.id, 'expirada')
+    } catch (e) {
+      console.error('[hold] expiry notice', e instanceof Error ? e.message : e)
+    }
+  }
+
+  if (lapsed.length > 0) revalidatePath('/', 'layout')
+  return { expired: lapsed.length }
 }
 
 async function currentClinicId(): Promise<string | null> {

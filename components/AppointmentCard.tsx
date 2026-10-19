@@ -8,6 +8,7 @@ import { fill } from '@/lib/fill'
 import { Badge, APPOINTMENT_TONE } from './ui'
 import { SHOWN_AS } from '@/lib/agenda-facts'
 import { IconCopy, IconCheck, IconClose } from './icons'
+import { PreAppointmentCountdown } from './clinic/PreAppointmentCountdown'
 import {
   confirmAppointment,
   markCopied,
@@ -19,6 +20,7 @@ import {
 export function AppointmentCard({
   appt,
   visits = 0,
+  serverNow,
   dict,
   locale,
   readOnly = false,
@@ -27,6 +29,10 @@ export function AppointmentCard({
   /** How many bookings this clinic has for this person, this one included.
    *  Zero when nobody has been matched to a record yet. */
   visits?: number
+  /** When the server drew this page. The zero of the countdown's clock, so a
+   *  receptionist's laptop running five minutes fast cannot expire a booking
+   *  that still has time on it. */
+  serverNow: string
   dict: Dictionary
   locale: Locale
   /**
@@ -146,6 +152,24 @@ export function AppointmentCard({
         {appt.reason && <Row label={dict.common.reason} value={appt.reason} />}
         <Row label={dict.common.channel} value={dict.status.origin[appt.origin]} />
       </dl>
+
+      {/* ── HOW LONG THIS HOUR IS STILL HERS ─────────────────────────────────
+          The hold has had a deadline since migration 0020 and the panel never
+          showed it: the hour lapsed, the booking went grey, and the only
+          explanation was that somebody had been too slow at something nobody
+          had been told was timed. It also matters that this is on screen,
+          because reaching zero is what tells the database to let the hour go
+          and the patient that the booking did not happen. */}
+      <PreAppointmentCountdown
+        appointment={appt}
+        serverNow={serverNow}
+        labels={{
+          confirmIn: dict.agenda.holdConfirmIn,
+          critical: dict.agenda.holdCritical,
+          expired: dict.agenda.holdExpired,
+          aria: dict.agenda.holdAria,
+        }}
+      />
 
       {appt.summary && (
         <p className="mt-4 rounded-xl bg-surface-sunken px-4 py-3 text-base leading-relaxed text-ink-soft">

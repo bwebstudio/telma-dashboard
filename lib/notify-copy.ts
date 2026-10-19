@@ -25,7 +25,15 @@
 /** `rejeitada` is the clinic saying no to a booking it never accepted.
  *  `cancelada` is a booking that existed and stopped existing. Different
  *  events, different sentences: see 0011. */
-export type NotifyKind = 'confirmada' | 'alterada' | 'rejeitada' | 'cancelada'
+export type NotifyKind =
+  | 'confirmada'
+  | 'alterada'
+  | 'rejeitada'
+  | 'cancelada'
+  /** Nobody decided anything: the window closed and the hour went back
+   *  on sale. The only person who still believed they had an
+   *  appointment was the one who asked for it. */
+  | 'expirada'
 
 /** Only what a message needs. Narrower than `Clinic` on purpose: this module
  *  imports nothing, and a message does not depend on a plan or a phone. */
@@ -84,12 +92,16 @@ const COPY = {
     alterada: (c: string, w: string) => `${c}: a sua marcação passou para ${w}.`,
     rejeitada: (c: string, w: string) => `${c}: não foi possível confirmar a sua marcação de ${w}.`,
     cancelada: (c: string, w: string) => `${c}: a sua marcação de ${w} foi cancelada.`,
+    expirada: (c: string, w: string) =>
+      `${c}: não foi possível confirmar a sua marcação para ${w}.`,
   },
   es: {
     confirmada: (c: string, w: string) => `${c}: su cita queda confirmada para ${w}.`,
     alterada: (c: string, w: string) => `${c}: su cita ha pasado al ${w}.`,
     rejeitada: (c: string, w: string) => `${c}: no hemos podido confirmar su cita del ${w}.`,
     cancelada: (c: string, w: string) => `${c}: su cita del ${w} ha quedado cancelada.`,
+    expirada: (c: string, w: string) =>
+      `${c}: no hemos podido confirmar su cita para el ${w}.`,
   },
 } as const
 
@@ -111,6 +123,10 @@ const REACH = {
       n ? `Para fazer uma nova marcação, ligue para ${n}.` : 'Ligue-nos para fazer uma nova marcação.',
     cancelada: (n: string | null) =>
       n ? `Para fazer uma nova marcação, ligue para ${n}.` : 'Ligue-nos para fazer uma nova marcação.',
+    expirada: (n: string | null) =>
+      n
+        ? `Contacte a clínica pelo ${n} para fazer uma nova marcação.`
+        : 'Contacte a clínica para fazer uma nova marcação.',
   },
   es: {
     confirmada: (n: string | null) => (n ? `Si no puede venir, llame al ${n}.` : 'Si no puede venir, llámenos.'),
@@ -120,6 +136,10 @@ const REACH = {
       n ? `Llame al ${n} para buscar otra hora.` : 'Llámenos para buscar otra hora.',
     cancelada: (n: string | null) =>
       n ? `Para pedir otra cita, llame al ${n}.` : 'Llámenos para pedir otra cita.',
+    expirada: (n: string | null) =>
+      n
+        ? `Póngase en contacto con la clínica en el ${n} para pedir una nueva cita.`
+        : 'Póngase en contacto con la clínica para pedir una nueva cita.',
   },
 } as const
 

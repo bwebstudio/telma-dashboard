@@ -357,6 +357,9 @@ export default async function AgendaPage({
       <AgendaDay
         appointments={dayAppointments}
         clinic={clinic ?? {}}
+        // One instant for the whole day, so every countdown on screen agrees
+        // with every other and with the server that drew them.
+        serverNow={new Date().toISOString()}
         dict={dict}
         locale={locale}
         tz={tz}

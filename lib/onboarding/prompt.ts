@@ -105,6 +105,14 @@ export interface PromptVariables {
   emergency_protocol: string | null
   /** Whether the call is being recorded. */
   recording: boolean
+  /**
+   * Telma confirms the booking herself instead of leaving it for the
+   * clinic. It changes what she says, which is the point: step 10 ends
+   * every booking with "fica por confirmar pela clínica", and a patient
+   * told their appointment is provisional when it is not has been
+   * misinformed by the only part of this product they hear. See 0064.
+   */
+  appointments_auto_confirmed?: boolean
   /** Whether the clinic agreed to be rung outside its own hours. False by
    *  default and by design: a clinic that never said yes must not have somebody
    *  woken at three in the morning because a caller asked for the doctor. */
@@ -208,6 +216,8 @@ interface BaseCopy {
   toolsCannot: string[]
   bookingTitle: string
   bookingCan: string[]
+  /** Step 10, for a clinic where Telma confirms. See PromptVariables. */
+  bookingStepConfirmed: string
   bookingCannot: string[]
   professionalsTitle: string
   professionals: (names: string[]) => string[]
@@ -497,6 +507,8 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     '"O mais cedo possível", "quanto antes" ou "a primeira que houver" **é** a resposta ao quando: ofereces logo horas concretas, a começar pela mais próxima. Nunca respondes a isso com o horário da clínica.',
     'Também não recitas o horário de abertura a não ser que to perguntem. O horário serve para saberes que horas podes oferecer.',
   ],
+  bookingStepConfirmed:
+    '10. Fechas a dizer que ficou, "Muito bem, fica marcada para...", e repetes o dia, a hora, o serviço e o nome. **A marcação fica confirmada**: dizes que fica confirmada e que a pessoa recebe a confirmação por mensagem. **Não dizes que fica por confirmar pela clínica.** **Não desligas aqui**: a seguir vais a "Como te despedes".',
   bookingCannot: [
     'Hoje **não podes marcar**. Podes informar, tirar dúvidas e tomar nota de quem quer ser contactado, mas não ofereces horas nem dás marcações por feitas.',
     'Quando tomas nota, pedes o nome e o número **que ainda não tiveres desta chamada**, repetes o número para confirmar, e dizes que fica registado no painel da clínica para alguém ligar de volta. Isso diz-se de um recado, nunca de uma marcação.',
@@ -858,6 +870,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     '"Lo antes posible", "cuanto antes" o "la primera que haya" **es** la respuesta a cuándo: ofreces directamente horas concretas, empezando por la más próxima. Nunca respondes a eso con el horario de la clínica.',
     'Tampoco recitas el horario de apertura salvo que te lo pregunten. El horario está para que sepas qué horas puedes ofrecer.',
   ],
+  bookingStepConfirmed:
+    '10. Cierras diciendo que ha quedado, "Muy bien, le queda para...", y repites el día, la hora, el servicio y el nombre. **La cita queda confirmada**: dices que queda confirmada y que recibirá la confirmación por mensaje. **No dices que queda pendiente de que la clínica la confirme.** **No cuelgas aquí**: a continuación vas a "Cómo te despides".',
   bookingCannot: [
     'Hoy **no puedes dar citas**. Puedes informar, resolver dudas y tomar nota de quien quiere que le llamen, pero no ofreces horas ni das citas por hechas.',
     'Cuando tomas nota, pides el nombre y el número **que no tengas ya de esta llamada**, repites el número para confirmarlo, y dices que queda registrado en el panel de la clínica para que alguien le devuelva la llamada. Eso se dice de un recado, nunca de una cita.',
@@ -1144,7 +1158,15 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
   // procedures need are named inside those procedures already.
   const tools = [t.toolsTitle, ...(v.can_book ? t.toolsCan : t.toolsCannot)]
 
-  const booking = [t.bookingTitle, ...(v.can_book ? t.bookingCan : t.bookingCannot)]
+  // Step 10 is the sentence the patient actually hears about whether the
+  // booking is real. Swapped rather than contradicted later: two instructions
+  // that disagree are a coin toss, and this one is said out loud.
+  const bookingSteps = v.can_book
+    ? v.appointments_auto_confirmed
+      ? t.bookingCan.map((line) => (line.startsWith('10.') ? t.bookingStepConfirmed : line))
+      : t.bookingCan
+    : t.bookingCannot
+  const booking = [t.bookingTitle, ...bookingSteps]
 
   const fallbackNumber = v.fallback_number ?? v.phone
   const fallback =

@@ -40,6 +40,42 @@ export async function confirmAppointment(id: string) {
   refresh()
 }
 
+/**
+ * Calling off a booking that was already confirmed.
+ *
+ * There was no way to do this. A confirmed appointment offered one button,
+ * "copy the details", and anything after that happened in somebody's own
+ * software with the patient none the wiser. The clinic closes for a funeral,
+ * a dentist is ill, a room floods: the slot is gone and the only person who
+ * does not know is the one who is going to turn up.
+ *
+ * 'cancelada' and not 'rejeitada': one is a booking that existed and stopped
+ * existing, the other is a booking the clinic never accepted. They read
+ * differently in the agenda and they say different things to the patient.
+ * See 0011.
+ */
+export async function cancelAppointment(id: string) {
+  const cid = await writableClinicId()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('appointments')
+    .update({
+      status: 'cancelada',
+      decided_at: new Date().toISOString(),
+      // The clinic did this and already knows. The alert band is for a
+      // cancellation the clinic has not seen yet, which is the patient's.
+      cancel_seen_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('clinic_id', cid)
+    .in('status', ['confirmada', 'copiada', 'pendente'])
+  if (error) throw new Error(error.message)
+  // After the write, never before, and it cannot undo it. Somebody who is not
+  // told keeps the appointment in their diary.
+  await notifyPatient(id, 'cancelada')
+  refresh()
+}
+
 export async function markCopied(id: string) {
   const cid = await writableClinicId()
   const supabase = await createClient()

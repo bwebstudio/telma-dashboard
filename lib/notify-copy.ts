@@ -22,7 +22,10 @@
  * line, so replying and calling back both reach the clinic.
  */
 
-export type NotifyKind = 'confirmada' | 'alterada' | 'rejeitada'
+/** `rejeitada` is the clinic saying no to a booking it never accepted.
+ *  `cancelada` is a booking that existed and stopped existing. Different
+ *  events, different sentences: see 0011. */
+export type NotifyKind = 'confirmada' | 'alterada' | 'rejeitada' | 'cancelada'
 
 /** Only what a message needs. Narrower than `Clinic` on purpose: this module
  *  imports nothing, and a message does not depend on a plan or a phone. */
@@ -79,12 +82,14 @@ const COPY = {
   pt: {
     confirmada: (c: string, w: string) => `${c}: marcação confirmada para ${w}.`,
     alterada: (c: string, w: string) => `${c}: a sua marcação passou para ${w}.`,
-    rejeitada: (c: string, w: string) => `${c}: a sua marcação de ${w} foi cancelada.`,
+    rejeitada: (c: string, w: string) => `${c}: não foi possível confirmar a sua marcação de ${w}.`,
+    cancelada: (c: string, w: string) => `${c}: a sua marcação de ${w} foi cancelada.`,
   },
   es: {
     confirmada: (c: string, w: string) => `${c}: su cita queda confirmada para ${w}.`,
     alterada: (c: string, w: string) => `${c}: su cita ha pasado al ${w}.`,
     rejeitada: (c: string, w: string) => `${c}: no hemos podido confirmar su cita del ${w}.`,
+    cancelada: (c: string, w: string) => `${c}: su cita del ${w} ha quedado cancelada.`,
   },
 } as const
 
@@ -104,6 +109,8 @@ const REACH = {
       n ? `Para alterações ou cancelamentos: ${n}.` : 'Para alterações ou cancelamentos, ligue-nos.',
     rejeitada: (n: string | null) =>
       n ? `Para fazer uma nova marcação, ligue para ${n}.` : 'Ligue-nos para fazer uma nova marcação.',
+    cancelada: (n: string | null) =>
+      n ? `Para fazer uma nova marcação, ligue para ${n}.` : 'Ligue-nos para fazer uma nova marcação.',
   },
   es: {
     confirmada: (n: string | null) => (n ? `Si no puede venir, llame al ${n}.` : 'Si no puede venir, llámenos.'),
@@ -111,6 +118,8 @@ const REACH = {
       n ? `Si esa hora no le viene bien, llame al ${n}.` : 'Si esa hora no le viene bien, llámenos.',
     rejeitada: (n: string | null) =>
       n ? `Llame al ${n} para buscar otra hora.` : 'Llámenos para buscar otra hora.',
+    cancelada: (n: string | null) =>
+      n ? `Para pedir otra cita, llame al ${n}.` : 'Llámenos para pedir otra cita.',
   },
 } as const
 

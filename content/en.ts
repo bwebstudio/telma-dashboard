@@ -325,6 +325,8 @@ export const en: Dictionary = {
     help: 'Appointments handled by Telma appear here. Confirm, change or reject each request and, if needed, copy it to your clinic software. Appointments awaiting confirmation remain visible until they are handled.',
     empty: 'No appointments right now.',
     confirm: 'Confirm',
+    cancelAppt: 'Cancel booking',
+    cancelApptConfirm: 'Cancel this booking? The patient is told by SMS.',
     alter: 'Change',
     reject: 'Reject',
     copyData: 'Copy patient details',

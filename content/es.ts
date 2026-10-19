@@ -325,6 +325,8 @@ export const es: Dictionary = {
     help: 'Aquí aparecen las citas gestionadas por Telma. Confirme, cambie o rechace cada solicitud y, si es necesario, pásela al software de la clínica. Las citas por confirmar permanecen visibles hasta que se gestionan.',
     empty: 'No hay citas en este momento.',
     confirm: 'Confirmar',
+    cancelAppt: 'Cancelar cita',
+    cancelApptConfirm: '¿Cancelar esta cita? Se avisará al paciente por SMS.',
     alter: 'Cambiar',
     reject: 'Rechazar',
     copyData: 'Copiar datos del paciente',

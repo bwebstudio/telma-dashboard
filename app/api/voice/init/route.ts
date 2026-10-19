@@ -214,6 +214,8 @@ export async function POST(request: Request) {
     emergency_number: clinic.emergency_number ?? null,
     emergency_protocol: clinic.emergency_protocol ?? null,
     recording: clinic.calls_recorded ?? true,
+    // Changes what she says when she closes a booking. See 0064.
+    appointments_auto_confirmed: clinic.appointments_auto_confirmed ?? false,
     after_hours_transfer: clinic.after_hours_transfer === true,
     after_hours_patients_only: clinic.after_hours_patients_only !== false,
     after_hours_number: clinic.after_hours_number ?? null,

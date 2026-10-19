@@ -351,6 +351,11 @@ export interface Dictionary {
     help: string
     empty: string
     confirm: string
+    /** Calling off a booking that was already confirmed. There was no way to
+     *  do it, so a cancelled slot reached the patient only by somebody
+     *  remembering to telephone them. */
+    cancelAppt: string
+    cancelApptConfirm: string
     alter: string
     reject: string
     copyData: string

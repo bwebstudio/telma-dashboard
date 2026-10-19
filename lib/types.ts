@@ -198,6 +198,9 @@ export interface Clinic {
    * Undefined on a row read before migration 0015 ran; treated as true.
    */
   pre_appointment_auto_expires?: boolean | null
+  /** Telma confirms the booking herself and tells the patient so, instead
+   *  of leaving it pending for the clinic. See 0064. */
+  appointments_auto_confirmed?: boolean | null
 }
 
 /**

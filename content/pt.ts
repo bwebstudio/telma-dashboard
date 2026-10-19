@@ -291,8 +291,9 @@ export const pt: Dictionary = {
     step: '{n} de {total}',
     changePassword: 'Alterar palavra-passe',
     steps: {
-      hoje: { title: 'Agenda', body: 'O mais importante de hoje, num só lugar: as marcações, as chamadas atendidas pela Telma e o que ficou por resolver.' },
+      hoje: { title: 'Agenda', body: 'O dia da clínica: as marcações de hoje, quem ligou e o que precisa de resposta. Enquanto a configuração não estiver terminada, é aqui que ela aparece.' },
       marcacoes: { title: 'Marcações', body: 'Aqui estão todas as marcações, não apenas as de hoje. Pode procurar um paciente, alterar uma hora ou cancelar uma marcação.' },
+      pacientes: { title: 'Pacientes', body: 'As pessoas que já ligaram ou já vieram à clínica. A ficha abre-se sozinha na primeira marcação, e é onde vê o histórico de alguém antes de lhe devolver a chamada.' },
       conversas: { title: 'Conversas', body: 'Aqui pode consultar as chamadas atendidas pela Telma e perceber rapidamente o que aconteceu em cada uma.' },
       horarios: { title: 'Horários', body: 'Indique quando a clínica está aberta e quando está fechada. A Telma utiliza estes horários para gerir as marcações.' },
       telma: { title: 'Telma', body: 'Aqui configura o que a Telma sabe sobre a sua clínica e como deve atender. Pode voltar e alterar tudo sempre que precisar.' },

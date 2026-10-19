@@ -36,9 +36,14 @@ import { markWelcomed } from '@/lib/actions/welcome'
  * and there was no way to have it short of editing a row.
  */
 
-// The five places in the sidebar, each with a `data-tour` attribute to point
-// at, and then one stop that is not a place at all.
-const NAV_IDS = ['hoje', 'marcacoes', 'conversas', 'horarios', 'telma'] as const
+// Every place in the sidebar, each with a `data-tour` attribute to point at,
+// and then one stop that is not a place at all.
+//
+// In the sidebar's own order, and all of them: Pacientes had no handle, so the
+// highlight jumped from Marcações to Conversas over a menu entry nobody had
+// explained. A tour that skips one of six doors is a tour somebody has to
+// finish on their own.
+const NAV_IDS = ['hoje', 'marcacoes', 'pacientes', 'conversas', 'horarios', 'telma'] as const
 
 /**
  * The last card: change the password you were emailed.
@@ -67,6 +72,7 @@ const PASSWORD_URL = '/nova-palavra-passe'
 const ANCHOR: Record<StepId, string> = {
   hoje: 'hoje',
   marcacoes: 'marcacoes',
+  pacientes: 'pacientes',
   conversas: 'conversas',
   horarios: 'horarios',
   telma: 'telma',

@@ -289,8 +289,9 @@ export const es: Dictionary = {
     step: '{n} de {total}',
     changePassword: 'Cambiar contraseña',
     steps: {
-      hoje: { title: 'Agenda', body: 'Lo importante de hoy, en un solo lugar: sus citas, las llamadas atendidas por Telma y lo que queda por resolver.' },
+      hoje: { title: 'Agenda', body: 'El día de la clínica: las citas de hoy, quién ha llamado y lo que necesita respuesta. Mientras no termine la configuración, es aquí donde aparece.' },
       marcacoes: { title: 'Citas', body: 'Aquí están todas las citas, no solo las de hoy. Puede buscar un paciente, cambiar una hora o cancelar una cita.' },
+      pacientes: { title: 'Pacientes', body: 'Las personas que ya han llamado o han venido a la clínica. La ficha se crea sola con la primera cita, y es donde ve el historial de alguien antes de devolverle la llamada.' },
       conversas: { title: 'Conversaciones', body: 'Aquí puede revisar las llamadas atendidas por Telma y ver de un vistazo qué ocurrió en cada una.' },
       horarios: { title: 'Horarios', body: 'Indique cuándo abre la clínica y cuándo está cerrada. Telma utilizará estos horarios para gestionar las citas.' },
       telma: { title: 'Telma', body: 'Aquí configura lo que Telma sabe de su clínica y cómo debe atender. Puede volver y cambiarlo siempre que lo necesite.' },

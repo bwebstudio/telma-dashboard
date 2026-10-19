@@ -262,7 +262,7 @@ export interface Dictionary {
      *  to be looking is the first minute in the panel. */
     changePassword: string
     steps: Record<
-      'hoje' | 'marcacoes' | 'conversas' | 'horarios' | 'telma' | 'password',
+      'hoje' | 'marcacoes' | 'pacientes' | 'conversas' | 'horarios' | 'telma' | 'password',
       { title: string; body: string }
     >
   }

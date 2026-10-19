@@ -289,8 +289,9 @@ export const en: Dictionary = {
     step: '{n} of {total}',
     changePassword: 'Change password',
     steps: {
-      hoje: { title: 'Today', body: "What matters today, in one place: your bookings, the calls Telma answered and what is still unresolved." },
+      hoje: { title: 'Agenda', body: 'The clinic\'s day: today\'s bookings, who rang, and what needs an answer. Until the set-up is finished, that is what shows here instead.' },
       marcacoes: { title: 'Bookings', body: 'Every booking, not only today\'s. Search for a patient, move an appointment or cancel one.' },
+      pacientes: { title: 'Patients', body: 'The people who have rung or been to the clinic. A record opens by itself with the first booking, and it is where you read somebody\'s history before ringing them back.' },
       conversas: { title: 'Conversations', body: 'Here you can go through the calls Telma answered and see at a glance what happened in each one.' },
       horarios: { title: 'Opening hours', body: 'Say when the clinic is open and when it is closed. Telma uses these hours to manage bookings.' },
       telma: { title: 'Telma', body: 'Here you set what Telma knows about your clinic and how she should answer. Come back and change it whenever you need.' },

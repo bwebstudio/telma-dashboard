@@ -47,7 +47,7 @@ export default async function ClinicaLayout({
     // Beside the bookings, not down with the settings. A record is looked at
     // while somebody is on the telephone, which is the same work as answering
     // them, and the reminders waiting to go out live on it.
-    { href: '/pacientes', label: dict.clinicNav.pacientes, icon: <IconPatients />, group: day },
+    { href: '/pacientes', label: dict.clinicNav.pacientes, icon: <IconPatients />, group: day, tour: 'pacientes' },
     { href: '/conversas', label: dict.clinicNav.chamadas, icon: <IconCalls />, group: day, tour: 'conversas' },
     { href: '/horarios', label: dict.clinicNav.horarios, icon: <IconHours />, group: setup, tour: 'horarios' },
     { href: '/telma', label: dict.clinicNav.telma, icon: <IconTelma />, group: setup, tour: 'telma' },

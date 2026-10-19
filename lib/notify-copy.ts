@@ -30,8 +30,16 @@ export interface NotifiableClinic {
   name: string
   timezone: string
   language?: string | null
-  /** The line the patient should ring. Only written into the message when the
-   *  sender is a name rather than a number — see `withPhone`. */
+  /**
+   * The clinic's own public line: the one on the door, the one the patient
+   * already has. This is what goes in the message.
+   */
+  phone?: string | null
+  /**
+   * The Telma line. Only the number to ring when the clinic bought one of its
+   * own and publishes it; on a shared line it is the hidden end of a forward,
+   * which nobody should be told to call. See `ringable`.
+   */
   assigned_phone?: string | null
 }
 
@@ -69,22 +77,59 @@ export function senderIdFor(name: string): string {
 
 const COPY = {
   pt: {
-    confirmada: (c: string, w: string) =>
-      `${c}: a sua marcação está confirmada para ${w}. Se não puder vir, ligue-nos.`,
-    alterada: (c: string, w: string) =>
-      `${c}: a sua marcação passou para ${w}. Se este horário não lhe der jeito, ligue-nos.`,
-    rejeitada: (c: string, w: string) =>
-      `${c}: não foi possível confirmar a sua marcação de ${w}. Ligue-nos para remarcar.`,
+    confirmada: (c: string, w: string) => `${c}: marcação confirmada para ${w}.`,
+    alterada: (c: string, w: string) => `${c}: a sua marcação passou para ${w}.`,
+    rejeitada: (c: string, w: string) => `${c}: a sua marcação de ${w} foi cancelada.`,
   },
   es: {
-    confirmada: (c: string, w: string) =>
-      `${c}: su cita queda confirmada para ${w}. Si no puede venir, llámenos.`,
-    alterada: (c: string, w: string) =>
-      `${c}: su cita ha pasado al ${w}. Si esa hora no le viene bien, llámenos.`,
-    rejeitada: (c: string, w: string) =>
-      `${c}: no hemos podido confirmar su cita del ${w}. Llámenos para buscar otra hora.`,
+    confirmada: (c: string, w: string) => `${c}: su cita queda confirmada para ${w}.`,
+    alterada: (c: string, w: string) => `${c}: su cita ha pasado al ${w}.`,
+    rejeitada: (c: string, w: string) => `${c}: no hemos podido confirmar su cita del ${w}.`,
   },
 } as const
+
+/**
+ * How to reach the clinic, which is a different sentence when there is a
+ * number to print and when there is not.
+ *
+ * An alphanumeric sender is one-way: nothing can be replied to, so "ligue-nos"
+ * with no number is an instruction nobody can follow. From the clinic's own
+ * number it is one tap and printing the digits again is noise.
+ */
+const REACH = {
+  pt: {
+    confirmada: (n: string | null) =>
+      n ? `Para alterações ou cancelamentos: ${n}.` : 'Para alterações ou cancelamentos, ligue-nos.',
+    alterada: (n: string | null) =>
+      n ? `Para alterações ou cancelamentos: ${n}.` : 'Para alterações ou cancelamentos, ligue-nos.',
+    rejeitada: (n: string | null) =>
+      n ? `Para fazer uma nova marcação, ligue para ${n}.` : 'Ligue-nos para fazer uma nova marcação.',
+  },
+  es: {
+    confirmada: (n: string | null) => (n ? `Si no puede venir, llame al ${n}.` : 'Si no puede venir, llámenos.'),
+    alterada: (n: string | null) =>
+      n ? `Si esa hora no le viene bien, llame al ${n}.` : 'Si esa hora no le viene bien, llámenos.',
+    rejeitada: (n: string | null) =>
+      n ? `Llame al ${n} para buscar otra hora.` : 'Llámenos para buscar otra hora.',
+  },
+} as const
+
+/**
+ * The number to print, or null.
+ *
+ * The clinic's own line, always, when it has one: that is what the patient
+ * already knows and what somebody picks up. `assigned_phone` is only the
+ * number to ring for a clinic that bought a Telma line of its own and
+ * publishes it; for everybody else it is the shared line, the hidden end of a
+ * forward that nobody dials, and telling a patient to call it would hand out
+ * the one number this product keeps to itself.
+ */
+function ringable(clinic: NotifiableClinic): string | null {
+  const own = clinic.phone?.trim()
+  if (own) return own
+  const telma = clinic.assigned_phone?.trim()
+  return telma || null
+}
 
 /**
  * The hour as the patient reads it: in the clinic's own timezone, written out.
@@ -121,8 +166,6 @@ export function messageFor(
 ): string {
   const locale = clinic.language === 'es' ? 'es' : 'pt'
   const when = whenIn(scheduledAt, clinic.timezone, locale)
-  const t = COPY[locale]
-  const said = t[kind](clinic.name, when)
-  const phone = clinic.assigned_phone?.trim()
-  return withPhone && phone ? `${said} ${phone}` : said
+  const said = COPY[locale][kind](clinic.name, when)
+  return `${said} ${REACH[locale][kind](withPhone ? ringable(clinic) : null)}`
 }

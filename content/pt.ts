@@ -296,7 +296,7 @@ export const pt: Dictionary = {
       conversas: { title: 'Conversas', body: 'Aqui pode consultar as chamadas atendidas pela Telma e perceber rapidamente o que aconteceu em cada uma.' },
       horarios: { title: 'Horários', body: 'Indique quando a clínica está aberta e quando está fechada. A Telma utiliza estes horários para gerir as marcações.' },
       telma: { title: 'Telma', body: 'Aqui configura o que a Telma sabe sobre a sua clínica e como deve atender. Pode voltar e alterar tudo sempre que precisar.' },
-      password: { title: 'Altere a sua palavra-passe', body: 'Está a utilizar a palavra-passe temporária que recebeu ao criar a conta. Por segurança, altere-a agora.' },
+      password: { title: 'Altere a sua palavra-passe', body: 'Por segurança, altere a palavra-passe temporária que recebeu ao criar a conta. Abra o menu da clínica, no canto inferior esquerdo, e entre em Segurança.' },
     },
   },
   languagesSection: {
@@ -570,6 +570,9 @@ export const pt: Dictionary = {
   },
   conta: {
     title: 'A minha clínica',
+    accountMenu: 'Definições da conta',
+    billingTitle: 'Plano e faturação',
+    securityTitle: 'Segurança',
     accessTitle: 'Acesso',
     accessHelp: 'A palavra-passe com que entra no painel. Se ainda usa a temporária que lhe enviámos por email, altere-a.',
     changePassword: 'Alterar palavra-passe',

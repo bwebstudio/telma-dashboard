@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { AccountMenu, type AccountMenuItem } from '@/components/AccountMenu'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { locales, localeNames, type Locale } from '@/content'
@@ -68,7 +69,7 @@ export function Shell({
   userLabel,
   langLabel,
   signOutLabel,
-  accountHref,
+  accountMenu,
   accent,
   brandMark,
   banner,
@@ -85,7 +86,9 @@ export function Shell({
   userLabel: string
   langLabel: string
   signOutLabel: string
-  accountHref?: string
+  /** The three doors behind the clinic's own name. Absent on the internal
+   *  panels, where the footer is a label and nothing else. */
+  accountMenu?: { title: string; items: AccountMenuItem[] }
   /**
    * The clinic's chosen accent. It swaps the whole brand ramp underneath this
    * subtree (see [data-accent] in globals.css), so a clinic's panel is its own
@@ -185,19 +188,14 @@ export function Shell({
           {aside}
         </nav>
         <div className="border-t border-line px-4 py-4">
-          {accountHref ? (
-            <Link
-              href={accountHref}
-              aria-current={isActive(accountHref) ? 'page' : undefined}
-              // The welcome tour's last stop points here: the account is where
-              // the password is changed, and somebody who has just read that
-              // should be able to find it again without being told a path.
-              data-tour="conta"
-              className="mb-3 flex items-center gap-2 truncate text-sm text-ink-soft hover:text-brand-accent"
-            >
-              <IconAccount className="h-4 w-4 shrink-0" />
-              <span className="truncate">{userLabel}</span>
-            </Link>
+          {accountMenu ? (
+            <div className="mb-3">
+              <AccountMenu
+                label={userLabel}
+                title={accountMenu.title}
+                items={accountMenu.items}
+              />
+            </div>
           ) : (
             <p className="mb-3 truncate text-sm text-ink-mute">{userLabel}</p>
           )}
@@ -244,15 +242,13 @@ export function Shell({
               {!showSwitcher && <PanelName panel={panel} label={panelLabel} />}
             </div>
             <div className="flex shrink-0 items-center gap-1">
-              {accountHref && (
-                <Link
-                  href={accountHref}
-                  aria-current={isActive(accountHref) ? 'page' : undefined}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-soft"
-                  aria-label={userLabel}
-                >
-                  <IconAccount className="h-5 w-5" />
-                </Link>
+              {accountMenu && (
+                <AccountMenu
+                  label={userLabel}
+                  title={accountMenu.title}
+                  items={accountMenu.items}
+                  compact
+                />
               )}
               <form action={setLocale}>
                 <input type="hidden" name="locale" value={other} />

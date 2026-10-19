@@ -606,6 +606,10 @@ export interface Dictionary {
   }
   conta: {
     title: string
+    /** The three doors behind the clinic's name in the sidebar. */
+    accountMenu: string
+    billingTitle: string
+    securityTitle: string
     /** Where the password is changed. There was no link to it anywhere
      *  in the panel, so the only route anybody would find on their own
      *  was "I forgot my password". */

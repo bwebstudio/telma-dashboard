@@ -66,7 +66,14 @@ export default async function ClinicaLayout({
       userLabel={clinicName}
       langLabel={dict.common.switchLanguage}
       signOutLabel={dict.common.signOut}
-      accountHref="/conta"
+      accountMenu={{
+        title: dict.conta.accountMenu,
+        items: [
+          { href: '/conta', label: dict.clinicNav.conta },
+          { href: '/conta/faturacao', label: dict.conta.billingTitle },
+          { href: '/conta/seguranca', label: dict.conta.securityTitle },
+        ],
+      }}
       accent={clinic?.accent}
       brandMark={<ClinicMark logoUrl={clinic?.logo_url} clinicName={clinicName} />}
       banner={

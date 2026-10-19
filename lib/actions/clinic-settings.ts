@@ -235,9 +235,11 @@ export async function clinicLanguageSettings(clinicId: string): Promise<{
       languages: [
         { code: 'pt', name: 'Português', status: 'available' },
         { code: 'es', name: 'Español', status: 'available' },
-        { code: 'ca', name: 'Català', status: 'available' },
         { code: 'en', name: 'English', status: 'available' },
+        // As in `available_languages`, where Catalan is deprecated: it was on
+        // the sign-up form and the voice platform does not speak it.
         { code: 'fr', name: 'Français', status: 'coming_soon' },
+        { code: 'de', name: 'Deutsch', status: 'coming_soon' },
       ],
       selected: ['pt'],
       base: 'pt',

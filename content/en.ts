@@ -294,7 +294,7 @@ export const en: Dictionary = {
       conversas: { title: 'Conversations', body: 'Here you can go through the calls Telma answered and see at a glance what happened in each one.' },
       horarios: { title: 'Opening hours', body: 'Say when the clinic is open and when it is closed. Telma uses these hours to manage bookings.' },
       telma: { title: 'Telma', body: 'Here you set what Telma knows about your clinic and how she should answer. Come back and change it whenever you need.' },
-      password: { title: 'Change your password', body: 'You are using the temporary password you were sent when the account was created. Change it now.' },
+      password: { title: 'Change your password', body: 'For safety, change the temporary password you were sent when the account was created. Open your clinic\'s menu, at the bottom left, and go to Security.' },
     },
   },
   languagesSection: {
@@ -568,6 +568,9 @@ export const en: Dictionary = {
   },
   conta: {
     title: 'My clinic',
+    accountMenu: 'Account settings',
+    billingTitle: 'Plan and billing',
+    securityTitle: 'Security',
     accessTitle: 'Access',
     accessHelp: 'The password you sign in with. If you are still using the temporary one we emailed you, change it.',
     changePassword: 'Change password',

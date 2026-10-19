@@ -1014,9 +1014,12 @@ export async function signupLanguages(locale: OnboardingLocale): Promise<Languag
     return [
       { code: 'pt', name: 'Português', label: locale === 'es' ? 'Portugués' : 'Português', status: 'available' },
       { code: 'es', name: 'Español', label: locale === 'es' ? 'Español' : 'Espanhol', status: 'available' },
-      { code: 'ca', name: 'Català', label: locale === 'es' ? 'Catalán' : 'Catalão', status: 'available' },
       { code: 'en', name: 'English', label: locale === 'es' ? 'Inglés' : 'Inglês', status: 'available' },
+      // Mirrors `available_languages`, where Catalan is deprecated: it was
+      // offered at sign-up and the voice platform does not speak it, which is
+      // a promise made at the worst possible moment.
       { code: 'fr', name: 'Français', label: locale === 'es' ? 'Francés' : 'Francês', status: 'coming_soon' },
+      { code: 'de', name: 'Deutsch', label: locale === 'es' ? 'Alemán' : 'Alemão', status: 'coming_soon' },
     ]
   }
 

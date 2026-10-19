@@ -44,7 +44,7 @@ export default async function HorariosPage() {
 
       <section className="mb-12">
         <SectionTitle>{dict.horarios.gridTitle}</SectionTitle>
-        <div className="mb-5 rounded-2xl bg-brand px-5 py-4 text-white">
+        <div className="mb-5 rounded-2xl bg-brand px-5 py-4 text-on-ink">
           <p className="text-lg font-medium">{dict.horarios.help}</p>
         </div>
         <div className="card p-5 sm:p-6">

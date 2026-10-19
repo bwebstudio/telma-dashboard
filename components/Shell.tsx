@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { AccountMenu, type AccountMenuItem } from '@/components/AccountMenu'
 import { usePathname } from 'next/navigation'
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { locales, localeNames, type Locale } from '@/content'
 import { setLocale, signOut } from '@/lib/actions/session'
 import type { Panel } from '@/lib/access'
@@ -71,6 +71,7 @@ export function Shell({
   signOutLabel,
   accountMenu,
   accent,
+  theme,
   brandMark,
   banner,
   aside,
@@ -95,6 +96,8 @@ export function Shell({
    * colour without any component having to know about it.
    */
   accent?: ClinicAccent
+  /** Light or dark, the clinic's choice. See [data-theme] in globals.css. */
+  theme?: 'light' | 'dark' | null
   /** The clinic's logo, standing in for the Telma wordmark in its own panel. */
   brandMark?: ReactNode
   banner?: ReactNode
@@ -128,7 +131,7 @@ export function Shell({
             aria-current={current ? 'page' : undefined}
             className={`min-w-0 flex-1 truncate rounded-pill px-3 py-1.5 text-center text-sm font-medium transition-colors ${
               current
-                ? 'bg-ink text-white'
+                ? 'bg-ink text-on-ink'
                 : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
             }`}
           >
@@ -139,6 +142,23 @@ export function Shell({
     </nav>
   )
 
+  // ── AND ON THE DOCUMENT, FOR THE THINGS THAT ESCAPE IT ──────────────────
+  // The attribute below styles everything inside this element, which is the
+  // whole panel except what React puts in a portal: the welcome tour hangs
+  // off document.body, outside this subtree, and came out in the light
+  // palette over a dark panel. Mirrored here rather than moved to <html>,
+  // because the theme belongs to the clinic and the root layout does not know
+  // which clinic this is. A portal's content is only drawn after mount, so
+  // there is nothing to flash.
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'dark') root.dataset.theme = 'dark'
+    else delete root.dataset.theme
+    return () => {
+      delete root.dataset.theme
+    }
+  }, [theme])
+
   const mark = brandMark ?? <Logo height={34} />
   const markSmall = brandMark ?? <Logo height={30} />
 
@@ -146,6 +166,9 @@ export function Shell({
     <div
       className="min-h-screen lg:flex"
       data-accent={accent && accent !== 'brand' ? accent : undefined}
+      // Light is the default and sets nothing, so every panel that does not
+      // ask for a theme keeps the palette it has always had.
+      data-theme={theme === 'dark' ? 'dark' : undefined}
     >
       {/* Sidebar. Desktop only: on a tablet in portrait a 16rem rail eats a
           third of the width for four links that fit in the bottom bar. */}
@@ -176,7 +199,7 @@ export function Shell({
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={`mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors ${
                 isActive(item.href)
-                  ? 'bg-ink text-white'
+                  ? 'bg-ink text-on-ink'
                   : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
               }`}
             >

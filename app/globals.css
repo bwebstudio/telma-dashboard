@@ -87,6 +87,10 @@
     --ink-soft: 82 82 82;
     --ink-mute: 112 112 110;
 
+    /* The label on an ink or brand ground. A token and not `text-white`,
+       because both of those grounds invert in the dark theme. */
+    --on-ink: 255 255 255;
+
     /* --- Surfaces ---------------------------------------------------------
        The page is warm off-white and the cards are pure white, which is the
        right way round: an object lifts by being lighter than its ground. */
@@ -175,6 +179,78 @@
     --dur-fast: 250ms;
     --dur: 400ms;
     --dur-slow: 600ms;
+  }
+
+  /* --- The dark theme ------------------------------------------------------
+     Set by the clinic, on the same element as the accent, and written as a
+     redefinition of the same tokens rather than as a second set of rules: no
+     component knows which theme it is in, exactly as none of them knows which
+     accent they are in.
+
+     Three things invert rather than darken:
+
+       --ink and --brand       near-white now, so the primary button is a pale
+                               block with dark type on it, and --on-ink is the
+                               dark type. Keeping ink dark would have meant
+                               black text on a black card.
+
+       the status colours      --ok, --warn and --danger were taken down until
+                               they read on white; here they are taken up until
+                               they read on near-black, and the softs become
+                               dim grounds instead of pale ones.
+
+       the category pastels    they carry ink text inside a chip, and ink is
+                               near-white here, so a pale pastel would have
+                               been white on cream. They become dim versions of
+                               the same eight hues, still distinguishable from
+                               each other and still carrying readable text.
+
+     The shadows stay as they are and mostly disappear, which is correct: depth
+     on a dark ground comes from the surface being lighter than the page, and
+     that is what --surface does. */
+  [data-theme='dark'] {
+    --bg: 13 13 13;
+    --surface: 26 26 26;
+    --surface-sunken: 35 35 35;
+    --border: 51 51 51;
+    --border-strong: 74 74 74;
+
+    --ink: 240 240 238;
+    --ink-soft: 180 180 176;
+    --ink-mute: 138 138 134;
+    --on-ink: 17 17 17;
+
+    --brand: 240 240 238;
+    --brand-hover: 214 214 211;
+    --brand-accent: 170 170 166;
+    --brand-wash: 42 42 42;
+    --brand-wash-strong: 56 56 56;
+
+    /* Measured as text on --surface: ok 7.4:1, warn 7.1:1, danger 6.4:1. */
+    --ok: 173 194 92;
+    --ok-soft: 38 44 20;
+    --warn: 226 168 92;
+    --warn-soft: 51 39 22;
+    --danger: 240 140 128;
+    --danger-soft: 56 30 28;
+
+    --cat-1: 30 44 70;
+    --cat-2: 68 44 24;
+    --cat-3: 28 54 40;
+    --cat-4: 58 36 62;
+    --cat-5: 62 54 22;
+    --cat-6: 26 52 56;
+    --cat-7: 44 42 72;
+    --cat-8: 64 34 44;
+
+    /* The dark blocks of the light theme have nowhere left to go, so they
+       lift instead: a header that was near-black on white is a shade lighter
+       than the page here, which is what keeps it a block at all. */
+    --dark: 32 32 32;
+    --dark-soft: 44 44 44;
+    --dark-line: 62 62 62;
+
+    color-scheme: dark;
   }
 
   /* --- Clinic accents -----------------------------------------------------

@@ -344,7 +344,7 @@ function Diaries({
               aria-pressed={r.id === who}
               className={`rounded-card border px-3.5 py-2 text-base transition-colors ${
                 r.id === who
-                  ? 'border-brand bg-brand text-white'
+                  ? 'border-brand bg-brand text-on-ink'
                   : 'border-line bg-surface text-ink hover:border-line-strong'
               }`}
             >

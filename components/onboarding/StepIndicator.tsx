@@ -50,7 +50,7 @@ export function StepIndicator({
                   className={[
                     'flex h-7 w-7 shrink-0 items-center justify-center rounded-pill text-sm font-medium transition-colors duration-fast ease-calm',
                     here
-                      ? 'bg-brand text-white'
+                      ? 'bg-brand text-on-ink'
                       : done
                         ? 'bg-brand-wash-strong text-brand-accent'
                         : 'border border-line-strong bg-surface text-ink-mute',

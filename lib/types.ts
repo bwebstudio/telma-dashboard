@@ -177,6 +177,8 @@ export interface Clinic {
   /** The clinic's own logo, shown in its panel instead of the Telma wordmark. */
   logo_url: string | null
   accent: ClinicAccent
+  /** Light or dark panel. See 0069 and [data-theme] in globals.css. */
+  theme?: 'light' | 'dark' | null
   created_at: string
   updated_at: string
 

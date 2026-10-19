@@ -592,6 +592,9 @@ export const en: Dictionary = {
     logoSaving: 'Saving...',
     logoTooBig: 'The file is larger than 1 MB.',
     logoBadType: 'Use PNG, JPG, WebP or SVG.',
+    themeTitle: 'How the panel looks',
+    themeHelp: 'How the panel looks for the whole team. Dark is easier on the eyes in a room with little light.',
+    themes: { light: 'Light', dark: 'Dark' },
     accentTitle: 'Accent colour',
     accentHelp: 'Used on buttons and highlights. Every one has been checked to read clearly.',
     accents: {

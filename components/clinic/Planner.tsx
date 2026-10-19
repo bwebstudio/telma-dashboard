@@ -170,7 +170,7 @@ export function Planner({
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full text-sm tabular-nums ${
                     d.isToday
-                      ? 'bg-ink font-semibold text-white'
+                      ? 'bg-ink font-semibold text-on-ink'
                       : outside
                         ? 'text-ink-mute'
                         : 'text-ink'

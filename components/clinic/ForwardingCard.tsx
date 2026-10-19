@@ -97,7 +97,7 @@ export function ForwardingCard({
           >
             {codes.length > 1 && (
               <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-medium text-white"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-medium text-on-ink"
                 aria-hidden
               >
                 {i + 1}

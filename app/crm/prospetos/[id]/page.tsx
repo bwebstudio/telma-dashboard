@@ -103,7 +103,7 @@ export default async function ProspetoPage({
           {tel ? (
             <a
               href={tel}
-              className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-brand px-5 text-lg font-semibold text-white hover:bg-brand-hover"
+              className="flex min-h-[3.5rem] flex-1 items-center justify-center gap-2 rounded-2xl bg-brand px-5 text-lg font-semibold text-on-ink hover:bg-brand-hover"
             >
               <IconPhone className="h-6 w-6" />
               {prospect.phone}
@@ -118,7 +118,7 @@ export default async function ProspetoPage({
               href={wa}
               target="_blank"
               rel="noreferrer"
-              className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl border border-brand px-5 text-lg font-semibold text-brand hover:bg-brand hover:text-white sm:w-auto"
+              className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl border border-brand px-5 text-lg font-semibold text-brand hover:bg-brand hover:text-on-ink sm:w-auto"
             >
               <IconWhatsApp className="h-6 w-6" />
               {t.detail.whatsapp}

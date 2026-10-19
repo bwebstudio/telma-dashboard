@@ -635,6 +635,9 @@ export interface Dictionary {
     logoSaving: string
     logoTooBig: string
     logoBadType: string
+    themeTitle: string
+    themeHelp: string
+    themes: Record<'light' | 'dark', string>
     accentTitle: string
     accentHelp: string
     accents: Record<'brand' | 'ocean' | 'plum' | 'clay' | 'slate', string>

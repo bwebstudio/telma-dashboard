@@ -75,6 +75,7 @@ export default async function ClinicaLayout({
         ],
       }}
       accent={clinic?.accent}
+      theme={clinic?.theme}
       brandMark={<ClinicMark logoUrl={clinic?.logo_url} clinicName={clinicName} />}
       banner={
         viewingAs ? (

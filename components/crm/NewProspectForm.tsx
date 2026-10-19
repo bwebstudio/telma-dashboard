@@ -41,7 +41,7 @@ function Submit({ label, busy }: { label: string; busy: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-brand text-lg font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-60 sm:w-auto sm:px-10"
+      className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-brand text-lg font-semibold text-on-ink transition-colors hover:bg-brand-hover disabled:opacity-60 sm:w-auto sm:px-10"
     >
       {pending ? busy : label}
     </button>

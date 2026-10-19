@@ -2,7 +2,7 @@ import { store, type DemoStore } from './data'
 import { nextStage, stageFromResult, type CrmActivity } from '@/lib/crm/types'
 import type { Appointment, Call } from '@/lib/types'
 
-type Filter = ['eq' | 'gte' | 'lte' | 'ilike' | 'is', string, any]
+type Filter = ['eq' | 'gte' | 'lte' | 'lt' | 'gt' | 'neq' | 'ilike' | 'is' | 'or' | 'in' | 'not', string, any]
 type Order = [string, boolean]
 
 const isIso = (v: any) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)
@@ -213,6 +213,58 @@ class DemoQuery<K extends keyof DemoStore> {
     this.filters.push(['is', col, val])
     return this
   }
+  /** Strictly before, strictly after, and not equal. Same shape as the three
+   *  above; they arrived one at a time, as the screens that needed them did. */
+  lt(col: string, val: any) {
+    this.filters.push(['lt', col, val])
+    return this
+  }
+  gt(col: string, val: any) {
+    this.filters.push(['gt', col, val])
+    return this
+  }
+  neq(col: string, val: any) {
+    this.filters.push(['neq', col, val])
+    return this
+  }
+  /** Membership. The real client takes an array and so does this. */
+  in(col: string, values: any[]) {
+    this.filters.push(['in', col, Array.isArray(values) ? values : []])
+    return this
+  }
+  /**
+   * The negation of one condition, as `.not(col, 'is', null)`.
+   *
+   * Only the operators the panel actually negates. An unknown one keeps the
+   * row rather than dropping it: a demo that quietly hides records is worse
+   * than one that shows a few too many.
+   */
+  not(col: string, op: string, val: any) {
+    this.filters.push(['not', col, [op, val]])
+    return this
+  }
+  /**
+   * PostgREST's `or`, which arrives as one string: "col.is.null,col.gte.x".
+   *
+   * Without it the bookings screen threw `query.or is not a function` and the
+   * whole page died -- in demo mode only, so it was invisible to everybody
+   * except the person being shown the product.
+   *
+   * Parsed rather than interpreted: the shape is three parts separated by
+   * dots, and the value may contain dots of its own (a timestamp does), so
+   * only the first two separators count.
+   */
+  or(expr: string) {
+    const alternatives = String(expr ?? '')
+      .split(',')
+      .map((part) => {
+        const [col, kind, ...rest] = part.split('.')
+        return [kind, col, rest.join('.')] as [string, string, string]
+      })
+      .filter(([kind, col]) => kind && col)
+    this.filters.push(['or', '', alternatives])
+    return this
+  }
   order(col: string, opts?: { ascending?: boolean }) {
     this.orders.push([col, opts?.ascending !== false])
     return this
@@ -267,15 +319,41 @@ class DemoQuery<K extends keyof DemoStore> {
       }
     }
     return this.filters.every(([kind, col, val]) => {
+      // One filter, several conditions, any of which will do.
+      if (kind === 'or') {
+        return (val as Array<[string, string, string]>).some(([k, c, v]) =>
+          this.one_of(row, k, c, v)
+        )
+      }
       const cell = row[col]
       if (kind === 'eq') return cell === val
+      if (kind === 'in') return (val as any[]).includes(cell)
+      if (kind === 'not') {
+        const [op, want] = val as [string, any]
+        if (op === 'is') return want === null ? cell != null : cell !== want
+        if (op === 'eq') return cell !== want
+        return true
+      }
       if (kind === 'gte') return cmp(cell, val) >= 0
       if (kind === 'lte') return cmp(cell, val) <= 0
+      if (kind === 'lt') return cell != null && cmp(cell, val) < 0
+      if (kind === 'gt') return cell != null && cmp(cell, val) > 0
+      if (kind === 'neq') return cell !== val
       if (kind === 'ilike')
         return String(cell ?? '').toLowerCase().includes(String(val).replace(/%/g, '').toLowerCase())
       if (kind === 'is') return val === null ? cell == null : cell === val
       return true
     })
+  }
+
+  /** One condition, as PostgREST writes it inside an `or`. */
+  private one_of(row: any, kind: string, col: string, raw: string): boolean {
+    const cell = row[col]
+    if (kind === 'is') return raw === 'null' ? cell == null : String(cell) === raw
+    if (kind === 'eq') return String(cell ?? '') === raw
+    if (kind === 'gte') return cell != null && cmp(cell, raw) >= 0
+    if (kind === 'lte') return cell != null && cmp(cell, raw) <= 0
+    return true
   }
 
   private run() {

@@ -592,6 +592,9 @@ export const es: Dictionary = {
     logoSaving: 'Guardando...',
     logoTooBig: 'El archivo pesa más de 1 MB.',
     logoBadType: 'Use PNG, JPG, WebP o SVG.',
+    themeTitle: 'Aspecto del panel',
+    themeHelp: 'Cómo ve el panel todo el equipo. El modo oscuro cansa menos la vista en una sala con poca luz.',
+    themes: { light: 'Claro', dark: 'Oscuro' },
     accentTitle: 'Color de acento',
     accentHelp: 'Se usa en los botones y en los realces. Todos están comprobados para leerse bien.',
     accents: {

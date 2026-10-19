@@ -29,7 +29,7 @@ export function ViewSwitcher({
             href={v === 'dia' ? '/hoje' : `/hoje?v=${v}`}
             aria-current={on ? 'page' : undefined}
             className={`inline-flex min-h-[2.5rem] items-center justify-center rounded-pill px-4 text-base font-medium transition-colors ${
-              on ? 'bg-ink text-white' : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
+              on ? 'bg-ink text-on-ink' : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
             }`}
           >
             {labels[v]}

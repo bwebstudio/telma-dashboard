@@ -171,7 +171,7 @@ export function LogSheet({
                   }}
                   className={`flex min-h-[3rem] items-center justify-center rounded-2xl border px-2 text-center text-base font-medium leading-tight transition-colors ${
                     on
-                      ? 'border-brand bg-brand text-white'
+                      ? 'border-brand bg-brand text-on-ink'
                       : 'border-line-strong bg-surface text-ink hover:border-ink'
                   }`}
                 >
@@ -209,7 +209,7 @@ export function LogSheet({
                   onClick={() => setNext(on && c !== 'custom' ? 'none' : c)}
                   className={`flex min-h-[2.75rem] items-center justify-center rounded-2xl border px-3 text-base font-medium transition-colors ${
                     on
-                      ? 'border-brand bg-brand text-white'
+                      ? 'border-brand bg-brand text-on-ink'
                       : 'border-line-strong bg-surface text-ink hover:border-ink'
                   }`}
                 >
@@ -240,7 +240,7 @@ export function LogSheet({
           type="button"
           onClick={save}
           disabled={saving}
-          className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-brand text-lg font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-60"
+          className="flex min-h-[3.5rem] w-full items-center justify-center rounded-2xl bg-brand text-lg font-semibold text-on-ink transition-colors hover:bg-brand-hover disabled:opacity-60"
         >
           {saving ? t.log.saving : t.log.save}
         </button>

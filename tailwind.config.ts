@@ -64,6 +64,10 @@ const config: Config = {
           200: 'rgb(var(--red-200) / <alpha-value>)',
           100: 'rgb(var(--red-100) / <alpha-value>)',
         },
+        /* The label on an ink or brand ground. White in the light theme and
+           near-black in the dark one, because both of those grounds invert
+           and a hard-coded white would have gone with the ground. */
+        'on-ink': 'rgb(var(--on-ink) / <alpha-value>)',
         ink: {
           DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
           soft: 'rgb(var(--ink-soft) / <alpha-value>)',

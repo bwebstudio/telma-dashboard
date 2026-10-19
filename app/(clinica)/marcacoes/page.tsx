@@ -131,7 +131,7 @@ export default async function MarcacoesPage({
       <Link
         href={key === 'all' ? '/marcacoes' : `/marcacoes?f=${key}`}
         className={`rounded-full px-4 py-2 text-base font-medium ${
-          active ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
+          active ? 'bg-ink text-on-ink' : 'text-ink-soft hover:text-ink'
         }`}
       >
         {label}

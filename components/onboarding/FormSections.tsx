@@ -1053,7 +1053,7 @@ export function TelmaStep({
               className={[
                 'min-h-[2.75rem] rounded-pill border px-5 text-base transition-all duration-fast ease-calm',
                 (values.formality ?? 'formal') === f
-                  ? 'border-brand bg-brand text-white'
+                  ? 'border-brand bg-brand text-on-ink'
                   : 'border-line-strong bg-surface text-ink hover:border-ink/25',
               ].join(' ')}
             >
@@ -1444,7 +1444,7 @@ export function PlanStep({
             aria-pressed={cycle === c}
             className={[
               'rounded-pill px-4 py-1.5 text-sm font-medium transition-colors duration-fast ease-calm',
-              cycle === c ? 'bg-brand text-white' : 'text-ink-soft hover:text-brand-accent',
+              cycle === c ? 'bg-brand text-on-ink' : 'text-ink-soft hover:text-brand-accent',
             ].join(' ')}
           >
             {c === 'monthly' ? t.planMonthly : t.planAnnual}

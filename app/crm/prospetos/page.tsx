@@ -306,7 +306,7 @@ function ViewTab({
       role="tab"
       aria-selected={active}
       className={`flex min-h-[2.5rem] items-center rounded-pill px-4 text-base font-medium transition-colors ${
-        active ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
+        active ? 'bg-ink text-on-ink' : 'text-ink-soft hover:text-ink'
       }`}
     >
       {children}

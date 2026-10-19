@@ -99,7 +99,7 @@ export function ProspectCards({
               {row.phone && row.telHref ? (
                 <a
                   href={row.telHref}
-                  className="flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-base font-semibold text-white hover:bg-brand-hover"
+                  className="flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-base font-semibold text-on-ink hover:bg-brand-hover"
                 >
                   <IconPhone className="h-5 w-5" />
                   {row.phone}
@@ -112,7 +112,7 @@ export function ProspectCards({
               <button
                 type="button"
                 onClick={() => setLogging(row)}
-                className="min-h-[3rem] shrink-0 rounded-xl border border-ink/25 px-4 text-base font-semibold text-ink hover:border-ink hover:bg-ink hover:text-white"
+                className="min-h-[3rem] shrink-0 rounded-xl border border-ink/25 px-4 text-base font-semibold text-ink hover:border-ink hover:bg-ink hover:text-on-ink"
               >
                 {t.logShort}
               </button>

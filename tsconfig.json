@@ -47,6 +47,10 @@
     // copies of whatever it finds, so those generated types arrive twice and
     // every build after that fails on duplicate identifiers. Excluded rather
     // than removed from `include`, because Next writes that line back.
-    ".next-demo"
+    ".next-demo",
+    // Same story in the real build folder: iCloud leaves " 2." copies of the
+    // generated types and every typecheck after that fails on duplicates.
+    // The build does not need them typechecked; it writes them.
+    ".next/types"
   ]
 }

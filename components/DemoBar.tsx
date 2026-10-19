@@ -52,7 +52,7 @@ function RoleBtn({ value, label, role }: { value: UserRole; label: string; role:
       <button
         type="submit"
         aria-pressed={role === value}
-        className={`${PILL} ${role === value ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'}`}
+        className={`${PILL} ${role === value ? 'bg-ink text-on-ink' : 'text-ink-soft hover:text-ink'}`}
       >
         {label}
       </button>
@@ -75,7 +75,7 @@ function StageBtn({
       <button
         type="submit"
         aria-pressed={stage === value}
-        className={`${PILL} ${stage === value ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'}`}
+        className={`${PILL} ${stage === value ? 'bg-ink text-on-ink' : 'text-ink-soft hover:text-ink'}`}
       >
         {label}
       </button>

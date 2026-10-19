@@ -174,7 +174,7 @@ function Tab({
       role="tab"
       aria-selected={active}
       className={`flex min-h-[3rem] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-2 text-base font-medium transition-colors ${
-        active ? 'bg-ink text-white' : 'text-ink-soft hover:text-ink'
+        active ? 'bg-ink text-on-ink' : 'text-ink-soft hover:text-ink'
       }`}
     >
       {children}

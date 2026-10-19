@@ -151,7 +151,7 @@ export default async function ContaPage() {
             <BrandingForm
               logoUrl={clinic.logo_url ?? null}
               clinicName={clinic.name}
-              accent={clinic.accent ?? 'brand'}
+              theme={clinic.theme === 'dark' ? 'dark' : 'light'}
               dict={dict}
             />
           </section>

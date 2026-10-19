@@ -190,7 +190,7 @@ export function WelcomeTour({
           />
           <div className="absolute inset-0 flex items-center justify-center p-4">
             <div className="w-full max-w-lg overflow-hidden rounded-hero bg-surface shadow-3">
-              <div className="flex items-center gap-3 bg-ink px-7 py-5 text-white">
+              <div className="flex items-center gap-3 bg-ink px-7 py-5 text-on-ink">
                 <TelmaMark className="h-5 w-auto" />
                 <span className="text-lg font-medium tracking-tight">Telma</span>
               </div>

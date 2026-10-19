@@ -24,6 +24,31 @@ const TYPES: Record<string, string> = {
   'image/svg+xml': 'svg',
 }
 
+/**
+ * Light panel or dark panel.
+ *
+ * This replaced the accent picker on the account screen. The accent is still
+ * read by the CSS and still stored, so nothing a clinic already chose was
+ * taken away; what changed is which of the two the panel offers, because a
+ * receptionist reading this screen all day with the blinds down wants the
+ * lights off rather than a different lilac.
+ */
+export async function setTheme(formData: FormData): Promise<void> {
+  const value = String(formData.get('theme') || '')
+  if (value !== 'light' && value !== 'dark') return
+  const clinicId = await ownClinicId()
+
+  if (isDemo()) {
+    writeClinicOverride(clinicId, { theme: value })
+  } else {
+    const supabase = await createClient()
+    await supabase.from('clinics').update({ theme: value }).eq('id', clinicId)
+  }
+  // The theme lives on the shell, so every screen has to be re-rendered, not
+  // only the one the form was submitted from.
+  revalidatePath('/', 'layout')
+}
+
 export async function setAccent(formData: FormData): Promise<void> {
   const value = String(formData.get('accent') || '')
   if (!CLINIC_ACCENTS.includes(value as ClinicAccent)) return

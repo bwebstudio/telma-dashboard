@@ -345,7 +345,7 @@ function Progress({
               aria-hidden
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
                 state === 'done'
-                  ? 'bg-ink text-white'
+                  ? 'bg-ink text-on-ink'
                   : state === 'now'
                     ? 'bg-accent text-ink'
                     : 'border border-line-strong text-ink-mute'

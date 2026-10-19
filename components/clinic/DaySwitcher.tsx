@@ -32,7 +32,7 @@ export function DaySwitcher({
         href={day === today ? '/hoje' : `/hoje?d=${day}`}
         aria-current={active ? 'page' : undefined}
         className={`inline-flex min-h-[2.5rem] items-center rounded-pill px-4 text-base font-medium transition-colors ${
-          active ? 'bg-ink text-white' : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
+          active ? 'bg-ink text-on-ink' : 'text-ink-soft hover:bg-brand-wash hover:text-ink'
         }`}
       >
         {label}

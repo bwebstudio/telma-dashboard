@@ -850,3 +850,92 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
 }
+
+// ── LEAVING ─────────────────────────────────────────────────────────────────
+// The one email in this file that nobody wants to receive, which is exactly
+// why it is worth writing well. It carries one instruction: the code that
+// undoes the forward. The panel says it too, but the panel is a place they
+// have just decided to stop visiting, and this is the thing they will still
+// have in their inbox on the day the telephone goes quiet.
+//
+// No save offer and no survey. The reason was already asked for, once, where
+// it was optional; asking again here would be arguing with somebody who has
+// decided.
+
+interface ServiceEndingEmail {
+  email: string
+  clinicName: string
+  locale: OnboardingLocale
+  /** The day the service stops. Already formatted for the reader. */
+  endsOn: string
+  /** `##002#`, passed in rather than imported, so lib/forwarding stays the
+   *  one place the digits live. */
+  undoCode: string
+}
+
+const ENDING = {
+  pt: {
+    subject: (c: string) => `${c}: o serviço termina a seu pedido`,
+    heading: 'O seu pedido ficou registado',
+    lead: (d: string) =>
+      `A Telma atende até ${d}. Até lá não muda nada, e pode voltar atrás no painel a qualquer momento antes dessa data.`,
+    actionTitle: 'Falta uma coisa que só a clínica pode fazer',
+    action: (code: string) =>
+      `O desvio que ativou na sua operadora não se desliga sozinho. Marque ${code} no telefone da clínica. Enquanto não o fizer, quem ligar para a clínica ouve o sinal de ocupado.`,
+    closing: 'Obrigado pelo tempo que esteve connosco.',
+  },
+  es: {
+    subject: (c: string) => `${c}: el servicio termina a petición suya`,
+    heading: 'Su solicitud ha quedado registrada',
+    lead: (d: string) =>
+      `Telma atiende hasta el ${d}. Hasta entonces no cambia nada, y puede echarse atrás en el panel en cualquier momento antes de esa fecha.`,
+    actionTitle: 'Falta algo que solo puede hacer la clínica',
+    action: (code: string) =>
+      `El desvío que activó en su operadora no se quita solo. Marque ${code} en el teléfono de la clínica. Mientras no lo haga, quien llame a la clínica oirá la señal de comunicando.`,
+    closing: 'Gracias por el tiempo que ha estado con nosotros.',
+  },
+} as const
+
+export async function sendServiceEndingEmail(p: ServiceEndingEmail): Promise<EmailResult> {
+  const t = ENDING[p.locale] ?? ENDING.pt
+  const text = [
+    t.heading,
+    '',
+    t.lead(p.endsOn),
+    '',
+    `${t.actionTitle}: ${t.action(p.undoCode)}`,
+    '',
+    t.closing,
+  ].join('\n')
+
+  const base = emailCopy(p.locale)
+  const html = shell({
+    lang: base.htmlLang,
+    title: p.clinicName,
+    preheader: t.lead(p.endsOn),
+    heading: t.heading,
+    footer: base.footer,
+    tagline: base.footerTagline,
+    support: base.support,
+    body: `        <tr><td style="padding:30px 24px 8px">
+          <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
+            t.lead(p.endsOn)
+          )}</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${LINE};border-radius:12px">
+            <tr><td style="padding:18px 20px">
+              <p style="margin:0 0 6px;font-size:16px;font-weight:600;color:${INK}">${escapeHtml(
+                t.actionTitle
+              )}</p>
+              <p style="margin:0;font-size:16px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
+                t.action(p.undoCode)
+              )}</p>
+            </td></tr>
+          </table>
+          <p style="margin:24px 0 0;font-size:16px;line-height:1.65;color:${INK_SOFT}">${escapeHtml(
+            t.closing
+          )}</p>
+        </td></tr>`,
+  })
+
+  return send({ to: p.email, subject: t.subject(p.clinicName), html, text })
+}

@@ -19,6 +19,7 @@ import { AddonsSection } from '@/components/clinic/AddonsSection'
 import { LanguagesSection } from '@/components/clinic/LanguagesSection'
 import { clinicLanguageSettings } from '@/lib/actions/clinic-settings'
 import { PurchaseHistoryTable } from '@/components/clinic/PurchaseHistoryTable'
+import { EndServiceSection } from '@/components/clinic/EndServiceSection'
 import { getClinicWithPlan, getMinutePackOffer, listAddonOffers } from '@/lib/clinic-utils'
 import type { Purchase } from '@/lib/types'
 
@@ -217,6 +218,23 @@ export default async function ContaPage() {
         <div className="lg:col-span-2">
           <PurchaseHistoryTable purchases={purchases} dict={dict} locale={locale} />
         </div>
+
+        {/* ── THE DOOR OUT ───────────────────────────────────────────────
+            Last on the page, which is where a door out belongs: findable
+            without being in the way of anybody who came here to do something
+            else. Not hidden, though. A clinic that cannot find how to leave
+            leaves anyway, and takes the reason with it. */}
+        {clinic && (
+          <EndServiceSection
+            status={clinic.status}
+            pausedUntil={clinic.service_paused_until ?? null}
+            cancelEffectiveAt={clinic.cancel_effective_at ?? null}
+            deletionRequestedAt={clinic.deletion_requested_at ?? null}
+            readOnly={readOnly}
+            locale={locale}
+            dict={dict}
+          />
+        )}
 
         {/* How the panel looks is the clinic's own decision, so it sits in the
             clinic's own screen rather than in a settings menu somewhere. The

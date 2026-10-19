@@ -153,6 +153,42 @@ export const en: Dictionary = {
     thenForward:
       "After activating Telma, the final step is to set up call forwarding from your clinic number to Telma's number. The required codes will appear here, ready to use, with instructions.",
   },
+  endService: {
+    title: 'End or pause the service',
+    lead: 'Your clinic, your number and your history are yours. You can stop them whenever you want.',
+
+    pauseTitle: 'Pause',
+    pauseHelp:
+      'For a clinic that closes for a few weeks. You pay nothing while it lasts and everything stays as it is: the number, the hours, the patients and the price agreed. Telma stops answering until the date you choose.',
+    pauseAction: 'Pause for {n} month(s)',
+    pausedUntil: 'Service paused until {date}.',
+    resume: 'Resume now',
+
+    cancelTitle: 'End the service',
+    cancelHelp:
+      'It ends at the end of the period you have already paid for, {date}. Nothing changes until then, and you can change your mind at any point before that date.',
+    cancelHelpNoDate: 'It ends at the end of the period you have already paid for. You can change your mind before that date.',
+    cancelAction: 'End the service',
+    cancelConfirm: 'Telma stops answering at the end of the period you have paid for. Are you sure?',
+    cancelled: 'The service ends on {date}.',
+    keep: 'I want to stay after all',
+    reasonLabel: 'Why are you leaving? (optional)',
+    reasonHelp: 'It stays with us and helps us understand what went wrong.',
+    reasonPlaceholder: 'e.g. too expensive, we hired someone, not what I expected',
+
+    forwardTitle: 'One thing only the clinic can do',
+    forwardBody:
+      'The forward you set up with your operator keeps working after this ends. Dial {code} from the clinic telephone to switch it off. Until you do, anyone ringing the clinic hears the engaged tone.',
+
+    eraseTitle: 'Delete the data',
+    eraseHelp:
+      'Deletes this clinic\'s patients, calls, appointments and recordings. Only what the law requires is kept: the invoices, with no name attached. You have {days} days to change your mind before it happens.',
+    eraseAction: 'Request deletion of the data',
+    eraseConfirm: 'This deletes everything after {days} days and cannot be undone. Are you sure?',
+    erasePending: 'The data will be deleted on {date}.',
+    eraseKeep: 'I do not want to delete it after all',
+    failed: 'That did not work. Try again or write to us.',
+  },
   forwarding: {
     eyebrow: 'Your line',
     title: 'Forward unanswered calls to Telma',

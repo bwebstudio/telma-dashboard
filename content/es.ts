@@ -153,6 +153,42 @@ export const es: Dictionary = {
     thenForward:
       'Después de activar Telma, solo falta configurar el desvío de llamadas del número de la clínica al número de Telma. Aquí aparecerán los códigos necesarios, ya preparados, con las instrucciones para marcarlos.',
   },
+  endService: {
+    title: 'Terminar o pausar el servicio',
+    lead: 'Su clínica, su número y su historial son suyos. Puede pararlos cuando quiera.',
+
+    pauseTitle: 'Pausar',
+    pauseHelp:
+      'Para una clínica que cierra unas semanas. No paga nada durante la pausa y queda todo como está: el número, los horarios, los pacientes y el precio acordado. Telma deja de atender hasta la fecha que elija.',
+    pauseAction: 'Pausar durante {n} mes(es)',
+    pausedUntil: 'Servicio en pausa hasta el {date}.',
+    resume: 'Reanudar ahora',
+
+    cancelTitle: 'Terminar el servicio',
+    cancelHelp:
+      'Termina al final del periodo que ya ha pagado, el {date}. Hasta entonces no cambia nada. Puede echarse atrás en cualquier momento antes de esa fecha.',
+    cancelHelpNoDate: 'Termina al final del periodo que ya ha pagado. Puede echarse atrás antes de esa fecha.',
+    cancelAction: 'Terminar el servicio',
+    cancelConfirm: 'Telma dejará de atender al final del periodo que ya ha pagado. ¿Seguro?',
+    cancelled: 'El servicio termina el {date}.',
+    keep: 'Al final quiero seguir',
+    reasonLabel: '¿Por qué se va? (opcional)',
+    reasonHelp: 'Se queda solo para nosotros y nos ayuda a entender qué ha fallado.',
+    reasonPlaceholder: 'Ej: se nos ha hecho caro, hemos contratado a alguien, no era lo que esperaba',
+
+    forwardTitle: 'Falta algo que solo puede hacer la clínica',
+    forwardBody:
+      'El desvío que activó en su operadora sigue funcionando después de terminar aquí. Marque {code} en el teléfono de la clínica para quitarlo. Mientras no lo haga, quien llame a la clínica oirá la señal de comunicando.',
+
+    eraseTitle: 'Eliminar los datos',
+    eraseHelp:
+      'Borra los pacientes, las llamadas, las citas y las grabaciones de esta clínica. Solo se conserva lo que obliga la ley: las facturas, sin nombre asociado. Tiene {days} días para cambiar de idea antes de que se haga.',
+    eraseAction: 'Pedir la eliminación de los datos',
+    eraseConfirm: 'Esto lo borra todo a los {days} días y no hay forma de recuperarlo. ¿Seguro?',
+    erasePending: 'Los datos se eliminarán el {date}.',
+    eraseKeep: 'Al final no quiero eliminarlos',
+    failed: 'No se ha podido. Inténtelo otra vez o escríbanos.',
+  },
   forwarding: {
     eyebrow: 'Su línea',
     title: 'Desvíe a Telma las llamadas que no pueda atender',

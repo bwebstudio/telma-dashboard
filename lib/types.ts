@@ -208,6 +208,24 @@ export interface Clinic {
   /** Telma confirms the booking herself and tells the patient so, instead
    *  of leaving it pending for the clinic. See 0064. */
   appointments_auto_confirmed?: boolean | null
+  /**
+   * Leaving, pausing, and being forgotten. See 0067.
+   *
+   * `service_paused_until` is a pause the clinic asked for and is what tells
+   * a holiday apart from an unpaid invoice, which share the 'pausada' status.
+   * `cancel_effective_at` is the end of what was paid for, so the panel can
+   * say when the telephone stops rather than only that it will.
+   * `deletion_requested_at` is a clock, not a deletion: clearing it is how a
+   * clinic changes its mind, and the sweep is what acts.
+   */
+  service_paused_until?: string | null
+  cancel_requested_at?: string | null
+  cancel_effective_at?: string | null
+  cancel_reason?: string | null
+  deletion_requested_at?: string | null
+  /** When the data was actually destroyed. The row outlives it, emptied,
+   *  because the invoices we must keep point at it. See 0068. */
+  deleted_at?: string | null
 }
 
 /**

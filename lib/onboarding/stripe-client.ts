@@ -470,3 +470,72 @@ export async function billingPortalUrl(
     return null
   }
 }
+
+// ── STOPPING, AND STARTING AGAIN ────────────────────────────────────────────
+// Everything below changes an existing subscription rather than creating one.
+// None of it deletes anything at Stripe: a cancelled subscription keeps its
+// invoices, which is what the tax authorities of both countries require and
+// what a clinic asking for its data back is told.
+
+/** When the clinic has paid up to. Null when Stripe does not know it. */
+export async function subscriptionPeriodEnd(subscriptionId: string): Promise<string | null> {
+  if (!stripeConfigured() || !subscriptionId) return null
+  try {
+    const sub = (await stripeGet(`/subscriptions/${subscriptionId}`)) as {
+      current_period_end?: number
+    }
+    return sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null
+  } catch (e) {
+    console.error('[stripe] period end', e)
+    return null
+  }
+}
+
+/**
+ * Stop at the end of what was paid for.
+ *
+ * Not `DELETE /subscriptions/:id`, which stops it now: the clinic paid for
+ * these days and also needs them, because cancelling does not undo the
+ * forward on its line and its patients would reach an engaged tone the same
+ * afternoon. Reversible until the day arrives, which is the whole reason
+ * Stripe has this flag rather than a delete.
+ */
+export async function cancelAtPeriodEnd(subscriptionId: string): Promise<string | null> {
+  if (!stripeConfigured() || !subscriptionId) return null
+  const sub = (await stripe(
+    `/subscriptions/${subscriptionId}`,
+    new URLSearchParams({ cancel_at_period_end: 'true' })
+  )) as { current_period_end?: number }
+  return sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null
+}
+
+/** Changed their mind, before the day arrived. */
+export async function keepSubscription(subscriptionId: string): Promise<void> {
+  if (!stripeConfigured() || !subscriptionId) return
+  await stripe(
+    `/subscriptions/${subscriptionId}`,
+    new URLSearchParams({ cancel_at_period_end: 'false' })
+  )
+}
+
+/**
+ * Stop collecting, keep the subscription.
+ *
+ * `void` and not `keep_as_draft`: the months a clinic is away are months it
+ * owes nothing for, and an invoice drafted now is an invoice somebody has to
+ * remember to throw away later. The subscription itself stays, which is what
+ * keeps the plan, the price agreed and the line.
+ */
+export async function pauseCollection(subscriptionId: string): Promise<void> {
+  if (!stripeConfigured() || !subscriptionId) return
+  await stripe(
+    `/subscriptions/${subscriptionId}`,
+    new URLSearchParams({ 'pause_collection[behavior]': 'void' })
+  )
+}
+
+/** Back from the pause. Billing resumes on the subscription's own cycle. */
+export async function resumeCollection(subscriptionId: string): Promise<void> {
+  if (!stripeConfigured() || !subscriptionId) return
+  await stripe(`/subscriptions/${subscriptionId}`, new URLSearchParams({ pause_collection: '' }))
+}

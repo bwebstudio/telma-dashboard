@@ -155,6 +155,42 @@ export const pt: Dictionary = {
     thenForward:
       'Depois de ativar a Telma, falta configurar o desvio de chamadas do número da clínica para o número da Telma. Mostraremos aqui os códigos necessários, já preenchidos, e explicaremos como os marcar.',
   },
+  endService: {
+    title: 'Terminar ou pausar o serviço',
+    lead: 'A sua clínica, o seu número e o seu histórico são seus. Pode pará-los quando quiser.',
+
+    pauseTitle: 'Pausar',
+    pauseHelp:
+      'Para uma clínica que fecha umas semanas. Não paga nada durante a pausa e fica tudo como está: o número, os horários, os pacientes e o preço acordado. A Telma deixa de atender até à data que escolher.',
+    pauseAction: 'Pausar durante {n} mês(es)',
+    pausedUntil: 'Serviço em pausa até {date}.',
+    resume: 'Retomar agora',
+
+    cancelTitle: 'Terminar o serviço',
+    cancelHelp:
+      'Termina no fim do período que já pagou, {date}. Até lá está tudo igual. Pode voltar atrás a qualquer momento antes dessa data.',
+    cancelHelpNoDate: 'Termina no fim do período que já pagou. Pode voltar atrás antes dessa data.',
+    cancelAction: 'Terminar o serviço',
+    cancelConfirm: 'A Telma deixa de atender no fim do período que já pagou. Tem a certeza?',
+    cancelled: 'O serviço termina a {date}.',
+    keep: 'Afinal quero continuar',
+    reasonLabel: 'Porque está a sair? (opcional)',
+    reasonHelp: 'Fica só para nós e ajuda-nos a perceber o que falhou.',
+    reasonPlaceholder: 'Ex: ficou caro, contratámos alguém, não era o que esperava',
+
+    forwardTitle: 'Falta uma coisa que só a clínica pode fazer',
+    forwardBody:
+      'O desvio que ativou na sua operadora continua a funcionar depois de terminar aqui. Marque {code} no telefone da clínica para o desligar. Enquanto não o fizer, quem ligar para a clínica ouve o sinal de ocupado.',
+
+    eraseTitle: 'Eliminar os dados',
+    eraseHelp:
+      'Apaga os pacientes, as chamadas, as marcações e as gravações desta clínica. Fica guardado apenas o que a lei obriga: as faturas, sem nome associado. Tem {days} dias para mudar de ideias antes de ser feito.',
+    eraseAction: 'Pedir a eliminação dos dados',
+    eraseConfirm: 'Isto apaga tudo ao fim de {days} dias e não há como recuperar. Tem a certeza?',
+    erasePending: 'Os dados serão eliminados a {date}.',
+    eraseKeep: 'Afinal não quero eliminar',
+    failed: 'Não foi possível. Tente outra vez ou escreva-nos.',
+  },
   forwarding: {
     eyebrow: 'A sua linha',
     title: 'Desvie para a Telma as chamadas que não conseguir atender',

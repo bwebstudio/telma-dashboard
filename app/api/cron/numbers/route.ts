@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sweepServiceDates, type SweepReport } from '@/lib/service-sweep'
 import { syncTwilioNumbers } from '@/lib/numbers/sync'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notifyPatient } from '@/lib/notify-patient'
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
   let purged: unknown = null
   let purgeError: string | null = null
   let expired = 0
+  let service: SweepReport = { resumed: 0, stopped: 0, erased: 0, errors: [] }
   try {
     const admin = createAdminClient()
     const { data, error } = await admin.rpc('purge_expired')
@@ -87,9 +89,28 @@ export async function GET(request: Request) {
     } catch (e) {
       console.error('[cron] expiry sweep', e instanceof Error ? e.message : e)
     }
+
+    // ── AND THE THINGS THAT HAPPEN ON A DATE ────────────────────────────
+    // A pause that ends, a cancellation that falls due, an erasure asked for
+    // a month ago. Nobody is present when any of them happens, which is why
+    // they are here. Once a day is as often as the account's two cron jobs
+    // allow, and all three are things where a few hours late is harmless and
+    // never is not.
+    try {
+      service = await sweepServiceDates()
+    } catch (e) {
+      console.error('[cron] service sweep', e instanceof Error ? e.message : e)
+    }
   } catch (e) {
     purgeError = e instanceof Error ? e.message : 'purge_failed'
   }
 
-  return NextResponse.json({ ok: !report.error, ...report, purged, expired, purge_error: purgeError })
+  return NextResponse.json({
+    ok: !report.error,
+    ...report,
+    purged,
+    expired,
+    service,
+    purge_error: purgeError,
+  })
 }

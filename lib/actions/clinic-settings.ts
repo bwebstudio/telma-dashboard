@@ -40,12 +40,21 @@ export async function updatePreAppointmentHoldConfig(formData: FormData): Promis
   const clinicId = await ownClinicId()
 
   if (isDemo()) {
-    writeClinicOverride(clinicId, { pre_appointment_auto_expires: autoExpires })
+    writeClinicOverride(clinicId, {
+      pre_appointment_auto_expires: autoExpires,
+      ...(holdMinutes ? { pre_appointment_hold_minutes: holdMinutes } : {}),
+    })
     // The store as well as the override bag: the demo's stand-in for
     // record_call reads the clinic row to decide whether a new pre-marcação
     // gets a deadline, exactly as the trigger does.
     const demoClinic = store.clinics.find((c) => c.id === clinicId)
-    if (demoClinic) demoClinic.pre_appointment_auto_expires = autoExpires
+    if (demoClinic) {
+      demoClinic.pre_appointment_auto_expires = autoExpires
+      // Otherwise the chips on screen would never move: a demo that shows a
+      // choice being made and then shows it unmade is worse than a demo that
+      // does not offer it.
+      if (holdMinutes) demoClinic.pre_appointment_hold_minutes = holdMinutes
+    }
     // The demo has no trigger to release the bookings already counting down, so
     // the same thing the real branch does below is done by hand. Without it the
     // demo would show the setting changing and the countdowns carrying on, and

@@ -19,7 +19,7 @@ import { AddonsSection } from '@/components/clinic/AddonsSection'
 import { LanguagesSection } from '@/components/clinic/LanguagesSection'
 import { clinicLanguageSettings } from '@/lib/actions/clinic-settings'
 import { PurchaseHistoryTable } from '@/components/clinic/PurchaseHistoryTable'
-import { EndServiceSection } from '@/components/clinic/EndServiceSection'
+import { SubscriptionSection } from '@/components/clinic/SubscriptionSection'
 import { getClinicWithPlan, getMinutePackOffer, listAddonOffers } from '@/lib/clinic-utils'
 import type { Purchase } from '@/lib/types'
 
@@ -225,9 +225,10 @@ export default async function ContaPage() {
             else. Not hidden, though. A clinic that cannot find how to leave
             leaves anyway, and takes the reason with it. */}
         {clinic && (
-          <EndServiceSection
+          <SubscriptionSection
             status={clinic.status}
             pausedUntil={clinic.service_paused_until ?? null}
+            renewsAt={clinic.plan_renews_at ?? null}
             cancelEffectiveAt={clinic.cancel_effective_at ?? null}
             deletionRequestedAt={clinic.deletion_requested_at ?? null}
             readOnly={readOnly}

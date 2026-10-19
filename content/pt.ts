@@ -155,40 +155,62 @@ export const pt: Dictionary = {
     thenForward:
       'Depois de ativar a Telma, falta configurar o desvio de chamadas do número da clínica para o número da Telma. Mostraremos aqui os códigos necessários, já preenchidos, e explicaremos como os marcar.',
   },
-  endService: {
-    title: 'Terminar ou pausar o serviço',
-    lead: 'A sua clínica, o seu número e o seu histórico são seus. Pode pará-los quando quiser.',
+  subscription: {
+    title: 'Gerir subscrição',
+    lead: 'Pause temporariamente o serviço ou cancele a sua subscrição. Os seus dados não são eliminados automaticamente ao cancelar.',
 
-    pauseTitle: 'Pausar',
+    pauseTitle: 'Pausar a subscrição',
     pauseHelp:
-      'Para uma clínica que fecha umas semanas. Não paga nada durante a pausa e fica tudo como está: o número, os horários, os pacientes e o preço acordado. A Telma deixa de atender até à data que escolher.',
-    pauseAction: 'Pausar durante {n} mês(es)',
-    pausedUntil: 'Serviço em pausa até {date}.',
+      'Vai estar algum tempo sem precisar da Telma? Pode pausar o serviço durante 1, 2 ou 3 meses. Durante a pausa não paga a subscrição e a Telma deixa de atender chamadas. As suas configurações e os seus dados ficam guardados para quando regressar.',
+    pauseOne: 'Pausar 1 mês',
+    pauseMany: 'Pausar {n} meses',
+    pausedUntil: 'Subscrição em pausa até {date}.',
     resume: 'Retomar agora',
 
-    cancelTitle: 'Terminar o serviço',
+    cancelTitle: 'Cancelar a subscrição',
     cancelHelp:
-      'Termina no fim do período que já pagou, {date}. Até lá está tudo igual. Pode voltar atrás a qualquer momento antes dessa data.',
-    cancelHelpNoDate: 'Termina no fim do período que já pagou. Pode voltar atrás antes dessa data.',
-    cancelAction: 'Terminar o serviço',
-    cancelConfirm: 'A Telma deixa de atender no fim do período que já pagou. Tem a certeza?',
-    cancelled: 'O serviço termina a {date}.',
-    keep: 'Afinal quero continuar',
-    reasonLabel: 'Porque está a sair? (opcional)',
-    reasonHelp: 'Fica só para nós e ajuda-nos a perceber o que falhou.',
-    reasonPlaceholder: 'Ex: ficou caro, contratámos alguém, não era o que esperava',
+      'A sua subscrição continuará ativa até {date}, o último dia do período já pago. Até essa data pode continuar a utilizar a Telma e anular este pedido.',
+    cancelHelpNoDate:
+      'A sua subscrição continuará ativa até ao último dia do período já pago. Até essa data pode continuar a utilizar a Telma e anular este pedido.',
+    reasonLabel: 'Porque decidiu cancelar?',
+    reasonOptional: 'Opcional',
+    reasonPlaceholder: 'Conte-nos o que poderíamos ter feito melhor.',
+    reasonHelp: 'A sua resposta é privada e ajuda-nos a melhorar a Telma.',
+    cancelAction: 'Cancelar subscrição',
+    cancelConfirmTitle: 'Cancelar a subscrição?',
+    cancelConfirmBody:
+      'A Telma continuará ativa até {date}. Depois dessa data deixará de atender as chamadas da clínica. Os seus dados não serão eliminados por este cancelamento.',
+    cancelConfirmBodyNoDate:
+      'A Telma continuará ativa até ao fim do período já pago. Depois dessa data deixará de atender as chamadas da clínica. Os seus dados não serão eliminados por este cancelamento.',
+    cancelConfirmGo: 'Confirmar cancelamento',
+    cancelled: 'A subscrição termina a {date}.',
+    cancelledNoDate: 'A subscrição termina no fim do período já pago.',
+    keep: 'Anular o cancelamento',
 
-    forwardTitle: 'Falta uma coisa que só a clínica pode fazer',
-    forwardBody:
-      'O desvio que ativou na sua operadora continua a funcionar depois de terminar aqui. Marque {code} no telefone da clínica para o desligar. Enquanto não o fizer, quem ligar para a clínica ouve o sinal de ocupado.',
+    forwardTitle: 'Desative também o encaminhamento de chamadas',
+    forwardAfterCancel:
+      'A Telma não consegue desativar o encaminhamento configurado na sua operadora. Não o faça já, se quiser continuar a utilizar a Telma até {date}: nesse dia, marque {code} no telefone da clínica.',
+    forwardAfterCancelNoDate:
+      'A Telma não consegue desativar o encaminhamento configurado na sua operadora. No último dia do período já pago, marque {code} no telefone da clínica.',
+    forwardAfterPause:
+      'A Telma não consegue desativar o encaminhamento configurado na sua operadora e durante a pausa não atende. Marque {code} no telefone da clínica para que as chamadas voltem a tocar aí. Quando regressar, terá de voltar a ativar o encaminhamento com os códigos que estão nesta página.',
 
-    eraseTitle: 'Eliminar os dados',
+    eraseTitle: 'Eliminar dados da clínica',
     eraseHelp:
-      'Apaga os pacientes, as chamadas, as marcações e as gravações desta clínica. Fica guardado apenas o que a lei obriga: as faturas, sem nome associado. Tem {days} dias para mudar de ideias antes de ser feito.',
-    eraseAction: 'Pedir a eliminação dos dados',
-    eraseConfirm: 'Isto apaga tudo ao fim de {days} dias e não há como recuperar. Tem a certeza?',
+      'Pode pedir a eliminação dos dados associados à sua clínica. Este pedido é independente do cancelamento da subscrição.',
+    eraseRetention:
+      'Eliminaremos os dados que já não seja necessário conservar. Alguns registos podem ter de ser mantidos durante o período exigido por lei.',
+    eraseGrace:
+      'O pedido pode ser anulado durante {days} dias. Passado esse prazo a eliminação é feita e não há como recuperar.',
+    eraseAction: 'Pedir eliminação dos dados',
+    eraseConfirmTitle: 'Pedir a eliminação dos dados?',
+    eraseConfirmBody:
+      'Pode anular este pedido durante {days} dias. Passado esse prazo os dados são eliminados e não há como os recuperar.',
+    eraseConfirmGo: 'Confirmar pedido',
     erasePending: 'Os dados serão eliminados a {date}.',
-    eraseKeep: 'Afinal não quero eliminar',
+    eraseKeep: 'Anular o pedido',
+
+    back: 'Voltar',
     failed: 'Não foi possível. Tente outra vez ou escreva-nos.',
   },
   forwarding: {

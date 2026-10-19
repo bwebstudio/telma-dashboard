@@ -153,40 +153,62 @@ export const en: Dictionary = {
     thenForward:
       "After activating Telma, the final step is to set up call forwarding from your clinic number to Telma's number. The required codes will appear here, ready to use, with instructions.",
   },
-  endService: {
-    title: 'End or pause the service',
-    lead: 'Your clinic, your number and your history are yours. You can stop them whenever you want.',
+  subscription: {
+    title: 'Manage subscription',
+    lead: 'Pause the service for a while, or cancel your subscription. Cancelling does not delete your data.',
 
-    pauseTitle: 'Pause',
+    pauseTitle: 'Pause the subscription',
     pauseHelp:
-      'For a clinic that closes for a few weeks. You pay nothing while it lasts and everything stays as it is: the number, the hours, the patients and the price agreed. Telma stops answering until the date you choose.',
-    pauseAction: 'Pause for {n} month(s)',
-    pausedUntil: 'Service paused until {date}.',
+      'Going to be without Telma for a while? You can pause the service for 1, 2 or 3 months. While it is paused you do not pay the subscription and Telma stops answering calls. Your settings and your data are kept for when you come back.',
+    pauseOne: 'Pause for 1 month',
+    pauseMany: 'Pause for {n} months',
+    pausedUntil: 'Subscription paused until {date}.',
     resume: 'Resume now',
 
-    cancelTitle: 'End the service',
+    cancelTitle: 'Cancel the subscription',
     cancelHelp:
-      'It ends at the end of the period you have already paid for, {date}. Nothing changes until then, and you can change your mind at any point before that date.',
-    cancelHelpNoDate: 'It ends at the end of the period you have already paid for. You can change your mind before that date.',
-    cancelAction: 'End the service',
-    cancelConfirm: 'Telma stops answering at the end of the period you have paid for. Are you sure?',
-    cancelled: 'The service ends on {date}.',
-    keep: 'I want to stay after all',
-    reasonLabel: 'Why are you leaving? (optional)',
-    reasonHelp: 'It stays with us and helps us understand what went wrong.',
-    reasonPlaceholder: 'e.g. too expensive, we hired someone, not what I expected',
+      'Your subscription stays active until {date}, the last day of the period you have paid for. Until then you can keep using Telma and undo this request.',
+    cancelHelpNoDate:
+      'Your subscription stays active until the last day of the period you have paid for. Until then you can keep using Telma and undo this request.',
+    reasonLabel: 'Why did you decide to cancel?',
+    reasonOptional: 'Optional',
+    reasonPlaceholder: 'Tell us what we could have done better.',
+    reasonHelp: 'Your answer is private and helps us make Telma better.',
+    cancelAction: 'Cancel subscription',
+    cancelConfirmTitle: 'Cancel the subscription?',
+    cancelConfirmBody:
+      'Telma stays active until {date}. After that date she stops answering the clinic\'s calls. This cancellation does not delete your data.',
+    cancelConfirmBodyNoDate:
+      'Telma stays active until the end of the period you have paid for. After that date she stops answering the clinic\'s calls. This cancellation does not delete your data.',
+    cancelConfirmGo: 'Confirm cancellation',
+    cancelled: 'The subscription ends on {date}.',
+    cancelledNoDate: 'The subscription ends at the end of the period you have paid for.',
+    keep: 'Undo the cancellation',
 
-    forwardTitle: 'One thing only the clinic can do',
-    forwardBody:
-      'The forward you set up with your operator keeps working after this ends. Dial {code} from the clinic telephone to switch it off. Until you do, anyone ringing the clinic hears the engaged tone.',
+    forwardTitle: 'Switch off call forwarding as well',
+    forwardAfterCancel:
+      'Telma cannot switch off the forwarding you set up with your operator. Do not do it yet if you want to keep using Telma until {date}: on that day, dial {code} from the clinic telephone.',
+    forwardAfterCancelNoDate:
+      'Telma cannot switch off the forwarding you set up with your operator. On the last day of the period you have paid for, dial {code} from the clinic telephone.',
+    forwardAfterPause:
+      'Telma cannot switch off the forwarding you set up with your operator, and she does not answer while you are paused. Dial {code} from the clinic telephone so the calls ring there again. When you come back you will have to set the forwarding up again, with the codes on this page.',
 
-    eraseTitle: 'Delete the data',
+    eraseTitle: 'Delete the clinic\'s data',
     eraseHelp:
-      'Deletes this clinic\'s patients, calls, appointments and recordings. Only what the law requires is kept: the invoices, with no name attached. You have {days} days to change your mind before it happens.',
+      'You can ask for the data held about your clinic to be deleted. This request is separate from cancelling the subscription.',
+    eraseRetention:
+      'We will delete the data there is no longer any need to keep. Some records may have to be kept for the period the law requires.',
+    eraseGrace:
+      'The request can be undone for {days} days. After that the deletion is carried out and nothing can be recovered.',
     eraseAction: 'Request deletion of the data',
-    eraseConfirm: 'This deletes everything after {days} days and cannot be undone. Are you sure?',
+    eraseConfirmTitle: 'Request deletion of the data?',
+    eraseConfirmBody:
+      'You can undo this request for {days} days. After that the data is deleted and nothing can be recovered.',
+    eraseConfirmGo: 'Confirm request',
     erasePending: 'The data will be deleted on {date}.',
-    eraseKeep: 'I do not want to delete it after all',
+    eraseKeep: 'Undo the request',
+
+    back: 'Back',
     failed: 'That did not work. Try again or write to us.',
   },
   forwarding: {

@@ -32,13 +32,20 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * answers with the prompt that takes a message. A patient with a swollen face
  * must never hear this layer having an opinion.
  *
- * The one exception is a clinic that is no longer a client. Cancelling is not
- * an act the telephone network knows about, so the forward keeps working and
- * its patients keep arriving here for as long as nobody dials ##002#. We
- * cannot answer: speaking in the name of a business that left us, into a
- * diary nobody reads, is worse than not answering. So the call is refused as
- * busy, which is the one thing this layer is allowed to have an opinion
- * about, and it costs neither side a conversation.
+ * The exceptions are a clinic that is no longer a client and one that asked
+ * to be paused. Neither is an act the telephone network knows about, so the
+ * forward keeps working and the patients keep arriving here for as long as
+ * nobody dials ##002#. We cannot answer for either: speaking in the name of a
+ * business that left us, into a diary nobody reads, is worse than not
+ * answering, and a clinic that is not being charged is not being answered for
+ * -- which is what the panel told it when it pressed pause. So the call is
+ * refused as busy, which is the one thing this layer is allowed to have an
+ * opinion about, and it costs neither side a conversation.
+ *
+ * A clinic 'pausada' because an invoice did not land is NOT this. It is still
+ * a client, nobody chose anything, and Telma already answers it without
+ * booking. The difference is `service_paused_until`, which only a pause the
+ * clinic asked for ever sets.
  */
 
 export const dynamic = 'force-dynamic'
@@ -101,14 +108,27 @@ export async function POST(request: Request) {
 
         // Written down first, then refused. The note is how anybody ever
         // finds out the forward is still on: the call is attributed to the
-        // clinic that left, so it can be counted and they can be told.
-        const { data: clinic } = await admin
+        // clinic it belongs to, so it can be counted and they can be told.
+        const { data } = await admin
           .from('clinics')
-          .select('status')
+          .select('status, service_paused_until')
           .eq('id', clinicId)
           .maybeSingle()
-        if ((clinic as { status?: string } | null)?.status === 'cancelada') {
-          console.warn('[incoming] a forward outlived its clinic:', forwardedFrom)
+        const clinic = data as { status?: string; service_paused_until?: string | null } | null
+
+        const gone = clinic?.status === 'cancelada'
+        // The day itself counts as paused: the pause runs until the end of
+        // the day the clinic chose, and comparing dates rather than instants
+        // is what makes that true in every timezone.
+        const away =
+          Boolean(clinic?.service_paused_until) &&
+          String(clinic?.service_paused_until) >= new Date().toISOString().slice(0, 10)
+
+        if (gone || away) {
+          console.warn(
+            `[incoming] ${gone ? 'a forward outlived its clinic' : 'a forward is on while paused'}:`,
+            forwardedFrom
+          )
           return busy()
         }
       } else {

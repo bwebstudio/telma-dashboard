@@ -153,40 +153,62 @@ export const es: Dictionary = {
     thenForward:
       'Después de activar Telma, solo falta configurar el desvío de llamadas del número de la clínica al número de Telma. Aquí aparecerán los códigos necesarios, ya preparados, con las instrucciones para marcarlos.',
   },
-  endService: {
-    title: 'Terminar o pausar el servicio',
-    lead: 'Su clínica, su número y su historial son suyos. Puede pararlos cuando quiera.',
+  subscription: {
+    title: 'Gestionar suscripción',
+    lead: 'Pause temporalmente el servicio o cancele su suscripción. Sus datos no se eliminan automáticamente al cancelar.',
 
-    pauseTitle: 'Pausar',
+    pauseTitle: 'Pausar la suscripción',
     pauseHelp:
-      'Para una clínica que cierra unas semanas. No paga nada durante la pausa y queda todo como está: el número, los horarios, los pacientes y el precio acordado. Telma deja de atender hasta la fecha que elija.',
-    pauseAction: 'Pausar durante {n} mes(es)',
-    pausedUntil: 'Servicio en pausa hasta el {date}.',
+      '¿Va a estar un tiempo sin necesitar a Telma? Puede pausar el servicio durante 1, 2 o 3 meses. Durante la pausa no paga la suscripción y Telma deja de atender llamadas. Su configuración y sus datos quedan guardados para cuando vuelva.',
+    pauseOne: 'Pausar 1 mes',
+    pauseMany: 'Pausar {n} meses',
+    pausedUntil: 'Suscripción en pausa hasta el {date}.',
     resume: 'Reanudar ahora',
 
-    cancelTitle: 'Terminar el servicio',
+    cancelTitle: 'Cancelar la suscripción',
     cancelHelp:
-      'Termina al final del periodo que ya ha pagado, el {date}. Hasta entonces no cambia nada. Puede echarse atrás en cualquier momento antes de esa fecha.',
-    cancelHelpNoDate: 'Termina al final del periodo que ya ha pagado. Puede echarse atrás antes de esa fecha.',
-    cancelAction: 'Terminar el servicio',
-    cancelConfirm: 'Telma dejará de atender al final del periodo que ya ha pagado. ¿Seguro?',
-    cancelled: 'El servicio termina el {date}.',
-    keep: 'Al final quiero seguir',
-    reasonLabel: '¿Por qué se va? (opcional)',
-    reasonHelp: 'Se queda solo para nosotros y nos ayuda a entender qué ha fallado.',
-    reasonPlaceholder: 'Ej: se nos ha hecho caro, hemos contratado a alguien, no era lo que esperaba',
+      'Su suscripción seguirá activa hasta el {date}, el último día del periodo ya pagado. Hasta esa fecha puede seguir usando Telma y anular esta solicitud.',
+    cancelHelpNoDate:
+      'Su suscripción seguirá activa hasta el último día del periodo ya pagado. Hasta esa fecha puede seguir usando Telma y anular esta solicitud.',
+    reasonLabel: '¿Por qué ha decidido cancelar?',
+    reasonOptional: 'Opcional',
+    reasonPlaceholder: 'Cuéntenos qué podríamos haber hecho mejor.',
+    reasonHelp: 'Su respuesta es privada y nos ayuda a mejorar Telma.',
+    cancelAction: 'Cancelar suscripción',
+    cancelConfirmTitle: '¿Cancelar la suscripción?',
+    cancelConfirmBody:
+      'Telma seguirá activa hasta el {date}. A partir de esa fecha dejará de atender las llamadas de la clínica. Sus datos no se eliminarán por esta cancelación.',
+    cancelConfirmBodyNoDate:
+      'Telma seguirá activa hasta el final del periodo ya pagado. A partir de esa fecha dejará de atender las llamadas de la clínica. Sus datos no se eliminarán por esta cancelación.',
+    cancelConfirmGo: 'Confirmar cancelación',
+    cancelled: 'La suscripción termina el {date}.',
+    cancelledNoDate: 'La suscripción termina al final del periodo ya pagado.',
+    keep: 'Anular la cancelación',
 
-    forwardTitle: 'Falta algo que solo puede hacer la clínica',
-    forwardBody:
-      'El desvío que activó en su operadora sigue funcionando después de terminar aquí. Marque {code} en el teléfono de la clínica para quitarlo. Mientras no lo haga, quien llame a la clínica oirá la señal de comunicando.',
+    forwardTitle: 'Desactive también el desvío de llamadas',
+    forwardAfterCancel:
+      'Telma no puede desactivar el desvío que configuró en su operadora. No lo haga todavía si quiere seguir usando Telma hasta el {date}: ese día, marque {code} en el teléfono de la clínica.',
+    forwardAfterCancelNoDate:
+      'Telma no puede desactivar el desvío que configuró en su operadora. El último día del periodo ya pagado, marque {code} en el teléfono de la clínica.',
+    forwardAfterPause:
+      'Telma no puede desactivar el desvío que configuró en su operadora y durante la pausa no atiende. Marque {code} en el teléfono de la clínica para que las llamadas vuelvan a sonar ahí. Cuando vuelva, tendrá que activar el desvío de nuevo con los códigos que están en esta página.',
 
-    eraseTitle: 'Eliminar los datos',
+    eraseTitle: 'Eliminar datos de la clínica',
     eraseHelp:
-      'Borra los pacientes, las llamadas, las citas y las grabaciones de esta clínica. Solo se conserva lo que obliga la ley: las facturas, sin nombre asociado. Tiene {days} días para cambiar de idea antes de que se haga.',
-    eraseAction: 'Pedir la eliminación de los datos',
-    eraseConfirm: 'Esto lo borra todo a los {days} días y no hay forma de recuperarlo. ¿Seguro?',
+      'Puede pedir la eliminación de los datos asociados a su clínica. Esta solicitud es independiente de la cancelación de la suscripción.',
+    eraseRetention:
+      'Eliminaremos los datos que ya no sea necesario conservar. Algunos registros pueden tener que mantenerse durante el periodo exigido por la ley.',
+    eraseGrace:
+      'La solicitud puede anularse durante {days} días. Pasado ese plazo la eliminación se realiza y no hay forma de recuperarlos.',
+    eraseAction: 'Pedir eliminación de los datos',
+    eraseConfirmTitle: '¿Pedir la eliminación de los datos?',
+    eraseConfirmBody:
+      'Puede anular esta solicitud durante {days} días. Pasado ese plazo los datos se eliminan y no hay forma de recuperarlos.',
+    eraseConfirmGo: 'Confirmar solicitud',
     erasePending: 'Los datos se eliminarán el {date}.',
-    eraseKeep: 'Al final no quiero eliminarlos',
+    eraseKeep: 'Anular la solicitud',
+
+    back: 'Volver',
     failed: 'No se ha podido. Inténtelo otra vez o escríbanos.',
   },
   forwarding: {

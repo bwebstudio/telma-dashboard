@@ -159,32 +159,45 @@ export interface Dictionary {
    *  calls reach us. The digits live in lib/forwarding.ts; these are only the
    *  words. `{own}` is the clinic's public number, `{telma}` the hidden one we
    *  bought, `{code}` the cancel-everything code. */
-  endService: {
+  subscription: {
     title: string
     lead: string
     pauseTitle: string
     pauseHelp: string
-    pauseAction: string
+    pauseOne: string
+    pauseMany: string
     pausedUntil: string
     resume: string
     cancelTitle: string
     cancelHelp: string
     cancelHelpNoDate: string
-    cancelAction: string
-    cancelConfirm: string
-    cancelled: string
-    keep: string
     reasonLabel: string
-    reasonHelp: string
+    reasonOptional: string
     reasonPlaceholder: string
+    reasonHelp: string
+    cancelAction: string
+    cancelConfirmTitle: string
+    cancelConfirmBody: string
+    cancelConfirmBodyNoDate: string
+    cancelConfirmGo: string
+    cancelled: string
+    cancelledNoDate: string
+    keep: string
     forwardTitle: string
-    forwardBody: string
+    forwardAfterCancel: string
+    forwardAfterCancelNoDate: string
+    forwardAfterPause: string
     eraseTitle: string
     eraseHelp: string
+    eraseRetention: string
+    eraseGrace: string
     eraseAction: string
-    eraseConfirm: string
+    eraseConfirmTitle: string
+    eraseConfirmBody: string
+    eraseConfirmGo: string
     erasePending: string
     eraseKeep: string
+    back: string
     failed: string
   }
   forwarding: {

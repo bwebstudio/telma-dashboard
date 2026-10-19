@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:prompt": "node --experimental-strip-types --test scripts/test-prompt.mjs",
-    "test": "npm run test:prompt && npm run test:notify && npm run test:recall-copy && npm run test:agenda-facts && npm run test:middleware && npm run test:content && npm run test:duration && npm run test:booking-guard && npm run test:no-access && npm run test:onboarding-done && npm run test:setup-gate && npm run test:on-sale && npm run test:signup-rules",
+    "test": "npm run test:prompt && npm run test:notify && npm run test:recall-copy && npm run test:agenda-facts && npm run test:middleware && npm run test:content && npm run test:duration && npm run test:booking-guard && npm run test:no-access && npm run test:onboarding-done && npm run test:setup-gate && npm run test:on-sale && npm run test:signup-rules && npm run test:implementation-week",
     "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs",
     "test:agenda": "node --experimental-strip-types --test scripts/test-agenda.mjs",
     "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs",
@@ -29,6 +29,7 @@
     "test:setup-gate": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-setup-gate.mjs",
     "test:on-sale": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-on-sale.mjs",
     "test:signup-rules": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-signup-rules.mjs",
+    "test:implementation-week": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-implementation-week.mjs",
     "test:shared-line": "node --test scripts/test-shared-line.mjs",
     "test:idempotency": "node scripts/test-idempotency.mjs"
   },

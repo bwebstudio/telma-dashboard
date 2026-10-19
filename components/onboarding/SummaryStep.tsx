@@ -32,11 +32,16 @@ export function SummaryStep({
   values,
   locale,
   planName,
+  trialDays = 0,
 }: {
   values: Record<string, unknown>
   locale: OnboardingLocale
   /** The plan's own name, as step 1 showed it. */
   planName: string
+  /** Days before the first charge, for a clinic that came through an
+   *  implementation link. The table above still shows what the plan costs;
+   *  this is about when it starts. */
+  trialDays?: number
 }) {
   const t = copyFor(locale)
   const [quote, setQuote] = useState<CheckoutQuote | null>(null)
@@ -141,6 +146,15 @@ export function SummaryStep({
           </tr>
         </tbody>
       </table>
+
+      {/* Said here and not only on Stripe's page: "Total a pagar hoy" with a
+          figure beside it is the line somebody reads twice before deciding,
+          and today that figure is zero. */}
+      {trialDays > 0 && (
+        <p className="max-w-prose rounded-card bg-surface-sunken px-4 py-3 text-sm leading-relaxed text-ink-soft">
+          {t.summaryTrialNote(trialDays)}
+        </p>
+      )}
 
       {quote.reverseCharge && (
         <p className="max-w-prose rounded-card bg-surface-sunken px-4 py-3 text-sm leading-relaxed text-ink-soft">

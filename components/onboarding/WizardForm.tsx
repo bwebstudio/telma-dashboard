@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition, type ReactNode } from 'react'
 import { completeOnboarding, submitWizardStep } from '@/lib/actions/onboarding'
 import { SummaryStep } from '@/components/onboarding/SummaryStep'
+import { implementationDaysFor } from '@/lib/onboarding/catalog'
 import type { OnboardingResult } from '@/lib/actions/onboarding'
 import { copyFor } from '@/lib/onboarding/copy'
 import { loadDone, saveDone } from '@/lib/onboarding/done-state'
@@ -131,6 +132,7 @@ export function WizardForm({
   plans,
   demo,
   initialPlan = null,
+  implementationCode = null,
   locale = DEFAULT_ONBOARDING_LOCALE,
   languages,
   maxLanguages,
@@ -147,6 +149,9 @@ export function WizardForm({
   maxLanguages: number | null
   /** Preselected from `?plano=` when the reader came from a price card. */
   initialPlan?: string | null
+  /** From `?implantacao=` on the URL. Never shown and never asked for:
+   *  it is checked on the server, which is the only place it counts. */
+  implementationCode?: string | null
   locale?: OnboardingLocale
 }) {
   const t = copyFor(locale)
@@ -300,7 +305,7 @@ export function WizardForm({
         return
       }
 
-      const state = await completeOnboarding(saved.token ?? token, values, locale)
+      const state = await completeOnboarding(saved.token ?? token, values, locale, implementationCode)
       if (!state.ok) {
         setErrors(state.errors)
         setStep(firstStepWithError(state.errors, DATA_STEPS))
@@ -388,6 +393,7 @@ export function WizardForm({
               values={values}
               locale={locale}
               planName={plans.find((p) => p.id === values.plan_id)?.name ?? String(values.plan_id ?? '')}
+              trialDays={implementationDaysFor(implementationCode)}
             />
           )}
 

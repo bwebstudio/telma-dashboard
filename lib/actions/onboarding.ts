@@ -11,6 +11,7 @@ import {
   regionLabel,
   SPECIALTY_LABEL,
   TIMEZONE,
+  implementationDaysFor,
   SIGNUP_PLANS,
   type Specialty,
   WHATSAPP_ON_SALE,
@@ -172,7 +173,10 @@ export async function submitWizardStep(
 export async function completeOnboarding(
   draftToken: string | null,
   fallbackData?: unknown,
-  requestedLocale: OnboardingLocale = DEFAULT_ONBOARDING_LOCALE
+  requestedLocale: OnboardingLocale = DEFAULT_ONBOARDING_LOCALE,
+  /** From `?implantacao=` on the sign-up URL. Worth nothing by itself: the
+   *  value is compared here, on the server, against IMPLEMENTATION_CODE. */
+  implementationCode?: string | null
 ): Promise<SubmitState> {
   const draft = draftToken ? await readDraft(draftToken) : null
 
@@ -605,6 +609,9 @@ export async function completeOnboarding(
       // is derived from it rather than asked for a second time.
       country: countryOfRegion(wizard.region),
       locale,
+      // A week before the first charge, for a clinic that came through an
+      // implementation link. Zero for everybody else.
+      trialDays: implementationDaysFor(implementationCode),
       // ── THE LANGUAGE HAS TO TRAVEL ───────────────────────────────────
       // Coming back from Stripe is a navigation from another site, so the
       // page that greets them cannot rely on a cookie being there. It reads

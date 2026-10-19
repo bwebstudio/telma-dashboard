@@ -166,6 +166,12 @@ export interface Clinic {
   after_hours_number?: string | null
   /** Whether call audio is stored. Drives the recording notice Telma gives. */
   calls_recorded?: boolean | null
+  /** Which documents the clinic agreed to at sign-up, and when. Null for a
+   *  clinic created before any of this was recorded: null means we do not
+   *  know, which is the honest answer. See lib/legal.ts and 0063. */
+  terms_version?: string | null
+  privacy_version?: string | null
+  terms_accepted_at?: string | null
   /** IANA zone. The agenda's day boundary is the clinic's, never the server's. */
   timezone: string
   /** The clinic's own logo, shown in its panel instead of the Telma wordmark. */

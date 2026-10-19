@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getAppUser } from '@/lib/auth'
 import { buildSlots } from '@/lib/onboarding/schedule'
-import { wizardSchemas } from '@/lib/onboarding/wizard-schema'
+import { wizardSchemas, fieldErrors } from '@/lib/onboarding/wizard-schema'
 import {
   DEFAULT_ONBOARDING_LOCALE,
   type OnboardingLocale,
@@ -36,14 +36,12 @@ export async function saveSetupHours(
   const cid = user.clinic_id
 
   const parsed = wizardSchemas(locale).hours.safeParse(values)
-  if (!parsed.success) {
-    const errors: Record<string, string> = {}
-    for (const issue of parsed.error.issues) {
-      const key = String(issue.path[0] ?? '_form')
-      if (!errors[key]) errors[key] = issue.message
-    }
-    return { ok: false, errors }
-  }
+  // The sign-up's own flattener, which keeps the whole path. This used to take
+  // only its first segment, so the lunch break's complaint arrived as 'pause'
+  // while the form draws it under 'pause.end' -- the message existed, was
+  // correct, and was shown nowhere, and the clinic saw a button that did
+  // nothing. Same rule, same shape, one copy. See fieldErrors.
+  if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error) }
 
   const supabase = await createClient()
 

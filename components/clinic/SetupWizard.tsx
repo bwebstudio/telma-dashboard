@@ -50,6 +50,52 @@ type Values = Record<string, unknown>
 const STEP_IDS = ['hours', 'services', 'languages', 'telma', 'review'] as const
 type StepId = (typeof STEP_IDS)[number]
 
+/**
+ * Which step draws which field.
+ *
+ * Saving validates more than the step on screen -- deliberately, because the
+ * rules are the sign-up's own and a second copy per step is a copy that will
+ * disagree -- so a failure has to be routed to the step that can fix it.
+ * Without this the button simply stops working: the message is anchored to an
+ * input that is not on the page, nothing highlights, nothing scrolls.
+ *
+ * Keyed on the first segment of the field, so `pause.end` is routed by
+ * `pause`. Anything not listed belongs to no step in this wizard: those are
+ * the profile fields the sign-up collected, and they are edited in A minha
+ * clínica.
+ */
+const STEP_FIELDS: Record<StepId, readonly string[]> = {
+  hours: [
+    'weekdays',
+    'saturday',
+    'sunday',
+    'pause',
+    'appointment_duration_minutes',
+    'min_interval_minutes',
+  ],
+  services: ['services', 'custom_services', 'service_prices', 'service_durations'],
+  languages: ['selected_languages'],
+  telma: [
+    'greeting_language',
+    'formality',
+    'fallback_policy',
+    'fallback_number',
+    'briefing',
+    'emergency_number',
+    'emergency_protocol',
+    'after_hours_transfer',
+    'after_hours_number',
+    'after_hours_patients_only',
+  ],
+  review: [],
+}
+
+/** The step that can fix this complaint, or -1 when no step can. */
+function stepFor(key: string): number {
+  const root = key.split('.')[0]
+  return STEP_IDS.findIndex((stepId) => STEP_FIELDS[stepId].includes(root))
+}
+
 export function SetupWizard({
   initial,
   locale,
@@ -131,32 +177,24 @@ export function SetupWizard({
       if (!r.ok) {
         setErrors(r.errors)
 
-        // ── AN ERROR WITH NOWHERE TO LAND ────────────────────────────────
-        // Saving a step validates the whole profile, not only what this step
-        // draws, because the rules are the sign-up's own and splitting them
-        // per step is how two copies of a rule start disagreeing. The cost is
-        // that a missing field belonging to another screen anchors its message
-        // to an input that is not on the page: nothing highlights, nothing
-        // scrolls, the button just does not advance, and the clinic is left
-        // pressing it. So if none of the failures is on screen, say so in
-        // words and say where the fields are.
-        const onScreen = Object.keys(r.errors).filter(
-          (key) => key === '_form' || document.querySelector(`[name="${key}"]`)
-        )
-        if (onScreen.length === 0) {
-          const missing = Object.keys(r.errors)
-            .map((key) => t.fieldNames[key] ?? key)
-            .join(', ')
-          setFailed(t.missingElsewhere.replace('{fields}', missing))
+        // ── SENDING THE COMPLAINT WHERE IT CAN BE ANSWERED ───────────────
+        // Three places it can belong: this step, which draws it and is
+        // already showing it; another step, which is where the clinic has to
+        // be taken; or no step at all, which means the sign-up collected it
+        // and it is changed in A minha clínica.
+        const keys = Object.keys(r.errors).filter((key) => key !== '_form')
+        if (keys.some((key) => stepFor(key) === step)) return
+
+        const elsewhere = keys.map(stepFor).filter((n) => n >= 0)
+        if (elsewhere.length) {
+          setStep(Math.min(...elsewhere))
+          window.scrollTo({ top: 0, behavior: 'smooth' })
           return
         }
 
-        const first = onScreen[0]
-        if (first && first !== '_form') {
-          document
-            .querySelector<HTMLElement>(`[name="${first}"]`)
-            ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
+        // Nothing in this wizard can fix it. Said in words, because the only
+        // other outcome is a button that does nothing.
+        if (keys.length) setFailed(t.missingElsewhere)
         return
       }
       go(step + 1)

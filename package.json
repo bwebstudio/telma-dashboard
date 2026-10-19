@@ -9,7 +9,7 @@
     "lint": "next lint",
     "demo": "NEXT_DIST_DIR=.next-demo NEXT_PUBLIC_DEMO=1 next dev -p 3100",
     "test:prompt": "node --experimental-strip-types --test scripts/test-prompt.mjs",
-    "test": "npm run test:prompt && npm run test:notify && npm run test:recall-copy && npm run test:agenda-facts && npm run test:middleware && npm run test:content && npm run test:duration && npm run test:booking-guard && npm run test:no-access && npm run test:onboarding-done && npm run test:setup-gate && npm run test:on-sale && npm run test:signup-rules && npm run test:implementation-week && npm run test:hold-and-mode",
+    "test": "npm run test:prompt && npm run test:notify && npm run test:recall-copy && npm run test:agenda-facts && npm run test:middleware && npm run test:content && npm run test:duration && npm run test:booking-guard && npm run test:no-access && npm run test:onboarding-done && npm run test:setup-gate && npm run test:on-sale && npm run test:signup-rules && npm run test:implementation-week && npm run test:hold-and-mode && npm run test:schedule",
     "test:prompt:update": "UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test scripts/test-prompt.mjs",
     "test:agenda": "node --experimental-strip-types --test scripts/test-agenda.mjs",
     "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs",
@@ -32,6 +32,7 @@
     "test:signup-rules": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-signup-rules.mjs",
     "test:implementation-week": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-implementation-week.mjs",
     "test:hold-and-mode": "node --experimental-strip-types --test scripts/test-hold-and-mode.mjs",
+    "test:schedule": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-schedule.mjs",
     "test:shared-line": "node --test scripts/test-shared-line.mjs",
     "test:idempotency": "node scripts/test-idempotency.mjs"
   },

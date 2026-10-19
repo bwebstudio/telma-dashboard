@@ -127,13 +127,27 @@ export function slotsToSimple(slots: Array<{ weekday: number; start_time: string
   // The break is the gap between two stretches on the same weekday. Read off
   // Monday, because a clinic with a break has the same one all week; a clinic
   // whose Monday has one window has no break to show.
+  //
+  // The widest gap, not the first one. A timetable written by the sign-up has
+  // one or two rows per day and the first gap is the only gap, but nothing
+  // guarantees that shape: a day cut into hourly rows has a gap between every
+  // pair, and taking the first one gave a break from 10:00 to 10:00 -- which
+  // the schema then refuses, on a screen that could not show the refusal, so
+  // the clinic was left pressing a button that did nothing.
   const monday = slots
     .filter((s) => s.weekday === 1)
     .sort((a, b) => a.start_time.localeCompare(b.start_time))
-  const pause =
-    monday.length >= 2
-      ? { enabled: true, start: hhmm(monday[0].end_time), end: hhmm(monday[1].start_time) }
-      : { enabled: false, start: '13:00', end: '14:00' }
+
+  let widest = { start: '', end: '', minutes: 0 }
+  for (let i = 1; i < monday.length; i++) {
+    const start = hhmm(monday[i - 1].end_time)
+    const end = hhmm(monday[i].start_time)
+    const minutes = toMinutes(end) - toMinutes(start)
+    if (minutes > widest.minutes) widest = { start, end, minutes }
+  }
+  const pause = widest.minutes > 0
+    ? { enabled: true, start: widest.start, end: widest.end }
+    : { enabled: false, start: '13:00', end: '14:00' }
 
   // Nothing stored at all: the sign-up's own defaults, so the first screen a
   // clinic sees is the week most clinics actually keep.

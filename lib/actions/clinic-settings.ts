@@ -8,7 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { isDemo } from '@/lib/demo/config'
 import { writeClinicOverride } from '@/lib/demo/overrides'
 import { store } from '@/lib/demo/data'
-import { normalisePhone, wizardSchemas } from '@/lib/onboarding/wizard-schema'
+import { normalisePhone, wizardSchemas, fieldErrors } from '@/lib/onboarding/wizard-schema'
 import { DEFAULT_ONBOARDING_LOCALE, type OnboardingLocale } from '@/lib/onboarding/locale'
 
 /**
@@ -335,9 +335,11 @@ export async function updateClinicProfile(
         : values
     const parsed = shape.safeParse(input)
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) {
-        const key = String(issue.path[0] ?? '_form')
-        if (!errors[key]) errors[key] = issue.message
+      // Whole path, not its first segment: the forms draw nested complaints
+      // under 'pause.end' and 'weekdays.close', and a key cut down to 'pause'
+      // matches nothing on screen. See fieldErrors.
+      for (const [key, message] of Object.entries(fieldErrors(parsed.error))) {
+        if (!errors[key]) errors[key] = message
       }
       continue
     }

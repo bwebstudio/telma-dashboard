@@ -11,26 +11,30 @@ import { markForwardingDone } from '@/lib/actions/forwarding'
  * A clinic that kept its own number has to point it at ours, and until it
  * does, Telma sits on a number nobody rings.
  *
- * ── WHY IT READS AS ONE TASK AND NOT AS THREE ─────────────────────────────
- * The first version printed three codes as three equal rows, each with its own
- * heading: "when nobody answers", "when busy", "when out of range". It looked
- * like a menu to choose from. It is not one: all three have to be dialled, and
- * a clinic that dials only the first still sends patients the engaged tone.
+ * ── THE ORDER IS THE WHOLE DESIGN ─────────────────────────────────────────
+ * What is going to happen, what I have to do, the codes, how to undo it, and
+ * the exception. In that order, because the first version answered a question
+ * nobody had asked yet: it opened by explaining how forwarding works, which
+ * made something simple read as something complicated, and the instruction
+ * was three paragraphs down.
  *
- * So the three are numbered steps of one job, under one sentence that says why
- * there are three of them. The technical fact -- that a telephone distinguishes
- * three ways of not answering -- is ours and not theirs, but it has to be said,
- * because otherwise three codes for one thing reads as a mistake.
+ * What went with it was every sentence explaining the machinery. "The
+ * telephone distinguishes three ways of not being able to answer" is true and
+ * it is ours to know; what the clinic needs is that there are three codes and
+ * what each one covers. "That is how Telma knows the call is yours" became
+ * plain instruction: dial it from this line.
  *
- * Both numbers are named in the lead, with what each is for. Without that the
- * reader has two phone numbers on screen and no idea which one is theirs,
- * which is exactly how somebody ends up dialling their own number into the
- * code and forwarding their line to itself.
+ * ── AND THE ANSWER TO THE QUESTION THEY ACTUALLY HAVE ─────────────────────
+ * "After I dial these, what happens to my telephone?" It has its own block,
+ * after the codes, where somebody who has just dialled them is looking: the
+ * number does not change, patients ring it as always, Telma only takes what
+ * you could not.
  *
  * `dismissable` separates the two places this appears. On the agenda it is a
  * task, and a task that cannot be put away is an alarm. Under Conta it is
- * reference, kept because somebody changes operator, or a receptionist cancels
- * every forward on the line by dialling ##002# for an unrelated reason.
+ * reference, kept because somebody changes operator, or a receptionist
+ * cancels every forward on the line by dialling ##002# for an unrelated
+ * reason.
  */
 export function ForwardingCard({
   telmaNumber,
@@ -56,9 +60,8 @@ export function ForwardingCard({
   const codes = forwardCodes(telmaNumber, forwardType)
   if (!codes.length) return null
 
-  const lead = (forwardType === 'all' ? t.leadAll : t.leadKeep)
-    .replace('{own}', ownNumber ?? '—')
-    .replace('{telma}', telmaNumber)
+  const all = forwardType === 'all'
+  const own = ownNumber ?? '—'
 
   async function copy(code: string) {
     try {
@@ -74,9 +77,14 @@ export function ForwardingCard({
   return (
     <section className="card p-6">
       <p className="label-caps text-ink-mute">{t.eyebrow}</p>
-      <h2 className="mt-2 text-xl font-semibold text-ink">{t.title}</h2>
-      <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-soft">{lead}</p>
+      <h2 className="mt-2 text-xl font-semibold text-ink">{all ? t.titleAll : t.titleKeep}</h2>
 
+      {/* What is going to happen. */}
+      <p className="mt-2 max-w-prose text-base leading-relaxed text-ink-soft">
+        {(all ? t.leadAll : t.leadKeep).replace('{own}', own)}
+      </p>
+
+      {/* What I have to do. */}
       <p className="mt-5 max-w-prose text-base leading-relaxed text-ink">
         {codes.length > 1 ? t.stepsIntroMany : t.stepsIntroOne}
       </p>
@@ -112,18 +120,36 @@ export function ForwardingCard({
         ))}
       </ol>
 
-      {/* Before the reassurance, because it is the one thing that stops the
-          forward working at all. */}
-      <p className="mt-4 max-w-prose text-sm text-ink">
-        {t.mustMatch.replace('{own}', ownNumber ?? '—')}
+      {/* ── AND THEN WHAT? ───────────────────────────────────────────────────
+          The question somebody has while dialling, answered where they will
+          be looking when they finish. */}
+      <div className="mt-5 rounded-card border border-ok/30 bg-ok-soft px-4 py-3">
+        <p className="font-medium text-ink">{t.doneTitle}</p>
+        <p className="mt-1 max-w-prose text-base leading-relaxed text-ink-soft">
+          {all ? t.doneBodyAll : t.doneBodyKeep}
+        </p>
+      </div>
+
+      {/* The one thing that stops the forward working at all. */}
+      <p className="mt-5 max-w-prose text-base leading-relaxed text-ink">
+        {t.mustMatch.replace('{own}', own)}
       </p>
 
-      <p className="mt-3 max-w-prose text-sm text-ink-soft">{t.reassure}</p>
-      <p className="mt-1 text-sm text-ink-mute">{t.undo.replace('{code}', FORWARD_UNDO)}</p>
-      <p className="mt-3 max-w-prose text-sm text-ink-mute">{t.fixedLine}</p>
+      <div className="mt-5 flex flex-col gap-4 text-sm text-ink-soft sm:flex-row sm:gap-8">
+        <p className="max-w-prose">
+          <span className="block font-medium text-ink">{t.undoTitle}</span>
+          {t.undoBody.split('{code}')[0]}
+          <span className="font-mono font-semibold text-ink">{FORWARD_UNDO}</span>
+          {t.undoBody.split('{code}')[1]}
+        </p>
+        <p className="max-w-prose">
+          <span className="block font-medium text-ink">{t.fixedTitle}</span>
+          {t.fixedBody}
+        </p>
+      </div>
 
       {dismissable && !readOnly && (
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <button
             type="button"
             disabled={pending}

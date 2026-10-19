@@ -213,31 +213,38 @@ export const en: Dictionary = {
   },
   forwarding: {
     eyebrow: 'Your line',
-    title: 'Forward unanswered calls to Telma',
+    titleKeep: 'Forward the calls you cannot answer to Telma',
+    titleAll: 'Forward all the clinic\'s calls to Telma',
     leadKeep:
-      "Your clinic number, {own}, does not change. When you cannot answer, your operator forwards the call to Telma's number, {telma}. Patients continue calling your usual clinic number.",
+      'Patients keep ringing the clinic\'s usual number, {own}. If nobody answers, the line is engaged, or it is unavailable, the call is forwarded to Telma.',
     leadAll:
-      'Your own number, {own}, stays yours and does not change. What we are going to do is tell your operator to send every call to Telma\u2019s number, {telma}. The clinic phone stops ringing.',
+      'Patients keep ringing the clinic\'s usual number, {own}. From the moment you dial the code, every call is forwarded to Telma.',
     stepsIntroMany:
-      'Dial these three codes on the clinic phone, one after the other. There are three because a telephone tells apart three ways of not being able to answer, and all three need covering.',
-    stepsIntroOne: 'Dial this code on the clinic phone.',
+      'From the clinic telephone, dial the three codes below, one at a time. Telma can then answer in these three situations:',
+    stepsIntroOne: 'From the clinic telephone, dial the code below.',
     codes: {
-      all: 'Every call, always',
-      noAnswer: 'If nobody picks up',
-      busy: 'If the line is busy',
-      unreachable: 'If the phone is off or has no signal',
+      all: 'Every call',
+      noAnswer: 'If nobody answers',
+      busy: 'If the line is engaged',
+      unreachable: 'If the telephone is off or has no signal',
     },
-    reassure: 'Setup is quick and does not change the number patients call.',
+    doneTitle: 'And that is it',
+    doneBodyKeep:
+      'The clinic\'s number does not change and patients go on ringing it as always. Telma only gets the calls you cannot answer.',
+    doneBodyAll:
+      'The clinic\'s number does not change and patients go on ringing it as always. Telma answers every call from now on.',
     copy: 'Copy',
     copied: 'Copied',
-    undo: 'To undo all of it, dial {code}.',
     mustMatch:
-      'The forward has to come from this number, {own}. It is how Telma knows the call is from your clinic. If you forward from another line, tell us which one so we can register it.',
-    fixedLine:
-      'On a landline these codes do nothing: the forward is set by the operator or in their customer area. Write to us and we will do it with you.',
+      'Important: set this up from the line {own}. If you use another number to forward the calls, tell us which one so we can attach it to your clinic.',
+    undoTitle: 'Want to switch the forwarding off?',
+    undoBody: 'Dial {code} from the clinic telephone.',
+    fixedTitle: 'Do you have a landline?',
+    fixedBody:
+      'These codes may not work on a landline. Forwarding is then set up through the operator or in their customer area. Talk to us and we will help you set it up.',
     markDone: 'I have dialled the codes',
     savingDone: 'Saving...',
-    failed: 'Could not save. Try again.',
+    failed: 'That could not be saved. Try again.',
   },
   setupWizard: {
     steps: { hours: 'Hours', services: 'Services', languages: 'Languages', telma: 'How she answers', review: 'Review' },

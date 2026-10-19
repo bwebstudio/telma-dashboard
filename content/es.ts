@@ -213,28 +213,35 @@ export const es: Dictionary = {
   },
   forwarding: {
     eyebrow: 'Su línea',
-    title: 'Desvíe a Telma las llamadas que no pueda atender',
+    titleKeep: 'Desvíe a Telma las llamadas que no pueda atender',
+    titleAll: 'Desvíe a Telma todas las llamadas de la clínica',
     leadKeep:
-      'El número habitual de la clínica, {own}, no cambia. Cuando no pueda atender, la operadora desvía la llamada al número de Telma, {telma}. Los pacientes siguen llamando al número habitual de la clínica.',
+      'Los pacientes siguen llamando al número habitual de la clínica, {own}. Si nadie contesta, la línea está ocupada o no está disponible, la llamada se desvía a Telma.',
     leadAll:
-      'Su número de siempre, {own}, sigue siendo suyo y no cambia. Lo que vamos a hacer es decirle a su operadora que mande todas las llamadas al número de Telma, {telma}. El teléfono de la clínica deja de sonar.',
+      'Los pacientes siguen llamando al número habitual de la clínica, {own}. Desde el momento en que marque el código, todas las llamadas se desvían a Telma.',
     stepsIntroMany:
-      'Marque estos tres códigos en el teléfono de la clínica, uno detrás de otro. Son tres porque el teléfono distingue tres formas de no poder atender, y hay que cubrir las tres.',
-    stepsIntroOne: 'Marque este código en el teléfono de la clínica.',
+      'Desde el teléfono de la clínica, marque los tres códigos siguientes, uno cada vez. Así, Telma podrá atender en estas tres situaciones:',
+    stepsIntroOne: 'Desde el teléfono de la clínica, marque el código siguiente.',
     codes: {
-      all: 'Todas las llamadas, siempre',
-      noAnswer: 'Si nadie responde',
-      busy: 'Si está comunicando',
+      all: 'Todas las llamadas',
+      noAnswer: 'Si nadie contesta',
+      busy: 'Si la línea está ocupada',
       unreachable: 'Si el teléfono está apagado o sin cobertura',
     },
-    reassure: 'La activación es rápida y no cambia el número al que llaman los pacientes.',
+    doneTitle: 'Y ya está',
+    doneBodyKeep:
+      'El número de la clínica no cambia y los pacientes siguen llamando como siempre. Telma solo recibe las llamadas que usted no pueda atender.',
+    doneBodyAll:
+      'El número de la clínica no cambia y los pacientes siguen llamando como siempre. Telma pasa a atender todas las llamadas.',
     copy: 'Copiar',
     copied: 'Copiado',
-    undo: 'Para deshacerlo todo, marque {code}.',
     mustMatch:
-      'El desvío tiene que salir de este número, {own}. Es por él como Telma sabe que la llamada es de su clínica. Si desvía desde otra línea, díganos cuál es para registrarla.',
-    fixedLine:
-      'Si el número de la clínica es fijo, estos códigos no sirven: el desvío se pide a la operadora o se hace en el área de cliente. Escríbanos y lo vemos con usted.',
+      'Importante: configure el desvío desde la línea {own}. Si utiliza otro número para desviar las llamadas, indíquenos cuál para que podamos asociarlo a su clínica.',
+    undoTitle: '¿Quiere desactivar los desvíos?',
+    undoBody: 'Marque {code} desde el teléfono de la clínica.',
+    fixedTitle: '¿Tiene un teléfono fijo?',
+    fixedBody:
+      'Estos códigos pueden no funcionar en líneas fijas. En ese caso, el desvío se configura a través de su operadora o desde el área de cliente. Póngase en contacto con nosotros y le ayudaremos a configurarlo.',
     markDone: 'Ya he marcado los códigos',
     savingDone: 'Guardando...',
     failed: 'No se ha podido guardar. Inténtelo otra vez.',

@@ -227,6 +227,7 @@ export interface Dictionary {
    *  on the clinic reading its own answers back before turning Telma on. */
   setupWizard: {
     steps: { hours: string; services: string; languages: string; telma: string; review: string }
+    stepOf: string
     doneLabel: string
     titles: { hours: string; services: string; languages: string; telma: string; review: string }
     leads: { hours: string; services: string; languages: string; telma: string; review: string }
@@ -614,10 +615,13 @@ export interface Dictionary {
     statusOff: string
     statusOffHelp: string
     progress: string
-    stepDone: string
-    stepTodo: string
-    stepWaiting: string
-    steps: Record<'hours' | 'services' | 'number', { title: string; body: string }>
+    here: string
+    stageWaiting: string
+    stageDone: string
+    stages: Record<
+      'clinica' | 'linhaReady' | 'linhaWaiting' | 'ativar',
+      { title: string; body: string }
+    >
   }
   conta: {
     title: string

@@ -224,6 +224,27 @@ export function SetupWizard({
 
   return (
     <section className="card p-6 sm:p-8">
+      {/* ── WHERE AM I, FIFTEEN HUNDRED PIXELS DOWN ──────────────────────
+          The step list below scrolls away with everything else, and a long
+          step -- the services, the week -- leaves somebody filling in a form
+          with no sign of which form it is or how much of it is left. One
+          line, stuck to the top of the card: the process, the step, and the
+          count. Not the whole header, which would take a third of a laptop
+          screen to say what one line says.
+
+          `top-0` and not an offset: the panel's own header is not sticky on
+          a desktop, and on a phone this card starts below it anyway. */}
+      <div className="sticky top-0 z-10 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line bg-surface px-6 py-3 sm:-mx-8 sm:px-8">
+        <p className="min-w-0 truncate text-base font-medium text-ink">
+          {dict.comecar.navItem} <span className="text-ink-mute">·</span> {t.steps[id]}
+        </p>
+        <p className="label-caps shrink-0 text-ink-mute">
+          {t.stepOf
+            .replace('{n}', String(step + 1))
+            .replace('{total}', String(STEP_IDS.length))}
+        </p>
+      </div>
+
       <Progress step={step} total={STEP_IDS.length} labels={t.steps} done={t.doneLabel} />
 
       <h2 className="mt-6 text-2xl font-semibold text-ink sm:text-3xl">{t.titles[id]}</h2>

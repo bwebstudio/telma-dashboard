@@ -104,6 +104,21 @@ export async function POST(request: Request) {
   const context = await getClinicWithPlan(clinicId)
   if (!context) return NextResponse.json({ error: 'clinic_not_found' }, { status: 404 })
 
+  // ── A CLINIC THAT IS NO LONGER A CLIENT ───────────────────────────────────
+  // Cancelling does not undo a forward: the clinic's patients keep ringing
+  // the number on the door and the operator keeps sending those calls here,
+  // for as long as nobody dials ##002#. Telma must not answer in the name of
+  // a clinic that left -- she would be taking bookings into a diary nobody
+  // reads, and speaking for a business that is no longer a client.
+  //
+  // Refused rather than answered differently: the agent falls back to its own
+  // generic configuration, which speaks for nobody. 'pausada' is not this.
+  // That is an invoice that has not landed, the clinic is still a client, and
+  // she already answers without booking.
+  if (context.clinic.status === 'cancelada') {
+    return NextResponse.json({ error: 'clinic_no_longer_active' }, { status: 404 })
+  }
+
   const { clinic, minutes } = context
   const promptLocale = isOnboardingLocale(clinic.language)
     ? clinic.language

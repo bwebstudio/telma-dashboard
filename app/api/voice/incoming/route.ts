@@ -62,7 +62,16 @@ export async function POST(request: Request) {
   try {
     if (callSid && forwardedFrom) {
       const admin = createAdminClient()
-      const { data } = await admin.rpc('clinic_by_own_number', { p_number: forwardedFrom })
+      // Any status, including a clinic that has left us. Recognising whose
+      // call this is and agreeing to answer it are two questions, and a call
+      // that matches nothing here does not stop: it falls through to the
+      // number that was dialled, which on a shared line is whichever clinic
+      // declared it answers direct calls. A former client's patient would be
+      // booked into that clinic's diary. Whether Telma answers at all is
+      // decided in /api/voice/init. See migration 0066.
+      const { data } = await admin.rpc('clinic_by_own_number_any_status', {
+        p_number: forwardedFrom,
+      })
       const clinicId = (data as string | null) ?? null
       if (clinicId) {
         await admin

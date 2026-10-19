@@ -154,3 +154,73 @@ test('a number nobody answers on resolves to nothing, rather than to somebody', 
   const { body } = await rpc('clinic_by_dialled_number', { p_number: '+351999888777' })
   assert.equal(body, null)
 })
+
+// ── AND THE CLINIC THAT LEFT ───────────────────────────────────────────────
+// Cancelling is not something the telephone network is told about. The forward
+// a clinic dialled months ago keeps working, and its patients keep arriving on
+// the shared line. Whose call that is has to stay answerable after the clinic
+// has gone, because a call that matches nothing does not stop: it falls
+// through to the number dialled, which on a shared line is whichever clinic
+// declared it answers direct calls. See migration 0066.
+
+/** The id of a row this test made. `rest` overrides the Prefer header, so an
+ *  insert never hands one back and it is read afterwards instead. */
+async function idOf(phone) {
+  const { body } = await rest(`clinics?select=id&name=eq.${encodeURIComponent(MARK)}&phone=eq.${encodeURIComponent(phone)}`)
+  return body?.[0]?.id ?? null
+}
+
+test('a forward that outlives the clinic is still recognised as theirs', async () => {
+  const left = '+351999000333'
+  const { ok, body } = await makeClinic({
+    status: 'cancelada',
+    phone: left,
+    assigned_phone: sharedNumber,
+    assigned_phone_shared: true,
+    porting_details: { current_number: left, forward_type: 'no_answer' },
+  })
+  assert.equal(ok, true, `the clinic was refused: ${JSON.stringify(body)}`)
+  const gone = await idOf(left)
+  assert.ok(gone, 'the fixture was not written')
+
+  // Who may claim it: nobody, which is right. A cancelled clinic does not get
+  // to answer calls.
+  const claim = await rpc('clinic_by_own_number', { p_number: left })
+  assert.equal(claim.body, null, 'a cancelled clinic was allowed to claim a call')
+
+  // Who it belongs to: them, which is what stops the call falling through to
+  // the owner of the shared line and into a different clinic's diary.
+  const attributed = await rpc('clinic_by_own_number_any_status', { p_number: left })
+  assert.equal(attributed.body, gone, 'the call was not attributed to the clinic that left')
+
+  const owner = await rpc('clinic_by_dialled_number', { p_number: sharedNumber })
+  assert.notEqual(
+    attributed.body,
+    owner.body,
+    'the former client\u2019s call resolved to the clinic that answers the shared line'
+  )
+})
+
+test('a live clinic wins the same digits over one that left', async () => {
+  const shared = '+351999000444'
+  const gone = await makeClinic({
+    status: 'cancelada',
+    phone: shared,
+    assigned_phone: sharedNumber,
+    assigned_phone_shared: true,
+  })
+  assert.equal(gone.ok, true, `the fixture was refused: ${JSON.stringify(gone.body)}`)
+  const goneId = await idOf(shared)
+
+  const live = await makeClinic({
+    status: 'ativa',
+    phone: shared,
+    assigned_phone: sharedNumber,
+    assigned_phone_shared: true,
+  })
+  assert.equal(live.ok, true, `the fixture was refused: ${JSON.stringify(live.body)}`)
+
+  const { body } = await rpc('clinic_by_own_number_any_status', { p_number: shared })
+  assert.ok(body, 'nobody was found for digits two clinics carry')
+  assert.notEqual(body, goneId, 'the clinic that left took a live clinic\u2019s call')
+})

@@ -249,25 +249,33 @@ function Checkbox({
   onChange,
   children,
   error,
+  disabled,
 }: {
   name: string
   checked: boolean
   onChange: (v: boolean) => void
   children: ReactNode
   error?: string
+  /** Shown, and not tickable. For something that exists and is not for sale
+   *  yet: hiding it answers no question, and a reader who heard about it
+   *  goes looking. */
+  disabled?: boolean
 }) {
   return (
     <div>
-      <label className="flex cursor-pointer items-start gap-3">
+      <label
+        className={`flex items-start gap-3 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+      >
         <input
           type="checkbox"
           name={name}
           checked={Boolean(checked)}
           onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
           aria-invalid={error ? true : undefined}
-          className="mt-0.5 h-5 w-5 shrink-0 accent-brand"
+          className="mt-0.5 h-5 w-5 shrink-0 accent-brand disabled:cursor-not-allowed disabled:opacity-40"
         />
-        <span className="text-base text-ink">{children}</span>
+        <span className={`text-base ${disabled ? 'text-ink-mute' : 'text-ink'}`}>{children}</span>
       </label>
       {error && (
         <p role="alert" className="mt-1.5 text-sm font-medium text-danger">
@@ -1504,17 +1512,28 @@ export function PlanStep({
         .
       </p>
 
-      {/* Not on sale until it does what it was sold as. See catalog.ts. */}
-      {WHATSAPP_ON_SALE && (
+      {/* Shown either way, tickable only when it is on sale. It is coming and
+          people ask about it; a box that is visibly not ready answers the
+          question, and an absence does not. See WHATSAPP_ON_SALE in
+          catalog.ts, and `addonSoon` on /conta, which says the same word. */}
+      {(
         <>
           <div className="rule" />
 
           <Checkbox
             name="addon_whatsapp"
-            checked={values.addon_whatsapp}
+            checked={WHATSAPP_ON_SALE && values.addon_whatsapp}
             onChange={(v) => set({ addon_whatsapp: v })}
+            disabled={!WHATSAPP_ON_SALE}
           >
-            {t.addonWhatsapp}
+            <span className="flex flex-wrap items-center gap-2">
+              {t.addonWhatsapp}
+              {!WHATSAPP_ON_SALE && (
+                <span className="rounded-pill bg-surface-sunken px-2 py-0.5 font-mono text-[0.6875rem] uppercase tracking-[0.08em] text-ink-mute">
+                  {t.addonWhatsappSoon}
+                </span>
+              )}
+            </span>
             <span className="mt-0.5 block text-sm text-ink-mute">{t.addonWhatsappHelp}</span>
           </Checkbox>
         </>

@@ -214,6 +214,9 @@ export interface Copy {
   locations: string
   addonWhatsapp: string
   addonWhatsappHelp: string
+  /** Shown instead of a tick while the add-on is not on sale. The same
+   *  word /conta uses for it, so the two screens agree. */
+  addonWhatsappSoon: string
   needMore: string
   needMoreLink: string
   terms: string
@@ -456,6 +459,7 @@ const pt: Copy = {
   locations: 'sedes incluídas',
   addonWhatsapp: 'Adicionar a Telma ao WhatsApp',
   addonWhatsappHelp: 'A Telma também responde no WhatsApp e pode marcar consultas. 49 €/mês.',
+  addonWhatsappSoon: 'Em breve',
   needMore: 'Várias sedes ou mais de 1750 minutos?',
   needMoreLink: 'Fale connosco',
   terms: 'Li e aceito os termos de serviço e a política de privacidade.',
@@ -702,6 +706,7 @@ const es: Copy = {
   locations: 'sedes incluidas',
   addonWhatsapp: 'Añadir Telma a WhatsApp',
   addonWhatsappHelp: 'Telma también responde por WhatsApp y puede dar citas. 49 €/mes.',
+  addonWhatsappSoon: 'Próximamente',
   needMore: '¿Varias sedes o más de 1750 minutos?',
   needMoreLink: 'Hable con nosotros',
   terms: 'He leído y acepto los términos del servicio y la política de privacidad.',

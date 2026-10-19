@@ -224,3 +224,38 @@ test('a live clinic wins the same digits over one that left', async () => {
   assert.ok(body, 'nobody was found for digits two clinics carry')
   assert.notEqual(body, goneId, 'the clinic that left took a live clinic\u2019s call')
 })
+
+// ── AND IT IS NOT STOCK ────────────────────────────────────────────────────
+// The shared line lives on the same shelf as the numbers waiting to be given
+// out, because that is where numbers live. It is the one row that must never
+// be given to anybody: a clinic asking for a number of its own would have
+// been told the shared line was its own, published it, and the row would have
+// been marked claimed underneath every clinic already forwarding to it.
+//
+// Against the real table, because the guard is a filter in a query and the
+// only way to know a query filters is to run it.
+
+test('the shelf never hands out the shared line', async () => {
+  const { body: shelf } = await rest(
+    'phone_stock?select=number,shared,clinic_id,claimed_at&shared=is.true'
+  )
+  assert.ok(Array.isArray(shelf) && shelf.length > 0, 'there is no shared line on the shelf')
+
+  for (const row of shelf) {
+    assert.equal(row.clinic_id, null, `the shared line ${row.number} belongs to a clinic`)
+    assert.equal(row.claimed_at, null, `the shared line ${row.number} has been claimed`)
+  }
+
+  // What claimFromStock asks for: unclaimed, unowned, not shared. Nothing the
+  // shared line can answer.
+  const { body: claimable } = await rest(
+    'phone_stock?select=number,shared&clinic_id=is.null&claimed_at=is.null&shared=is.false'
+  )
+  const numbers = (claimable ?? []).map((r) => r.number)
+  for (const row of shelf) {
+    assert.ok(
+      !numbers.includes(row.number),
+      `${row.number} is shared and is still being offered as stock`
+    )
+  }
+})

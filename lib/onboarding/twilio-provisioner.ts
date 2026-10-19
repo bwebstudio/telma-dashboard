@@ -257,6 +257,19 @@ async function claimFromStock(
       .select('id, number, provider_ref')
       .is('clinic_id', null)
       .is('claimed_at', null)
+      // ── THE SHARED LINE IS NOT STOCK ──────────────────────────────────
+      // It is on this shelf because that is where numbers live, and it is
+      // the one row that must never be handed to anybody: every clinic that
+      // keeps its own number forwards to it, and the routing tells them
+      // apart by the number the call came from.
+      //
+      // Without this, a clinic asking for a number of its own took it. It
+      // would have been told the shared line was its own, published it, and
+      // the row would have been marked claimed underneath every clinic
+      // already forwarding to it. Nothing in the database stops that: the
+      // unique index on an exclusive line does not see the shared row,
+      // because it is excluded by the very flag this now reads.
+      .eq('shared', false)
       .eq('country', where.country)
     if ('region' in where && where.region) query.eq('region', where.region)
 

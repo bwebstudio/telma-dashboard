@@ -205,6 +205,10 @@ export interface Dictionary {
     activateNoNumber: string
     hoursAlready: string
     saveFailed: string
+    missingElsewhere: string
+    /** For the message above: the handful of profile fields a step can fail
+     *  on without drawing them. Anything missing falls back to its key. */
+    fieldNames: Record<string, string>
     tooManyLanguages: string
   }
   /** The first minute in the panel: a welcome card, then a walk round the

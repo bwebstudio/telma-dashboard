@@ -130,7 +130,28 @@ export function SetupWizard({
           : await updateClinicProfile(values, locale)
       if (!r.ok) {
         setErrors(r.errors)
-        const first = Object.keys(r.errors)[0]
+
+        // ── AN ERROR WITH NOWHERE TO LAND ────────────────────────────────
+        // Saving a step validates the whole profile, not only what this step
+        // draws, because the rules are the sign-up's own and splitting them
+        // per step is how two copies of a rule start disagreeing. The cost is
+        // that a missing field belonging to another screen anchors its message
+        // to an input that is not on the page: nothing highlights, nothing
+        // scrolls, the button just does not advance, and the clinic is left
+        // pressing it. So if none of the failures is on screen, say so in
+        // words and say where the fields are.
+        const onScreen = Object.keys(r.errors).filter(
+          (key) => key === '_form' || document.querySelector(`[name="${key}"]`)
+        )
+        if (onScreen.length === 0) {
+          const missing = Object.keys(r.errors)
+            .map((key) => t.fieldNames[key] ?? key)
+            .join(', ')
+          setFailed(t.missingElsewhere.replace('{fields}', missing))
+          return
+        }
+
+        const first = onScreen[0]
         if (first && first !== '_form') {
           document
             .querySelector<HTMLElement>(`[name="${first}"]`)

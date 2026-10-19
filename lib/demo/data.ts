@@ -120,6 +120,17 @@ const seed: DemoStore = {
       address: 'Rua das Flores 12, Porto',
       phone: '+351 220 000 000',
       contact_email: 'geral@sorriso.pt',
+      // ── WHAT THE SIGN-UP WRITES ──────────────────────────────────────
+      // Not decoration. The set-up wizard saves the services step through
+      // the sign-up's own schemas, which validate the whole profile and not
+      // only the fields on screen, so a demo clinic without a specialty or a
+      // district could tick every service and never get past step 2 -- with
+      // nothing on screen to say why, because the error belongs to a field
+      // that step does not draw.
+      specialty: 'dentaria',
+      region: 'porto',
+      language: 'pt',
+      selected_languages: ['pt'],
       plan: 'clinica',
       addon_whatsapp: true,
       status: 'ativa',
@@ -145,6 +156,10 @@ const seed: DemoStore = {
       address: 'Avenida Central 88, Lisboa',
       phone: '+351 210 111 222',
       contact_email: 'ola@esteticaluz.pt',
+      specialty: 'estetica',
+      region: 'lisboa',
+      language: 'pt',
+      selected_languages: ['pt'],
       plan: 'essencial',
       addon_whatsapp: false,
       status: 'ativa',

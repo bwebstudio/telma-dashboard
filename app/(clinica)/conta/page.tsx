@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
@@ -24,7 +25,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ContaPage() {
   const { locale, dict } = await getDict()
-  const { clinicId, clinic, readOnly } = await requireClinicContext()
+  const { user, clinicId, clinic, readOnly } = await requireClinicContext()
   const onboardingLocale = isOnboardingLocale(locale) ? locale : DEFAULT_ONBOARDING_LOCALE
   const supabase = await createClient()
 
@@ -109,6 +110,22 @@ export default async function ContaPage() {
             a receptionist who cancelled every forward on the line by dialling
             ##002# for an unrelated reason. On the agenda it is a task and goes
             away; here it is reference and stays. */}
+        {/* ── THE PASSWORD HAS A DOOR NOW ──────────────────────────────
+            /nova-palavra-passe existed and worked for anybody already signed
+            in, and nothing in the panel linked to it. The only route somebody
+            would find unaided was "I forgot my password", which means asking
+            for a recovery email to change a password they already know. */}
+        <section className="card p-6">
+          <SectionTitle>{dict.conta.accessTitle}</SectionTitle>
+          <dl className="mb-4 flex flex-col gap-3">
+            <Field label={dict.common.email} value={user?.email} />
+          </dl>
+          <p className="mb-4 max-w-prose text-base text-ink-soft">{dict.conta.accessHelp}</p>
+          <Link href="/nova-palavra-passe" className="btn-secondary inline-flex">
+            {dict.conta.changePassword}
+          </Link>
+        </section>
+
         {/* Invoices, card and cancellation: one door, hosted by Stripe and
             wearing our name. Building the invoice screen ourselves would be a
             second version of a legal document, and the first time it

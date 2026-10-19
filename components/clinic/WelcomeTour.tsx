@@ -49,6 +49,23 @@ const PASSWORD_STEP = 'password' as const
  *  there, so nobody has to remember a path. */
 const PASSWORD_URL = '/nova-palavra-passe'
 
+/**
+ * Which element each stop points at.
+ *
+ * The five rooms point at their own sidebar entry. The password points at the
+ * account, one line below them, because that is where it is changed from
+ * tomorrow onwards: the button on the card is for right now, and the ring
+ * around the account is for the next time they look.
+ */
+const ANCHOR: Record<StepId, string> = {
+  hoje: 'hoje',
+  marcacoes: 'marcacoes',
+  conversas: 'conversas',
+  horarios: 'horarios',
+  telma: 'telma',
+  password: 'conta',
+}
+
 type StepId = (typeof NAV_IDS)[number] | typeof PASSWORD_STEP
 
 interface Box {
@@ -96,7 +113,7 @@ export function WelcomeTour({ dict, clinicName }: { dict: Dictionary; clinicName
 
   const measure = useCallback(() => {
     if (at < 0 || at >= steps.length) return setBox(null)
-    const el = document.querySelector<HTMLElement>(`[data-tour="${steps[at]}"]`)
+    const el = document.querySelector<HTMLElement>(`[data-tour="${ANCHOR[steps[at]]}"]`)
     if (!el) return setBox(null)
     const r = el.getBoundingClientRect()
     const pad = 6

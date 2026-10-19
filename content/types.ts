@@ -563,6 +563,12 @@ export interface Dictionary {
   }
   conta: {
     title: string
+    /** Where the password is changed. There was no link to it anywhere
+     *  in the panel, so the only route anybody would find on their own
+     *  was "I forgot my password". */
+    accessTitle: string
+    accessHelp: string
+    changePassword: string
     clinicData: string
     plan: string
     addon: string

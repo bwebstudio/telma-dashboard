@@ -189,6 +189,10 @@ export function Shell({
             <Link
               href={accountHref}
               aria-current={isActive(accountHref) ? 'page' : undefined}
+              // The welcome tour's last stop points here: the account is where
+              // the password is changed, and somebody who has just read that
+              // should be able to find it again without being told a path.
+              data-tour="conta"
               className="mb-3 flex items-center gap-2 truncate text-sm text-ink-soft hover:text-brand-accent"
             >
               <IconAccount className="h-4 w-4 shrink-0" />

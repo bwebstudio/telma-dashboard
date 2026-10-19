@@ -17,6 +17,7 @@ import {
   WHATSAPP_ON_SALE,
 } from '@/lib/onboarding/catalog'
 import { copyFor } from '@/lib/onboarding/copy'
+import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { planFits, type LanguageOption } from '@/lib/onboarding/languages'
 import { sendWelcomeEmail } from '@/lib/onboarding/email-sender'
 import { showcaseMode } from '@/lib/demo/config'
@@ -439,6 +440,14 @@ export async function completeOnboarding(
         // its late appointments land on the wrong day.
         timezone: TIMEZONE[countryOfRegion(wizard.region)],
         onboarding_completed_at: now,
+        // ── WHAT THEY AGREED TO ───────────────────────────────────────
+        // The box was validated and then thrown away: the row could not say
+        // whether anybody had accepted anything, let alone which document.
+        // That holds up until the first time the terms change, and the ones
+        // published today say of themselves that they are provisional.
+        terms_version: TERMS_VERSION,
+        privacy_version: PRIVACY_VERSION,
+        terms_accepted_at: now,
       })
       .select('id')
       .single()

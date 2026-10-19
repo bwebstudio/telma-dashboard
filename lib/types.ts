@@ -100,6 +100,12 @@ export interface Clinic {
   /** Monthly allowance in minutes of conversation. Plans are metered in minutes. */
   minute_limit: number
   assigned_phone: string | null
+  /** True when `assigned_phone` is the line shared by every clinic that
+   *  forwards to us, rather than one bought for this clinic. See 0059. */
+  assigned_phone_shared?: boolean | null
+  /** Of the clinics on a shared line, the one a call dialled straight at
+   *  it belongs to. At most one, enforced by a unique index. */
+  answers_direct_calls?: boolean | null
   /** 'provisioned' when we bought the number, 'ported' when the clinic kept
    *  its own and forwards it to ours. */
   phone_source: 'provisioned' | 'ported' | null

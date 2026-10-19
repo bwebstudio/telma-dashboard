@@ -171,7 +171,20 @@ class DemoQuery<K extends keyof DemoStore> {
   private counting = false
   private headOnly = false
 
-  constructor(private table: K, private scope?: string, private repScope?: string) {}
+  private table: K
+  private scope?: string
+  private repScope?: string
+
+  // Written out rather than declared in the parameter list. A constructor
+  // parameter property is TypeScript that has to be compiled, not stripped,
+  // and node's strip-only loader refuses the whole module: anything that
+  // reaches this file through an import -- which is most of lib/ -- becomes
+  // untestable outside Next. Three lines buy back `node --test` for all of it.
+  constructor(table: K, scope?: string, repScope?: string) {
+    this.table = table
+    this.scope = scope
+    this.repScope = repScope
+  }
 
   select(_cols?: string, opts?: { count?: 'exact'; head?: boolean }) {
     if (opts?.count) this.counting = true

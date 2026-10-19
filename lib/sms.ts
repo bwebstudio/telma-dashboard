@@ -35,9 +35,27 @@ import { senderIdFor } from '@/lib/notify-copy'
 
 const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID?.trim()
 const AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN?.trim()
+const API_KEY_SID = process.env.TWILIO_API_KEY_SID?.trim()
+const API_KEY_SECRET = process.env.TWILIO_API_KEY_SECRET?.trim()
+
+/**
+ * Either credential Twilio accepts, the same way lib/transfer.ts does it.
+ *
+ * An API key can be scoped and rotated without touching the account, which is
+ * why the rest of the product uses one, and this file asked for the account
+ * token alone. The effect was quiet: wherever only the key pair was
+ * configured, `twilioConfigured()` answered false and every patient message
+ * was skipped with no error, because a message nobody can send is not an
+ * error anybody raises.
+ */
+function credentials(): string | null {
+  if (API_KEY_SID && API_KEY_SECRET) return `${API_KEY_SID}:${API_KEY_SECRET}`
+  if (ACCOUNT_SID && AUTH_TOKEN) return `${ACCOUNT_SID}:${AUTH_TOKEN}`
+  return null
+}
 
 export function twilioConfigured(): boolean {
-  return Boolean(ACCOUNT_SID && AUTH_TOKEN)
+  return Boolean(ACCOUNT_SID && credentials())
 }
 
 export interface SendResult {
@@ -52,7 +70,13 @@ export interface SendResult {
 
 export interface SendRequest {
   /** The clinic, for the sender and for the name to fall back to. */
-  clinic: { name: string; assigned_phone?: string | null }
+  clinic: {
+    name: string
+    assigned_phone?: string | null
+    /** True when that number is the line shared by every forwarding clinic.
+     *  It cannot carry an SMS, and it is not this clinic's to send from. */
+    assigned_phone_shared?: boolean | null
+  }
   to: string
   /** The message, given the answer to "does the text have to carry the clinic's
    *  number, because the sender is a name?" */
@@ -89,7 +113,7 @@ export async function sendToPatient(req: SendRequest): Promise<SendResult> {
         method: 'POST',
         headers: {
           Authorization:
-            'Basic ' + Buffer.from(`${ACCOUNT_SID}:${AUTH_TOKEN}`).toString('base64'),
+            'Basic ' + Buffer.from(credentials() ?? '').toString('base64'),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body,
@@ -100,10 +124,24 @@ export async function sendToPatient(req: SendRequest): Promise<SendResult> {
     return { ok: r.ok, status: r.status, message: payload.message }
   }
 
-  let res = await attempt(from, false)
+  // ── DO NOT ASK A QUESTION WITH A KNOWN ANSWER ───────────────────────────
+  // The shared line is one Portuguese voice number, and Twilio has already
+  // said in writing that it cannot carry an SMS. Every clinic that forwards
+  // to it has it as `assigned_phone`, so the first attempt below would fail
+  // for every patient message we ever send: one refused request each, and a
+  // failed message sitting in the log that nobody should go looking into.
+  const sharedLine = Boolean(req.clinic.assigned_phone_shared)
 
+  let res = sharedLine
+    ? await attempt(senderIdFor(req.clinic.name), true)
+    : await attempt(from, false)
+
+  // Its own number, and it turned out not to carry SMS after all. Nobody can
+  // know that in advance -- not us and not the clinic -- so the cost of
+  // finding out is one refused request, once per clinic rather than once per
+  // message would be better and is not worth the column until it hurts.
   const notSmsCapable = /not SMS-capable|is not a valid.*SMS/i.test(res.message ?? '')
-  if (!res.ok && notSmsCapable && req.channel === 'sms') {
+  if (!res.ok && !sharedLine && notSmsCapable && req.channel === 'sms') {
     res = await attempt(senderIdFor(req.clinic.name), true)
   }
 

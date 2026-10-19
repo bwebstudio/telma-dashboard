@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isOpenNow, openingHours, spansText } from '@/lib/opening-hours'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
 import {
@@ -216,7 +217,7 @@ export async function POST(request: Request) {
     // so repeating the raw list here would have Telma read the same treatments
     // twice, once priced and once not.
     custom_services: null,
-    opening_hours: hours.map((h) => `${weekdayName(h.weekday, promptLocale)}: ${h.opens}-${h.closes}`),
+    opening_hours: hours.map((h) => `${weekdayName(h.weekday, promptLocale)}: ${spansText(h)}`),
     appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,
     languages: languageNames,
     formality: (clinic.formality as 'formal' | 'informal') ?? 'formal',
@@ -383,50 +384,6 @@ async function clinicIdByPhone(raw: string): Promise<string | null> {
   const admin = createAdminClient()
   const { data } = await admin.rpc('clinic_by_dialled_number', { p_number: raw })
   return (data as string | null) ?? null
-}
-
-async function openingHours(
-  clinicId: string
-): Promise<Array<{ weekday: number; opens: string; closes: string }>> {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('availability_slots')
-    .select('weekday, start_time, end_time')
-    .eq('clinic_id', clinicId)
-    .eq('active', true)
-
-  const rows = (data ?? []) as Array<{ weekday: number; start_time: string; end_time: string }>
-  const byDay = new Map<number, { opens: string; closes: string }>()
-  for (const r of rows) {
-    const cur = byDay.get(r.weekday)
-    if (!cur) {
-      byDay.set(r.weekday, { opens: r.start_time, closes: r.end_time })
-      continue
-    }
-    if (r.start_time < cur.opens) cur.opens = r.start_time
-    if (r.end_time > cur.closes) cur.closes = r.end_time
-  }
-  return [...byDay.entries()]
-    .map(([weekday, v]) => ({ weekday, opens: v.opens.slice(0, 5), closes: v.closes.slice(0, 5) }))
-    .sort((a, b) => a.weekday - b.weekday)
-}
-
-function isOpenNow(
-  hours: Array<{ weekday: number; opens: string; closes: string }>,
-  timezone: string
-): boolean {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: timezone,
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date())
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
-  const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'))
-  if (weekday < 0) return false
-  const hhmm = `${get('hour')}:${get('minute')}`
-  return hours.some((h) => h.weekday === weekday && hhmm >= h.opens && hhmm < h.closes)
 }
 
 async function languageLabels(codes: string[], locale: 'pt' | 'es'): Promise<string[]> {

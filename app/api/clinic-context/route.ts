@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isOpenNow, openingHours, spansText } from '@/lib/opening-hours'
 import { authorizedWebhook } from '@/lib/api-auth'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -99,7 +100,7 @@ export async function GET(request: Request) {
     timezone: clinic.timezone,
     services: (clinic.services ?? []).map((id) => serviceLabel(id, promptLocale)),
     custom_services: clinic.custom_services ?? null,
-    opening_hours: hours.map((h) => `${weekdayName(h.weekday, promptLocale)}: ${h.opens}-${h.closes}`),
+    opening_hours: hours.map((h) => `${weekdayName(h.weekday, promptLocale)}: ${spansText(h)}`),
     appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,
     languages: languageNames,
     formality: (clinic.formality as 'formal' | 'informal') ?? 'formal',
@@ -191,46 +192,6 @@ export async function GET(request: Request) {
   })
 }
 
-/**
- * When the clinic is open, in a shape a sentence can be built from.
- *
- * Derived from `availability_slots` rather than stored a second time: those
- * rows are what the agent will actually be able to offer, so a summary read
- * from anywhere else could promise an hour the diary does not have.
- *
- * One entry per weekday it is open, with the first start and the last end.
- * Lunch is visible as the gap between slots and is deliberately not described
- * here: the agent should be offering times from /api/availability, not
- * reasoning about breaks from prose.
- */
-async function openingHours(
-  clinicId: string
-): Promise<Array<{ weekday: number; opens: string; closes: string }>> {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('availability_slots')
-    .select('weekday, start_time, end_time')
-    .eq('clinic_id', clinicId)
-    .eq('active', true)
-
-  const rows = (data ?? []) as Array<{ weekday: number; start_time: string; end_time: string }>
-  const byDay = new Map<number, { opens: string; closes: string }>()
-
-  for (const r of rows) {
-    const current = byDay.get(r.weekday)
-    if (!current) {
-      byDay.set(r.weekday, { opens: r.start_time, closes: r.end_time })
-      continue
-    }
-    if (r.start_time < current.opens) current.opens = r.start_time
-    if (r.end_time > current.closes) current.closes = r.end_time
-  }
-
-  return [...byDay.entries()]
-    .map(([weekday, v]) => ({ weekday, opens: v.opens.slice(0, 5), closes: v.closes.slice(0, 5) }))
-    .sort((a, b) => a.weekday - b.weekday)
-}
-
 /** Language names as the prompt should read them, from the catalogue. */
 async function languageLabels(codes: string[], locale: 'pt' | 'es'): Promise<string[]> {
   const admin = createAdminClient()
@@ -252,40 +213,6 @@ const WEEKDAYS: Record<'pt' | 'es', string[]> = {
 
 function weekdayName(weekday: number, locale: 'pt' | 'es'): string {
   return WEEKDAYS[locale][weekday] ?? String(weekday)
-}
-
-/**
- * Is the clinic open at this moment, by its own clock?
- *
- * The clinic's timezone and not the server's. Vercel runs in UTC, Lisbon is an
- * hour off it for half the year and Madrid two, so a call at half past nine in
- * Barcelona is half past seven here. Getting this wrong would tell Telma the
- * clinic is closed while somebody is sitting at the desk, and the emergency
- * block would read out an out-of-hours instruction to a caller who could have
- * been put straight through.
- */
-function isOpenNow(
-  hours: Array<{ weekday: number; opens: string; closes: string }>,
-  timezone: string
-): boolean {
-  const now = new Date()
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: timezone,
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(now)
-
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
-  const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'))
-  if (weekday < 0) return false
-
-  const hhmm = `${get('hour')}:${get('minute')}`
-  // The gap for lunch is not consulted: a clinic with somebody at the desk over
-  // lunch should still take an emergency, and the alternative reading would send
-  // a bleeding patient to A&E at one o'clock on a Tuesday.
-  return hours.some((h) => h.weekday === weekday && hhmm >= h.opens && hhmm < h.closes)
 }
 
 /**

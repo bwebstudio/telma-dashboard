@@ -438,7 +438,12 @@ export const pt: Dictionary = {
     addPhoneHint: 'Nove algarismos, com ou sem o indicativo do país.',
 
     notes: 'Notas',
-    notesHint: 'Informação útil para atender esta pessoa, por exemplo: “prefere de manhã” ou “vem com a filha”. O histórico clínico deve permanecer no software da clínica. A Telma não lê este campo.',
+    notesHint: 'Informação útil para atender esta pessoa, por exemplo: “prefere de manhã” ou “vem com a filha”. O histórico clínico deve permanecer no software da clínica. A Telma não lê estas notas, e cada uma guarda o dia em que foi escrita.',
+    noteAdd: 'Adicionar nota',
+    notePlaceholder: 'Ex: prefere a Dra. Sofia. Ou: ficou de trazer o relatório do médico.',
+    notesEmpty: 'Ainda não há notas sobre esta pessoa.',
+    noteDelete: 'Apagar',
+    noteDeleteConfirm: 'Apagar esta nota?',
     taxId: 'NIF',
     taxIdHint: 'Opcional, e a Telma nunca o pergunta: escreve-o quem está ao balcão com a pessoa à frente. Serve para saber que duas fichas são a mesma pessoa.',
     maybeSame: 'Pode ser a mesma pessoa',

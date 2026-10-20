@@ -454,6 +454,24 @@ export interface ActivityEvent {
  * held by us, which is a worse thing to hold than a clinic's own list of its
  * own patients.
  */
+/**
+ * One thing the clinic knows about a person, written on a day.
+ *
+ * A list and not a field, because every new thing learned used to be written
+ * by deleting the last thing learned. See 0071.
+ *
+ * This is the one part of a patient's record Telma is never handed: the
+ * clinic talking to itself, and a model that can be asked to read something
+ * out loud must not be able to reach it.
+ */
+export interface PatientNote {
+  id: string
+  clinic_id: string
+  patient_id: string
+  body: string
+  created_at: string
+}
+
 export interface Patient {
   id: string
   clinic_id: string

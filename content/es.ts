@@ -436,7 +436,12 @@ export const es: Dictionary = {
     addPhoneHint: 'Nueve cifras, con o sin el prefijo del país.',
 
     notes: 'Notas',
-    notesHint: 'Información útil para atender a esta persona, por ejemplo: «prefiere por la mañana» o «viene con su hija». El historial clínico debe permanecer en el software de la clínica. Telma no lee este campo.',
+    notesHint: 'Información útil para atender a esta persona, por ejemplo: “prefiere por la mañana” o “viene con su hija”. El historial clínico debe quedarse en el software de la clínica. Telma no lee estas notas, y cada una guarda el día en que se escribió.',
+    noteAdd: 'Añadir nota',
+    notePlaceholder: 'Ej: prefiere a la Dra. Sofía. O: quedó en traer el informe del médico.',
+    notesEmpty: 'Todavía no hay notas sobre esta persona.',
+    noteDelete: 'Borrar',
+    noteDeleteConfirm: '¿Borrar esta nota?',
     taxId: 'NIF',
     taxIdHint: 'Opcional, y Telma nunca lo pregunta: lo escribe quien está en el mostrador con la persona delante. Sirve para saber que dos fichas son la misma persona.',
     maybeSame: 'Puede ser la misma persona',

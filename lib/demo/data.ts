@@ -8,6 +8,7 @@ import type {
   Usage,
   ActivityEvent,
   Patient,
+  PatientNote,
   PatientRecall,
   Purchase,
   UserRole,
@@ -61,6 +62,9 @@ export interface DemoStore {
    *  the query threw, the page caught it and drew "something went wrong", so
    *  the demo had a broken screen in the middle of the sidebar. */
   patients: Patient[]
+  /** Several per person, newest first: the record stopped having one note
+   *  that each new one overwrote. See 0071. */
+  patient_notes: PatientNote[]
   /** With the patient already attached. The screen reads it from a join, and
    *  the demo's stand-in for Supabase does not join, so the row carries what
    *  the join would have brought. */
@@ -405,6 +409,40 @@ const seed: DemoStore = {
       marketing_consent_source: null,
       last_seen_at: iso(-60 * 24 * 55),
       created_at: iso(-60 * 24 * 115),
+    },
+  ],
+
+  // Three on one person, months apart, which is the whole point of the change:
+  // in one field these would have been one paragraph with no dates, or only
+  // the last of them.
+  patient_notes: [
+    {
+      id: 'demo-note-1',
+      clinic_id: DEMO_CLINIC_ID,
+      patient_id: 'demo-patient-1',
+      body: 'Vem desde 2019. Prefere marcar de manhã e pede sempre a Dra. Sofia.',
+      created_at: iso(-60 * 24 * 300),
+    },
+    {
+      id: 'demo-note-2',
+      clinic_id: DEMO_CLINIC_ID,
+      patient_id: 'demo-patient-1',
+      body: 'Mudou de número em Março. O antigo já não atende.',
+      created_at: iso(-60 * 24 * 120),
+    },
+    {
+      id: 'demo-note-3',
+      clinic_id: DEMO_CLINIC_ID,
+      patient_id: 'demo-patient-1',
+      body: 'Ficou de trazer o relatório do ortopedista na próxima consulta.',
+      created_at: iso(-60 * 24 * 9),
+    },
+    {
+      id: 'demo-note-4',
+      clinic_id: DEMO_CLINIC_ID,
+      patient_id: 'demo-patient-3',
+      body: 'Fica nervosa no gabinete. Avisar a assistente antes de a chamar.',
+      created_at: iso(-60 * 24 * 40),
     },
   ],
 

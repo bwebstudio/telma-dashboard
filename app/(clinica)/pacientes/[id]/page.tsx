@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
 import { PatientRecord } from '@/components/clinic/PatientRecord'
-import type { Appointment, Call, Patient, PatientRecall } from '@/lib/types'
+import type { Appointment, Call, Patient, PatientRecall, PatientNote } from '@/lib/types'
 
 /**
  * One person, as this clinic knows them.
@@ -49,7 +49,7 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
   // emptier after the merge than before it.
   const allDigits = [digits, ...(patient.other_digits ?? [])].filter((d) => d.length === 9)
 
-  const [{ data: appts }, { data: recalls }, { data: calls }] = await Promise.all([
+  const [{ data: appts }, { data: recalls }, { data: notes }, { data: calls }] = await Promise.all([
     supabase
       .from('appointments')
       .select('*')
@@ -70,6 +70,13 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
     // the needle "912345678", so a patient who had rung twice read as never
     // having rung. `from_digits` is generated, so this holds whatever wrote
     // the row. See 0070.
+    supabase
+      .from('patient_notes')
+      .select('*')
+      .eq('clinic_id', clinicId)
+      .eq('patient_id', id)
+      .order('created_at', { ascending: false })
+      .limit(100),
     allDigits.length
       ? supabase
           .from('calls')
@@ -113,6 +120,7 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
         patient={patient}
         appointments={(appts ?? []) as Appointment[]}
         recalls={(recalls ?? []) as PatientRecall[]}
+      notes={(notes ?? []) as PatientNote[]}
         calls={(calls ?? []) as Call[]}
         twins={(twins ?? []) as Patient[]}
         clinic={{

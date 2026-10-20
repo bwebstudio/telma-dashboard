@@ -3,13 +3,14 @@
 import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import Link from 'next/link'
-import type { Appointment, Call, Patient, PatientRecall, RecallState } from '@/lib/types'
+import type { Appointment, Call, Patient, PatientNote, PatientRecall, RecallState } from '@/lib/types'
 import { formatDay, formatDate, formatDateTime, formatDuration, formatWeekdayDate, formatTime } from '@/lib/format'
 import { recallMessage, defaultBody, segmentsFor, BODY_LIMIT } from '@/lib/recall-copy'
 import { fill } from '@/lib/fill'
 import { Badge, SectionTitle, APPOINTMENT_TONE, CALL_TONE } from '@/components/ui'
 import {
-  savePatientNotes,
+  addPatientNote,
+  deletePatientNote,
   savePatientTaxId,
   mergePatients,
   setReminders,
@@ -56,6 +57,7 @@ export function PatientRecord({
   appointments,
   recalls,
   calls,
+  notes,
   twins,
   clinic,
   dict,
@@ -65,6 +67,7 @@ export function PatientRecord({
   patient: Patient
   appointments: Appointment[]
   recalls: PatientRecall[]
+  notes: PatientNote[]
   /** Matched by telephone number, so they fall off as the numbers are cleared
    *  at ninety days. See the note on the page that fetches them. */
   calls: Call[]
@@ -167,7 +170,16 @@ export function PatientRecord({
         </section>
       )}
 
-      <Notes patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
+      <Notes
+        patient={patient}
+        notes={notes}
+        t={t}
+        dict={dict}
+        locale={locale}
+        run={run}
+        pending={pending}
+        readOnly={readOnly}
+      />
 
       <TaxId patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
 
@@ -319,41 +331,89 @@ type Run = (fn: () => Promise<void>) => void
 
 function Notes({
   patient,
+  notes,
   t,
   dict,
+  locale,
   run,
   pending,
   readOnly,
 }: {
   patient: Patient
+  notes: PatientNote[]
   t: Copy
   dict: Dictionary
+  locale: Locale
   run: Run
   pending: boolean
   readOnly: boolean
 }) {
-  const [value, setValue] = useState(patient.notes ?? '')
-  const dirty = value !== (patient.notes ?? '')
+  const [draft, setDraft] = useState('')
+
   return (
     <section>
       <SectionTitle>{t.notes}</SectionTitle>
       <p className="mb-3 text-sm text-ink-mute">{t.notesHint}</p>
-      <textarea
-        rows={4}
-        value={value}
-        disabled={readOnly}
-        onChange={(e) => setValue(e.target.value)}
-        className="field-input py-2.5"
-        aria-label={t.notes}
-      />
-      {!readOnly && dirty && (
-        <button
-          className="btn-primary mt-3"
-          disabled={pending}
-          onClick={() => run(() => savePatientNotes(patient.id, value))}
-        >
-          {dict.common.save}
-        </button>
+
+      {/* ── WRITING COMES FIRST ────────────────────────────────────────────
+          A record with a year of notes on it would otherwise put the box at
+          the bottom, below everything already written, which is the one
+          place somebody with a patient on the telephone cannot find it. */}
+      {!readOnly && (
+        <div className="mb-4">
+          <textarea
+            rows={3}
+            value={draft}
+            placeholder={t.notePlaceholder}
+            onChange={(e) => setDraft(e.target.value)}
+            className="field-input py-2.5"
+            aria-label={t.noteAdd}
+          />
+          <button
+            className="btn-primary mt-2"
+            disabled={pending || !draft.trim()}
+            onClick={() =>
+              run(async () => {
+                await addPatientNote(patient.id, draft)
+                setDraft('')
+              })
+            }
+          >
+            {t.noteAdd}
+          </button>
+        </div>
+      )}
+
+      {notes.length === 0 ? (
+        <p className="text-base text-ink-mute">{t.notesEmpty}</p>
+      ) : (
+        <ol className="flex flex-col gap-2">
+          {notes.map((note) => (
+            <li key={note.id} className="rounded-card border border-line bg-surface p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <time dateTime={note.created_at} className="text-sm text-ink-mute">
+                  {formatDateTime(note.created_at, locale)}
+                </time>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => {
+                      if (!confirm(t.noteDeleteConfirm)) return
+                      run(() => deletePatientNote(patient.id, note.id))
+                    }}
+                    className="btn-ghost min-h-0 px-2 py-1 text-sm text-ink-mute"
+                  >
+                    {t.noteDelete}
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-ink">
+                {note.body}
+              </p>
+            </li>
+          ))}
+        </ol>
       )}
     </section>
   )

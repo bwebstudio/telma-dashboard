@@ -436,7 +436,12 @@ export const en: Dictionary = {
     addPhoneHint: 'Nine digits, with or without the country code.',
 
     notes: 'Notes',
-    notesHint: 'Useful information for assisting this patient, for example: “prefers mornings” or “comes with her daughter”. Clinical history should remain in your clinic software. Telma does not read this field.',
+    notesHint: 'Anything useful for answering this person, for example “prefers mornings” or “comes with her daughter”. Clinical history belongs in the clinic\'s own software. Telma never reads these notes, and each one keeps the day it was written.',
+    noteAdd: 'Add a note',
+    notePlaceholder: 'e.g. prefers Dr Sofia. Or: said they would bring the doctor\'s report.',
+    notesEmpty: 'No notes about this person yet.',
+    noteDelete: 'Delete',
+    noteDeleteConfirm: 'Delete this note?',
     taxId: 'Tax number',
     taxIdHint: 'Optional, and Telma never asks for it: somebody at the desk types it with the person in front of them. It is what says two records are one person.',
     maybeSame: 'This may be the same person',

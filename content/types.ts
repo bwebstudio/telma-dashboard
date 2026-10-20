@@ -450,6 +450,11 @@ export interface Dictionary {
 
     notes: string
     notesHint: string
+    noteAdd: string
+    notePlaceholder: string
+    notesEmpty: string
+    noteDelete: string
+    noteDeleteConfirm: string
     /** The identifier a receptionist types and Telma never asks for. */
     taxId: string
     taxIdHint: string

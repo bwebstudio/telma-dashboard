@@ -29,13 +29,40 @@ function refresh(patientId?: string) {
   if (patientId) revalidatePath(`/pacientes/${patientId}`)
 }
 
-export async function savePatientNotes(patientId: string, notes: string) {
+/**
+ * One more thing the clinic knows about this person.
+ *
+ * Added, never overwritten. The record used to hold a single note, so every
+ * new thing learned was written by deleting the last thing learned: "prefers
+ * the morning", "nervous in the chair" and "still owes for the x-ray" are
+ * three facts from three different months, and one textarea made the clinic
+ * choose which of them survived.
+ *
+ * Still the one thing on the record Telma is never handed. It is the clinic
+ * talking to itself about somebody, and a model that can be asked to read
+ * something out loud must not be able to reach these.
+ */
+export async function addPatientNote(patientId: string, body: string) {
+  const text = body.trim().slice(0, 2000)
+  if (!text) return
   const cid = await writableClinicId()
   const supabase = await createClient()
   const { error } = await supabase
-    .from('patients')
-    .update({ notes: notes.trim().slice(0, 2000) || null })
-    .eq('id', patientId)
+    .from('patient_notes')
+    .insert({ clinic_id: cid, patient_id: patientId, body: text })
+  if (error) throw new Error(error.message)
+  refresh(patientId)
+}
+
+/** Written by mistake, or about the wrong person. Scoped to the clinic, so a
+ *  note id from somewhere else deletes nothing. */
+export async function deletePatientNote(patientId: string, noteId: string) {
+  const cid = await writableClinicId()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('patient_notes')
+    .delete()
+    .eq('id', noteId)
     .eq('clinic_id', cid)
   if (error) throw new Error(error.message)
   refresh(patientId)

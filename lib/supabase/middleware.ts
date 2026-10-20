@@ -42,16 +42,39 @@ function misconfigured(message: string) {
   })
 }
 
+/**
+ * The id of the user this middleware has just verified, passed to the page.
+ *
+ * ── WHY A HEADER ────────────────────────────────────────────────────────────
+ * `auth.getUser()` is a round trip to Supabase: the token is checked against
+ * the server rather than trusted. This file makes that call on every request,
+ * and then every page made it a second time, through `getAppUser`, to learn
+ * the same id. Two sequential calls to the same endpoint before a page could
+ * ask for a single row of its own -- about 200ms on a good day, and the auth
+ * endpoint has bad ones: 5 seconds was measured on a panel that felt broken.
+ *
+ * So the answer travels with the request. A page reads this instead of asking
+ * again, and nothing about the check is weakened: the value is set here, after
+ * the verification, and any copy the browser sent is deleted first, so it
+ * cannot be forged. Everything the browser reaches goes through this file --
+ * the exclusions in the matcher are the endpoints the voice platform and the
+ * scheduler call with a token of their own, and scripts/test-middleware.mjs
+ * fails if one of those ever starts reading a user session.
+ */
+export const VERIFIED_USER_HEADER = 'x-telma-user'
+
 // Refresh the Supabase session on every request and gate private routes.
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request })
-
   // Demo mode: no Supabase, no auth gate. Browse everything freely.
-  if (isDemo()) return response
+  if (isDemo()) return NextResponse.next({ request })
 
   // Configured, but wrongly. Say so rather than crashing on every route.
   const problem = supabaseConfigError()
   if (problem) return misconfigured(problem)
+
+  // Held until the end, because the response that carries them is also the one
+  // that carries the header below, and it can only be built once.
+  let refreshed: CookieToSet[] = []
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -60,10 +83,7 @@ export async function updateSession(request: NextRequest) {
       },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-        response = NextResponse.next({ request })
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        )
+        refreshed = cookiesToSet
       },
     },
   })
@@ -87,5 +107,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
+  // Whatever the browser sent under this name is dropped, and only what was
+  // verified above goes back in.
+  const headers = new Headers(request.headers)
+  headers.delete(VERIFIED_USER_HEADER)
+  if (user) headers.set(VERIFIED_USER_HEADER, user.id)
+
+  const response = NextResponse.next({ request: { headers } })
+  refreshed.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
   return response
 }

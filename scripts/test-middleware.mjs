@@ -111,3 +111,24 @@ test('nothing is excluded without a reason to be', () => {
     }
   }
 })
+
+// ── THE HEADER THE MIDDLEWARE WRITES ───────────────────────────────────────
+// `getAppUser` trusts `x-telma-user` because the middleware verifies the token
+// and sets it, after deleting whatever the browser sent. That holds exactly as
+// long as everything reading a user session goes through the middleware. A
+// route excluded from the matcher does not, so on that route the header would
+// be whatever the caller typed.
+test('nothing outside the session door reads a user session', () => {
+  const m = matcher()
+  for (const route of routes()) {
+    if (!/getAppUser|requireClinicContext/.test(route.source)) continue
+    const asked = route.path.replace(/\[[^\]]+\]/g, 'x')
+    assert.ok(
+      m.test(asked),
+      `${asked} reads the signed in user but is excluded from the middleware, `
+        + 'so the x-telma-user header it ends up trusting was never verified. '
+        + 'Either take it out of the exclusion list in middleware.ts, or stop '
+        + 'it reading a user session.'
+    )
+  }
+})

@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PLAN_MINUTES, PLAN_PRICE, EXTRA_MINUTE_PRICE } from '@/lib/plans'
 // The month key the meter is written under, in UTC. record_call has used
@@ -117,6 +118,19 @@ export interface ClinicWithPlan {
  * error: the plan falls back to the list price, so a clinic is never locked out
  * of its own allowance by a migration that has not run yet.
  */
+/** The plan's row from the catalogue. Priced by us, not by the clinic, so it
+ *  is held for a few minutes like the pack above rather than fetched on every
+ *  screen that needs to know how many minutes the plan includes. */
+const getPlanRow = unstable_cache(
+  async (planId: string): Promise<Plan | null> => {
+    const admin = createAdminClient()
+    const { data } = await admin.from('plans').select('*').eq('id', planId).maybeSingle()
+    return (data as Plan | null) ?? null
+  },
+  ['plan-row'],
+  { revalidate: 300, tags: ['catalogue'] }
+)
+
 export async function getClinicWithPlan(clinicId: string): Promise<ClinicWithPlan | null> {
   if (!clinicId) return null
   const admin = createAdminClient()
@@ -125,8 +139,8 @@ export async function getClinicWithPlan(clinicId: string): Promise<ClinicWithPla
   if (!row) return null
   const base = row as Clinic
 
-  const [{ data: planRow }, { data: usageRow }] = await Promise.all([
-    admin.from('plans').select('*').eq('id', base.plan).maybeSingle(),
+  const [planRow, { data: usageRow }] = await Promise.all([
+    getPlanRow(base.plan),
     admin
       .from('usage')
       .select('minutes')
@@ -135,7 +149,7 @@ export async function getClinicWithPlan(clinicId: string): Promise<ClinicWithPla
       .maybeSingle(),
   ])
 
-  const plan = (planRow as Plan | null) ?? fallbackPlan(base.plan)
+  const plan = planRow ?? fallbackPlan(base.plan)
   const metered = Number((usageRow as { minutes?: number } | null)?.minutes ?? 0) || 0
 
   const clinic: Clinic = {
@@ -381,25 +395,34 @@ export async function lookupPurchasableItem(
  * Null hides the whole buying path rather than showing a button that leads to a
  * dead end, which is also what happens before migration 0014 has run.
  */
-export async function getMinutePackOffer(packId = 'pack_250'): Promise<MinutePackOffer | null> {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('minute_packs')
-    .select('*')
-    .eq('id', packId)
-    .eq('active', true)
-    .maybeSingle()
+export const getMinutePackOffer = unstable_cache(
+  async (packId = 'pack_250'): Promise<MinutePackOffer | null> => {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from('minute_packs')
+      .select('*')
+      .eq('id', packId)
+      .eq('active', true)
+      .maybeSingle()
 
-  const pack = data as MinutePack | null
-  if (!pack) return null
-  return {
-    id: pack.id,
-    name: pack.name,
-    minutes: pack.minutes,
-    price_eur: Number(pack.price_eur),
-    unit_price_eur: Number(pack.unit_price_eur),
-  }
-}
+    const pack = data as MinutePack | null
+    if (!pack) return null
+    return {
+      id: pack.id,
+      name: pack.name,
+      minutes: pack.minutes,
+      price_eur: Number(pack.price_eur),
+      unit_price_eur: Number(pack.unit_price_eur),
+    }
+  },
+  ['minute-pack-offer'],
+  // ── A PRICE LIST IS NOT LIVE DATA ────────────────────────────────────────
+  // This row changes when we decide to change it, perhaps twice a year, and
+  // the agenda was reading it from the database on every single load: one of
+  // the slowest calls measured on that screen, 1.1 seconds on a bad one, to
+  // learn a price that had not moved since June. Held for five minutes.
+  { revalidate: 300, tags: ['catalogue'] }
+)
 
 /**
  * Every add-on in the catalogue, each already told apart: on, included in the

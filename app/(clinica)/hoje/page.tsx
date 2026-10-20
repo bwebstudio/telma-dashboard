@@ -70,8 +70,21 @@ export default async function AgendaPage({
   const todayStart = startOfDayIn(tz, now)
   const todayEnd = endOfDayIn(tz, now)
 
-  const [dayRes, pendingRes, cancelledRes, cancelledTodayRes, callsRes, slotsRes, blockedRes] =
-    await Promise.all([
+  // Everything this screen needs, asked for at once. The minutes and the pack
+  // used to be a second round after this one had come back, which made the
+  // morning screen wait twice: they depend on nothing here, so they wait with
+  // the rest.
+  const [
+    dayRes,
+    pendingRes,
+    cancelledRes,
+    cancelledTodayRes,
+    callsRes,
+    slotsRes,
+    blockedRes,
+    billing,
+    pack,
+  ] = await Promise.all([
     // The day on screen.
     supabase
       .from('appointments')
@@ -128,6 +141,8 @@ export default async function AgendaPage({
       .select('*')
       .eq('clinic_id', clinicId)
       .eq('day', dayKeyIn(tz, day)),
+    getClinicWithPlan(clinicId),
+    getMinutePackOffer(),
   ])
 
   const dayAppointments = (dayRes.data ?? []) as Appointment[]
@@ -169,10 +184,6 @@ export default async function AgendaPage({
   // this screen for. Past that it is news, and news that stops Telma booking
   // goes above everything, because finding out from a patient is worse than
   // finding out from a card.
-  const [billing, pack] = await Promise.all([
-    getClinicWithPlan(clinicId),
-    getMinutePackOffer(),
-  ])
   const minutesCard = billing ? (
     <MinutesProgressCard
       quiet

@@ -14,6 +14,7 @@ import { isOnboardingLocale, DEFAULT_ONBOARDING_LOCALE } from '@/lib/onboarding/
 import { ForwardingCard } from '@/components/clinic/ForwardingCard'
 import type { ForwardType } from '@/lib/forwarding'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
+import { MessagesDay, weekRowLabel } from '@/components/clinic/MessagesDay'
 import { PlannerSection } from '@/components/clinic/PlannerSection'
 import { ViewSwitcher } from '@/components/clinic/ViewSwitcher'
 import { getClinicWithPlan, getMinutePackOffer } from '@/lib/clinic-utils'
@@ -69,6 +70,116 @@ export default async function AgendaPage({
   // because somebody is looking at next Tuesday.
   const todayStart = startOfDayIn(tz, now)
   const todayEnd = endOfDayIn(tz, now)
+
+  // ── THE DAY, WHEN THERE IS NO DIARY ──────────────────────────────────────
+  // A clinic whose Telma only takes messages has no bookings to show and
+  // still opens this screen every morning for the same reason everybody does:
+  // to find out how the day is going. So the first entry in the menu keeps
+  // its place and changes its meaning -- what Telma did today, and the week
+  // under it -- and none of the diary below is read at all.
+  if (clinic?.takes_bookings === false) {
+    const weekFrom = startOfDayIn(tz, dayIn(tz, -6, now))
+    const [dayCallsRes, weekCallsRes, billingOnly, packOnly] = await Promise.all([
+      supabase
+        .from('calls')
+        .select('*')
+        .eq('clinic_id', clinicId)
+        .gte('created_at', dayStart.toISOString())
+        .lte('created_at', dayEnd.toISOString())
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('calls')
+        .select('created_at, result')
+        .eq('clinic_id', clinicId)
+        .gte('created_at', weekFrom.toISOString())
+        .lte('created_at', todayEnd.toISOString()),
+      getClinicWithPlan(clinicId),
+      getMinutePackOffer(),
+    ])
+
+    const weekRows = (weekCallsRes.data ?? []) as Array<{ created_at: string; result: string | null }>
+    const week = Array.from({ length: 7 }, (_, i) => {
+      const d = dayIn(tz, i - 6, now)
+      const key = dayKeyIn(tz, d)
+      const mine = weekRows.filter((r) => dayKeyIn(tz, new Date(r.created_at)) === key)
+      return {
+        dayKey: key,
+        label: weekRowLabel(d.toISOString(), locale, tz),
+        answered: mine.filter((r) => r.result !== 'nao_atendida').length,
+        missed: mine.filter((r) => r.result === 'nao_atendida').length,
+      }
+    })
+
+    const porting = (clinic?.porting_details ?? null) as {
+      current_number?: string
+      forward_type?: ForwardType
+      forward_done?: boolean
+    } | null
+    const owed =
+      clinic?.status === 'ativa' &&
+      clinic?.phone_source === 'ported' &&
+      !!clinic?.assigned_phone &&
+      !porting?.forward_done
+
+    return (
+      <>
+        <AgendaLive clinicId={clinicId} />
+        <BillingLive clinicId={clinicId} />
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div>
+            <h1 className="h-display text-3xl sm:text-4xl">{dict.agenda.messagesTitle}</h1>
+            <p className="mt-1 text-lg text-ink-soft">{dict.agenda.messagesLead}</p>
+          </div>
+          <LiveBar
+            clinicId={clinicId}
+            renderedAt={now.toISOString()}
+            locale={locale}
+            liveLabel={dict.agenda.live}
+            lostLabel={dict.agenda.liveLost}
+            retryLabel={dict.agenda.liveRetry}
+            updatedLabel={dict.agenda.updated}
+          />
+        </div>
+
+        {owed && (
+          <div className="mb-6">
+            <ForwardingCard
+              telmaNumber={clinic!.assigned_phone!}
+              ownNumber={porting?.current_number ?? null}
+              forwardType={porting?.forward_type ?? null}
+              dict={dict}
+              dismissable
+              readOnly={readOnly}
+            />
+          </div>
+        )}
+
+        <MessagesDay
+          calls={(dayCallsRes.data ?? []) as Call[]}
+          week={week}
+          dayKey={dayKeyIn(tz, day)}
+          todayKey={dayKeyIn(tz, now)}
+          yesterdayKey={dayKeyIn(tz, dayIn(tz, -1, now))}
+          heading={weekdayDateIn(day.toISOString(), locale, tz)}
+          dict={dict}
+          locale={locale}
+        />
+
+        {billingOnly && (
+          <div className="mt-10">
+            <MinutesProgressCard
+              quiet
+              minutes={billingOnly.minutes}
+              pack={packOnly}
+              canBuy={!readOnly}
+              dict={dict}
+              locale={locale}
+            />
+          </div>
+        )}
+      </>
+    )
+  }
 
   // Everything this screen needs, asked for at once. The minutes and the pack
   // used to be a second round after this one had come back, which made the
@@ -235,12 +346,6 @@ export default async function AgendaPage({
   // today; a form is not that. /comecar is where it lives, and it is where
   // this lands until there is a day to show.
   if (awaitingSetup) redirect('/comecar')
-
-  // ── AND A CLINIC WITH NO DIARY HAS NO DAY TO SHOW ─────────────────────
-  // The menu does not offer this screen while Telma only takes messages, but
-  // this is also where the panel lands after signing in, and a bookmark
-  // outlives a setting. The conversations are the day for that clinic.
-  if (clinic?.takes_bookings === false) redirect('/conversas')
 
   return (
     <>

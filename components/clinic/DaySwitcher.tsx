@@ -20,8 +20,11 @@ export function DaySwitcher({
   current: string
   today: string
   yesterday: string
-  tomorrow: string
-  labels: { before: string; today: string; after: string; pick: string }
+  /** Left out on a screen that looks backwards: what Telma did has no
+   *  tomorrow, and a tab leading to an empty day teaches people the screen is
+   *  broken. */
+  tomorrow?: string
+  labels: { before: string; today: string; after?: string; pick: string }
 }) {
   const router = useRouter()
 
@@ -45,7 +48,7 @@ export function DaySwitcher({
       <div className="inline-flex rounded-pill border border-line-strong bg-surface p-1">
         <Tab day={yesterday} label={labels.before} />
         <Tab day={today} label={labels.today} />
-        <Tab day={tomorrow} label={labels.after} />
+        {tomorrow && labels.after && <Tab day={tomorrow} label={labels.after} />}
       </div>
       <input
         type="date"

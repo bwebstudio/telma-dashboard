@@ -69,9 +69,19 @@ export default async function ClinicaLayout({
           },
         ]
       : []),
+    // The same first entry in both modes, and a different screen behind it:
+    // the diary where there is one, what Telma did where there is not. The
+    // name changes with it, because "Agenda" over a list of messages is the
+    // contradiction this was meant to end.
+    {
+      href: '/hoje',
+      label: books ? dict.clinicNav.hoje : dict.clinicNav.dia,
+      icon: <IconToday />,
+      group: day,
+      tour: 'hoje',
+    },
     ...(books
       ? [
-          { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday />, group: day, tour: 'hoje' },
           { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings />, group: day, tour: 'marcacoes' },
         ]
       : []),

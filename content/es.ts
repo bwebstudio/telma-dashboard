@@ -108,6 +108,7 @@ export const es: Dictionary = {
     exitView: 'Salir de esta vista',
   },
   clinicNav: {
+    dia: 'Hoy',
     // Ver el comentario en pt.ts: el menú y el título de la página decían
     // cosas distintas del mismo sitio.
     hoje: 'Agenda',
@@ -345,6 +346,10 @@ export const es: Dictionary = {
     emptyDay: 'Sin citas este día.',
     closedDay: 'La clínica no abre este día.',
     doneTitle: 'Lo que hizo Telma hoy',
+    messagesTitle: 'Lo que hizo Telma',
+    messagesLead: 'Los recados que tomó y quién llamó.',
+    messagesEmpty: 'Ninguna llamada este día.',
+    weekTitle: 'Esta semana',
     doneCalls: 'Llamadas atendidas',
     doneMissed: 'Colgaron antes de contestar',
     doneWhatsapp: 'Conversaciones en WhatsApp',

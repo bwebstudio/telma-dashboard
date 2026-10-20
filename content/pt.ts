@@ -108,6 +108,7 @@ export const pt: Dictionary = {
     exitView: 'Sair desta vista',
   },
   clinicNav: {
+    dia: 'Hoje',
     // 'Agenda', não 'Hoje'. O menu dizia uma coisa e o título da
     // página dizia outra, para o mesmo ecrã, e quem o lia tinha de descobrir
     // que eram o mesmo sítio. E a página mostra ontem e amanhã, por isso
@@ -347,6 +348,10 @@ export const pt: Dictionary = {
     emptyDay: 'Sem marcações neste dia.',
     closedDay: 'A clínica não abre neste dia.',
     doneTitle: 'O que a Telma fez hoje',
+    messagesTitle: 'O que a Telma fez',
+    messagesLead: 'Os recados que tomou e quem ligou.',
+    messagesEmpty: 'Nenhuma chamada neste dia.',
+    weekTitle: 'Esta semana',
     doneCalls: 'Chamadas atendidas',
     doneMissed: 'Desligaram antes de atender',
     doneWhatsapp: 'Conversas no WhatsApp',

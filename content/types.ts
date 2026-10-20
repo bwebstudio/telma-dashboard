@@ -127,6 +127,8 @@ export interface Dictionary {
     exitView: string
   }
   clinicNav: {
+    /** The first entry, for a clinic whose Telma does not book. */
+    dia: string
     hoje: string
     marcacoes: string
     pacientes: string
@@ -343,6 +345,12 @@ export interface Dictionary {
     emptyDay: string
     closedDay: string
     doneTitle: string
+    /** The day, for a clinic whose Telma does not book: what she did, and the
+     *  week under it. See components/clinic/MessagesDay. */
+    messagesTitle: string
+    messagesLead: string
+    messagesEmpty: string
+    weekTitle: string
     doneCalls: string
     /** Only drawn when it happened: calls that ended while it rang. */
     doneMissed: string

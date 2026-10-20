@@ -108,6 +108,7 @@ export const en: Dictionary = {
     exitView: 'Leave this view',
   },
   clinicNav: {
+    dia: 'Today',
     // See the comment in pt.ts: the nav and the page title named the same
     // screen two different things.
     hoje: 'Agenda',
@@ -345,6 +346,10 @@ export const en: Dictionary = {
     emptyDay: 'No appointments on this day.',
     closedDay: 'The clinic is closed on this day.',
     doneTitle: 'What Telma did today',
+    messagesTitle: 'What Telma did',
+    messagesLead: 'The messages she took, and who rang.',
+    messagesEmpty: 'No calls on this day.',
+    weekTitle: 'This week',
     doneCalls: 'Calls answered',
     doneMissed: 'Hung up before answering',
     doneWhatsapp: 'WhatsApp conversations',

@@ -386,9 +386,19 @@ function Notes({
 }) {
   const [draft, setDraft] = useState('')
   const [reason, setReason] = useState('')
+  const [opening, setOpening] = useState(false)
   const [adding, setAdding] = useState<'nota' | 'contacto' | null>(null)
   const open = Boolean(patient.follow_up_since)
   const attempts = notes.filter((n) => n.kind === 'contacto').length
+
+  // The reason is optional, so Enter on an empty field opens the follow-up
+  // just as the button does; there is nothing to validate.
+  const openFollowUp = () =>
+    run(async () => {
+      await setFollowUp(patient.id, true, reason)
+      setReason('')
+      setOpening(false)
+    })
 
   return (
     <section>
@@ -423,9 +433,9 @@ function Notes({
           </p>
         )}
 
-        {!readOnly && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {open ? (
+        {!readOnly &&
+          (open ? (
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 className="btn-secondary min-h-0 px-4 py-2 text-sm"
                 disabled={pending}
@@ -433,31 +443,57 @@ function Notes({
               >
                 {t.followDone}
               </button>
-            ) : (
-              <>
-                <input
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder={t.followReasonPlaceholder}
-                  aria-label={t.followOpenAction}
-                  className="field-input max-w-xs flex-1 py-2"
-                />
-                <button
-                  className="btn-secondary min-h-0 px-4 py-2 text-sm"
-                  disabled={pending}
-                  onClick={() =>
-                    run(async () => {
-                      await setFollowUp(patient.id, true, reason)
-                      setReason('')
-                    })
+            </div>
+          ) : /* ── ONE BUTTON UNTIL SOMEBODY PRESSES IT ──────────────────────
+                 The reason used to sit in this row next to the quiet line, and
+                 a justified row left it the width of a postage stamp: neither
+                 the example nor what was being typed could be read. So the row
+                 carries the button alone, and the field arrives underneath on a
+                 line of its own, as wide as the card. */
+          !opening ? (
+            <button
+              className="btn-secondary min-h-0 shrink-0 px-4 py-2 text-sm"
+              disabled={pending}
+              onClick={() => setOpening(true)}
+            >
+              {t.followOpenAction}
+            </button>
+          ) : (
+            <div className="mt-3 flex w-full flex-wrap items-center gap-2">
+              <input
+                autoFocus
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !pending) openFollowUp()
+                  if (e.key === 'Escape') {
+                    setOpening(false)
+                    setReason('')
                   }
-                >
-                  {t.followOpenAction}
-                </button>
-              </>
-            )}
-          </div>
-        )}
+                }}
+                placeholder={t.followReasonPlaceholder}
+                aria-label={t.followOpenAction}
+                className="field-input min-w-0 flex-1 basis-72 py-2"
+              />
+              <button
+                className="btn-secondary min-h-0 shrink-0 px-4 py-2 text-sm"
+                disabled={pending}
+                onClick={() => openFollowUp()}
+              >
+                {t.followOpenAction}
+              </button>
+              <button
+                className="shrink-0 rounded-input px-3 py-2 text-sm text-ink-mute hover:text-ink"
+                disabled={pending}
+                onClick={() => {
+                  setOpening(false)
+                  setReason('')
+                }}
+              >
+                {dict.common.cancel}
+              </button>
+            </div>
+          ))}
       </div>
 
       {/* ── WHAT WAS DONE ─────────────────────────────────────────────── */}

@@ -256,6 +256,8 @@ interface BaseCopy {
   address: string
   hours: (tz: string) => string
   hoursNote: string
+  /** Said when the call arrives outside those hours. */
+  closedNow: string
   eachAppointmentTakes: (minutes: number) => string
   callerNumberKnown: (number: string) => string
   /** Somebody this clinic has a record for, ringing from the same number. */
@@ -649,7 +651,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   fallbackTransfer: (n) =>
     `Passas a chamada${n ? ` para ${n}` : ' para a clínica'}. Dizes que vais passar antes de o fazeres.`,
   fallbackMessage:
-    'Pedes o nome, o número e o motivo, repetes o número em voz alta para confirmar, e dizes que fica registado no painel da clínica e que a clínica liga de volta. Não prometes uma hora concreta para essa chamada. Isso diz-se de um recado, nunca de uma marcação. **Não passas a chamada a ninguém, e nunca dizes que vais passar**: nesta clínica não há para onde passar, e quem ouve "passo-o já" fica à espera em vez de procurar ajuda.',
+    'Pedes o nome, o número e o motivo. Lês o número de volta em voz alta e **paras aí**: não emendas nada à frente na mesma frase, esperas que a pessoa diga que está certo. Depois dizes que fica registado no painel da clínica e que a clínica liga de volta. Não prometes uma hora concreta para essa chamada. Isso diz-se de um recado, nunca de uma marcação. **Não passas a chamada a ninguém, e nunca dizes que vais passar**: nesta clínica não há para onde passar, e quem ouve "passo-o já" fica à espera em vez de procurar ajuda.',
   fallbackShort: {
     transfer: 'passas a chamada a uma pessoa',
     message: 'tomas nota e dizes que a clínica liga de volta',
@@ -662,6 +664,8 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   hours: (tz) => `Horário (hora local, ${tz}):`,
   hoursNote:
     'Todas as horas que disseres são nesta hora local. Se quem liga estiver noutro país, dizes isso.',
+  closedNow:
+    '**Agora a clínica está fechada.** Dizes isso logo, por palavras tuas, e dizes quando reabre, antes de tratares do que a pessoa quer. Quem liga a uma porta fechada tem de saber que está fechada: descobri-lo ao fim da chamada é pior do que ouvi-lo no princípio.',
   // A etiqueta diz para que serve a lista, mesmo ao lado da lista. Uma regra
   // a vinte linhas de distância perde para o que está debaixo dos olhos.
   eachAppointmentTakes: (m) => `Cada consulta ocupa ${m} minutos, e só ofereces horas que a agenda te der.`,
@@ -1010,7 +1014,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   fallbackTransfer: (n) =>
     `Pasas la llamada${n ? ` al ${n}` : ' a la clínica'}. Avisas de que vas a pasarla antes de hacerlo.`,
   fallbackMessage:
-    'Pides el nombre, el teléfono y el motivo, repites el número en voz alta para confirmarlo, y dices que queda registrado en el panel de la clínica y que la clínica le devuelve la llamada. No prometes una hora concreta para esa llamada. Eso se dice de un recado, nunca de una cita. **No pasas la llamada a nadie, y nunca dices que vas a pasarla**: en esta clínica no hay a dónde pasarla, y quien oye "ahora mismo le paso" se queda esperando en vez de buscar ayuda.',
+    'Pides el nombre, el teléfono y el motivo. Lees el número de vuelta en voz alta y **te paras ahí**: no encadenas nada más en la misma frase, esperas a que la persona diga que está bien. Después dices que queda registrado en el panel de la clínica y que la clínica le devuelve la llamada. No prometes una hora concreta para esa llamada. Eso se dice de un recado, nunca de una cita. **No pasas la llamada a nadie, y nunca dices que vas a pasarla**: en esta clínica no hay a dónde pasarla, y quien oye "ahora mismo le paso" se queda esperando en vez de buscar ayuda.',
   fallbackShort: {
     transfer: 'pasas la llamada a una persona',
     message: 'tomas nota y dices que la clínica le devuelve la llamada',
@@ -1022,6 +1026,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   hours: (tz) => `Horario (hora local, ${tz}):`,
   hoursNote:
     'Todas las horas que digas son en esta hora local. Si quien llama está en otro país, se lo dices.',
+  closedNow:
+    '**Ahora mismo la clínica está cerrada.** Lo dices enseguida, con tus palabras, y dices cuándo vuelve a abrir, antes de ocuparte de lo que quiere la persona. Quien llama a una puerta cerrada tiene que saber que está cerrada: enterarse al final de la llamada es peor que oírlo al principio.',
   eachAppointmentTakes: (m) => `Cada cita ocupa ${m} minutos, y solo ofreces horas que te dé la agenda.`,
   // Ver el comentario en la versión portuguesa: la regla entera vivía aquí, y
   // el modo de confirmar se ha ido al paso 8, que es donde se usa.
@@ -1215,6 +1221,10 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     facts.push(t.hours(v.timezone))
     for (const h of v.opening_hours) facts.push(`  - ${h}`)
     facts.push(t.hoursNote)
+    // Measured, not assumed: on a closed clinic she answered the question and
+    // never said the door was shut, in one run of three. The hours are a list
+    // and a list is not an answer to "are you open now".
+    if (!v.within_opening_hours) facts.push(t.closedNow)
   }
   // Only where there is an hour to offer. On a clinic that takes messages it
   // was telling her a slot length and, in the same sentence, that she may

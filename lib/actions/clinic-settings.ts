@@ -382,6 +382,7 @@ export async function updateClinicProfile(
     price_info: clean.price_info || null,
     appointment_duration_minutes: clean.appointment_duration_minutes,
     formality: clean.formality,
+    takes_bookings: clean.takes_bookings !== false,
     fallback_policy: clean.fallback_policy,
     fallback_number: normalisePhone(String(clean.fallback_number ?? '')) || null,
     briefing: clean.briefing || null,

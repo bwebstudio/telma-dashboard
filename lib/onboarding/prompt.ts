@@ -98,6 +98,9 @@ export interface PromptVariables {
   /** False when the clinic is paused or out of minutes. Never applies to an
    *  emergency. */
   can_book: boolean
+  /** False when the clinic decided Telma does not book at all, which is a
+   *  different sentence from "not today": see 0076. */
+  takes_bookings?: boolean
   /** Whether the clinic is open at the moment of the call, in its own timezone. */
   within_opening_hours: boolean
   /** Where an emergency goes. Null means the clinic named nobody. */
@@ -210,15 +213,21 @@ interface BaseCopy {
    *  the moment the procedures stopped being in the prompt. See the comment in
    *  buildPrompt. */
   severalTasksTitle: string
-  severalTasks: string[]
+  /** Takes whether the clinic never books: the example is a cancellation and
+   *  then a booking, and neither happens on a line that only takes messages. */
+  severalTasks: (never: boolean) => string[]
   toolsTitle: string
   toolsCan: string[]
-  toolsCannot: string[]
+  /** Takes whether the clinic never books: "today you do not look at the
+   *  diary" promises a tomorrow that is not coming. */
+  toolsCannot: (never: boolean) => string[]
   bookingTitle: string
   bookingCan: string[]
   /** Step 10, for a clinic where Telma confirms. See PromptVariables. */
   bookingStepConfirmed: string
-  bookingCannot: string[]
+  /** Takes whether the clinic never books, because "today you cannot" said to
+   *  a clinic that never will teaches Telma to promise tomorrow. */
+  bookingCannot: (never: boolean) => string[]
   professionalsTitle: string
   professionals: (names: string[]) => string[]
   cancellationsTitle: string
@@ -253,6 +262,8 @@ interface BaseCopy {
   knownPatient: string
   callerNumberUnknown: string
   services: string
+  /** The same list, for a clinic where she books none of them. */
+  servicesOnly: string
   alsoDoes: string
   prices: string
   noPrices: string
@@ -399,11 +410,15 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   },
   emergencyProtocolLead: 'A clínica indicou o seguinte para estes casos:',
   severalTasksTitle: '# Quando há mais do que uma coisa',
-  severalTasks: [
-    'Uma chamada pode trazer mais do que um assunto: outra marcação, um cancelamento e depois uma marcação. Quando isso acontece, **o nome e o telefone que já te deram servem para tudo o que vier a seguir**, e começas por outro sítio:',
+  severalTasks: (never) => [
+    never
+      ? 'Uma chamada pode trazer mais do que um assunto, e um deles pode ser para outra pessoa. Quando isso acontece, **o nome e o telefone que já te deram servem para tudo o que vier a seguir**, e começas por outro sítio:'
+      : 'Uma chamada pode trazer mais do que um assunto: outra marcação, um cancelamento e depois uma marcação. Quando isso acontece, **o nome e o telefone que já te deram servem para tudo o que vier a seguir**, e começas por outro sítio:',
     '',
     '1. **Antes de tudo o resto**, perguntas para quem é: "esta é também para si?".',
-    '2. Se for para ela, já tens o nome e o telefone. **Não voltas a pedi-los nem para confirmar.** Segues direto para o motivo e para a agenda.',
+    never
+      ? '2. Se for para ela, já tens o nome e o telefone. **Não voltas a pedi-los nem para confirmar.** Segues direto para o motivo.'
+      : '2. Se for para ela, já tens o nome e o telefone. **Não voltas a pedi-los nem para confirmar.** Segues direto para o motivo e para a agenda.',
     '3. Se for para outra pessoa, pedes só o nome dela. **O telefone continua a ser o mesmo e não voltas a pedi-lo**: quem liga é o contacto, seja a consulta para quem for.',
     '',
     // Cortada uma vez por parecer justificação a mais de uma regra já dita duas
@@ -440,8 +455,10 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     'Se a agenda não responder ou der erro, **não inventas horas**: dizes que neste momento não a consegues consultar, pedes o nome e o número, e registas a chamada.',
     'Se hoje já não vierem horas, o dia acabou: passas ao seguinte com naturalidade. **Nunca ofereces uma hora que já passou.**',
   ],
-  toolsCannot: [
-    'Hoje não consultas nem seguras horas na agenda.',
+  toolsCannot: (never) => [
+    never
+      ? 'Não tens agenda. Não consultas horas, não as seguras e não há marcações para consultar: as marcações desta clínica são tratadas por pessoas, noutro sítio.'
+      : 'Hoje não consultas nem seguras horas na agenda.',
     '',
     '**telma_registar_chamada** chamas na mesma, uma única vez, no fim de todas as chamadas. É por aí que a clínica fica a saber quem ligou e para quê.',
   ],
@@ -518,8 +535,10 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   ],
   bookingStepConfirmed:
     '10. Fechas a dizer que ficou, "Muito bem, fica marcada para...", e repetes o dia, a hora, o serviço e o nome. **A marcação fica confirmada**: dizes que fica confirmada e que a pessoa recebe a confirmação por mensagem. **Não dizes que fica por confirmar pela clínica.** **Não desligas aqui**: a seguir vais a "Como te despedes".',
-  bookingCannot: [
-    'Hoje **não podes marcar**. Podes informar, tirar dúvidas e tomar nota de quem quer ser contactado, mas não ofereces horas nem dás marcações por feitas.',
+  bookingCannot: (never) => [
+    never
+      ? 'Nesta clínica **não marcas consultas**. É a clínica que trata das marcações, e tu não ofereces horas nem dás marcações por feitas: nem hoje, nem para outro dia, nem "deixo aqui marcado". Também não dizes que está cheio nem que não há vagas, porque não é disso que se trata.'
+      : 'Hoje **não podes marcar**. Podes informar, tirar dúvidas e tomar nota de quem quer ser contactado, mas não ofereces horas nem dás marcações por feitas.',
     'Quando tomas nota, pedes o nome e o número **que ainda não tiveres desta chamada**, repetes o número para confirmar, e dizes que fica registado no painel da clínica para alguém ligar de volta. Isso diz-se de um recado, nunca de uma marcação.',
     'Isto não se aplica a urgências: essas escalam na mesma, como está acima.',
   ],
@@ -658,6 +677,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   knownPatient:
     'Este número já é de um paciente desta clínica. **Não pedes os nove algarismos outra vez**: perguntas só se o contacto para esta marcação é este mesmo número, e se disserem que não, apontas o que derem. Numa casa há mais do que uma pessoa e a consulta pode ser para quem tem outro telemóvel. Pedes sempre o nome. **Nunca dizes tu o nome que tens em ficha**, nem para confirmar: quem atende o telefone pode não ser quem lá está guardado, e dizê-lo é contar a um estranho quem mais vive naquela casa.',
   services: 'Serviços que podes marcar',
+  servicesOnly: 'Serviços desta clínica',
   alsoDoes: 'Também faz',
   prices: 'Preços',
   noPrices:
@@ -786,11 +806,15 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   },
   emergencyProtocolLead: 'La clínica ha indicado lo siguiente para estos casos:',
   severalTasksTitle: '# Cuando hay más de una cosa',
-  severalTasks: [
-    'Una llamada puede traer más de un asunto: otra cita, una anulación y después una cita. Cuando pasa, **el nombre y el teléfono que ya te han dado sirven para todo lo que venga después**, y empiezas por otro sitio:',
+  severalTasks: (never) => [
+    never
+      ? 'Una llamada puede traer más de un asunto, y uno de ellos puede ser para otra persona. Cuando pasa, **el nombre y el teléfono que ya te han dado sirven para todo lo que venga después**, y empiezas por otro sitio:'
+      : 'Una llamada puede traer más de un asunto: otra cita, una anulación y después una cita. Cuando pasa, **el nombre y el teléfono que ya te han dado sirven para todo lo que venga después**, y empiezas por otro sitio:',
     '',
     '1. **Antes que nada**, preguntas para quién es: "¿esta también es para usted?".',
-    '2. Si es para ella, ya tienes el nombre y el teléfono. **No vuelves a pedirlos ni para confirmar.** Sigues directo al motivo y a la agenda.',
+    never
+      ? '2. Si es para ella, ya tienes el nombre y el teléfono. **No vuelves a pedirlos ni para confirmar.** Sigues directo al motivo.'
+      : '2. Si es para ella, ya tienes el nombre y el teléfono. **No vuelves a pedirlos ni para confirmar.** Sigues directo al motivo y a la agenda.',
     '3. Si es para otra persona, pides solo su nombre. **El teléfono sigue siendo el mismo y no lo vuelves a pedir**: quien llama es el contacto, sea la cita para quien sea.',
     '',
     // Ver el comentario en la versión portuguesa: cortada y repuesta con
@@ -820,8 +844,10 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     'Si la agenda no responde o da error, **no te inventas horas**: dices que en este momento no puedes consultarla, pides el nombre y el teléfono, y registras la llamada.',
     'Si hoy ya no vienen horas, es que el día se ha acabado: pasas al siguiente con naturalidad. **Nunca ofreces una hora que ya ha pasado.**',
   ],
-  toolsCannot: [
-    'Hoy no consultas ni retienes horas en la agenda.',
+  toolsCannot: (never) => [
+    never
+      ? 'No tienes agenda. No consultas horas, no las retienes y no hay citas que consultar: las citas de esta clínica las llevan personas, en otro sitio.'
+      : 'Hoy no consultas ni retienes horas en la agenda.',
     '',
     '**telma_registar_chamada** la llamas igualmente, una sola vez, al final de todas las llamadas. Es así como la clínica se entera de quién ha llamado y para qué.',
   ],
@@ -879,8 +905,10 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   ],
   bookingStepConfirmed:
     '10. Cierras diciendo que ha quedado, "Muy bien, le queda para...", y repites el día, la hora, el servicio y el nombre. **La cita queda confirmada**: dices que queda confirmada y que recibirá la confirmación por mensaje. **No dices que queda pendiente de que la clínica la confirme.** **No cuelgas aquí**: a continuación vas a "Cómo te despides".',
-  bookingCannot: [
-    'Hoy **no puedes dar citas**. Puedes informar, resolver dudas y tomar nota de quien quiere que le llamen, pero no ofreces horas ni das citas por hechas.',
+  bookingCannot: (never) => [
+    never
+      ? 'En esta clínica **no das citas**. De las citas se encarga la clínica, y tú no ofreces horas ni das citas por hechas: ni hoy, ni para otro día, ni "se lo dejo apuntado". Tampoco dices que está lleno ni que no hay hueco, porque no va de eso.'
+      : 'Hoy **no puedes dar citas**. Puedes informar, resolver dudas y tomar nota de quien quiere que le llamen, pero no ofreces horas ni das citas por hechas.',
     'Cuando tomas nota, pides el nombre y el número **que no tengas ya de esta llamada**, repites el número para confirmarlo, y dices que queda registrado en el panel de la clínica para que alguien le devuelva la llamada. Eso se dice de un recado, nunca de una cita.',
     'Esto no se aplica a las urgencias: esas escalan igual, como está arriba.',
   ],
@@ -1003,6 +1031,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   knownPatient:
     'Este número ya es de un paciente de esta clínica. **No pides los nueve dígitos otra vez**: preguntas sólo si el contacto para esta cita es este mismo número, y si dicen que no, apuntas el que den. En una casa hay más de una persona y la cita puede ser para quien tiene otro móvil. Pides siempre el nombre. **Nunca dices tú el nombre que tienes en ficha**, ni para confirmar: quien coge el teléfono puede no ser quien está guardado, y decirlo es contarle a un desconocido quién más vive en esa casa.',
   services: 'Servicios que puedes citar',
+  servicesOnly: 'Servicios de esta clínica',
   alsoDoes: 'También hace',
   prices: 'Precios',
   noPrices:
@@ -1160,7 +1189,10 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
   // is about finding, holding and filing an appointment, so it is read on
   // every sentence of a call that is not about one. The two tools the other
   // procedures need are named inside those procedures already.
-  const tools = [t.toolsTitle, ...(v.can_book ? t.toolsCan : t.toolsCannot)]
+  const tools = [
+    t.toolsTitle,
+    ...(v.can_book ? t.toolsCan : t.toolsCannot(v.takes_bookings === false)),
+  ]
 
   // Step 10 is the sentence the patient actually hears about whether the
   // booking is real. Swapped rather than contradicted later: two instructions
@@ -1169,7 +1201,7 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     ? v.appointments_auto_confirmed
       ? t.bookingCan.map((line) => (line.startsWith('10.') ? t.bookingStepConfirmed : line))
       : t.bookingCan
-    : t.bookingCannot
+    : t.bookingCannot(v.takes_bookings === false)
   const booking = [t.bookingTitle, ...bookingSteps]
 
   const fallbackNumber = v.fallback_number ?? v.phone
@@ -1184,7 +1216,12 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     for (const h of v.opening_hours) facts.push(`  - ${h}`)
     facts.push(t.hoursNote)
   }
-  facts.push(t.eachAppointmentTakes(v.appointment_duration_minutes))
+  // Only where there is an hour to offer. On a clinic that takes messages it
+  // was telling her a slot length and, in the same sentence, that she may
+  // only offer what the diary gives her -- on a call where she offers nothing.
+  if (v.takes_bookings !== false) {
+    facts.push(t.eachAppointmentTakes(v.appointment_duration_minutes))
+  }
   // Estas duas linhas viviam dentro do procedimento de marcação e mudavam com
   // a clínica, o que impedia que esse procedimento vivesse no agente partilhado
   // como um nó. Aqui não impedem nada: "A clínica" é a única parte que já se
@@ -1199,7 +1236,13 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
         : t.callerNumberUnknown
   )
   facts.push('')
-  if (v.services.length) facts.push(`${t.services}: ${v.services.join(', ')}.`)
+  if (v.services.length) {
+    // Named either way, because "do you do implants?" is the commonest
+    // question on any of these lines. Only the verb changes: a clinic she
+    // does not book for has services, not a menu she can offer hours from.
+    const label = v.takes_bookings === false ? t.servicesOnly : t.services
+    facts.push(`${label}: ${v.services.join(', ')}.`)
+  }
   if (v.custom_services) facts.push(`${t.alsoDoes}: ${v.custom_services}`)
   facts.push(v.price_info ? `${t.prices}: ${v.price_info}` : t.noPrices)
   facts.push('')
@@ -1268,7 +1311,7 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     // reach is a node you can fail to reach. A rule about what carries ACROSS
     // two jobs cannot live inside one of them.
     t.severalTasksTitle,
-    ...t.severalTasks,
+    ...t.severalTasks(v.takes_bookings === false),
   ]
 
   const bookingSection = [tools.join('\n'), '', booking.join('\n')]
@@ -1285,7 +1328,15 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
       ? [t.professionalsTitle, ...t.professionals(v.professionals), '']
       : []
 
-  const cancellingSection = [t.cancellationsTitle, ...t.cancellations]
+  // ── NOTHING TO CANCEL WHERE NOTHING WAS BOOKED ──────────────────────────
+  // Two pages teaching her to look a booking up and call it off, on a clinic
+  // whose diary she has never written in. The tools would answer "nothing
+  // here" to everybody who rang about an appointment made at the desk, and
+  // she would have spent the call proving it. It goes out entirely: a person
+  // who wants to cancel something leaves a message like everybody else, which
+  // is what this clinic asked for.
+  const cancellingSection =
+    v.takes_bookings === false ? [] : [t.cancellationsTitle, ...t.cancellations]
 
   // The normal end of a call, before the two exception paths below it. The
   // instruction about waiting is the one that earns its place: a voice agent

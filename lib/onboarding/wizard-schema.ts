@@ -279,6 +279,9 @@ function build(m: Messages) {
         .refine((v) => new Set(v).size === v.length, { error: m.duplicateLanguage }),
       greeting_language: z.string().min(1, { error: m.greetingLanguage }),
       formality: z.enum(['formal', 'informal']),
+      // Booking unless the clinic says otherwise: it is what the product is
+      // for, and an absent field means the ordinary thing. See 0076.
+      takes_bookings: z.boolean().optional().default(true),
       // 'callback' was a third answer until it turned out to be the same one
       // as 'message' told in halves. Still accepted, because a browser tab
       // left open on the old form would otherwise fail on submit, and it

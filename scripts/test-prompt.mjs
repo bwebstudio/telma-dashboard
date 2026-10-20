@@ -87,6 +87,11 @@ const CASES = {
   // Out of minutes. Booking is off, and the emergency path must survive it.
   'cannot-book': { ...BASE_CLINIC, can_book: false },
 
+  // A clinic that chose not to have her booking at all, which is a different
+  // sentence from "not today": she must not promise to book tomorrow, and the
+  // message she takes is the whole of what the call is for. See 0076.
+  'messages-only': { ...BASE_CLINIC, can_book: false, takes_bookings: false },
+
   // A clinic that does not quote prices, does not record, speaks to people
   // informally, and transfers when stuck.
   'informal-no-recording-transfer': {

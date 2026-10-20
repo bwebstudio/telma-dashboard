@@ -60,7 +60,7 @@ const FIELD_STEP: Record<string, number> = {
   appointment_duration_minutes: 3, min_interval_minutes: 3,
   services: 3, custom_services: 3, price_info: 3,
   selected_languages: 3, greeting_language: 3, formality: 3,
-  fallback_policy: 3, fallback_number: 3, briefing: 3,
+  takes_bookings: 3, fallback_policy: 3, fallback_number: 3, briefing: 3,
   emergency_number: 3, emergency_protocol: 3,
   phone_option: 3, current_number: 3, operator: 3, area_region: 3, terms: 3,
 }
@@ -101,6 +101,7 @@ const INITIAL: Values = {
   price_info: '',
   greeting_language: '',
   formality: 'formal',
+  takes_bookings: true,
   fallback_policy: 'message',
   fallback_number: '',
   briefing: '',

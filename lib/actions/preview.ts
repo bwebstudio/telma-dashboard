@@ -136,10 +136,13 @@ async function previewPrompt(
     fallback_policy: values.fallback_policy === 'transfer' ? 'transfer' : 'message',
     fallback_number: str(values.fallback_number),
     briefing: str(values.briefing),
-    // The preview always shows the clinic able to book. It is the state it will
-    // be in on day one, and showing the out-of-minutes version to somebody who
-    // has not paid yet would be answering a question they did not ask.
-    can_book: true,
+    // The preview shows the clinic able to book, because that is the state it
+    // will be in on day one and the out-of-minutes version answers a question
+    // nobody asked yet. Unless they have just said she does not book at all,
+    // which is a choice and not a state, and a preview that ignored it would
+    // be showing them somebody else's receptionist.
+    can_book: values.takes_bookings !== false,
+    takes_bookings: values.takes_bookings !== false,
     within_opening_hours: hours.openNow,
     emergency_number: str(values.emergency_number),
     emergency_protocol: str(values.emergency_protocol),

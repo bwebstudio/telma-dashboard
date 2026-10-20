@@ -76,6 +76,7 @@ const STEP_FIELDS: Record<StepId, readonly string[]> = {
   services: ['services', 'custom_services', 'service_prices', 'service_durations'],
   languages: ['selected_languages'],
   telma: [
+    'takes_bookings',
     'greeting_language',
     'formality',
     'fallback_policy',

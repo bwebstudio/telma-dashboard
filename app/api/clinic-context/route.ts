@@ -109,7 +109,11 @@ export async function GET(request: Request) {
     fallback_policy: clinic.fallback_policy === 'transfer' ? 'transfer' : 'message',
     fallback_number: clinic.fallback_number ?? null,
     briefing: clinic.briefing ?? null,
-    can_book: clinic.status === 'ativa' && !minutes.exhausted,
+    // Three reasons she cannot book today, and one that is not about today:
+    // a clinic that told us it does not want her booking at all. See 0076.
+    can_book:
+      clinic.status === 'ativa' && !minutes.exhausted && clinic.takes_bookings !== false,
+    takes_bookings: clinic.takes_bookings !== false,
     // Whether the clinic is open right now, in its own timezone. This is what
     // makes the emergency block able to say something true: inside hours there
     // is somebody to transfer to, outside there is not.
@@ -194,7 +198,11 @@ export async function GET(request: Request) {
     // lives on the server and not in a prompt: a paused clinic takes no
     // bookings, and a clinic out of minutes should be wrapping up, not opening
     // a new conversation.
-    can_book: clinic.status === 'ativa' && !minutes.exhausted,
+    // Three reasons she cannot book today, and one that is not about today:
+    // a clinic that told us it does not want her booking at all. See 0076.
+    can_book:
+      clinic.status === 'ativa' && !minutes.exhausted && clinic.takes_bookings !== false,
+    takes_bookings: clinic.takes_bookings !== false,
     is_active: clinic.status === 'ativa',
 
     // One agent serves every clinic. This is what makes it this clinic's.

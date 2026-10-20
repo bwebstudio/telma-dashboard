@@ -951,8 +951,35 @@ export function TelmaStep({
     })
   }
 
+  const books = values.takes_bookings !== false
+
   return (
     <div className="flex flex-col gap-8">
+      {/* ── WHAT SHE IS FOR, BEFORE HOW SHE SOUNDS ──────────────────────────
+          First, because every answer below it is downstream of this one. The
+          default is the thing the clinic is paying for: Telma takes the call
+          and fills the diary. The other is a real way of starting -- the
+          first clinic asked for exactly it, in writing, on day one: take the
+          call, write down what they wanted, we ring them back -- and before
+          this existed the only way to get it was to leave the clinic half
+          configured, which is to say by making the product look broken. */}
+      <Group title={t.groupDoes} lead={t.groupDoesLead}>
+        <div className="flex flex-col gap-2.5">
+          {[true, false].map((on) => (
+            <OptionCard
+              key={String(on)}
+              name="takes_bookings"
+              value={String(on)}
+              checked={books === on}
+              onSelect={() => set({ takes_bookings: on })}
+              title={on ? t.booksYes : t.booksNo}
+            >
+              {on ? t.booksYesHelp : t.booksNoHelp}
+            </OptionCard>
+          ))}
+        </div>
+      </Group>
+
       <Group title={t.groupVoice} lead={t.groupVoiceLead}>
       {showLanguages && (
       <div>

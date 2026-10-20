@@ -228,7 +228,11 @@ export async function POST(request: Request) {
     fallback_policy: clinic.fallback_policy === 'transfer' ? 'transfer' : 'message',
     fallback_number: clinic.fallback_number ?? null,
     briefing: clinic.briefing ?? null,
-    can_book: clinic.status === 'ativa' && !minutes.exhausted,
+    // Three reasons she cannot book today, and one that is not about today:
+    // a clinic that told us it does not want her booking at all. See 0076.
+    can_book:
+      clinic.status === 'ativa' && !minutes.exhausted && clinic.takes_bookings !== false,
+    takes_bookings: clinic.takes_bookings !== false,
     within_opening_hours: isOpenNow(hours, clinic.timezone),
     emergency_number: clinic.emergency_number ?? null,
     emergency_protocol: clinic.emergency_protocol ?? null,

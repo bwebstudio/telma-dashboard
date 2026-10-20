@@ -125,6 +125,12 @@ export interface Copy {
   priceInfo: string
   priceInfoHelp: string
   priceInfoPlaceholder: string
+  groupDoes: string
+  groupDoesLead: string
+  booksYes: string
+  booksYesHelp: string
+  booksNo: string
+  booksNoHelp: string
   groupVoice: string
   groupVoiceLead: string
   groupStuck: string
@@ -372,6 +378,12 @@ const pt: Copy = {
   priceInfo: 'Preços',
   priceInfoHelp: 'Opcional, e só para o que não cabe num número: "o laser varia com a zona", "o primeiro orçamento é gratuito". Os preços de cada serviço põem-se em cima.',
   priceInfoPlaceholder: 'Primeira consulta 40 €. Limpeza a partir de 60 €.',
+  groupDoes: 'Marcar consultas',
+  groupDoesLead: 'O que a Telma faz quando alguém liga a pedir uma hora.',
+  booksYes: 'Atende e marca consultas',
+  booksYesHelp: 'Vê a agenda, oferece as horas livres e deixa a marcação no painel. É para isto que ela serve.',
+  booksNo: 'Atende e toma recados',
+  booksNoHelp: 'Nunca oferece horas nem marca nada. Pergunta o motivo da chamada, toma nota e diz que a clínica liga de volta. Pode mudar isto quando quiser.',
   groupVoice: 'Como fala',
   groupVoiceLead: 'Em que língua abre a chamada e como trata quem liga.',
   groupStuck: 'Quando não consegue ajudar',
@@ -619,6 +631,12 @@ const es: Copy = {
   priceInfo: 'Precios',
   priceInfoHelp: 'Opcional, y solo para lo que no cabe en un número: "el láser varía según la zona", "el primer presupuesto es gratis". Los precios de cada servicio se ponen arriba.',
   priceInfoPlaceholder: 'Primera visita 40 €. Limpieza desde 60 €.',
+  groupDoes: 'Dar citas',
+  groupDoesLead: 'Lo que hace Telma cuando alguien llama pidiendo hora.',
+  booksYes: 'Atiende y da citas',
+  booksYesHelp: 'Ve la agenda, ofrece las horas libres y deja la cita en el panel. Es para esto que sirve.',
+  booksNo: 'Atiende y toma recados',
+  booksNoHelp: 'Nunca ofrece horas ni cita a nadie. Pregunta el motivo de la llamada, toma nota y dice que la clínica le devuelve la llamada. Puede cambiarlo cuando quiera.',
   groupVoice: 'Cómo habla',
   groupVoiceLead: 'En qué lengua abre la llamada y cómo trata a quien llama.',
   groupStuck: 'Cuando no puede ayudar',

@@ -151,6 +151,9 @@ export interface Clinic {
   price_info?: string | null
   /** 'formal' is usted / o senhor. 'informal' is tú / você. */
   formality?: 'formal' | 'informal' | null
+  /** False: Telma answers and takes messages but never offers an hour. The
+   *  clinic's own decision, not a state it fell into. See 0076. */
+  takes_bookings?: boolean | null
   fallback_policy?: 'transfer' | 'message' | null
   fallback_number?: string | null
   /** Anything no other field covers. Read into the prompt as written. */

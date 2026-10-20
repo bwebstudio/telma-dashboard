@@ -445,6 +445,10 @@ export const pt: Dictionary = {
     addPhoneHint: 'Nove algarismos, com ou sem o indicativo do país.',
 
     notes: 'Notas',
+    followCaller: 'Seguir esta pessoa',
+    openRecord: 'Ver ficha',
+    callerName: 'Nome de quem ligou',
+    createRecord: 'Criar ficha',
     activityTitle: 'Atividade',
     activityEmpty: 'Ainda não aconteceu nada com esta pessoa.',
     activityNote: 'Nota',

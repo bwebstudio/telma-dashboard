@@ -462,6 +462,11 @@ export interface Dictionary {
     addPhoneHint: string
 
     notes: string
+    /** From a message to a record, on the day's list. See FollowCaller. */
+    followCaller: string
+    openRecord: string
+    callerName: string
+    createRecord: string
     activityTitle: string
     activityEmpty: string
     activityNote: string

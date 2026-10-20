@@ -5,6 +5,7 @@ import { Badge, CALL_TONE } from '@/components/ui'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { formatTime, formatDate } from '@/lib/format'
 import { IconPhone, IconPhoneMissed, IconWhatsApp } from '@/components/icons'
+import { FollowCaller } from '@/components/clinic/FollowCaller'
 
 /**
  * The day, for a clinic whose Telma does not book.
@@ -29,6 +30,7 @@ import { IconPhone, IconPhoneMissed, IconWhatsApp } from '@/components/icons'
  */
 export function MessagesDay({
   calls,
+  records,
   week,
   dayKey,
   todayKey,
@@ -39,6 +41,9 @@ export function MessagesDay({
 }: {
   /** The selected day's calls, newest first. */
   calls: Call[]
+  /** The record each caller already has, by the last nine digits they rang
+   *  from. Missing means there is none yet, and the row offers to open one. */
+  records: Record<string, string>
   /** One row per day of the last seven, oldest first. */
   week: Array<{ dayKey: string; label: string; answered: number; missed: number }>
   dayKey: string
@@ -104,7 +109,8 @@ export function MessagesDay({
                 </span>
                 {c.result && <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>}
                 {/* Nothing was said on a call nobody answered, so there is
-                    nothing to open. */}
+                    nothing to open. The person is still worth following up:
+                    they rang and got nobody. */}
                 {c.result !== 'nao_atendida' && (
                   <Link
                     href={`/conversas?c=${c.id}`}
@@ -112,6 +118,13 @@ export function MessagesDay({
                   >
                     {dict.agenda.openConversation}
                   </Link>
+                )}
+                {c.from_phone && (
+                  <FollowCaller
+                    phone={c.from_phone}
+                    patientId={records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? null}
+                    dict={dict}
+                  />
                 )}
               </div>
               {c.summary && (

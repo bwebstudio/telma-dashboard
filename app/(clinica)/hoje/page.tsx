@@ -110,6 +110,31 @@ export default async function AgendaPage({
       }
     })
 
+    // ── WHICH OF THESE PEOPLE ALREADY HAVE A RECORD ──────────────────────
+    // One query for the whole day, keyed on the nine digits a call carries,
+    // so each row can either lead to the record or offer to open one. A
+    // record is where every follow-up lives, and on this clinic nothing else
+    // creates them. See components/clinic/FollowCaller.
+    const dayCalls = (dayCallsRes.data ?? []) as Call[]
+    const digits = [
+      ...new Set(
+        dayCalls
+          .map((c) => (c.from_phone ?? '').replace(/\D/g, '').slice(-9))
+          .filter((d) => d.length === 9)
+      ),
+    ]
+    const records: Record<string, string> = {}
+    if (digits.length) {
+      const { data: known } = await supabase
+        .from('patients')
+        .select('id, phone_digits')
+        .eq('clinic_id', clinicId)
+        .in('phone_digits', digits)
+      for (const row of (known ?? []) as Array<{ id: string; phone_digits: string }>) {
+        records[row.phone_digits] = row.id
+      }
+    }
+
     const porting = (clinic?.porting_details ?? null) as {
       current_number?: string
       forward_type?: ForwardType
@@ -155,7 +180,8 @@ export default async function AgendaPage({
         )}
 
         <MessagesDay
-          calls={(dayCallsRes.data ?? []) as Call[]}
+          calls={dayCalls}
+          records={records}
           week={week}
           dayKey={dayKeyIn(tz, day)}
           todayKey={dayKeyIn(tz, now)}

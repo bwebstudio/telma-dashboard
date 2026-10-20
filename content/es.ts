@@ -443,6 +443,10 @@ export const es: Dictionary = {
     addPhoneHint: 'Nueve cifras, con o sin el prefijo del país.',
 
     notes: 'Notas',
+    followCaller: 'Seguir a esta persona',
+    openRecord: 'Ver ficha',
+    callerName: 'Nombre de quien llamó',
+    createRecord: 'Crear ficha',
     activityTitle: 'Actividad',
     activityEmpty: 'Todavía no ha pasado nada con esta persona.',
     activityNote: 'Nota',

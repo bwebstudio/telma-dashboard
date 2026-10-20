@@ -109,10 +109,10 @@ export function PatientActivity({
   // ── A RECORD GETS LONG, AND THE RECENT PART IS THE PART BEING READ ──────
   // Every call, every attempt, every booking and every opening and closing
   // lands here, so a patient of two years is a page nobody scrolls. The
-  // newest handful is what somebody with the person on the telephone needs,
+  // three newest are what somebody with the person on the telephone needs,
   // and the rest is one press away rather than gone: the whole point of
   // writing the closings down is being able to go back and read them.
-  const FOLD_AT = 6
+  const FOLD_AT = 3
   const [expanded, setExpanded] = useState(false)
   const hidden = Math.max(0, items.length - FOLD_AT)
   const shown = expanded ? items : items.slice(0, FOLD_AT)

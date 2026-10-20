@@ -828,6 +828,19 @@ function Reminders({
     if (untouched) setBody(defaultBody(clinic.language, next))
   }
 
+  // ── WHAT THIS PERSON HAS AGREED TO ─────────────────────────────────────
+  // An aviso needs no yes but obeys a no, and a promotion needs a yes. Both
+  // rules are checked again on the morning the message is due, which is the
+  // only place they can be enforced -- somebody may change their mind between
+  // today and then. But a panel that offers to schedule something it already
+  // knows will not be sent is a panel that quietly wastes the clinic's time:
+  // the row sits there reading "Agendado" for days and then turns into "Não
+  // foi enviado". So the offer is withdrawn while the answer is no, and comes
+  // back the moment it changes in Mensagens, below.
+  const optedOut = Boolean(patient.reminders_opt_out_at)
+  const mayPromote = Boolean(patient.marketing_consent_at)
+  const waiting = recalls.some((r) => r.state === 'agendado')
+
   const today = new Date().toISOString().slice(0, 10)
   const preview = recallMessage(clinic, kind, body)
   const why = (code: string | null) =>
@@ -844,7 +857,19 @@ function Reminders({
       <SectionTitle>{t.recalls}</SectionTitle>
 
       {recalls.length === 0 ? (
-        <p className="text-base text-ink-mute">{t.recallsEmpty}</p>
+        // Nothing scheduled is the normal state of this section, and it was
+        // taking a heading, a sentence and a button to say so. One line.
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-ink-mute">
+          {t.recallsEmpty}
+          {!readOnly && !open && !optedOut && (
+            <button
+              className="text-base text-brand-accent hover:text-brand-hover"
+              onClick={() => setOpen(true)}
+            >
+              {t.add}
+            </button>
+          )}
+        </p>
       ) : (
         <ul className="flex flex-col gap-2">
           {recalls.map((r) => (
@@ -879,7 +904,13 @@ function Reminders({
         </ul>
       )}
 
-      {!readOnly && !open && (
+      {optedOut && (
+        <p className={`mt-3 text-sm ${waiting ? 'text-warn' : 'text-ink-mute'}`}>
+          {waiting ? t.addBlockedWaiting : t.addBlocked}
+        </p>
+      )}
+
+      {!readOnly && !open && !optedOut && recalls.length > 0 && (
         <button className="btn-secondary mt-4" onClick={() => setOpen(true)}>
           {t.add}
         </button>
@@ -912,8 +943,13 @@ function Reminders({
                 className="field-input"
               >
                 <option value="aviso">{t.addKindAviso}</option>
-                <option value="campanha">{t.addKindCampanha}</option>
+                <option value="campanha" disabled={!mayPromote}>
+                  {t.addKindCampanha}
+                </option>
               </select>
+              {!mayPromote && (
+                <p className="mt-1 max-w-xs text-sm text-ink-mute">{t.addKindNoConsent}</p>
+              )}
             </div>
           </div>
 

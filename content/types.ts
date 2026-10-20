@@ -522,6 +522,11 @@ export interface Dictionary {
      *  moment the cost is about to be incurred and the one reader it concerns. */
     addCosts: string
     addKind: string
+    /** Why no reminder can be scheduled for this person, and where to change
+     *  it. The second form is for the ones already waiting, which will not go. */
+    addBlocked: string
+    addBlockedWaiting: string
+    addKindNoConsent: string
     addKindAviso: string
     addKindCampanha: string
     addBody: string

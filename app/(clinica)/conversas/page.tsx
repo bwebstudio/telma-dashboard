@@ -8,7 +8,15 @@ import type { Call, CallResult, ConversationChannel } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
-const RESULTS: CallResult[] = ['marcacao', 'transferida', 'informacao', 'nao_resolvida']
+const RESULTS: CallResult[] = [
+  'marcacao',
+  'transferida',
+  'informacao',
+  'nao_resolvida',
+  // The calls that ended while it rang. Filterable like the rest, because
+  // "show me only those" is the first thing a clinic will want from them.
+  'nao_atendida',
+]
 const CHANNELS: ConversationChannel[] = ['telefone', 'whatsapp']
 
 export default async function ConversasPage({

@@ -1,6 +1,13 @@
 import Link from 'next/link'
 import type { Dictionary } from '@/content'
-import { IconPhone, IconWhatsApp, IconBookings, IconCheck, IconClose } from '@/components/icons'
+import {
+  IconPhone,
+  IconPhoneMissed,
+  IconWhatsApp,
+  IconBookings,
+  IconCheck,
+  IconClose,
+} from '@/components/icons'
 
 /**
  * What Telma did today, in one line.
@@ -23,7 +30,14 @@ export function DayTally({
   whatsapp,
   dict,
 }: {
-  counts: { calls: number; whatsapp: number; bookings: number; info: number; cancelled: number }
+  counts: {
+    calls: number
+    missed: number
+    whatsapp: number
+    bookings: number
+    info: number
+    cancelled: number
+  }
   /** Only for clinics that pay for it. Everyone else never had the channel. */
   whatsapp: boolean
   dict: Dictionary
@@ -31,6 +45,19 @@ export function DayTally({
   const t = dict.agenda
   const items = [
     { icon: <IconPhone className="h-4 w-4" />, label: t.doneCalls, value: counts.calls },
+    // Drawn only on a day it happened, unlike the rest. A zero here is the
+    // ordinary day and the whole row is already five figures long; this one
+    // earns its place by not being zero.
+    ...(counts.missed > 0
+      ? [
+          {
+            icon: <IconPhoneMissed className="h-4 w-4" />,
+            label: t.doneMissed,
+            value: counts.missed,
+            warn: true,
+          },
+        ]
+      : []),
     ...(whatsapp
       ? [{ icon: <IconWhatsApp className="h-4 w-4" />, label: t.doneWhatsapp, value: counts.whatsapp }]
       : []),

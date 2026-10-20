@@ -102,6 +102,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'clinic_not_found_for_number' }, { status: 404 })
   }
 
+  // ── SOMEBODY IS BEING ANSWERED ─────────────────────────────────────────
+  // Written down against the call the network knows, so that when Twilio
+  // reports the end of it we can tell a conversation from a caller who hung
+  // up while it rang. Best effort and never in the way: a call must not fail
+  // because a note could not be written. See 0077.
+  if (typeof body.call_sid === 'string' && body.call_sid.startsWith('CA')) {
+    void markAnswered(body.call_sid, clinicId)
+  }
+
   const context = await getClinicWithPlan(clinicId)
   if (!context) return NextResponse.json({ error: 'clinic_not_found' }, { status: 404 })
 
@@ -370,6 +379,25 @@ async function clinicByCallSid(callSid: unknown): Promise<string | null> {
     return ((data as { clinic_id: string } | null)?.clinic_id) ?? null
   } catch {
     return null
+  }
+}
+
+/**
+ * "This one is being answered", against the call id the network issued.
+ *
+ * Upserted rather than updated: a direct call to a Telma line has no note from
+ * the first hop, because nothing was forwarded, and it still needs the mark.
+ */
+async function markAnswered(callSid: string, clinicId: string): Promise<void> {
+  try {
+    await createAdminClient()
+      .from('call_routes')
+      .upsert(
+        { call_sid: callSid, clinic_id: clinicId, answered_at: new Date().toISOString() },
+        { onConflict: 'call_sid' }
+      )
+  } catch (e) {
+    console.error('[init] could not mark the call answered:', e instanceof Error ? e.message : e)
   }
 }
 

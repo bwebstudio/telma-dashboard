@@ -24,6 +24,9 @@ export const CALL_TONE: Record<CallResult, Tone> = {
   transferida: 'info',
   informacao: 'neutral',
   nao_resolvida: 'danger',
+  // Amber and not red: nothing went wrong, somebody rang off while it was
+  // ringing, and the only thing that follows is a call back.
+  nao_atendida: 'warn',
 }
 
 const toneClass: Record<Tone, string> = {

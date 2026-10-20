@@ -152,7 +152,11 @@ export default async function AgendaPage({
 
   const t = dict.agenda
   const counts = {
-    calls: calls.filter((c) => c.channel === 'telefone').length,
+    // Answered, which is what the label says. A call that ended while it rang
+    // belongs in the figure beside it, not in this one: counting it here
+    // would make "chamadas atendidas" the number of calls that arrived.
+    calls: calls.filter((c) => c.channel === 'telefone' && c.result !== 'nao_atendida').length,
+    missed: calls.filter((c) => c.result === 'nao_atendida').length,
     whatsapp: calls.filter((c) => c.channel === 'whatsapp').length,
     bookings: calls.filter((c) => c.result === 'marcacao').length,
     info: calls.filter((c) => c.result === 'informacao').length,

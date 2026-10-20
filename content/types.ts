@@ -71,7 +71,10 @@ export interface Dictionary {
       string
     >
     clinic: Record<'ativa' | 'por_configurar' | 'pausada' | 'cancelada', string>
-    call: Record<'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida', string>
+    call: Record<
+      'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida' | 'nao_atendida',
+      string
+    >
     origin: Record<'telefone' | 'whatsapp', string>
     channel: Record<'telefone' | 'whatsapp', string>
   }
@@ -341,6 +344,8 @@ export interface Dictionary {
     closedDay: string
     doneTitle: string
     doneCalls: string
+    /** Only drawn when it happened: calls that ended while it rang. */
+    doneMissed: string
     doneWhatsapp: string
     doneBookings: string
     doneCancelled: string

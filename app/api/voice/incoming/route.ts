@@ -129,6 +129,13 @@ export async function POST(request: Request) {
             `[incoming] ${gone ? 'a forward outlived its clinic' : 'a forward is on while paused'}:`,
             forwardedFrom
           )
+          // Refused on purpose, and said so on the note: when Twilio reports
+          // the end of this call, nobody should count it as one the clinic
+          // missed. There was never a call for them to miss. See 0077.
+          await admin
+            .from('call_routes')
+            .update({ rejected_at: new Date().toISOString() })
+            .eq('call_sid', callSid)
           return busy()
         }
       } else {

@@ -99,15 +99,21 @@ export function PatientActivity({
             ? 'ok'
             : 'neutral') as ActivityItem['tone'],
     })),
-    ...calls.map((c) => ({
-      id: `c-${c.id}`,
-      at: c.created_at,
-      kind: 'chamada' as const,
-      title: t.activityCall,
-      detail: c.summary,
-      href: `/conversas?c=${c.id}`,
-      tone: 'neutral' as const,
-    })),
+    ...calls.map((c) => {
+      // A call nobody answered says so on the line, because on a record it is
+      // the one entry that is also a thing to do.
+      const missed = c.result === 'nao_atendida'
+      return {
+        id: `c-${c.id}`,
+        at: c.created_at,
+        kind: 'chamada' as const,
+        title: missed ? dict.status.call.nao_atendida : t.activityCall,
+        detail: c.summary,
+        // Nothing was said, so there is no conversation to open.
+        href: missed ? undefined : `/conversas?c=${c.id}`,
+        tone: (missed ? 'warn' : 'neutral') as ActivityItem['tone'],
+      }
+    }),
     ...appointments.map((a) => ({
       id: `a-${a.id}`,
       at: a.created_at,

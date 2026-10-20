@@ -39,7 +39,14 @@ export function holdsAnHour(status: AppointmentStatus): boolean {
 }
 
 export type AppointmentOrigin = 'telefone' | 'whatsapp'
-export type CallResult = 'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida'
+export type CallResult =
+  | 'marcacao'
+  | 'transferida'
+  | 'informacao'
+  | 'nao_resolvida'
+  /** Nobody spoke to them: they hung up while it was still ringing. Written
+   *  by the Twilio status callback, never by a conversation. See 0077. */
+  | 'nao_atendida'
 export type ConversationChannel = 'telefone' | 'whatsapp'
 
 /** One turn of a conversation: a spoken line, or a WhatsApp message. */

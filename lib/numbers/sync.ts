@@ -55,6 +55,24 @@ function countryOf(number: string): 'PT' | 'ES' | null {
   return null
 }
 
+/**
+ * Where Twilio reports the end of a call, with the secret that lets it in.
+ *
+ * Built from the voice webhook rather than from a variable of its own: the two
+ * are the same deployment by definition, and one address that can drift from
+ * the other is one address that will.
+ */
+function callStatusUrl(): string | null {
+  const voice = process.env.TWILIO_VOICE_WEBHOOK_URL?.trim()
+  const token = process.env.TELMA_WEBHOOK_TOKEN?.trim()
+  if (!voice || !token) return null
+  try {
+    return `${new URL(voice).origin}/api/webhook/call-status?t=${encodeURIComponent(token)}`
+  } catch {
+    return null
+  }
+}
+
 export async function syncTwilioNumbers(): Promise<SyncReport> {
   const empty: SyncReport = { seen: 0, shelved: [], skipped: [], assigned: [], stillWaiting: 0 }
 
@@ -80,11 +98,42 @@ export async function syncTwilioNumbers(): Promise<SyncReport> {
   if (!res.ok) return { ...empty, error: `twilio_${res.status}` }
 
   const body = (await res.json().catch(() => ({}))) as {
-    incoming_phone_numbers?: Array<{ sid?: string; phone_number?: string; voice_url?: string }>
+    incoming_phone_numbers?: Array<{
+      sid?: string
+      phone_number?: string
+      voice_url?: string
+      status_callback?: string
+    }>
   }
   const lines = body.incoming_phone_numbers ?? []
   const known = await knownNumbers()
   const report: SyncReport = { ...empty, seen: lines.length }
+
+  // ── EVERY LINE WE OWN REPORTS THE END OF ITS CALLS ──────────────────────
+  // Before anything else, and for the numbers already in use as much as for
+  // the new ones: this is what makes a call nobody answered exist at all.
+  // Twilio only tells us if the number is configured to tell us, and a number
+  // bought last August was configured before there was anywhere to tell.
+  // Done here because this already runs every hour and already holds the
+  // credentials; a setting that heals itself beats a setting somebody has to
+  // remember. See 0077 and app/api/webhook/call-status.
+  const statusHook = callStatusUrl()
+  if (statusHook) {
+    for (const line of lines) {
+      if (!line.sid || line.status_callback === statusHook) continue
+      await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${account}/IncomingPhoneNumbers/${line.sid}.json`,
+        {
+          method: 'POST',
+          headers: { Authorization: auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            StatusCallback: statusHook,
+            StatusCallbackMethod: 'POST',
+          }),
+        }
+      ).catch(() => null)
+    }
+  }
 
   for (const line of lines) {
     const number = (line.phone_number ?? '').replace(/\s/g, '')

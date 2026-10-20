@@ -169,6 +169,15 @@ export function IconPhone({ className }: P) {
     </svg>
   )
 }
+/** A handset with the line cut across it: the call that did not happen. */
+export function IconPhoneMissed({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6.6 10.8a11 11 0 0 0 4.6 4.6l1.6-1.6a1 1 0 0 1 1-.25 8 8 0 0 0 2.5.4 1 1 0 0 1 1 1v2.55a1 1 0 0 1-1 1A14 14 0 0 1 4 5a1 1 0 0 1 1-1h2.55a1 1 0 0 1 1 1 8 8 0 0 0 .4 2.5 1 1 0 0 1-.25 1z" />
+      <path d="M15 4l5 5M20 4l-5 5" />
+    </svg>
+  )
+}
 export function IconWhatsApp({ className }: P) {
   return (
     <svg {...base} className={className}>

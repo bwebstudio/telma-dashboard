@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState }  from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment, Call, PatientNote } from '@/lib/types'
 import { formatDateTime, formatWeekdayDate, formatTime } from '@/lib/format'
@@ -105,6 +106,17 @@ export function PatientActivity({
     })),
   ].sort((a, b) => +new Date(b.at) - +new Date(a.at))
 
+  // ── A RECORD GETS LONG, AND THE RECENT PART IS THE PART BEING READ ──────
+  // Every call, every attempt, every booking and every opening and closing
+  // lands here, so a patient of two years is a page nobody scrolls. The
+  // newest handful is what somebody with the person on the telephone needs,
+  // and the rest is one press away rather than gone: the whole point of
+  // writing the closings down is being able to go back and read them.
+  const FOLD_AT = 6
+  const [expanded, setExpanded] = useState(false)
+  const hidden = Math.max(0, items.length - FOLD_AT)
+  const shown = expanded ? items : items.slice(0, FOLD_AT)
+
   if (!items.length) {
     return (
       <section>
@@ -120,7 +132,7 @@ export function PatientActivity({
       {/* A rule down the left, which is what makes a list of dates read as one
           thread rather than as a stack of cards. */}
       <ol className="flex flex-col border-l border-line pl-4">
-        {items.map((item) => (
+        {shown.map((item) => (
           <li key={item.id} className="relative py-3 last:pb-0">
             <span
               aria-hidden
@@ -146,7 +158,10 @@ export function PatientActivity({
                 </Link>
               )}
             </div>
-            {item.body && (
+            {/* A dash is what an entry with nothing to say carries, so that
+                the row passes the table's own check. It is not something to
+                print under the date. */}
+            {item.body && item.body !== '—' && (
               <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-ink">
                 {item.body}
               </p>
@@ -154,6 +169,14 @@ export function PatientActivity({
           </li>
         ))}
       </ol>
+      {hidden > 0 && (
+        <button
+          className="btn-ghost mt-3 min-h-0 px-4 py-2 text-sm"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? t.activityLess : t.activityMore.replace('{n}', String(hidden))}
+        </button>
+      )}
     </section>
   )
 }

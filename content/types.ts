@@ -455,6 +455,9 @@ export interface Dictionary {
     activityOpened: string
     activityClosed: string
     activityCall: string
+    /** The fold on a long record. Takes {n}. */
+    activityMore: string
+    activityLess: string
     followQueueTitle: string
     followTitle: string
     followOpen: string

@@ -95,6 +95,21 @@ export async function setFollowUp(patientId: string, open: boolean, reason = '')
   const cid = await writableClinicId()
   const supabase = await createClient()
   const why = reason.trim().slice(0, 300)
+
+  // What is being closed, read before it is cleared. "Seguimento fechado" on
+  // its own is a line that says something ended without saying what: the
+  // reason is the only thing that makes the entry worth having been written.
+  let closing = ''
+  if (!open) {
+    const { data } = await supabase
+      .from('patients')
+      .select('follow_up_reason')
+      .eq('id', patientId)
+      .eq('clinic_id', cid)
+      .maybeSingle()
+    closing = ((data as { follow_up_reason?: string | null } | null)?.follow_up_reason ?? '').trim()
+  }
+
   const { error } = await supabase
     .from('patients')
     .update(
@@ -110,12 +125,18 @@ export async function setFollowUp(patientId: string, open: boolean, reason = '')
   // The column says what is open now. It cannot say that one was opened in
   // March and closed in April, which is exactly what somebody reading the
   // record next month needs to see. See 0073.
-  await supabase.from('patient_notes').insert({
+  //
+  // The error is checked like any other. It was not, and row level security
+  // was refusing this insert on every live clinic (see 0075): closing a
+  // follow-up quietly wrote nothing, which is the one thing this entry exists
+  // to prevent. A write that fails has to say so.
+  const { error: logError } = await supabase.from('patient_notes').insert({
     clinic_id: cid,
     patient_id: patientId,
     kind: open ? 'abertura' : 'fecho',
-    body: (open ? why : '') || '—',
+    body: (open ? why : closing) || '—',
   })
+  if (logError) throw new Error(logError.message)
 
   refresh(patientId)
 }

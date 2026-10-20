@@ -442,6 +442,8 @@ export const es: Dictionary = {
     activityOpened: 'Seguimiento abierto',
     activityClosed: 'Seguimiento cerrado',
     activityCall: 'Llamó',
+    activityMore: 'Ver las {n} entradas anteriores',
+    activityLess: 'Ver solo las recientes',
     followQueueTitle: 'Pendientes de nosotros ({n})',
     followTitle: 'Seguimiento',
     followOpen: 'Abierto desde el {date}',

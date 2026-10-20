@@ -442,6 +442,8 @@ export const en: Dictionary = {
     activityOpened: 'Follow-up opened',
     activityClosed: 'Follow-up closed',
     activityCall: 'Rang',
+    activityMore: 'Show the {n} earlier entries',
+    activityLess: 'Show only the recent ones',
     followQueueTitle: 'Waiting on us ({n})',
     followTitle: 'Follow-up',
     followOpen: 'Open since {date}',

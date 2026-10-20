@@ -518,15 +518,31 @@ function Notes({
 
           {adding && (
             <div className="mt-3">
-              {/* ── THE ANSWER FIRST, THE WORDS AFTER ───────────────────────
-                  A textarea at the top of this made logging a call look like
-                  writing a report, so the quickest thing in the panel read as
-                  the slowest. The two buttons are the whole action; the note
-                  is there for the times there is something to say. */}
+              {/* ── WRITE IT, THEN FILE IT ──────────────────────────────────
+                  The buttons used to sit above the box, so that logging a
+                  call was one press and the words were optional afterwards.
+                  Read on a note, where the words are the whole point, that
+                  put Guardar above the thing it saves: people typed, looked
+                  down for the button, and found a disclaimer. The box comes
+                  first now and the action closes it, which is the order of
+                  every form anybody has ever filled in.
+
+                  The hint still goes on top on an attempt, because what it
+                  says is that the text is optional, and that has to be read
+                  before the box rather than after it. */}
               {adding === 'contacto' && (
                 <p className="mb-2 text-sm text-ink-mute">{t.attemptHint}</p>
               )}
-              <div className="mb-2 flex flex-wrap gap-2">
+              <textarea
+                rows={3}
+                autoFocus
+                value={draft}
+                placeholder={adding === 'contacto' ? t.attemptPlaceholder : t.notePlaceholder}
+                onChange={(e) => setDraft(e.target.value)}
+                className="field-input py-2.5"
+                aria-label={adding === 'contacto' ? t.logAttempt : t.noteAdd}
+              />
+              <div className="mt-2 flex flex-wrap gap-2">
                 {adding === 'contacto' ? (
                   <>
                     {/* Two buttons and not a tick: "did they answer" has two
@@ -573,15 +589,17 @@ function Notes({
                     {dict.common.save}
                   </button>
                 )}
+                <button
+                  className="btn-ghost min-h-0 px-4 py-2 text-sm"
+                  disabled={pending}
+                  onClick={() => {
+                    setAdding(null)
+                    setDraft('')
+                  }}
+                >
+                  {dict.common.cancel}
+                </button>
               </div>
-              <textarea
-                rows={3}
-                value={draft}
-                placeholder={adding === 'contacto' ? t.attemptPlaceholder : t.notePlaceholder}
-                onChange={(e) => setDraft(e.target.value)}
-                className="field-input py-2.5"
-                aria-label={adding === 'contacto' ? t.logAttempt : t.noteAdd}
-              />
             </div>
           )}
         </div>

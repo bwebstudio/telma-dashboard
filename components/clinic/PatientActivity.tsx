@@ -5,7 +5,7 @@ import { useState }  from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Appointment, Call, PatientNote } from '@/lib/types'
 import { formatDateTime, formatWeekdayDate, formatTime } from '@/lib/format'
-import { Badge, SectionTitle } from '@/components/ui'
+import { SectionTitle, APPOINTMENT_TONE } from '@/components/ui'
 
 /**
  * One story instead of four boxes.
@@ -32,15 +32,28 @@ import { Badge, SectionTitle } from '@/components/ui'
  * would mean inventing one. When accounts per person exist, the name goes
  * here and nothing else changes.
  */
+/**
+ * ── WHAT HAPPENED, THEN THE PARTICULARS, THEN WHEN ────────────────────────
+ * An entry used to lead with its timestamp and carry what it was in a badge
+ * beside it, so the eye met "04/08/2026, 17:12" before it met "Rejeitada",
+ * and the thing refused was nowhere: a booking said only the hour it had been
+ * for. Read down a column of them, the dates were the only thing the entries
+ * had in common and the only thing they did not need repeating.
+ *
+ * So each entry says what it is, then what it was about, then when. The date
+ * is still there, last and quiet, because "which Tuesday" is a question
+ * somebody asks of one entry and never of all of them.
+ */
 export interface ActivityItem {
   id: string
   at: string
   kind: 'nota' | 'contacto' | 'abertura' | 'fecho' | 'chamada' | 'marcacao'
-  reached?: boolean | null
-  body?: string | null
+  /** What happened, in a few words: "Marcação rejeitada", "Não atendeu". */
+  title: string
+  /** The particulars: the note itself, the service and the hour, a summary. */
+  detail?: string | null
   href?: string
   tone?: 'ok' | 'warn' | 'danger' | 'neutral' | 'pending'
-  tag?: string
 }
 
 export function PatientActivity({
@@ -63,9 +76,10 @@ export function PatientActivity({
       id: `n-${n.id}`,
       at: n.created_at,
       kind: n.kind,
-      reached: n.reached,
-      body: n.body === '—' ? null : n.body,
-      tag:
+      // '—' is what an entry with nothing to say carries, so that the row
+      // passes the table's own check. It is not something to print.
+      detail: n.body === '—' ? null : n.body,
+      title:
         n.kind === 'contacto'
           ? n.reached
             ? t.attemptReachedTag
@@ -89,20 +103,27 @@ export function PatientActivity({
       id: `c-${c.id}`,
       at: c.created_at,
       kind: 'chamada' as const,
-      body: c.summary,
+      title: t.activityCall,
+      detail: c.summary,
       href: `/conversas?c=${c.id}`,
-      tag: t.activityCall,
       tone: 'neutral' as const,
     })),
     ...appointments.map((a) => ({
       id: `a-${a.id}`,
       at: a.created_at,
       kind: 'marcacao' as const,
-      // The hour agreed, which is the fact worth reading here. What became of
-      // it is the badge.
-      body: `${formatWeekdayDate(a.scheduled_at, locale)}, ${formatTime(a.scheduled_at, locale)}`,
-      tag: dict.status.appointment[a.status],
-      tone: 'neutral' as const,
+      // "Marcação rejeitada", not "Rejeitada" under a date: what was refused
+      // has to be in the line, and so does what it was for. The reason is the
+      // treatment the person asked for, and it goes first because that is how
+      // anybody at the desk remembers a booking: the implant on the 7th.
+      title: `${t.activityBooking} ${dict.status.appointment[a.status].toLocaleLowerCase(locale)}`,
+      detail: [
+        a.reason,
+        `${formatWeekdayDate(a.scheduled_at, locale)}, ${formatTime(a.scheduled_at, locale)}`,
+      ]
+        .filter(Boolean)
+        .join(' \u00b7 '),
+      tone: APPOINTMENT_TONE[a.status] as ActivityItem['tone'],
     })),
   ].sort((a, b) => +new Date(b.at) - +new Date(a.at))
 
@@ -134,38 +155,36 @@ export function PatientActivity({
       <ol className="flex flex-col border-l border-line pl-4">
         {shown.map((item) => (
           <li key={item.id} className="relative py-3 last:pb-0">
+            {/* The dot carries the colour, so the line itself can be read as
+                a sentence instead of as a label. */}
             <span
               aria-hidden
-              className={`absolute -left-[1.3rem] top-[1.1rem] h-2 w-2 rounded-full ${
+              className={`absolute -left-[1.3rem] top-[1.05rem] h-2 w-2 rounded-full ${
                 item.tone === 'ok'
                   ? 'bg-ok'
-                  : item.tone === 'warn'
+                  : item.tone === 'warn' || item.tone === 'pending'
                     ? 'bg-warn'
-                    : 'bg-line-strong'
+                    : item.tone === 'danger'
+                      ? 'bg-danger'
+                      : 'bg-line-strong'
               }`}
             />
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <time dateTime={item.at} className="text-sm tabular-nums text-ink-mute">
+            <p className="font-medium text-ink">{item.title}</p>
+            {item.detail && (
+              <p className="mt-0.5 whitespace-pre-wrap text-base leading-relaxed text-ink-soft">
+                {item.detail}
+              </p>
+            )}
+            <p className="mt-0.5 flex flex-wrap items-baseline gap-x-3 text-sm text-ink-mute">
+              <time dateTime={item.at} className="tabular-nums">
                 {formatDateTime(item.at, locale)}
               </time>
-              {item.tag && <Badge tone={item.tone ?? 'neutral'}>{item.tag}</Badge>}
               {item.href && (
-                <Link
-                  href={item.href}
-                  className="text-sm text-brand-accent hover:text-brand-hover"
-                >
+                <Link href={item.href} className="text-brand-accent hover:text-brand-hover">
                   {dict.agenda.openConversation}
                 </Link>
               )}
-            </div>
-            {/* A dash is what an entry with nothing to say carries, so that
-                the row passes the table's own check. It is not something to
-                print under the date. */}
-            {item.body && item.body !== '—' && (
-              <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-ink">
-                {item.body}
-              </p>
-            )}
+            </p>
           </li>
         ))}
       </ol>

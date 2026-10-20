@@ -102,7 +102,7 @@ export function PatientRecord({
   const visits = appointments.length
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-14">
       <header>
         <h1 className="text-3xl font-semibold text-ink">{patient.name}</h1>
         <p className="mt-1 flex flex-wrap items-center gap-3">
@@ -173,124 +173,148 @@ export function PatientRecord({
         </section>
       )}
 
-      <Notes
-        patient={patient}
-        notes={notes}
-        t={t}
-        dict={dict}
-        locale={locale}
-        run={run}
-        pending={pending}
-        readOnly={readOnly}
-      />
+      {/* ── THREE GROUPS, SAID WITH SPACE AND NOT WITH HEADINGS ──────────
+          Seven sections in one column, evenly spaced, are seven things of
+          equal weight, and somebody opening a record for the first time has
+          to work out what any of them has to do with the others. They fall
+          into three:
 
-      {/* ── THE STORY, BEFORE THE DRAWERS ────────────────────────────────
-          What has been going on with this person, in order, above everything
-          that is a setting or a form. The detailed lists stay below: a call
-          has a summary worth opening and a booking has an hour worth reading,
-          and this says that they happened and when. */}
-      <PatientActivity
-        notes={notes}
-        calls={calls}
-        appointments={appointments}
-        dict={dict}
-        locale={locale}
-      />
+            what is being worked on     the follow-up, what is due, the story
+            what was said               the messages this person gets, calls
+            what is on file             the bookings, the tax number
 
-      <Consent patient={patient} t={t} locale={locale} run={run} pending={pending} readOnly={readOnly} />
+          The grouping is the spacing. Headings over the top would be three
+          more words to read on a screen that already has enough. */}
+      <div className="flex flex-col gap-8">
+        <Notes
+          patient={patient}
+          notes={notes}
+          t={t}
+          dict={dict}
+          locale={locale}
+          run={run}
+          pending={pending}
+          readOnly={readOnly}
+        />
 
-      <Reminders
-        patient={patient}
-        recalls={recalls}
-        clinic={clinic}
-        t={t}
-        dict={dict}
-        locale={locale}
-        run={run}
-        pending={pending}
-        readOnly={readOnly}
-      />
+        {/* ── WHAT IS DUE, BESIDE WHAT IS PENDING ────────────────────────
+            It used to be four sections further down, under the messages. A
+            reminder to ring somebody tomorrow is the follow-up with a date
+            on it, and reading it four screens away from "nothing pending
+            with this person" is how both get forgotten. When there is
+            nothing scheduled it is one quiet line and a button. */}
+        <Reminders
+          patient={patient}
+          recalls={recalls}
+          clinic={clinic}
+          t={t}
+          dict={dict}
+          locale={locale}
+          run={run}
+          pending={pending}
+          readOnly={readOnly}
+        />
 
-      <section>
-        <SectionTitle>{t.calls}</SectionTitle>
-        {calls.length === 0 ? (
-          <p className="text-base text-ink-mute">{t.callsEmpty}</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {calls.map((c) => (
-              <li key={c.id} className="card p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* ── THE STORY, BEFORE THE DRAWERS ────────────────────────────────
+            What has been going on with this person, in order, above everything
+            that is a setting or a form. The detailed lists stay below: a call
+            has a summary worth opening and a booking has an hour worth reading,
+            and this says that they happened and when. */}
+        <PatientActivity
+          notes={notes}
+          calls={calls}
+          appointments={appointments}
+          dict={dict}
+          locale={locale}
+        />
+      </div>
+
+      <div className="flex flex-col gap-8">
+        <Consent patient={patient} t={t} locale={locale} run={run} pending={pending} readOnly={readOnly} />
+
+        <section>
+          <SectionTitle>{t.calls}</SectionTitle>
+          {calls.length === 0 ? (
+            <p className="text-base text-ink-mute">{t.callsEmpty}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {calls.map((c) => (
+                <li key={c.id} className="card p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span>
+                      <span className="block text-base text-ink">
+                        {formatDateTime(c.created_at, locale)}
+                      </span>
+                      <span className="block text-sm text-ink-mute">
+                        {dict.status.channel[c.channel]}
+                        {c.duration_seconds > 0 &&
+                          ` \u00b7 ${formatDuration(c.duration_seconds, locale)}`}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-3">
+                      {c.result && (
+                        <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>
+                      )}
+                      <Link
+                        href={`/conversas?c=${c.id}`}
+                        className="text-sm text-brand-accent hover:text-brand-hover"
+                      >
+                        {dict.agenda.openConversation}
+                      </Link>
+                    </span>
+                  </div>
+                  {/* Cleared at ninety days with the number, so an old call is a
+                      date and a duration and nothing else. */}
+                  {c.summary && (
+                    <p className="mt-2 text-base leading-relaxed text-ink-soft">{c.summary}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {/* Why this list is shorter than the person's history. A record that
+              quietly loses its oldest calls is one somebody will accuse of having
+              lost them. */}
+          <p className="mt-3 text-sm text-ink-mute">{t.callsGone}</p>
+        </section>
+      </div>
+
+      <div className="flex flex-col gap-8">
+        <section>
+          <SectionTitle>{t.history}</SectionTitle>
+          {appointments.length === 0 ? (
+            <p className="text-base text-ink-mute">{t.historyEmpty}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {appointments.map((a) => (
+                <li key={a.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
                   <span>
                     <span className="block text-base text-ink">
-                      {formatDateTime(c.created_at, locale)}
+                      {formatWeekdayDate(a.scheduled_at, locale)}, {formatTime(a.scheduled_at, locale)}
                     </span>
-                    <span className="block text-sm text-ink-mute">
-                      {dict.status.channel[c.channel]}
-                      {c.duration_seconds > 0 &&
-                        ` \u00b7 ${formatDuration(c.duration_seconds, locale)}`}
-                    </span>
+                    {/* Cleared at ninety days, and then this says nothing, which
+                        is what it is meant to say. */}
+                    {a.reason && <span className="block text-sm text-ink-soft">{a.reason}</span>}
                   </span>
-                  <span className="flex items-center gap-3">
-                    {c.result && (
-                      <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>
-                    )}
-                    <Link
-                      href={`/conversas?c=${c.id}`}
-                      className="text-sm text-brand-accent hover:text-brand-hover"
-                    >
-                      {dict.agenda.openConversation}
-                    </Link>
-                  </span>
-                </div>
-                {/* Cleared at ninety days with the number, so an old call is a
-                    date and a duration and nothing else. */}
-                {c.summary && (
-                  <p className="mt-2 text-base leading-relaxed text-ink-soft">{c.summary}</p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        {/* Why this list is shorter than the person's history. A record that
-            quietly loses its oldest calls is one somebody will accuse of having
-            lost them. */}
-        <p className="mt-3 text-sm text-ink-mute">{t.callsGone}</p>
-      </section>
+                  <Badge tone={APPOINTMENT_TONE[a.status]}>{dict.status.appointment[a.status]}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-      <section>
-        <SectionTitle>{t.history}</SectionTitle>
-        {appointments.length === 0 ? (
-          <p className="text-base text-ink-mute">{t.historyEmpty}</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {appointments.map((a) => (
-              <li key={a.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
-                <span>
-                  <span className="block text-base text-ink">
-                    {formatWeekdayDate(a.scheduled_at, locale)}, {formatTime(a.scheduled_at, locale)}
-                  </span>
-                  {/* Cleared at ninety days, and then this says nothing, which
-                      is what it is meant to say. */}
-                  {a.reason && <span className="block text-sm text-ink-soft">{a.reason}</span>}
-                </span>
-                <Badge tone={APPOINTMENT_TONE[a.status]}>{dict.status.appointment[a.status]}</Badge>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        {/* Administrative, and it was sitting between the follow-up and the
+            messages as though it were part of the story. It is not: nobody
+            opens a record to read a tax number. */}
+        <TaxId patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
 
-      {/* Administrative, and it was sitting between the follow-up and the
-          messages as though it were part of the story. It is not: nobody
-          opens a record to read a tax number. */}
-      <TaxId patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
-
-      {/* ── BORRAR, AL FINAL Y SIN ADORNO ────────────────────────────────────
-          Abajo del todo porque nadie viene a esta pantalla a borrar, y sin
-          tarjeta ni color de alerta porque un botón que grita se acaba pulsando
-          por costumbre. Lo que hace falta no es un susto, es saber qué se va y
-          qué se queda, y que esto no es el derecho al olvido. */}
-      {!readOnly && <DeleteRecord patient={patient} t={t} dict={dict} />}
+        {/* ── BORRAR, AL FINAL Y SIN ADORNO ────────────────────────────────────
+            Abajo del todo porque nadie viene a esta pantalla a borrar, y sin
+            tarjeta ni color de alerta porque un botón que grita se acaba pulsando
+            por costumbre. Lo que hace falta no es un susto, es saber qué se va y
+            qué se queda, y que esto no es el derecho al olvido. */}
+        {!readOnly && <DeleteRecord patient={patient} t={t} dict={dict} />}
+      </div>
     </div>
   )
 }
@@ -386,18 +410,25 @@ function Notes({
 }) {
   const [draft, setDraft] = useState('')
   const [reason, setReason] = useState('')
-  const [opening, setOpening] = useState(false)
-  const [adding, setAdding] = useState<'nota' | 'contacto' | null>(null)
+  // One form at a time, named by the button that opens it. Nothing is open
+  // when the record is opened: a box standing ready is a question nobody
+  // asked, and three of them at once is three half written things.
+  const [panel, setPanel] = useState<'seguimento' | 'contacto' | 'nota' | null>(null)
   const open = Boolean(patient.follow_up_since)
   const attempts = notes.filter((n) => n.kind === 'contacto').length
+
+  const close = () => {
+    setPanel(null)
+    setDraft('')
+    setReason('')
+  }
 
   // The reason is optional, so Enter on an empty field opens the follow-up
   // just as the button does; there is nothing to validate.
   const openFollowUp = () =>
     run(async () => {
       await setFollowUp(patient.id, true, reason)
-      setReason('')
-      setOpening(false)
+      close()
     })
 
   return (
@@ -408,13 +439,7 @@ function Notes({
           Two states, and they must not look alike. Open is a box that says
           so, with the day and the reason. Nothing pending is one quiet line:
           the answer is "no", and "no" does not need a card. */}
-      <div
-        className={
-          open
-            ? 'rounded-card border border-warn/40 bg-warn-soft p-4'
-            : 'flex flex-wrap items-center justify-between gap-x-4 gap-y-2'
-        }
-      >
+      <div className={open ? 'rounded-card border border-warn/40 bg-warn-soft p-4' : ''}>
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-ink">
           <span
             aria-hidden
@@ -429,13 +454,29 @@ function Notes({
         )}
         {attempts > 0 && (
           <p className="mt-1 text-sm text-ink-mute">
-            {fill(t.followAttempts, { n: attempts })}
+            {attempts === 1 ? t.followAttemptsOne : fill(t.followAttempts, { n: attempts })}
           </p>
         )}
+      </div>
 
-        {!readOnly &&
-          (open ? (
-            <div className="mt-3 flex flex-wrap gap-2">
+      {/* ── THE THREE THINGS SOMEBODY CAN DO HERE, IN ONE ROW ────────────
+          "Abrir seguimento" used to sit alone at the far right of the state
+          line, a button attached to nothing with a hand's width of white
+          space around it, while the other two sat in a row underneath. They
+          are three answers to the same question -- what do I do about this
+          person now -- and they read as three only when they are side by
+          side:
+
+            open a follow-up      there is something to resolve
+            log an attempt        I have tried or spoken to them
+            add a note            I want to leave some context
+
+          Whichever is pressed opens its own form underneath, and only one at
+          a time: two open boxes is two things half written. */}
+      {!readOnly && (
+        <>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {open ? (
               <button
                 className="btn-secondary min-h-0 px-4 py-2 text-sm"
                 disabled={pending}
@@ -443,22 +484,35 @@ function Notes({
               >
                 {t.followDone}
               </button>
-            </div>
-          ) : /* ── ONE BUTTON UNTIL SOMEBODY PRESSES IT ──────────────────────
-                 The reason used to sit in this row next to the quiet line, and
-                 a justified row left it the width of a postage stamp: neither
-                 the example nor what was being typed could be read. So the row
-                 carries the button alone, and the field arrives underneath on a
-                 line of its own, as wide as the card. */
-          !opening ? (
+            ) : (
+              <button
+                className="btn-secondary min-h-0 px-4 py-2 text-sm"
+                disabled={pending}
+                onClick={() => setPanel(panel === 'seguimento' ? null : 'seguimento')}
+              >
+                {t.followOpenAction}
+              </button>
+            )}
             <button
-              className="btn-secondary min-h-0 shrink-0 px-4 py-2 text-sm"
+              className="btn-secondary min-h-0 px-4 py-2 text-sm"
               disabled={pending}
-              onClick={() => setOpening(true)}
+              onClick={() => setPanel(panel === 'contacto' ? null : 'contacto')}
             >
-              {t.followOpenAction}
+              {t.logAttempt}
             </button>
-          ) : (
+            <button
+              className="btn-ghost min-h-0 px-4 py-2 text-sm"
+              disabled={pending}
+              onClick={() => setPanel(panel === 'nota' ? null : 'nota')}
+            >
+              {t.noteAdd}
+            </button>
+          </div>
+
+          {/* Why, in a field as wide as the card. Nothing is shown here until
+              the button above is pressed: an input standing open on a record
+              with nothing pending is a question nobody asked. */}
+          {panel === 'seguimento' && (
             <div className="mt-3 flex w-full flex-wrap items-center gap-2">
               <input
                 autoFocus
@@ -466,57 +520,30 @@ function Notes({
                 onChange={(e) => setReason(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !pending) openFollowUp()
-                  if (e.key === 'Escape') {
-                    setOpening(false)
-                    setReason('')
-                  }
+                  if (e.key === 'Escape') close()
                 }}
                 placeholder={t.followReasonPlaceholder}
                 aria-label={t.followOpenAction}
                 className="field-input min-w-0 flex-1 basis-72 py-2"
               />
               <button
-                className="btn-secondary min-h-0 shrink-0 px-4 py-2 text-sm"
+                className="btn-primary min-h-0 shrink-0 px-4 py-2 text-sm"
                 disabled={pending}
                 onClick={() => openFollowUp()}
               >
                 {t.followOpenAction}
               </button>
               <button
-                className="shrink-0 rounded-input px-3 py-2 text-sm text-ink-mute hover:text-ink"
+                className="btn-ghost min-h-0 shrink-0 px-4 py-2 text-sm"
                 disabled={pending}
-                onClick={() => {
-                  setOpening(false)
-                  setReason('')
-                }}
+                onClick={close}
               >
                 {dict.common.cancel}
               </button>
             </div>
-          ))}
-      </div>
+          )}
 
-      {/* ── WHAT WAS DONE ─────────────────────────────────────────────── */}
-      {!readOnly && (
-        <div className="mt-5">
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="btn-secondary min-h-0 px-4 py-2 text-sm"
-              disabled={pending}
-              onClick={() => setAdding(adding === 'contacto' ? null : 'contacto')}
-            >
-              {t.logAttempt}
-            </button>
-            <button
-              className="btn-ghost min-h-0 px-4 py-2 text-sm"
-              disabled={pending}
-              onClick={() => setAdding(adding === 'nota' ? null : 'nota')}
-            >
-              {t.noteAdd}
-            </button>
-          </div>
-
-          {adding && (
+          {(panel === 'contacto' || panel === 'nota') && (
             <div className="mt-3">
               {/* ── WRITE IT, THEN FILE IT ──────────────────────────────────
                   The buttons used to sit above the box, so that logging a
@@ -524,26 +551,25 @@ function Notes({
                   Read on a note, where the words are the whole point, that
                   put Guardar above the thing it saves: people typed, looked
                   down for the button, and found a disclaimer. The box comes
-                  first now and the action closes it, which is the order of
-                  every form anybody has ever filled in.
+                  first now and the action closes it.
 
                   The hint still goes on top on an attempt, because what it
                   says is that the text is optional, and that has to be read
                   before the box rather than after it. */}
-              {adding === 'contacto' && (
+              {panel === 'contacto' && (
                 <p className="mb-2 text-sm text-ink-mute">{t.attemptHint}</p>
               )}
               <textarea
                 rows={3}
                 autoFocus
                 value={draft}
-                placeholder={adding === 'contacto' ? t.attemptPlaceholder : t.notePlaceholder}
+                placeholder={panel === 'contacto' ? t.attemptPlaceholder : t.notePlaceholder}
                 onChange={(e) => setDraft(e.target.value)}
                 className="field-input py-2.5"
-                aria-label={adding === 'contacto' ? t.logAttempt : t.noteAdd}
+                aria-label={panel === 'contacto' ? t.logAttempt : t.noteAdd}
               />
               <div className="mt-2 flex flex-wrap gap-2">
-                {adding === 'contacto' ? (
+                {panel === 'contacto' ? (
                   <>
                     {/* Two buttons and not a tick: "did they answer" has two
                         real answers and both are worth one press. */}
@@ -553,8 +579,7 @@ function Notes({
                       onClick={() =>
                         run(async () => {
                           await logContactAttempt(patient.id, true, draft)
-                          setDraft('')
-                          setAdding(null)
+                          close()
                         })
                       }
                     >
@@ -566,8 +591,7 @@ function Notes({
                       onClick={() =>
                         run(async () => {
                           await logContactAttempt(patient.id, false, draft)
-                          setDraft('')
-                          setAdding(null)
+                          close()
                         })
                       }
                     >
@@ -581,8 +605,7 @@ function Notes({
                     onClick={() =>
                       run(async () => {
                         await addPatientNote(patient.id, draft)
-                        setDraft('')
-                        setAdding(null)
+                        close()
                       })
                     }
                   >
@@ -592,17 +615,14 @@ function Notes({
                 <button
                   className="btn-ghost min-h-0 px-4 py-2 text-sm"
                   disabled={pending}
-                  onClick={() => {
-                    setAdding(null)
-                    setDraft('')
-                  }}
+                  onClick={close}
                 >
                   {dict.common.cancel}
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </>
       )}
 
       <p className="mt-4 max-w-prose text-sm text-ink-mute">{t.notesHint}</p>

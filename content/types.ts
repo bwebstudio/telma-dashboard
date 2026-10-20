@@ -455,6 +455,8 @@ export interface Dictionary {
     activityOpened: string
     activityClosed: string
     activityCall: string
+    /** Prefixes a booking's state: "Marcação" + "rejeitada". */
+    activityBooking: string
     /** The fold on a long record. Takes {n}. */
     activityMore: string
     activityLess: string
@@ -462,6 +464,9 @@ export interface Dictionary {
     followTitle: string
     followOpen: string
     followClosed: string
+    /** One of them, and more than one: "(s)" on a line a clinic reads every
+     *  day is a form, not a product. */
+    followAttemptsOne: string
     followAttempts: string
     followDone: string
     followOpenAction: string

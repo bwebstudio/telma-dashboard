@@ -841,6 +841,13 @@ function Reminders({
   const mayPromote = Boolean(patient.marketing_consent_at)
   const waiting = recalls.some((r) => r.state === 'agendado')
 
+  // ── AND WHEN THERE IS NOTHING TO SAY, NOTHING IS SAID ──────────────────
+  // Somebody who does not want reminders and has none waiting makes this a
+  // heading, a "nothing scheduled" and an explanation of why there is nothing
+  // to do here: three lines on a record to report an absence. The section
+  // only exists while it has something in it or something can be put in it.
+  const hide = optedOut && recalls.length === 0
+
   const today = new Date().toISOString().slice(0, 10)
   const preview = recallMessage(clinic, kind, body)
   const why = (code: string | null) =>
@@ -851,6 +858,8 @@ function Reminders({
         : code === 'sem_numero'
           ? t.whySemNumero
           : code
+
+  if (hide) return null
 
   return (
     <section>
@@ -909,6 +918,7 @@ function Reminders({
           {waiting ? t.addBlockedWaiting : t.addBlocked}
         </p>
       )}
+
 
       {!readOnly && !open && !optedOut && recalls.length > 0 && (
         <button className="btn-secondary mt-4" onClick={() => setOpen(true)}>

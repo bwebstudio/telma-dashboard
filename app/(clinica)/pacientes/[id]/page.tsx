@@ -64,12 +64,18 @@ export default async function PacientePage({ params }: { params: Promise<{ id: s
       .eq('patient_id', id)
       .order('due_on', { ascending: false })
       .limit(30),
+    // Matched on digits and not on the text of the number. A call that comes
+    // off the network carries +351912345678, and one rescued after the fact
+    // carries whatever the caller said out loud: "912 345 678" never found
+    // the needle "912345678", so a patient who had rung twice read as never
+    // having rung. `from_digits` is generated, so this holds whatever wrote
+    // the row. See 0070.
     allDigits.length
       ? supabase
           .from('calls')
           .select('*')
           .eq('clinic_id', clinicId)
-          .or(allDigits.map((d) => `from_phone.ilike.%${d}`).join(','))
+          .in('from_digits', allDigits)
           .order('created_at', { ascending: false })
           .limit(30)
       : Promise.resolve({ data: [] }),

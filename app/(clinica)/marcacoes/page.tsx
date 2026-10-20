@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
@@ -19,7 +20,13 @@ export default async function MarcacoesPage({
   const onlyPending = f === 'pending'
   const onlyCancelled = f === 'cancelled'
   const { locale, dict } = await getDict()
-  const { clinicId, readOnly } = await requireClinicContext()
+  const { clinicId, clinic, readOnly } = await requireClinicContext()
+
+  // Not offered in the menu while Telma only takes messages, and there would
+  // be nothing on it: she has never written in this diary. A bookmark
+  // outlives a setting, so the screen says so by going where the work is.
+  if (clinic?.takes_bookings === false) redirect('/conversas')
+
   const supabase = await createClient()
 
   // ── A QUEUE, NOT AN ARCHIVE ───────────────────────────────────────────────

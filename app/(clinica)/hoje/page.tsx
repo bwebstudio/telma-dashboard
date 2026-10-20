@@ -232,6 +232,12 @@ export default async function AgendaPage({
   // this lands until there is a day to show.
   if (awaitingSetup) redirect('/comecar')
 
+  // ── AND A CLINIC WITH NO DIARY HAS NO DAY TO SHOW ─────────────────────
+  // The menu does not offer this screen while Telma only takes messages, but
+  // this is also where the panel lands after signing in, and a bookmark
+  // outlives a setting. The conversations are the day for that clinic.
+  if (clinic?.takes_bookings === false) redirect('/conversas')
+
   return (
     <>
       <AgendaLive clinicId={clinicId} />

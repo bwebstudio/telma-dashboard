@@ -41,6 +41,16 @@ export default async function ClinicaLayout({
   // a clinic looks at it is one more thing to explain and one more way to put
   // an invented booking in a real diary. The route still exists.
   const awaitingSetup = clinic?.status === 'por_configurar'
+  // ── A MENU THAT SAYS WHAT TELMA DOES HERE ───────────────────────────────
+  // A clinic that chose "atende e toma recados" has no diary for Telma to
+  // write in, and two entries leading to two permanently empty screens are
+  // not a hint about what they could buy: they are two questions on every
+  // visit -- do I have to set this up, why is it empty, is she booking
+  // behind my back. The entries come back the moment the answer in Telma
+  // changes, which is where that choice belongs. Patients and conversations
+  // keep their order either way, so nothing moves under the hand of somebody
+  // who switches.
+  const books = clinic?.takes_bookings !== false
   const day = dict.clinicNav.groupDay
   const setup = dict.clinicNav.groupSetup
   const nav: NavItem[] = [
@@ -59,8 +69,12 @@ export default async function ClinicaLayout({
           },
         ]
       : []),
-    { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday />, group: day, tour: 'hoje' },
-    { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings />, group: day, tour: 'marcacoes' },
+    ...(books
+      ? [
+          { href: '/hoje', label: dict.clinicNav.hoje, icon: <IconToday />, group: day, tour: 'hoje' },
+          { href: '/marcacoes', label: dict.clinicNav.marcacoes, icon: <IconBookings />, group: day, tour: 'marcacoes' },
+        ]
+      : []),
     // Beside the bookings, not down with the settings. A record is looked at
     // while somebody is on the telephone, which is the same work as answering
     // them, and the reminders waiting to go out live on it.

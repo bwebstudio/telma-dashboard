@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FollowUpQueue } from '@/components/clinic/FollowUpQueue'
 import { createClient } from '@/lib/supabase/server'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { getDict } from '@/lib/i18n'
@@ -77,7 +78,7 @@ export default async function PacientesPage({
           : list.ilike('name', `%${term}%`)
   }
 
-  const [{ data, error }, { count: total }, { data: queue }] = await Promise.all([
+  const [{ data, error }, { count: total }, { data: queue }, { data: openFollowUps }] = await Promise.all([
     list,
     supabase
       .from('patients')
@@ -91,6 +92,17 @@ export default async function PacientesPage({
       .lte('due_on', horizon)
       .order('due_on', { ascending: true })
       .limit(40),
+    // ── WHO ARE WE STILL WAITING ON ──────────────────────────────────────
+    // Oldest first, because the one that has been open longest is the one
+    // somebody forgot. This is the question a receptionist has on a Monday,
+    // and it cannot be answered by opening fifteen records one at a time.
+    supabase
+      .from('patients')
+      .select('id, name, phone, follow_up_since, follow_up_reason')
+      .eq('clinic_id', clinicId)
+      .not('follow_up_since', 'is', null)
+      .order('follow_up_since', { ascending: true })
+      .limit(20),
   ])
 
   const patients = (data ?? []) as Patient[]
@@ -100,6 +112,18 @@ export default async function PacientesPage({
   return (
     <>
       <PageHeader eyebrow={dict.clinicNav.pacientes} title={t.title} subtitle={t.lead} />
+
+      <FollowUpQueue
+        rows={(openFollowUps ?? []) as Array<{
+          id: string
+          name: string
+          phone: string
+          follow_up_since: string
+          follow_up_reason: string | null
+        }>}
+        dict={dict}
+        locale={locale}
+      />
 
       <RecallQueue
         rows={rows.map((r) => ({

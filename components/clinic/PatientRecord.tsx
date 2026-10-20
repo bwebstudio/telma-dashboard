@@ -11,6 +11,8 @@ import { Badge, SectionTitle, APPOINTMENT_TONE, CALL_TONE } from '@/components/u
 import {
   addPatientNote,
   deletePatientNote,
+  logContactAttempt,
+  setFollowUp,
   savePatientTaxId,
   mergePatients,
   setReminders,
@@ -329,6 +331,23 @@ function DeleteRecord({
 type Copy = Dictionary['pacientes']
 type Run = (fn: () => Promise<void>) => void
 
+/**
+ * Following somebody up: what was done, when, and whether it is finished.
+ *
+ * ── WHY THIS IS NOT A NOTEPAD ─────────────────────────────────────────────
+ * The questions a clinic actually has about a person are "how many times did
+ * we ring", "did anybody answer", "is this still open" and "since when". A
+ * free text field answers none of them without somebody reading every line,
+ * so each entry says which kind it is, an attempt records whether the person
+ * was reached, and whether anything is pending lives on the record rather
+ * than being inferred from prose.
+ *
+ * ── THE STATE COMES FIRST, THE HISTORY AFTER ──────────────────────────────
+ * The one thing somebody opening this record on a Monday needs is whether
+ * they still owe this person something. That is a strip at the top, with the
+ * day it has been open since. The log is underneath, newest first, because it
+ * is read to answer a question the strip has already asked.
+ */
 function Notes({
   patient,
   notes,
@@ -349,40 +368,160 @@ function Notes({
   readOnly: boolean
 }) {
   const [draft, setDraft] = useState('')
+  const [reason, setReason] = useState('')
+  const [adding, setAdding] = useState<'nota' | 'contacto' | null>(null)
+  const open = Boolean(patient.follow_up_since)
+  const attempts = notes.filter((n) => n.kind === 'contacto').length
 
   return (
     <section>
-      <SectionTitle>{t.notes}</SectionTitle>
-      <p className="mb-3 text-sm text-ink-mute">{t.notesHint}</p>
+      <SectionTitle>{t.followTitle}</SectionTitle>
 
-      {/* ── WRITING COMES FIRST ────────────────────────────────────────────
-          A record with a year of notes on it would otherwise put the box at
-          the bottom, below everything already written, which is the one
-          place somebody with a patient on the telephone cannot find it. */}
-      {!readOnly && (
-        <div className="mb-4">
-          <textarea
-            rows={3}
-            value={draft}
-            placeholder={t.notePlaceholder}
-            onChange={(e) => setDraft(e.target.value)}
-            className="field-input py-2.5"
-            aria-label={t.noteAdd}
+      {/* ── IS ANYTHING STILL OPEN ────────────────────────────────────── */}
+      <div
+        className={`rounded-card border p-4 ${
+          open ? 'border-warn/40 bg-warn-soft' : 'border-line bg-surface'
+        }`}
+      >
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-ink">
+          <span
+            aria-hidden
+            className={`h-2.5 w-2.5 shrink-0 rounded-full ${open ? 'bg-warn' : 'bg-ok'}`}
           />
-          <button
-            className="btn-primary mt-2"
-            disabled={pending || !draft.trim()}
-            onClick={() =>
-              run(async () => {
-                await addPatientNote(patient.id, draft)
-                setDraft('')
-              })
-            }
-          >
-            {t.noteAdd}
-          </button>
+          {open
+            ? t.followOpen.replace('{date}', formatDate(patient.follow_up_since!, locale))
+            : t.followClosed}
+        </p>
+        {open && patient.follow_up_reason && (
+          <p className="mt-1 text-base text-ink-soft">{patient.follow_up_reason}</p>
+        )}
+        {attempts > 0 && (
+          <p className="mt-1 text-sm text-ink-mute">
+            {fill(t.followAttempts, { n: attempts })}
+          </p>
+        )}
+
+        {!readOnly && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {open ? (
+              <button
+                className="btn-secondary min-h-0 px-4 py-2 text-sm"
+                disabled={pending}
+                onClick={() => run(() => setFollowUp(patient.id, false))}
+              >
+                {t.followDone}
+              </button>
+            ) : (
+              <>
+                <input
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder={t.followReasonPlaceholder}
+                  aria-label={t.followOpenAction}
+                  className="field-input max-w-xs flex-1 py-2"
+                />
+                <button
+                  className="btn-secondary min-h-0 px-4 py-2 text-sm"
+                  disabled={pending}
+                  onClick={() =>
+                    run(async () => {
+                      await setFollowUp(patient.id, true, reason)
+                      setReason('')
+                    })
+                  }
+                >
+                  {t.followOpenAction}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── WHAT WAS DONE ─────────────────────────────────────────────── */}
+      {!readOnly && (
+        <div className="mt-5">
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="btn-secondary min-h-0 px-4 py-2 text-sm"
+              disabled={pending}
+              onClick={() => setAdding(adding === 'contacto' ? null : 'contacto')}
+            >
+              {t.logAttempt}
+            </button>
+            <button
+              className="btn-ghost min-h-0 px-4 py-2 text-sm"
+              disabled={pending}
+              onClick={() => setAdding(adding === 'nota' ? null : 'nota')}
+            >
+              {t.noteAdd}
+            </button>
+          </div>
+
+          {adding && (
+            <div className="mt-3">
+              <textarea
+                rows={3}
+                value={draft}
+                placeholder={adding === 'contacto' ? t.attemptPlaceholder : t.notePlaceholder}
+                onChange={(e) => setDraft(e.target.value)}
+                className="field-input py-2.5"
+                aria-label={adding === 'contacto' ? t.logAttempt : t.noteAdd}
+              />
+              <div className="mt-2 flex flex-wrap gap-2">
+                {adding === 'contacto' ? (
+                  <>
+                    {/* Two buttons and not a tick: "did they answer" has two
+                        real answers and both are worth one press. */}
+                    <button
+                      className="btn-primary min-h-0 px-4 py-2 text-sm"
+                      disabled={pending}
+                      onClick={() =>
+                        run(async () => {
+                          await logContactAttempt(patient.id, true, draft)
+                          setDraft('')
+                          setAdding(null)
+                        })
+                      }
+                    >
+                      {t.attemptReached}
+                    </button>
+                    <button
+                      className="btn-secondary min-h-0 px-4 py-2 text-sm"
+                      disabled={pending}
+                      onClick={() =>
+                        run(async () => {
+                          await logContactAttempt(patient.id, false, draft)
+                          setDraft('')
+                          setAdding(null)
+                        })
+                      }
+                    >
+                      {t.attemptMissed}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="btn-primary min-h-0 px-4 py-2 text-sm"
+                    disabled={pending || !draft.trim()}
+                    onClick={() =>
+                      run(async () => {
+                        await addPatientNote(patient.id, draft)
+                        setDraft('')
+                        setAdding(null)
+                      })
+                    }
+                  >
+                    {dict.common.save}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      <p className="mb-3 mt-6 text-sm text-ink-mute">{t.notesHint}</p>
 
       {notes.length === 0 ? (
         <p className="text-base text-ink-mute">{t.notesEmpty}</p>
@@ -391,9 +530,16 @@ function Notes({
           {notes.map((note) => (
             <li key={note.id} className="rounded-card border border-line bg-surface p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <time dateTime={note.created_at} className="text-sm text-ink-mute">
-                  {formatDateTime(note.created_at, locale)}
-                </time>
+                <span className="flex flex-wrap items-center gap-2">
+                  {note.kind === 'contacto' && (
+                    <Badge tone={note.reached ? 'ok' : 'warn'}>
+                      {note.reached ? t.attemptReachedTag : t.attemptMissedTag}
+                    </Badge>
+                  )}
+                  <time dateTime={note.created_at} className="text-sm text-ink-mute">
+                    {formatDateTime(note.created_at, locale)}
+                  </time>
+                </span>
                 {!readOnly && (
                   <button
                     type="button"
@@ -408,9 +554,11 @@ function Notes({
                   </button>
                 )}
               </div>
-              <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-ink">
-                {note.body}
-              </p>
+              {note.body !== '—' && (
+                <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-ink">
+                  {note.body}
+                </p>
+              )}
             </li>
           ))}
         </ol>

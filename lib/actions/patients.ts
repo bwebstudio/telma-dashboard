@@ -54,6 +54,59 @@ export async function addPatientNote(patientId: string, body: string) {
   refresh(patientId)
 }
 
+/**
+ * We rang them. Whether we got through is the fact the whole follow-up turns
+ * on, and the one nobody writes down consistently in prose.
+ *
+ * Reaching somebody does not close anything by itself: a clinic can speak to
+ * a patient and still be waiting for a report. Closing is its own decision,
+ * taken on the record, which is why it is a separate action.
+ */
+export async function logContactAttempt(
+  patientId: string,
+  reached: boolean,
+  body: string
+) {
+  const cid = await writableClinicId()
+  const supabase = await createClient()
+  const { error } = await supabase.from('patient_notes').insert({
+    clinic_id: cid,
+    patient_id: patientId,
+    kind: 'contacto',
+    reached,
+    // The body carries what was said. Empty is allowed on an attempt nobody
+    // answered, because there was nothing to say, so the row needs a word in
+    // it that the check constraint will accept.
+    body: body.trim().slice(0, 2000) || (reached ? '—' : '—'),
+  })
+  if (error) throw new Error(error.message)
+  refresh(patientId)
+}
+
+/**
+ * Whether anything is still waiting on this person.
+ *
+ * A timestamp and not a flag: "pending since the 3rd" is what somebody needs
+ * on a Monday morning, and a true or false cannot say it. Opening one writes
+ * the reason beside it, because "pending" with no reason is a reminder to
+ * remember something you have already forgotten.
+ */
+export async function setFollowUp(patientId: string, open: boolean, reason = '') {
+  const cid = await writableClinicId()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('patients')
+    .update(
+      open
+        ? { follow_up_since: new Date().toISOString(), follow_up_reason: reason.trim().slice(0, 300) || null }
+        : { follow_up_since: null, follow_up_reason: null }
+    )
+    .eq('id', patientId)
+    .eq('clinic_id', cid)
+  if (error) throw new Error(error.message)
+  refresh(patientId)
+}
+
 /** Written by mistake, or about the wrong person. Scoped to the clinic, so a
  *  note id from somewhere else deletes nothing. */
 export async function deletePatientNote(patientId: string, noteId: string) {

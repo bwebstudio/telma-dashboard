@@ -468,6 +468,10 @@ export interface PatientNote {
   id: string
   clinic_id: string
   patient_id: string
+  /** 'nota' is something the clinic wrote. 'contacto' is an attempt to reach
+   *  the person, and then `reached` says whether anybody answered. */
+  kind: 'nota' | 'contacto'
+  reached?: boolean | null
   body: string
   created_at: string
 }
@@ -499,6 +503,11 @@ export interface Patient {
    *  the same as no. */
   marketing_consent_at?: string | null
   marketing_consent_source?: string | null
+  /** When a follow-up was opened on this person, and why. Null means nothing
+   *  is pending. A timestamp and not a flag: "pending since the 3rd" is the
+   *  thing somebody needs on a Monday morning. See 0072. */
+  follow_up_since?: string | null
+  follow_up_reason?: string | null
   last_seen_at: string
   created_at: string
 }

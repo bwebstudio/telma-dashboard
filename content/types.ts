@@ -449,6 +449,20 @@ export interface Dictionary {
     addPhoneHint: string
 
     notes: string
+    followQueueTitle: string
+    followTitle: string
+    followOpen: string
+    followClosed: string
+    followAttempts: string
+    followDone: string
+    followOpenAction: string
+    followReasonPlaceholder: string
+    logAttempt: string
+    attemptPlaceholder: string
+    attemptReached: string
+    attemptMissed: string
+    attemptReachedTag: string
+    attemptMissedTag: string
     notesHint: string
     noteAdd: string
     notePlaceholder: string

@@ -449,6 +449,12 @@ export interface Dictionary {
     addPhoneHint: string
 
     notes: string
+    activityTitle: string
+    activityEmpty: string
+    activityNote: string
+    activityOpened: string
+    activityClosed: string
+    activityCall: string
     followQueueTitle: string
     followTitle: string
     followOpen: string
@@ -458,6 +464,7 @@ export interface Dictionary {
     followOpenAction: string
     followReasonPlaceholder: string
     logAttempt: string
+    attemptHint: string
     attemptPlaceholder: string
     attemptReached: string
     attemptMissed: string

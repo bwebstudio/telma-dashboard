@@ -120,6 +120,9 @@ export function demoAppointments(clinicId: string): Appointment[] {
     }),
     appt(clinicId, {
       id: 'd-appt-2',
+      // Attached to the record, so the chronology on it can show the booking
+      // beside the calls that led to it.
+      patient_id: 'demo-patient-2',
       patient_name: 'Carlos Nunes',
       patient_phone: '+351 913 887 220',
       reason: 'Revisão',

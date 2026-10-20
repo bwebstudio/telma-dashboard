@@ -94,16 +94,29 @@ export async function logContactAttempt(
 export async function setFollowUp(patientId: string, open: boolean, reason = '') {
   const cid = await writableClinicId()
   const supabase = await createClient()
+  const why = reason.trim().slice(0, 300)
   const { error } = await supabase
     .from('patients')
     .update(
       open
-        ? { follow_up_since: new Date().toISOString(), follow_up_reason: reason.trim().slice(0, 300) || null }
+        ? { follow_up_since: new Date().toISOString(), follow_up_reason: why || null }
         : { follow_up_since: null, follow_up_reason: null }
     )
     .eq('id', patientId)
     .eq('clinic_id', cid)
   if (error) throw new Error(error.message)
+
+  // ── AND IT GOES INTO THE STORY ────────────────────────────────────────
+  // The column says what is open now. It cannot say that one was opened in
+  // March and closed in April, which is exactly what somebody reading the
+  // record next month needs to see. See 0073.
+  await supabase.from('patient_notes').insert({
+    clinic_id: cid,
+    patient_id: patientId,
+    kind: open ? 'abertura' : 'fecho',
+    body: (open ? why : '') || '—',
+  })
+
   refresh(patientId)
 }
 

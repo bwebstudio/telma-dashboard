@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { PatientActivity } from '@/components/clinic/PatientActivity'
 import type { Dictionary, Locale } from '@/content'
 import Link from 'next/link'
 import type { Appointment, Call, Patient, PatientNote, PatientRecall, RecallState } from '@/lib/types'
@@ -183,7 +184,18 @@ export function PatientRecord({
         readOnly={readOnly}
       />
 
-      <TaxId patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
+      {/* ── THE STORY, BEFORE THE DRAWERS ────────────────────────────────
+          What has been going on with this person, in order, above everything
+          that is a setting or a form. The detailed lists stay below: a call
+          has a summary worth opening and a booking has an hour worth reading,
+          and this says that they happened and when. */}
+      <PatientActivity
+        notes={notes}
+        calls={calls}
+        appointments={appointments}
+        dict={dict}
+        locale={locale}
+      />
 
       <Consent patient={patient} t={t} locale={locale} run={run} pending={pending} readOnly={readOnly} />
 
@@ -267,6 +279,11 @@ export function PatientRecord({
           </ul>
         )}
       </section>
+
+      {/* Administrative, and it was sitting between the follow-up and the
+          messages as though it were part of the story. It is not: nobody
+          opens a record to read a tax number. */}
+      <TaxId patient={patient} t={t} dict={dict} run={run} pending={pending} readOnly={readOnly} />
 
       {/* ── BORRAR, AL FINAL Y SIN ADORNO ────────────────────────────────────
           Abajo del todo porque nadie viene a esta pantalla a borrar, y sin
@@ -377,11 +394,16 @@ function Notes({
     <section>
       <SectionTitle>{t.followTitle}</SectionTitle>
 
-      {/* ── IS ANYTHING STILL OPEN ────────────────────────────────────── */}
+      {/* ── IS ANYTHING STILL OPEN ──────────────────────────────────────
+          Two states, and they must not look alike. Open is a box that says
+          so, with the day and the reason. Nothing pending is one quiet line:
+          the answer is "no", and "no" does not need a card. */}
       <div
-        className={`rounded-card border p-4 ${
-          open ? 'border-warn/40 bg-warn-soft' : 'border-line bg-surface'
-        }`}
+        className={
+          open
+            ? 'rounded-card border border-warn/40 bg-warn-soft p-4'
+            : 'flex flex-wrap items-center justify-between gap-x-4 gap-y-2'
+        }
       >
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-ink">
           <span
@@ -460,15 +482,15 @@ function Notes({
 
           {adding && (
             <div className="mt-3">
-              <textarea
-                rows={3}
-                value={draft}
-                placeholder={adding === 'contacto' ? t.attemptPlaceholder : t.notePlaceholder}
-                onChange={(e) => setDraft(e.target.value)}
-                className="field-input py-2.5"
-                aria-label={adding === 'contacto' ? t.logAttempt : t.noteAdd}
-              />
-              <div className="mt-2 flex flex-wrap gap-2">
+              {/* ── THE ANSWER FIRST, THE WORDS AFTER ───────────────────────
+                  A textarea at the top of this made logging a call look like
+                  writing a report, so the quickest thing in the panel read as
+                  the slowest. The two buttons are the whole action; the note
+                  is there for the times there is something to say. */}
+              {adding === 'contacto' && (
+                <p className="mb-2 text-sm text-ink-mute">{t.attemptHint}</p>
+              )}
+              <div className="mb-2 flex flex-wrap gap-2">
                 {adding === 'contacto' ? (
                   <>
                     {/* Two buttons and not a tick: "did they answer" has two
@@ -516,53 +538,20 @@ function Notes({
                   </button>
                 )}
               </div>
+              <textarea
+                rows={3}
+                value={draft}
+                placeholder={adding === 'contacto' ? t.attemptPlaceholder : t.notePlaceholder}
+                onChange={(e) => setDraft(e.target.value)}
+                className="field-input py-2.5"
+                aria-label={adding === 'contacto' ? t.logAttempt : t.noteAdd}
+              />
             </div>
           )}
         </div>
       )}
 
-      <p className="mb-3 mt-6 text-sm text-ink-mute">{t.notesHint}</p>
-
-      {notes.length === 0 ? (
-        <p className="text-base text-ink-mute">{t.notesEmpty}</p>
-      ) : (
-        <ol className="flex flex-col gap-2">
-          {notes.map((note) => (
-            <li key={note.id} className="rounded-card border border-line bg-surface p-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <span className="flex flex-wrap items-center gap-2">
-                  {note.kind === 'contacto' && (
-                    <Badge tone={note.reached ? 'ok' : 'warn'}>
-                      {note.reached ? t.attemptReachedTag : t.attemptMissedTag}
-                    </Badge>
-                  )}
-                  <time dateTime={note.created_at} className="text-sm text-ink-mute">
-                    {formatDateTime(note.created_at, locale)}
-                  </time>
-                </span>
-                {!readOnly && (
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => {
-                      if (!confirm(t.noteDeleteConfirm)) return
-                      run(() => deletePatientNote(patient.id, note.id))
-                    }}
-                    className="btn-ghost min-h-0 px-2 py-1 text-sm text-ink-mute"
-                  >
-                    {t.noteDelete}
-                  </button>
-                )}
-              </div>
-              {note.body !== '—' && (
-                <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-ink">
-                  {note.body}
-                </p>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
+      <p className="mt-4 max-w-prose text-sm text-ink-mute">{t.notesHint}</p>
     </section>
   )
 }

@@ -470,7 +470,7 @@ export interface PatientNote {
   patient_id: string
   /** 'nota' is something the clinic wrote. 'contacto' is an attempt to reach
    *  the person, and then `reached` says whether anybody answered. */
-  kind: 'nota' | 'contacto'
+  kind: 'nota' | 'contacto' | 'abertura' | 'fecho'
   reached?: boolean | null
   body: string
   created_at: string

@@ -451,6 +451,14 @@ const seed: DemoStore = {
       created_at: iso(-60 * 24 * 40),
     },
     {
+      id: 'demo-note-0',
+      clinic_id: DEMO_CLINIC_ID,
+      patient_id: 'demo-patient-2',
+      kind: 'abertura' as const,
+      body: 'Vai dizer que hora lhe serve. Se não ligar até sexta, ligamos nós.',
+      created_at: iso(-60 * 26),
+    },
+    {
       id: 'demo-note-5',
       clinic_id: DEMO_CLINIC_ID,
       patient_id: 'demo-patient-2',

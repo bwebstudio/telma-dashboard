@@ -151,7 +151,7 @@ export interface Clinic {
   price_info?: string | null
   /** 'formal' is usted / o senhor. 'informal' is tú / você. */
   formality?: 'formal' | 'informal' | null
-  fallback_policy?: 'transfer' | 'message' | 'callback' | null
+  fallback_policy?: 'transfer' | 'message' | null
   fallback_number?: string | null
   /** Anything no other field covers. Read into the prompt as written. */
   briefing?: string | null

@@ -222,7 +222,10 @@ export async function POST(request: Request) {
     languages: languageNames,
     formality: (clinic.formality as 'formal' | 'informal') ?? 'formal',
     price_info: clinic.price_info ?? null,
-    fallback_policy: (clinic.fallback_policy as 'transfer' | 'message' | 'callback') ?? 'message',
+    // Anything that is not a transfer is the one other answer there is: take
+    // the message and ring them back. 'callback' is a row written before the
+    // two were merged, and it means exactly that.
+    fallback_policy: clinic.fallback_policy === 'transfer' ? 'transfer' : 'message',
     fallback_number: clinic.fallback_number ?? null,
     briefing: clinic.briefing ?? null,
     can_book: clinic.status === 'ativa' && !minutes.exhausted,

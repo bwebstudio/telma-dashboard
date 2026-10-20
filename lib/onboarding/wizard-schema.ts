@@ -279,7 +279,14 @@ function build(m: Messages) {
         .refine((v) => new Set(v).size === v.length, { error: m.duplicateLanguage }),
       greeting_language: z.string().min(1, { error: m.greetingLanguage }),
       formality: z.enum(['formal', 'informal']),
-      fallback_policy: z.enum(['transfer', 'message', 'callback']),
+      // 'callback' was a third answer until it turned out to be the same one
+      // as 'message' told in halves. Still accepted, because a browser tab
+      // left open on the old form would otherwise fail on submit, and it
+      // means the merged option.
+      fallback_policy: z.preprocess(
+        (v) => (v === 'callback' ? 'message' : v),
+        z.enum(['transfer', 'message'])
+      ),
       fallback_number: z.string().optional().default(''),
       briefing: z.string().trim().max(2000, { error: m.briefingTooLong }).optional().default(''),
       // Emergencies are their own path, not a flavour of `fallback_policy`.

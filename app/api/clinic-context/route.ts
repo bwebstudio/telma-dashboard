@@ -105,8 +105,8 @@ export async function GET(request: Request) {
     languages: languageNames,
     formality: (clinic.formality as 'formal' | 'informal') ?? 'formal',
     price_info: clinic.price_info ?? null,
-    fallback_policy:
-      (clinic.fallback_policy as 'transfer' | 'message' | 'callback') ?? 'message',
+    // See the note in app/api/voice/init: not a transfer means the message.
+    fallback_policy: clinic.fallback_policy === 'transfer' ? 'transfer' : 'message',
     fallback_number: clinic.fallback_number ?? null,
     briefing: clinic.briefing ?? null,
     can_book: clinic.status === 'ativa' && !minutes.exhausted,

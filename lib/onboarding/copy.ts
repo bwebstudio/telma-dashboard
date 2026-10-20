@@ -145,8 +145,6 @@ export interface Copy {
   fallbackTransferHelp: string
   fallbackMessage: string
   fallbackMessageHelp: string
-  fallbackCallback: string
-  fallbackCallbackHelp: string
   fallbackNumber: string
   briefing: string
   briefingHelp: string
@@ -393,10 +391,8 @@ const pt: Copy = {
   fallbackHelp: 'Vai acontecer. O que decide aqui é o que ela faz nesse momento.',
   fallbackTransfer: 'Passa a chamada a uma pessoa',
   fallbackTransferHelp: 'Avisa antes de passar. Precisa de um número que atenda.',
-  fallbackMessage: 'Toma nota do recado',
-  fallbackMessageHelp: 'Pede nome, número e mensagem, e confirma o número repetindo-o.',
-  fallbackCallback: 'Diz que a clínica liga de volta',
-  fallbackCallbackHelp: 'Sem prometer hora certa. Fica registado no painel.',
+  fallbackMessage: 'Toma nota e a clínica liga de volta',
+  fallbackMessageHelp: 'Pede o nome, o número e o motivo, e repete o número para confirmar. Diz que a clínica liga de volta, sem prometer hora certa. Fica tudo registado no painel.',
   fallbackNumber: 'Número para onde passar',
   briefing: 'Mais alguma coisa que a Telma deva saber',
   briefingHelp: 'Opcional, e é onde cabe o que nenhum campo acima previu. Vai tal e qual para a Telma.',
@@ -642,10 +638,8 @@ const es: Copy = {
   fallbackHelp: 'Va a pasar. Lo que decide aquí es qué hace en ese momento.',
   fallbackTransfer: 'Pasa la llamada a una persona',
   fallbackTransferHelp: 'Avisa antes de pasarla. Necesita un número que conteste.',
-  fallbackMessage: 'Toma nota del recado',
-  fallbackMessageHelp: 'Pide nombre, teléfono y mensaje, y confirma el número repitiéndolo.',
-  fallbackCallback: 'Dice que la clínica le devuelve la llamada',
-  fallbackCallbackHelp: 'Sin prometer hora concreta. Queda registrado en el panel.',
+  fallbackMessage: 'Toma nota y la clínica le devuelve la llamada',
+  fallbackMessageHelp: 'Pide el nombre, el teléfono y el motivo, y confirma el número repitiéndolo. Dice que la clínica le devuelve la llamada, sin prometer hora concreta. Queda todo registrado en el panel.',
   fallbackNumber: 'Número al que pasar',
   briefing: 'Algo más que Telma deba saber',
   briefingHelp: 'Opcional, y es donde cabe lo que ningún campo de arriba previó. Va tal cual a Telma.',

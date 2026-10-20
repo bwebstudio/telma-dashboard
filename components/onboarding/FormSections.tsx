@@ -924,7 +924,9 @@ export function TelmaStep({
   }, [values.fallback_number, values.fallback_policy])
   const atMax = maxLanguages !== null && chosen.length >= maxLanguages
   const greeting: string = values.greeting_language ?? chosen[0] ?? ''
-  const fallback: string = values.fallback_policy ?? 'message'
+  // A clinic saved before the two were merged still carries 'callback'. It
+  // means the merged option now, and the radio has to show it as chosen.
+  const fallback: string = values.fallback_policy === 'transfer' ? 'transfer' : 'message'
 
   function toggle(code: string) {
     const next = chosen.includes(code)
@@ -1065,29 +1067,28 @@ export function TelmaStep({
 
       </Group>
 
-      {/* What happens when Telma cannot help. Three honest answers. */}
+      {/* ── WHAT HAPPENS WHEN TELMA CANNOT HELP ─────────────────────────────
+          Two answers, because there were three and two of them were the same
+          promise told in halves. "Take a message" and "say the clinic will
+          ring back" describe one thing that happens: she writes down who rang
+          and why, and somebody rings them back. A clinic reading them side by
+          side had to guess what the other one left out, and whichever it
+          picked, the message still landed in the panel and somebody still had
+          to return the call. So they are one option that says both.
+
+          The real fork is the one left: does a telephone ring now, or not. */}
       <Group title={t.groupStuck} lead={t.groupStuckLead}>
       <div className="flex flex-col gap-2.5">
-        {(['transfer', 'message', 'callback'] as const).map((p) => (
+        {(['transfer', 'message'] as const).map((p) => (
           <OptionCard
             key={p}
             name="fallback_policy"
             value={p}
             checked={fallback === p}
             onSelect={() => set({ fallback_policy: p })}
-            title={
-              p === 'transfer'
-                ? t.fallbackTransfer
-                : p === 'message'
-                  ? t.fallbackMessage
-                  : t.fallbackCallback
-            }
+            title={p === 'transfer' ? t.fallbackTransfer : t.fallbackMessage}
           >
-            {p === 'transfer'
-              ? t.fallbackTransferHelp
-              : p === 'message'
-                ? t.fallbackMessageHelp
-                : t.fallbackCallbackHelp}
+            {p === 'transfer' ? t.fallbackTransferHelp : t.fallbackMessageHelp}
           </OptionCard>
         ))}
         {fallback === 'transfer' && (

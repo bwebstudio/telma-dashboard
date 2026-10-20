@@ -92,7 +92,7 @@ export interface PromptVariables {
   formality: 'formal' | 'informal'
   /** Null means prices are not discussed at all. */
   price_info: string | null
-  fallback_policy: 'transfer' | 'message' | 'callback'
+  fallback_policy: 'transfer' | 'message'
   fallback_number: string | null
   briefing: string | null
   /** False when the clinic is paused or out of minutes. Never applies to an
@@ -238,9 +238,10 @@ interface BaseCopy {
   notUnderstood: string[]
   fallbackTitle: string
   fallbackTransfer: (n: string | null) => string
-  fallbackCallback: string
+  /** Takes the message and promises the call back, which used to be two
+   *  policies and is one answer: both halves happen on the same call. */
   fallbackMessage: string
-  fallbackShort: Record<'transfer' | 'callback' | 'message', string>
+  fallbackShort: Record<'transfer' | 'message', string>
   factsTitle: string
   todayIs: (d: string) => string
   address: string
@@ -628,14 +629,11 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   fallbackTitle: '# Quando não consegues ajudar',
   fallbackTransfer: (n) =>
     `Passas a chamada${n ? ` para ${n}` : ' para a clínica'}. Dizes que vais passar antes de o fazeres.`,
-  fallbackCallback:
-    'Pedes o nome e o número, dizes que a clínica liga de volta, e não prometes uma hora concreta para essa chamada. **Não passas a chamada a ninguém, e nunca dizes que vais passar.**',
   fallbackMessage:
-    'Pedes o nome, o número e o recado, repetes o número em voz alta para confirmar, e dizes que fica registado no painel da clínica. Isso diz-se de um recado, nunca de uma marcação. **Não passas a chamada a ninguém, e nunca dizes que vais passar**: nesta clínica não há para onde passar, e quem ouve "passo-o já" fica à espera em vez de procurar ajuda.',
+    'Pedes o nome, o número e o motivo, repetes o número em voz alta para confirmar, e dizes que fica registado no painel da clínica e que a clínica liga de volta. Não prometes uma hora concreta para essa chamada. Isso diz-se de um recado, nunca de uma marcação. **Não passas a chamada a ninguém, e nunca dizes que vais passar**: nesta clínica não há para onde passar, e quem ouve "passo-o já" fica à espera em vez de procurar ajuda.',
   fallbackShort: {
     transfer: 'passas a chamada a uma pessoa',
-    callback: 'dizes que a clínica liga de volta',
-    message: 'tomas nota do recado',
+    message: 'tomas nota e dizes que a clínica liga de volta',
   },
   factsTitle: '# A clínica',
   // A regra de não oferecer horas passadas está na agenda e a despedida pela
@@ -983,14 +981,11 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   fallbackTitle: '# Cuando no puedes ayudar',
   fallbackTransfer: (n) =>
     `Pasas la llamada${n ? ` al ${n}` : ' a la clínica'}. Avisas de que vas a pasarla antes de hacerlo.`,
-  fallbackCallback:
-    'Pides el nombre y el teléfono, dices que la clínica le devuelve la llamada, y no prometes una hora concreta para esa llamada. **No pasas la llamada a nadie, y nunca dices que vas a pasarla.**',
   fallbackMessage:
-    'Pides el nombre, el teléfono y el recado, repites el número en voz alta para confirmarlo, y dices que queda registrado en el panel de la clínica. Eso se dice de un recado, nunca de una cita. **No pasas la llamada a nadie, y nunca dices que vas a pasarla**: en esta clínica no hay a dónde pasarla, y quien oye "ahora mismo le paso" se queda esperando en vez de buscar ayuda.',
+    'Pides el nombre, el teléfono y el motivo, repites el número en voz alta para confirmarlo, y dices que queda registrado en el panel de la clínica y que la clínica le devuelve la llamada. No prometes una hora concreta para esa llamada. Eso se dice de un recado, nunca de una cita. **No pasas la llamada a nadie, y nunca dices que vas a pasarla**: en esta clínica no hay a dónde pasarla, y quien oye "ahora mismo le paso" se queda esperando en vez de buscar ayuda.',
   fallbackShort: {
     transfer: 'pasas la llamada a una persona',
-    callback: 'dices que la clínica le devuelve la llamada',
-    message: 'tomas nota del recado',
+    message: 'tomas nota y dices que la clínica le devuelve la llamada',
   },
   factsTitle: '# La clínica',
   // Ver el comentario en la versión portuguesa.
@@ -1179,11 +1174,7 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
 
   const fallbackNumber = v.fallback_number ?? v.phone
   const fallback =
-    v.fallback_policy === 'transfer'
-      ? t.fallbackTransfer(fallbackNumber)
-      : v.fallback_policy === 'callback'
-        ? t.fallbackCallback
-        : t.fallbackMessage
+    v.fallback_policy === 'transfer' ? t.fallbackTransfer(fallbackNumber) : t.fallbackMessage
 
   const facts: string[] = [t.factsTitle]
   if (v.today) facts.push(t.todayIs(v.today))

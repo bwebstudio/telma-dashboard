@@ -133,10 +133,7 @@ async function previewPrompt(
     languages: languageNames,
     formality,
     price_info: str(values.price_info),
-    fallback_policy:
-      values.fallback_policy === 'transfer' || values.fallback_policy === 'callback'
-        ? values.fallback_policy
-        : 'message',
+    fallback_policy: values.fallback_policy === 'transfer' ? 'transfer' : 'message',
     fallback_number: str(values.fallback_number),
     briefing: str(values.briefing),
     // The preview always shows the clinic able to book. It is the state it will
@@ -344,9 +341,7 @@ export async function previewSummary(
   care.push(
     values.fallback_policy === 'transfer' && fallbackNumber
       ? t.fallbackTransfer(fallbackNumber)
-      : values.fallback_policy === 'callback'
-        ? t.fallbackCallback
-        : t.fallbackMessage
+      : t.fallbackMessage
   )
   care.push(
     values.after_hours_transfer === true ? t.afterHoursOn : t.afterHoursOff
@@ -395,8 +390,8 @@ const SUMMARY = {
     emergencyNone: 'Numa urgência, como não indicou número, encaminha para um serviço de urgência. Nunca inventa um número.',
     emergencyExtra: (p: string) => `Além disso: ${p}`,
     fallbackTransfer: (n: string) => `Se não souber responder, passa a chamada para ${n}.`,
-    fallbackCallback: 'Se não souber responder, fica com o contacto e diz que a clínica liga de volta.',
-    fallbackMessage: 'Se não souber responder, toma o recado e deixa-o no seu painel.',
+    fallbackMessage:
+      'Se não souber responder, toma o recado, deixa-o no seu painel e diz que a clínica liga de volta.',
     afterHoursOn: 'Fora do horário, pode passar-lhe uma urgência.',
     afterHoursOff: 'Fora do horário, não incomoda ninguém.',
     alsoTold: 'O que nos contou',
@@ -425,8 +420,8 @@ const SUMMARY = {
     emergencyNone: 'En una urgencia, como no ha indicado número, deriva a un servicio de urgencias. Nunca se inventa un número.',
     emergencyExtra: (p: string) => `Además: ${p}`,
     fallbackTransfer: (n: string) => `Si no sabe qué responder, pasa la llamada al ${n}.`,
-    fallbackCallback: 'Si no sabe qué responder, se queda con el contacto y dice que la clínica le devuelve la llamada.',
-    fallbackMessage: 'Si no sabe qué responder, toma el recado y lo deja en su panel.',
+    fallbackMessage:
+      'Si no sabe qué responder, toma el recado, lo deja en su panel y dice que la clínica le devuelve la llamada.',
     afterHoursOn: 'Fuera del horario, puede pasarle una urgencia.',
     afterHoursOff: 'Fuera del horario, no molesta a nadie.',
     alsoTold: 'Lo que nos ha contado',

@@ -175,6 +175,9 @@ export interface Clinic {
   after_hours_patients_only?: boolean | null
   after_hours_number?: string | null
   /** Whether call audio is stored. Drives the recording notice Telma gives. */
+  /** What Telma says when she answers, in the clinic's own words. Null means
+   *  the standard line. See 0079. */
+  greeting?: string | null
   calls_recorded?: boolean | null
   /** Which documents the clinic agreed to at sign-up, and when. Null for a
    *  clinic created before any of this was recorded: null means we do not

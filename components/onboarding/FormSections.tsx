@@ -981,6 +981,24 @@ export function TelmaStep({
       </Group>
 
       <Group title={t.groupVoice} lead={t.groupVoiceLead}>
+      {/* ── THE FIRST SENTENCE, WHERE A CLINIC WANTS ITS OWN ────────────────
+          Almost nobody should write here: ours is short, says who is
+          speaking and gets out of the way, and every word added is a word
+          the caller listens to before they can say what they rang for. But
+          the first real client sent theirs written out before anything else,
+          and until now the only thing they could change was their own name. */}
+      <Field label={t.greeting} htmlFor="greeting" hint={t.greetingHelp} error={errors.greeting}>
+        <textarea
+          id="greeting"
+          name="greeting"
+          rows={4}
+          placeholder={t.greetingPlaceholder}
+          value={(values.greeting as string) ?? ''}
+          onChange={(e) => set({ greeting: e.target.value })}
+          className={`${inputClass(errors.greeting)} py-2.5`}
+        />
+      </Field>
+
       {showLanguages && (
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-2">

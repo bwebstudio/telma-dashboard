@@ -1070,6 +1070,16 @@ export function isBaseLanguage(v: unknown): v is BaseLanguage {
  * speech we author, and it is what a clinic hears when it previews its own
  * receptionist.
  */
+/** The notice on its own, for a greeting the clinic wrote itself: ours has it
+ *  in the middle of the sentence, theirs has nowhere for us to put it but the
+ *  end. See lib/recording for when it is said at all. */
+const RECORDING_NOTE: Record<string, string> = {
+  pt: 'Esta chamada é gravada para registo da clínica.',
+  es: 'Esta llamada se graba para el registro de la clínica.',
+  ca: 'Aquesta trucada es grava per al registre de la clínica.',
+  en: "This call is recorded for the clinic's records.",
+}
+
 const GREETINGS: Record<string, Record<'formal' | 'informal', (name: string) => string>> = {
   pt: {
     formal: (n) => `Olá, é da ${n}, fala a Telma. Esta chamada é gravada para registo da clínica. Em que posso ajudar?`,
@@ -1124,10 +1134,42 @@ export function greetingLine(
   languages: string[] = [],
   /** True once the telephone layer plays the notice before connecting. Then
    *  Telma does not repeat it; until then she is the only one saying it. */
-  noticeAlreadyPlayed = false
+  noticeAlreadyPlayed = false,
+  /**
+   * The clinic's own words, where it wrote them.
+   *
+   * It replaces our sentence and nothing else: the recording notice and the
+   * offer of the other languages are still appended below, because one is
+   * what makes a recording lawful and the other is how somebody who does not
+   * speak this language finds out they can ask for theirs. A clinic cannot
+   * delete either by writing around them. See migration 0079.
+   */
+  custom?: string | null
 ): string {
   const set = GREETINGS[languageCode] ?? GREETINGS.pt
-  let line = set[formality](clinicName)
+  const written = (custom ?? '').trim()
+  let line = written
+    ? // Collapsed to one line: what the clinic typed may carry the newlines of
+      // the document they wrote it in, and those become pauses that are not
+      // pauses when they are read aloud.
+      written.replace(/\s*\n\s*/g, ' ')
+    : set[formality](clinicName)
+
+  // Ours is three sentences and the middle one is the notice. A clinic's own
+  // is however many it is, so the notice is added rather than cut out, and
+  // both it and the language menu go at the end: there is no closing question
+  // of ours to put them in front of, and a sentence inserted into somebody
+  // else's paragraph reads like an interruption.
+  if (written) {
+    // A text that does not end in a full stop would run into whatever we add.
+    const ended = /[.!?]$/.test(line) ? line : `${line}.`
+    const withNotice =
+      recording && !noticeAlreadyPlayed
+        ? `${ended} ${RECORDING_NOTE[languageCode] ?? RECORDING_NOTE.pt}`
+        : ended
+    const others = languages.filter((l) => l !== languageCode && OFFER[l])
+    return others.length ? [withNotice, ...others.map((l) => OFFER[l])].join(' ') : withNotice
+  }
   // The middle sentence is the recording notice, and it comes out when there is
   // nothing to notify or when somebody has already said it.
   if (!recording || noticeAlreadyPlayed) {
@@ -1135,6 +1177,17 @@ export function greetingLine(
     line = parts.length >= 3 ? [parts[0], parts[parts.length - 1]].join(' ') : line
   }
 
+  return withLanguages(line, languageCode, languages)
+}
+
+/**
+ * The offer of the other languages, where there are any.
+ *
+ * Shared by the greeting we write and the one a clinic writes, because
+ * somebody who does not speak the language she opened in has to be told how
+ * to ask for theirs, whoever wrote the first sentence.
+ */
+function withLanguages(line: string, languageCode: string, languages: string[]): string {
   // A clinic with one language has nothing to choose, and a menu for one option
   // is a menu that wastes everybody's first ten seconds.
   const others = languages.filter((l) => l !== languageCode && OFFER[l])

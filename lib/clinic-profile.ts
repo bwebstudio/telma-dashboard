@@ -28,6 +28,7 @@ export function clinicProfileValues(clinic: Clinic): Record<string, unknown> {
     appointment_duration_minutes: clinic.appointment_duration_minutes ?? 30,
     formality: clinic.formality ?? 'formal',
     takes_bookings: clinic.takes_bookings !== false,
+    greeting: clinic.greeting ?? '',
     fallback_policy: clinic.fallback_policy ?? 'message',
     fallback_number: clinic.fallback_number ?? '',
     briefing: clinic.briefing ?? '',

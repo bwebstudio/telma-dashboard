@@ -77,6 +77,7 @@ const STEP_FIELDS: Record<StepId, readonly string[]> = {
   languages: ['selected_languages'],
   telma: [
     'takes_bookings',
+    'greeting',
     'greeting_language',
     'formality',
     'fallback_policy',

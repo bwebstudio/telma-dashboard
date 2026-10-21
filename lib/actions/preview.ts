@@ -166,7 +166,15 @@ async function previewPrompt(
   return {
     text: built.text,
     version: built.version,
-    greeting: greetingLine(clinicName, greetingCode, formality, recording, languageCodes),
+    greeting: greetingLine(
+      clinicName,
+      greetingCode,
+      formality,
+      recording,
+      languageCodes,
+      false,
+      typeof values.greeting === 'string' ? values.greeting : null
+    ),
     greetingLanguage: greetingCode,
     baseLanguage: built.base_language,
     openNow: hours.openNow,
@@ -359,7 +367,15 @@ export async function previewSummary(
   if (briefing) groups.push({ title: t.alsoTold, lines: [briefing] })
 
   return {
-    greeting: greetingLine(clinicName, greetingCode, formality, recording),
+    greeting: greetingLine(
+      clinicName,
+      greetingCode,
+      formality,
+      recording,
+      [],
+      false,
+      typeof values.greeting === 'string' ? values.greeting : null
+    ),
     greetingLanguage: greetingCode,
     groups,
   }

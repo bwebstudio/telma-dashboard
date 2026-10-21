@@ -131,6 +131,9 @@ export interface Copy {
   booksYesHelp: string
   booksNo: string
   booksNoHelp: string
+  greeting: string
+  greetingHelp: string
+  greetingPlaceholder: string
   groupVoice: string
   groupVoiceLead: string
   groupStuck: string
@@ -384,6 +387,9 @@ const pt: Copy = {
   booksYesHelp: 'Vê a agenda, oferece as horas livres e deixa a marcação no painel. É para isto que ela serve.',
   booksNo: 'Atende e toma recados',
   booksNoHelp: 'Nunca oferece horas nem marca nada. Pergunta o motivo da chamada, toma nota e diz que a clínica liga de volta. Pode ativar as marcações quando quiser, e a agenda volta ao menu.',
+  greeting: 'O que a Telma diz ao atender',
+  greetingHelp: 'Deixe vazio e ela diz: "Olá, é da [nome da clínica], fala a Telma. Em que posso ajudar?" Escreva aqui apenas se precisar de outra coisa, e lembre-se de que quem liga ouve isto inteiro antes de poder falar.',
+  greetingPlaceholder: 'Olá, ligou para a [clínica]. Neste momento não podemos atender, mas entraremos em contacto. Diga-nos por favor o motivo da sua chamada.',
   groupVoice: 'Como fala',
   groupVoiceLead: 'Em que língua abre a chamada e como trata quem liga.',
   groupStuck: 'Quando não consegue ajudar',
@@ -637,6 +643,9 @@ const es: Copy = {
   booksYesHelp: 'Ve la agenda, ofrece las horas libres y deja la cita en el panel. Es para esto que sirve.',
   booksNo: 'Atiende y toma recados',
   booksNoHelp: 'Nunca ofrece horas ni cita a nadie. Pregunta el motivo de la llamada, toma nota y dice que la clínica le devuelve la llamada. Puede activar las citas cuando quiera, y la agenda vuelve al menú.',
+  greeting: 'Lo que dice Telma al descolgar',
+  greetingHelp: 'Déjelo vacío y dice: "Hola, ha llamado a [nombre de la clínica], le habla Telma. ¿En qué puedo ayudarle?" Escriba aquí solo si necesita otra cosa, y recuerde que quien llama lo oye entero antes de poder hablar.',
+  greetingPlaceholder: 'Hola, ha llamado a [clínica]. En este momento no podemos atenderle, pero nos pondremos en contacto. Díganos por favor el motivo de su llamada.',
   groupVoice: 'Cómo habla',
   groupVoiceLead: 'En qué lengua abre la llamada y cómo trata a quien llama.',
   groupStuck: 'Cuando no puede ayudar',

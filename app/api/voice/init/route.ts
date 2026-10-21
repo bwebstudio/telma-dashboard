@@ -304,7 +304,10 @@ export async function POST(request: Request) {
           // Every language this clinic answers in. With more than one, the
           // greeting offers them, each said in its own language, and the choice
           // is made once at the start instead of guessed at mid-call.
-          clinic.selected_languages?.length ? clinic.selected_languages : [promptLocale]
+          clinic.selected_languages?.length ? clinic.selected_languages : [promptLocale],
+          false,
+          // What the clinic wrote, where it wrote one. See 0079.
+          clinic.greeting ?? null
         ),
         language: promptLocale,
       },

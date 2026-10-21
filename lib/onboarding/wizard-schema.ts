@@ -60,6 +60,8 @@ interface Messages {
   languageMin: string
   duplicateLanguage: string
   greetingLanguage: string
+  greetingTooLong: string
+  greetingTooShort: string
   greetingNotSelected: string
   languageTooMany: string
   addressLong: string
@@ -102,6 +104,8 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     languageMin: 'Escolha pelo menos um idioma.',
     duplicateLanguage: 'Esse idioma está repetido.',
     greetingLanguage: 'Escolha o idioma em que a Telma abre a chamada.',
+    greetingTooLong: 'A saudação é demasiado longa. Quem liga ouve-a inteira antes de poder falar.',
+    greetingTooShort: 'Escreva a saudação completa, ou deixe o campo vazio para usar a nossa.',
     greetingNotSelected: 'A Telma só pode abrir num idioma que escolheu.',
     languageTooMany: 'Escolheu mais idiomas do que este plano inclui.',
     addressLong: 'A morada é demasiado longa.',
@@ -141,6 +145,8 @@ const MESSAGES: Record<OnboardingLocale, Messages> = {
     languageMin: 'Elija al menos un idioma.',
     duplicateLanguage: 'Ese idioma está repetido.',
     greetingLanguage: 'Elija el idioma con el que Telma descuelga.',
+    greetingTooLong: 'El saludo es demasiado largo. Quien llama lo oye entero antes de poder hablar.',
+    greetingTooShort: 'Escriba el saludo completo, o deje el campo vacío para usar el nuestro.',
     greetingNotSelected: 'Telma solo puede abrir en un idioma que haya elegido.',
     languageTooMany: 'Ha elegido más idiomas de los que incluye este plan.',
     addressLong: 'La dirección es demasiado larga.',
@@ -282,6 +288,16 @@ function build(m: Messages) {
       // Booking unless the clinic says otherwise: it is what the product is
       // for, and an absent field means the ordinary thing. See 0076.
       takes_bookings: z.boolean().optional().default(true),
+      // What she says when she answers. Empty means ours. The floor of ten
+      // characters is so that half a sentence left behind by a deletion does
+      // not become the first thing a patient hears.
+      greeting: z
+        .string()
+        .trim()
+        .max(400, { error: m.greetingTooLong })
+        .refine((v) => v === '' || v.length >= 10, { error: m.greetingTooShort })
+        .optional()
+        .default(''),
       // 'callback' was a third answer until it turned out to be the same one
       // as 'message' told in halves. Still accepted, because a browser tab
       // left open on the old form would otherwise fail on submit, and it

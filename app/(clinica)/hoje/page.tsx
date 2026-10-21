@@ -93,7 +93,8 @@ export default async function AgendaPage({
         .eq('clinic_id', clinicId)
         .gte('created_at', weekFrom.toISOString())
         .lte('created_at', todayEnd.toISOString()),
-      getClinicWithPlan(clinicId),
+      // The clinic this request already has, rather than reading it twice.
+      getClinicWithPlan(clinicId, clinic),
       getMinutePackOffer(),
     ])
 
@@ -278,7 +279,8 @@ export default async function AgendaPage({
       .select('*')
       .eq('clinic_id', clinicId)
       .eq('day', dayKeyIn(tz, day)),
-    getClinicWithPlan(clinicId),
+    // Same row, already in hand on this request.
+    getClinicWithPlan(clinicId, clinic),
     getMinutePackOffer(),
   ])
 

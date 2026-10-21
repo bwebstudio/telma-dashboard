@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import type { JWK } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 import { isDemo } from '@/lib/demo/config'
 import { supabaseUrl, supabaseAnonKey, supabaseConfigError } from './env'
@@ -63,6 +64,40 @@ function misconfigured(message: string) {
  */
 export const VERIFIED_USER_HEADER = 'x-telma-user'
 
+/**
+ * The project's public signing keys, fetched once and kept.
+ *
+ * Held at module scope on purpose: the Supabase client is built per request
+ * and caches the key set on itself, so it would go and get it again on every
+ * single one. The keys rotate rarely and a stale one fails closed -- an
+ * unknown `kid` makes the verification fail, which sends the visitor to the
+ * sign-in page rather than letting anything through -- so the window is kept
+ * short and the fetch is never on the critical path twice.
+ */
+let keys: { keys: JWK[] } | null = null
+let keysAt = 0
+const KEYS_TTL = 10 * 60 * 1000
+
+async function signingKeys(): Promise<{ keys: JWK[] } | undefined> {
+  if (keys && Date.now() - keysAt < KEYS_TTL) return keys
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/.well-known/jwks.json`, {
+      headers: { apikey: supabaseAnonKey },
+      cache: 'no-store',
+    })
+    if (!res.ok) return keys ?? undefined
+    const body = (await res.json()) as { keys?: JWK[] }
+    if (!body.keys?.length) return keys ?? undefined
+    keys = { keys: body.keys }
+    keysAt = Date.now()
+    return keys
+  } catch {
+    // Whatever is held, even if stale, beats a round trip that failed. With
+    // nothing held, getClaims fetches the set itself.
+    return keys ?? undefined
+  }
+}
+
 // Refresh the Supabase session on every request and gate private routes.
 export async function updateSession(request: NextRequest) {
   // Demo mode: no Supabase, no auth gate. Browse everything freely.
@@ -88,9 +123,30 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // ── WHO THIS IS, WITHOUT ASKING SUPABASE ────────────────────────────────
+  // This runs before every page, and it used to be a round trip to the auth
+  // server: 200ms, sometimes far worse, paid by every click in the panel
+  // before the screen could even start being read.
+  //
+  // It does not have to be. This project signs its tokens with an asymmetric
+  // key (ES256) and publishes the public half, so the signature can be
+  // checked here with WebCrypto and nothing leaves the machine. The key set
+  // is fetched once per server and held, because a client built per request
+  // has an empty cache and would fetch it every time -- which is the round
+  // trip we came to remove.
+  //
+  // What this gives up, written down rather than discovered later: a token is
+  // trusted until it expires. Signing out clears the cookie and ends the
+  // session here, but a token already stolen stays usable for the rest of its
+  // hour, where before it would have been refused the moment the session was
+  // revoked on the server. For a panel whose session lives in an httpOnly
+  // cookie that is the right side of the trade; for anything that needs
+  // instant revocation it would not be.
+  //
+  // Expiry still refreshes: getClaims reads the session first, and the ssr
+  // client renews it through the same cookies as before.
+  const { data: claimed } = await supabase.auth.getClaims(undefined, { jwks: await signingKeys() })
+  const user = claimed?.claims?.sub ? { id: String(claimed.claims.sub) } : null
 
   const { pathname } = request.nextUrl
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p))

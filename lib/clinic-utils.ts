@@ -131,11 +131,28 @@ const getPlanRow = unstable_cache(
   { revalidate: 300, tags: ['catalogue'] }
 )
 
-export async function getClinicWithPlan(clinicId: string): Promise<ClinicWithPlan | null> {
+export async function getClinicWithPlan(
+  clinicId: string,
+  /**
+   * The clinic row, where the caller already has it.
+   *
+   * Every panel screen is handed its clinic by `requireClinicContext` and then
+   * asked for this, which read the same row again: two round trips for one
+   * row, on the screen a clinic opens every morning. Passing it in is not an
+   * optimisation of the query, it is removing a second question about
+   * something already answered on this request.
+   */
+  preloaded?: Clinic | null
+): Promise<ClinicWithPlan | null> {
   if (!clinicId) return null
   const admin = createAdminClient()
 
-  const { data: row } = await admin.from('clinics').select('*').eq('id', clinicId).maybeSingle()
+  const row =
+    preloaded && preloaded.id === clinicId
+      ? preloaded
+      : ((await admin.from('clinics').select('*').eq('id', clinicId).maybeSingle()).data as
+          | Clinic
+          | null)
   if (!row) return null
   const base = row as Clinic
 

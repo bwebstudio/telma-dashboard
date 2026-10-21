@@ -427,9 +427,11 @@ export const en: Dictionary = {
   pacientes: {
     title: 'Patients',
     lead: 'A patient record is created automatically when Telma records their first appointment.',
+    leadMessages: 'The people the clinic owes a call back, and the follow-up on each one. A record opens from the message itself, under Today, with "Follow this person".',
     search: 'Name or telephone',
     searchGo: 'Search',
     empty: 'No records yet. The first one opens by itself.',
+    emptyMessages: 'No records yet. Open the first one from a message, under Today.',
     none: 'Nobody with that name or number.',
     more: '{n} more. Search by name or telephone.',
     optedOut: 'Does not want messages',

@@ -52,6 +52,7 @@ export default async function PacientesPage({
   const term = (q ?? '').trim()
   const { locale, dict } = await getDict()
   const { clinic, clinicId, readOnly } = await requireClinicContext()
+  const books = clinic?.takes_bookings !== false
   const supabase = await createClient()
   const t = dict.pacientes
 
@@ -111,7 +112,14 @@ export default async function PacientesPage({
 
   return (
     <>
-      <PageHeader eyebrow={dict.clinicNav.pacientes} title={t.title} subtitle={t.lead} />
+      {/* Two sentences that were only true where Telma books: no record ever
+          opens by itself on a clinic that takes messages, and telling them to
+          wait for one is telling them to wait for ever. */}
+      <PageHeader
+        eyebrow={dict.clinicNav.pacientes}
+        title={t.title}
+        subtitle={books ? t.lead : t.leadMessages}
+      />
 
       <FollowUpQueue
         rows={(openFollowUps ?? []) as Array<{
@@ -164,7 +172,7 @@ export default async function PacientesPage({
       {error ? (
         <ErrorState title={dict.common.errorTitle} message={dict.common.errorGeneric} />
       ) : patients.length === 0 ? (
-        <EmptyState>{term ? t.none : t.empty}</EmptyState>
+        <EmptyState>{term ? t.none : books ? t.empty : t.emptyMessages}</EmptyState>
       ) : (
         <>
           <ul className="flex flex-col gap-2">

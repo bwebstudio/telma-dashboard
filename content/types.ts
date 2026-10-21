@@ -445,6 +445,10 @@ export interface Dictionary {
   pacientes: {
     title: string
     lead: string
+    /** The same two lines for a clinic whose Telma does not book: no record
+     *  ever opens by itself there, so neither may say that it will. */
+    leadMessages: string
+    emptyMessages: string
     search: string
     searchGo: string
     empty: string

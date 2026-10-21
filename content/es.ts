@@ -427,9 +427,11 @@ export const es: Dictionary = {
   pacientes: {
     title: 'Pacientes',
     lead: 'La ficha del paciente se crea automáticamente cuando Telma registra su primera cita.',
+    leadMessages: 'Aquí están las personas a las que la clínica tiene que devolver la llamada, y el seguimiento de cada una. La ficha se abre desde el recado, en Hoy, con "Seguir a esta persona".',
     search: 'Nombre o teléfono',
     searchGo: 'Buscar',
     empty: 'Todavía no hay fichas. La primera se abre sola.',
+    emptyMessages: 'Todavía no hay fichas. Abra la primera desde un recado, en Hoy.',
     none: 'Nadie con ese nombre o número.',
     more: 'Hay {n} más. Busque por el nombre o el teléfono.',
     optedOut: 'No quiere mensajes',

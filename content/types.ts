@@ -469,6 +469,11 @@ export interface Dictionary {
 
     notes: string
     /** From a message to a record, on the day's list. See FollowCaller. */
+    /** On a call nobody answered, which has no record to write it on. */
+    calledBack: string
+    calledBackAgain: string
+    calledBackAt: string
+    calledBackTimes: string
     followCaller: string
     openRecord: string
     callerName: string

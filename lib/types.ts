@@ -436,6 +436,10 @@ export interface Call {
   summary: string | null
   transcript: TranscriptTurn[] | null
   recording_url: string | null
+  /** How many times the clinic rang this number back, and the last of them.
+   *  Only used on a call nobody answered. See 0078. */
+  callbacks?: number | null
+  called_back_at?: string | null
   created_at: string
 }
 

@@ -6,6 +6,7 @@ import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { formatTime, formatDate } from '@/lib/format'
 import { IconPhone, IconPhoneMissed, IconWhatsApp } from '@/components/icons'
 import { FollowCaller } from '@/components/clinic/FollowCaller'
+import { CallBack } from '@/components/clinic/CallBack'
 
 /**
  * The day, for a clinic whose Telma does not book.
@@ -119,13 +120,30 @@ export function MessagesDay({
                     {dict.agenda.openConversation}
                   </Link>
                 )}
-                {c.from_phone && (
-                  <FollowCaller
-                    phone={c.from_phone}
-                    patientId={records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? null}
-                    dict={dict}
-                  />
-                )}
+                {/* ── TWO DIFFERENT THINGS, AND ONLY ONE AT A TIME ───────
+                    A call somebody spoke on has a person behind it, so the
+                    row leads to their record, where every attempt and note
+                    belongs. A call nobody answered has no person and no name;
+                    opening a record on a bare number would put a row nobody
+                    can read into the list that has to outlive this mode. So
+                    that one carries the only mark it can: we rang back. */}
+                {c.from_phone &&
+                  (c.result === 'nao_atendida' &&
+                  !records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ? (
+                    <CallBack
+                      callId={c.id}
+                      callbacks={Number(c.callbacks ?? 0)}
+                      calledBackAt={c.called_back_at ?? null}
+                      dict={dict}
+                      locale={locale}
+                    />
+                  ) : (
+                    <FollowCaller
+                      phone={c.from_phone}
+                      patientId={records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? null}
+                      dict={dict}
+                    />
+                  ))}
               </div>
               {c.summary && (
                 <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-ink">

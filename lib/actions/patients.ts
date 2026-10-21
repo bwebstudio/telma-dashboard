@@ -404,3 +404,38 @@ export async function deletePatient(patientId: string) {
   // forma de error nuestro.
   redirect('/pacientes')
 }
+
+/**
+ * "I rang this number back."
+ *
+ * Only ever on a call nobody answered, which is the one case with no person to
+ * write it on: a record is somebody with a name, and a record opened on a bare
+ * number is a row nobody can read. See migration 0078.
+ *
+ * Through the admin client and scoped by clinic, for the same reason as the
+ * recalls: the clinic may not write on the calls table directly, and the
+ * clinic this writes for is the one this session belongs to.
+ */
+export async function logCallback(callId: string) {
+  const cid = await writableClinicId()
+  const admin = createAdminClient()
+
+  // Read then write, because a counter needs its own previous value and this
+  // is one press by one person at a desk, not a race.
+  const { data } = await admin
+    .from('calls')
+    .select('callbacks')
+    .eq('id', callId)
+    .eq('clinic_id', cid)
+    .maybeSingle()
+  const before = Number((data as { callbacks?: number } | null)?.callbacks ?? 0)
+
+  const { error } = await admin
+    .from('calls')
+    .update({ callbacks: before + 1, called_back_at: new Date().toISOString() })
+    .eq('id', callId)
+    .eq('clinic_id', cid)
+  if (error) throw new Error(error.message)
+  revalidatePath('/hoje')
+  revalidatePath('/conversas')
+}

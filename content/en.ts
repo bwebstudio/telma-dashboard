@@ -446,6 +446,10 @@ export const en: Dictionary = {
     addPhoneHint: 'Nine digits, with or without the country code.',
 
     notes: 'Notes',
+    calledBack: 'I rang them back',
+    calledBackAgain: 'Rang again',
+    calledBackAt: 'Rang back at {time}',
+    calledBackTimes: '{n} attempts by the clinic',
     followCaller: 'Follow this person',
     openRecord: 'Open record',
     callerName: 'Name of the caller',

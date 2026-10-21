@@ -92,14 +92,24 @@ export function WelcomeTour({
   dict,
   clinicName,
   welcomed = false,
+  books = true,
 }: {
   dict: Dictionary
   clinicName: string
   /** True for somebody who has already been offered it. They see nothing,
    *  unless they asked for it again with `?tour=1`. */
   welcomed?: boolean
+  /** Whether Telma books for this clinic. The first entry in the menu is in
+   *  the same place either way and leads to a different screen, so the step
+   *  that points at it has to say the right one: a tour that says "Agenda,
+   *  the bookings of today" over a list of messages is worse than no tour. */
+  books?: boolean
 }) {
   const t = dict.welcome
+  // The one step whose copy depends on it. Marcações is not here because it
+  // is not in the menu at all in that mode, and a step with nothing to point
+  // at drops out by itself.
+  const copy = (id: StepId) => (id === 'hoje' && !books ? t.steps.dia : t.steps[id])
   // -1 is the welcome card; 0 and up are the steps.
   const [at, setAt] = useState(-1)
   const [open, setOpen] = useState(false)
@@ -254,9 +264,9 @@ export function WelcomeTour({
             <p className="label-caps text-ink-mute">
               {t.step.replace('{n}', String(at + 1)).replace('{total}', String(steps.length))}
             </p>
-            <h3 className="mt-1.5 text-lg font-semibold text-ink">{t.steps[steps[at]].title}</h3>
+            <h3 className="mt-1.5 text-lg font-semibold text-ink">{copy(steps[at]).title}</h3>
             <p className="mt-1.5 text-base leading-relaxed text-ink-soft">
-              {t.steps[steps[at]].body}
+              {copy(steps[at]).body}
             </p>
             <div className="mt-4 flex items-center gap-3">
               {steps[at] === PASSWORD_STEP ? (

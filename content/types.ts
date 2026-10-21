@@ -268,7 +268,9 @@ export interface Dictionary {
      *  to be looking is the first minute in the panel. */
     changePassword: string
     steps: Record<
-      'hoje' | 'marcacoes' | 'pacientes' | 'conversas' | 'horarios' | 'telma' | 'password',
+      // 'dia' is the same first entry seen by a clinic whose Telma does not
+      // book: the screen behind it is what she did, not a diary.
+      'hoje' | 'dia' | 'marcacoes' | 'pacientes' | 'conversas' | 'horarios' | 'telma' | 'password',
       { title: string; body: string }
     >
   }

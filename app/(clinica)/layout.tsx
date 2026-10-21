@@ -147,6 +147,7 @@ export default async function ClinicaLayout({
           // moment it is worth having -- the first thing after activating is
           // the panel they just bought.
           welcomed={user.welcomed_at !== null || awaitingSetup}
+          books={books}
         />
       )}
       {children}

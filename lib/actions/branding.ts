@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getAppUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { isDemo } from '@/lib/demo/config'
 import { writeClinicOverride } from '@/lib/demo/overrides'
 import { CLINIC_ACCENTS, type ClinicAccent } from '@/lib/types'
@@ -41,8 +42,8 @@ export async function setTheme(formData: FormData): Promise<void> {
   if (isDemo()) {
     writeClinicOverride(clinicId, { theme: value })
   } else {
-    const supabase = await createClient()
-    await supabase.from('clinics').update({ theme: value }).eq('id', clinicId)
+    // See the note in lib/actions/activate: a clinic cannot write its own row.
+    await createAdminClient().from('clinics').update({ theme: value }).eq('id', clinicId)
   }
   // The theme lives on the shell, so every screen has to be re-rendered, not
   // only the one the form was submitted from.
@@ -57,8 +58,7 @@ export async function setAccent(formData: FormData): Promise<void> {
   if (isDemo()) {
     writeClinicOverride(clinicId, { accent: value as ClinicAccent })
   } else {
-    const supabase = await createClient()
-    await supabase.from('clinics').update({ accent: value }).eq('id', clinicId)
+    await createAdminClient().from('clinics').update({ accent: value }).eq('id', clinicId)
   }
   // The accent lives on the shell, so every screen has to be re-rendered, not
   // only the one the form was submitted from.
@@ -104,7 +104,7 @@ export async function uploadLogo(
   // browser would keep showing the logo the clinic just replaced.
   const url = `${data.publicUrl}?v=${Date.now()}`
 
-  await supabase.from('clinics').update({ logo_url: url }).eq('id', clinicId)
+  await createAdminClient().from('clinics').update({ logo_url: url }).eq('id', clinicId)
   revalidatePath('/', 'layout')
   return {}
 }
@@ -116,7 +116,7 @@ export async function removeLogo(): Promise<void> {
     writeClinicOverride(clinicId, { logo_url: null })
   } else {
     const supabase = await createClient()
-    await supabase.from('clinics').update({ logo_url: null }).eq('id', clinicId)
+    await createAdminClient().from('clinics').update({ logo_url: null }).eq('id', clinicId)
     await supabase.storage
       .from('clinic-logos')
       .remove(['png', 'jpg', 'webp', 'svg'].map((e) => `${clinicId}/logo.${e}`))

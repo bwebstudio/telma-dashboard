@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getAppUser } from '@/lib/auth'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -90,8 +91,22 @@ export async function setSlotStep(minutes: number) {
   const step = Math.round(Number(minutes))
   if (!Number.isFinite(step) || step < 5 || step > 240) throw new Error('bad_step')
 
-  const { error } = await supabase.from('clinics').update({ slot_minutes: step }).eq('id', cid)
-  if (error) throw new Error(error.message)
+  // ── A CLINIC MAY READ ITS OWN ROW AND MAY NOT WRITE IT ────────────────────
+  // The only write policy on `clinics` is the internal one, so an update sent
+  // with the clinic's own session matches nothing, changes nothing, and returns
+  // no error: row level security refuses by filtering, not by complaining. Every
+  // setting on this panel that appeared to save and did not was this, and the
+  // one that cost a client a week was the activate button.
+  //
+  // So these go through the admin client, pinned to the clinic the session
+  // belongs to, which is the same thing the settings form has always done.
+  const { data: saved, error } = await createAdminClient()
+    .from('clinics')
+    .update({ slot_minutes: step })
+    .eq('id', cid)
+    .select('id')
+    .maybeSingle()
+  if (error || !saved) throw new Error(error?.message ?? 'not_saved')
   revalidatePath('/horarios')
 }
 

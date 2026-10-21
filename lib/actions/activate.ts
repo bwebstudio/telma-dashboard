@@ -43,15 +43,31 @@ export async function activateClinic(): Promise<{ ok: boolean; missing?: string[
     return { ok: false, missing: steps.filter((s) => !s.done).map((s) => s.id) }
   }
 
-  // Only from the state this exists for. A paused clinic is paused for a
-  // reason -- an unpaid invoice, usually -- and that is not a button on its
-  // own panel; a cancelled one is gone.
-  const { error } = await supabase
+  // ── THROUGH THE ADMIN CLIENT, AND CHECKED ───────────────────────────────
+  // A clinic may read its own row and may not write it: the only write policy
+  // on `clinics` is the internal one, which is why every other setting on
+  // this panel is saved through the admin client too. This was the one that
+  // was not, and row level security does not raise an error for an update
+  // that matches nothing -- it quietly changes no rows. So the button worked,
+  // the page refreshed, the status stayed `por_configurar`, and the clinic
+  // pressed it again. It is the only thing on this screen they can do, and
+  // for the first real client it did nothing at all.
+  //
+  // The reach is not widened by this: the clinic is `user.clinic_id`, read
+  // from the session above, and the update is pinned to it and to the one
+  // status it may be left.
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const { data: activated, error } = await createAdminClient()
     .from('clinics')
     .update({ status: 'ativa' })
     .eq('id', cid)
     .eq('status', 'por_configurar')
-  if (error) return { ok: false }
+    .select('id')
+    .maybeSingle()
+
+  // Nothing changed is a failure, not a success. Returning ok on an update
+  // that touched no rows is what made this invisible for a week.
+  if (error || !activated) return { ok: false }
 
   // ── AND THE SCREEN THE BUTTON WAS ON ──────────────────────────────────
   // The set-up moved to /comecar, which sends an active clinic to the agenda.

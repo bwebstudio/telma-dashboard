@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getAppUser } from '@/lib/auth'
 
 /**
@@ -41,11 +42,16 @@ export async function markForwardingDone(): Promise<{ ok: boolean }> {
       ? (clinic.porting_details as Record<string, unknown>)
       : {}
 
-  const { error } = await supabase
+  // See the note in lib/actions/activate: a clinic cannot write its own row,
+  // and this one failed in the quietest way of all -- the card stayed on the
+  // screen, so the clinic dialled the codes again.
+  const { data: saved, error } = await createAdminClient()
     .from('clinics')
     .update({ porting_details: { ...details, forward_done: true } })
     .eq('id', cid)
-  if (error) return { ok: false }
+    .select('id')
+    .maybeSingle()
+  if (error || !saved) return { ok: false }
 
   revalidatePath('/hoje')
   revalidatePath('/conta')

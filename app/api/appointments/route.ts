@@ -49,6 +49,28 @@ export async function GET(request: Request) {
   const context = await getClinicWithPlan(clinicId)
   if (!context) return NextResponse.json({ error: 'clinic_not_found' }, { status: 404 })
 
+  // ── A CLINIC WITH NO DIARY HAS NOTHING TO LOOK UP ────────────────────────
+  // Telma is told she does not book for this clinic and that there is nothing
+  // here to consult. The platform can still open the cancellations procedure
+  // on its own -- it triggers on the caller saying "I want to cancel", not on
+  // anything we send -- and then she asks this, gets an empty list, and tells
+  // a patient "I cannot find any booking on this number". To that patient it
+  // sounds like their appointment has been lost. It has not: we never had it.
+  //
+  // So the answer says which of the two it is, and the shape stays the same
+  // so that nothing downstream has to learn a new one. See 0076.
+  if (context.clinic.takes_bookings === false) {
+    return NextResponse.json({
+      is_patient: false,
+      appointments: [],
+      no_diary: true,
+      say:
+        context.clinic.language === 'es'
+          ? 'En esta clínica las citas no se llevan desde aquí. Toma el recado y di que la clínica le devuelve la llamada.'
+          : 'Nesta clínica as marcações não se tratam por aqui. Toma o recado e diz que a clínica liga de volta.',
+    })
+  }
+
   const admin = createAdminClient()
   const [{ data: rows }, { data: patient }] = await Promise.all([
     admin.rpc('appointments_by_phone', { p_clinic_id: clinicId, p_phone: phone }),

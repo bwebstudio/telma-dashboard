@@ -232,6 +232,9 @@ interface BaseCopy {
   professionals: (names: string[]) => string[]
   cancellationsTitle: string
   cancellations: string[]
+  /** For a clinic that does not book: the same heading, three lines, and the
+   *  one sentence she must never say. */
+  cancellationsNone: string[]
   /** What happens when a transfer rings out. Nobody answering is the normal
    *  case, not the exception, and it needs a script of its own. */
   transferFails: string
@@ -555,6 +558,11 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     'Se a pessoa pedir alguém em concreto, passas esse nome à agenda e ofereces só as horas dessa pessoa. Se não houver nenhuma que lhe sirva, dizes com todas as letras que essa pessoa não tem nada nesses dias, e só então perguntas se quer com outra.',
   ],
   cancellationsTitle: '# Cancelamentos e alterações',
+  cancellationsNone: [
+    'Nesta clínica não tratas disto e não tens onde o consultar: as marcações estão noutro sítio, com as pessoas da clínica.',
+    'Quem liga para desmarcar ou para mudar uma hora deixa recado como qualquer outra pessoa: pedes o nome, o número e o que quer mudar, dizes que a clínica trata disso e liga de volta, e registas a chamada.',
+    '**Nunca dizes que não encontras a marcação dessa pessoa.** Não é que não exista: é que não se vê daqui, e quem ouve "não encontro nada" entende que lhe perderam a consulta.',
+  ],
   cancellations: [
     'Cancelar ou mudar uma marcação faz-se em dois passos, e são precisos os dois:',
     '',
@@ -927,6 +935,11 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     'Si la persona pide a alguien en concreto, pasas ese nombre a la agenda y ofreces solo las horas de esa persona. Si no hay ninguna que le sirva, dices con todas las letras que esa persona no tiene nada esos días, y solo entonces preguntas si quiere con otra.',
   ],
   cancellationsTitle: '# Cancelaciones y cambios',
+  cancellationsNone: [
+    'En esta clínica no te ocupas de esto y no tienes dónde consultarlo: las citas están en otro sitio, con las personas de la clínica.',
+    'Quien llama para anular o cambiar una hora deja recado como cualquier otra persona: pides el nombre, el teléfono y qué quiere cambiar, dices que la clínica se ocupa y le devuelve la llamada, y registras la llamada.',
+    '**Nunca dices que no encuentras la cita de esa persona.** No es que no exista: es que no se ve desde aquí, y quien oye "no encuentro nada" entiende que le han perdido la cita.',
+  ],
   cancellations: [
     'Anular o cambiar una cita se hace en dos pasos, y hacen falta los dos:',
     '',
@@ -1393,13 +1406,21 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
 
   // ── NOTHING TO CANCEL WHERE NOTHING WAS BOOKED ──────────────────────────
   // Two pages teaching her to look a booking up and call it off, on a clinic
-  // whose diary she has never written in. The tools would answer "nothing
-  // here" to everybody who rang about an appointment made at the desk, and
-  // she would have spent the call proving it. It goes out entirely: a person
-  // who wants to cancel something leaves a message like everybody else, which
-  // is what this clinic asked for.
+  // whose diary she has never written in.
+  //
+  // Taking them out was right and leaving silence was not. The platform opens
+  // the cancellations procedure by itself when a caller says they cannot come
+  // -- it triggers on them, not on us -- and with nothing in the sheet about
+  // it, that procedure was the only instruction she had. So she looked the
+  // diary up and told a patient "I cannot find any booking on this number",
+  // which to that patient means their appointment has been lost.
+  //
+  // What replaces it is three lines: this is not yours, you do not look
+  // anything up, and never say you cannot find it.
   const cancellingSection =
-    v.takes_bookings === false ? [] : [t.cancellationsTitle, ...t.cancellations]
+    v.takes_bookings === false
+      ? [t.cancellationsTitle, ...t.cancellationsNone]
+      : [t.cancellationsTitle, ...t.cancellations]
 
   // The normal end of a call, before the two exception paths below it. The
   // instruction about waiting is the one that earns its place: a voice agent

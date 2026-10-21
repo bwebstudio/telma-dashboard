@@ -85,6 +85,12 @@ export function MinutesProgressCard({
         <div className={`h-full rounded-full ${BAR[tone]}`} style={{ width: `${percent}%` }} />
       </div>
 
+      {/* What a minute is spent on, under the bar that spends them. The
+          question is asked of every plan sooner or later, and the answer was
+          only written inside the reminder form, which is the one place a
+          clinic looks after it has already wondered. */}
+      <p className="mt-3 max-w-prose text-sm text-ink-mute">{t.whatCounts}</p>
+
       {minutes.purchased > 0 && (
         <p className="mt-2 text-sm text-ink-mute">
           {t.includesPurchased} {minutes.purchased} {t.minutesWord}

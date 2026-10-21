@@ -518,7 +518,7 @@ export const pt: Dictionary = {
     addWhen: 'Quando',
     addNote: 'Para quê',
     addNoteHint: 'Só a clínica vê isto. A mensagem nunca diz o tratamento.',
-    addCosts: 'Conta como um minuto do seu plano. As confirmações de marcação não contam: essas vão incluídas.',
+    addCosts: 'Conta como um minuto do seu plano. As confirmações de marcação não contam: essas só existem quando há uma marcação, e a chamada que a criou já contou.',
     addKind: 'O que é',
     addBlocked: 'Esta pessoa pediu para não receber avisos. Pode voltar a ligá-los em Mensagens, aqui abaixo.',
     addBlockedWaiting: 'Esta pessoa pediu para não receber avisos, por isso os que estão agendados não vão sair. Pode voltar a ligá-los em Mensagens, aqui abaixo.',
@@ -702,6 +702,7 @@ export const pt: Dictionary = {
   },
   billing: {
     minutesTitle: 'Minutos utilizados',
+    whatCounts: 'Contam as chamadas que a Telma atende, pelo tempo que duram, e cada aviso que agendar. As confirmações de marcação não contam: só existem quando há uma marcação, e a chamada que a criou já contou.',
     percentUsed: 'usado',
     minutesWord: 'minutos',
     minuteWord: 'minuto',

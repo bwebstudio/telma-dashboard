@@ -516,7 +516,7 @@ export const en: Dictionary = {
     addWhen: 'When',
     addNote: 'What for',
     addNoteHint: 'Only the clinic sees this. The message never names the treatment.',
-    addCosts: 'Counts as one minute of your plan. Appointment confirmations do not: those are included.',
+    addCosts: 'Counts as one minute of your plan. Appointment confirmations do not: one only exists because a booking does, and the call that made it has already counted.',
     addKind: 'What it is',
     addBlocked: 'This person asked not to get reminders. You can turn them back on under Messages, below.',
     addBlockedWaiting: 'This person asked not to get reminders, so the ones already scheduled will not go out. You can turn them back on under Messages, below.',
@@ -699,6 +699,7 @@ export const en: Dictionary = {
   },
   billing: {
     minutesTitle: 'Minutes used',
+    whatCounts: 'What counts: the calls Telma answers, for as long as they last, and each reminder you schedule. Appointment confirmations do not: one only exists because a booking does, and the call that made it has already counted.',
     percentUsed: 'used',
     minutesWord: 'minutes',
     minuteWord: 'minute',

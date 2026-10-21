@@ -757,6 +757,8 @@ export interface Dictionary {
   // screen, because that is where somebody goes to decide something.
   billing: {
     minutesTitle: string
+    /** What a minute is spent on, where a clinic goes to ask. */
+    whatCounts: string
     percentUsed: string
     minutesWord: string
     minuteWord: string

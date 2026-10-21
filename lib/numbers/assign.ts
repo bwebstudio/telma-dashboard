@@ -224,6 +224,14 @@ export async function claimForClinic(
       .select('id, number, provider_ref')
       .is('clinic_id', null)
       .is('claimed_at', null)
+      // ── THE SHARED LINE IS NOT STOCK ──────────────────────────────────
+      // The same rule as claimFromStock, which had it and this did not. A
+      // shared line is unclaimed and unassigned by definition, so it matches
+      // this query perfectly, and `limit(1)` could hand back nothing else:
+      // the database refuses to mark it claimed, the update returns nothing,
+      // and a clinic that had been waiting weeks for a number was told again
+      // that there were none, with a free one sitting on the shelf behind it.
+      .eq('shared', false)
       .eq('country', country)
     if (withRegion && region) q.eq('region', region)
 

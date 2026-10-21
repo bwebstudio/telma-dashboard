@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { announcesRecording } from '@/lib/recording'
 import { isDemo } from '@/lib/demo/config'
 import { serviceLabel, specialtyLabel, TIMEZONE, countryOfRegion, type Specialty } from '@/lib/onboarding/catalog'
 import { speak, voiceId } from '@/lib/onboarding/elevenlabs'
@@ -106,7 +107,9 @@ async function previewPrompt(
   const languageNames = await languageNamesFor(languageCodes, greetingCode, locale)
 
   const formality = values.formality === 'informal' ? 'informal' : 'formal'
-  const recording = values.calls_recorded !== false
+  // What the caller will actually hear, which is not only this clinic's
+  // setting: if the platform keeps no audio, nobody announces one.
+  const recording = announcesRecording({ calls_recorded: values.calls_recorded as boolean | null })
 
   // The hours, through the same generator the sign-up uses, so the preview
   // cannot show a timetable the diary would not produce.
@@ -301,7 +304,9 @@ export async function previewSummary(
   const languageNames = await languageNamesFor(languageCodes, greetingCode, locale)
 
   const formality = values.formality === 'informal' ? 'informal' : 'formal'
-  const recording = values.calls_recorded !== false
+  // What the caller will actually hear, which is not only this clinic's
+  // setting: if the platform keeps no audio, nobody announces one.
+  const recording = announcesRecording({ calls_recorded: values.calls_recorded as boolean | null })
   const hours = openingHoursFrom(values, locale)
 
   const services = Array.isArray(values.services)

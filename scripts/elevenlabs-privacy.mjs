@@ -23,8 +23,23 @@ const KEY = env('ELEVENLABS_API_KEY')
 if (!KEY) fail('ELEVENLABS_API_KEY não encontrada.')
 
 const PRIVACY = {
-  record_voice: true,
-  // Seven days, and then the audio is deleted rather than merely hidden.
+  // ── NO AUDIO AT ALL ──────────────────────────────────────────────────────
+  // The sentence Telma says at the start is what makes keeping a recording
+  // lawful, and the first real client asked for the sentence to go. One agent
+  // answers for every clinic and this setting lives on the agent, so the
+  // honest way to give them that is to stop keeping audio for anybody.
+  //
+  // It costs nothing that exists. No audio has ever reached a panel: the tool
+  // that files a call has no field for one, and nobody has ever played a call
+  // back. What it removes is a week of unredacted clinical speech on a third
+  // party's servers, kept for no reader.
+  //
+  // lib/recording.ts holds the other half of this decision, the sentence, and
+  // says how to turn both back on together.
+  record_voice: false,
+  // Seven days, and then whatever is left is deleted rather than merely
+  // hidden. It still matters with no audio: the transcript is kept for this
+  // long, because the summary in the panel is written from it.
   retention_days: 7,
   delete_audio: true,
   // The transcript goes with the audio, at the same seven days.

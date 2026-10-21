@@ -609,7 +609,7 @@ export const en: Dictionary = {
     detail: 'Call detail',
     noSummary: 'No summary.',
     audio: 'Recording',
-    noAudio: 'No recording available.',
+    noAudio: 'Calls are not recorded. What stays of each one is this summary.',
     duration: 'Duration',
   },
   comecar: {

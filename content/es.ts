@@ -609,7 +609,7 @@ export const es: Dictionary = {
     detail: 'Detalle de la llamada',
     noSummary: 'Sin resumen.',
     audio: 'Grabación',
-    noAudio: 'Sin grabación disponible.',
+    noAudio: 'Las llamadas no se graban. De cada conversación queda este resumen.',
     duration: 'Duración',
   },
   comecar: {

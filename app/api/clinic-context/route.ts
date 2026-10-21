@@ -3,6 +3,7 @@ import { isOpenNow, openingHours, spansText } from '@/lib/opening-hours'
 import { authorizedWebhook } from '@/lib/api-auth'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { announcesRecording } from '@/lib/recording'
 import {
   countryOfRegion,
   serviceLabel,
@@ -120,7 +121,8 @@ export async function GET(request: Request) {
     within_opening_hours: isOpenNow(hours, clinic.timezone),
     emergency_number: clinic.emergency_number ?? null,
     emergency_protocol: clinic.emergency_protocol ?? null,
-    recording: clinic.calls_recorded ?? true,
+    // The sentence and the audio move together. See lib/recording.
+    recording: announcesRecording(clinic),
     // Changes what she says when she closes a booking. See 0064.
     appointments_auto_confirmed: clinic.appointments_auto_confirmed ?? false,
     after_hours_transfer: clinic.after_hours_transfer === true,

@@ -611,7 +611,7 @@ export const pt: Dictionary = {
     detail: 'Detalhe da chamada',
     noSummary: 'Sem resumo.',
     audio: 'Gravação',
-    noAudio: 'Sem gravação disponível.',
+    noAudio: 'As chamadas não são gravadas. De cada conversa fica este resumo.',
     duration: 'Duração',
   },
   comecar: {

@@ -443,6 +443,9 @@ export interface Call {
    *  Only used on a call nobody answered. See 0078. */
   callbacks?: number | null
   called_back_at?: string | null
+  /** When somebody marked this call dealt with. Null means it is still on
+   *  the day's list of things to do. See 0080. */
+  handled_at?: string | null
   created_at: string
 }
 

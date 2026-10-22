@@ -406,6 +406,26 @@ export async function deletePatient(patientId: string) {
 }
 
 /**
+ * "Somebody has dealt with this call", and the way back out of it.
+ *
+ * On the call and not on the person, because it is a different sentence.
+ * "This person still owes us something" is the follow-up on their record and
+ * outlives any one call; this is the day's list saying a line can go quiet.
+ * See migration 0080.
+ */
+export async function setCallHandled(callId: string, done: boolean) {
+  const cid = await writableClinicId()
+  const { error } = await createAdminClient()
+    .from('calls')
+    .update({ handled_at: done ? new Date().toISOString() : null })
+    .eq('id', callId)
+    .eq('clinic_id', cid)
+  if (error) throw new Error(error.message)
+  revalidatePath('/hoje')
+  revalidatePath('/conversas')
+}
+
+/**
  * "I rang this number back."
  *
  * Only ever on a call nobody answered, which is the one case with no person to

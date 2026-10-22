@@ -14,7 +14,8 @@ import { isOnboardingLocale, DEFAULT_ONBOARDING_LOCALE } from '@/lib/onboarding/
 import { ForwardingCard } from '@/components/clinic/ForwardingCard'
 import type { ForwardType } from '@/lib/forwarding'
 import { MinutesProgressCard } from '@/components/clinic/MinutesProgressCard'
-import { MessagesDay, weekRowLabel } from '@/components/clinic/MessagesDay'
+import { MessagesDay } from '@/components/clinic/MessagesDay'
+import { weekRowLabel } from '@/lib/format'
 import { PlannerSection } from '@/components/clinic/PlannerSection'
 import { ViewSwitcher } from '@/components/clinic/ViewSwitcher'
 import { getClinicWithPlan, getMinutePackOffer } from '@/lib/clinic-utils'
@@ -188,6 +189,7 @@ export default async function AgendaPage({
           todayKey={dayKeyIn(tz, now)}
           yesterdayKey={dayKeyIn(tz, dayIn(tz, -1, now))}
           heading={weekdayDateIn(day.toISOString(), locale, tz)}
+          readOnly={readOnly}
           dict={dict}
           locale={locale}
         />

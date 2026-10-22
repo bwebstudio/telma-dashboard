@@ -1,12 +1,15 @@
+'use client'
+
 import Link from 'next/link'
+import { useState } from 'react'
 import type { Dictionary, Locale } from '@/content'
 import type { Call } from '@/lib/types'
 import { Badge, CALL_TONE } from '@/components/ui'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
-import { formatTime, formatDate } from '@/lib/format'
+import { formatTime } from '@/lib/format'
 import { IconPhone, IconPhoneMissed, IconWhatsApp } from '@/components/icons'
 import { FollowCaller } from '@/components/clinic/FollowCaller'
-import { CallBack } from '@/components/clinic/CallBack'
+import { CallWork } from '@/components/clinic/CallWork'
 
 /**
  * The day, for a clinic whose Telma does not book.
@@ -37,6 +40,7 @@ export function MessagesDay({
   todayKey,
   yesterdayKey,
   heading,
+  readOnly,
   dict,
   locale,
 }: {
@@ -52,12 +56,45 @@ export function MessagesDay({
   yesterdayKey: string
   /** The selected day, written out. */
   heading: string
+  /** An administrator looking at somebody else's clinic reads and does not
+   *  act, the same rule as everywhere else in the panel. */
+  readOnly: boolean
   dict: Dictionary
   locale: Locale
 }) {
   const t = dict.agenda
+
+  // ── ONE PLACE REMEMBERS WHAT HAS BEEN DONE ───────────────────────────────
+  // The heading counts what is left and each row says whether it is one of
+  // them, which is the same fact drawn twice. Held here, so pressing
+  // "Tratado" moves the row and the figure above it together: a count that
+  // lags behind the list it is counting is read as the screen being wrong.
+  //
+  // Seeded from the server and corrected by it on the next load; this is the
+  // same morning's work, not a second source of truth.
+  const [work, setWork] = useState<Record<string, { handledAt: string | null; tries: number; lastTry: string | null }>>(
+    () =>
+      Object.fromEntries(
+        calls.map((c) => [
+          c.id,
+          {
+            handledAt: c.handled_at ?? null,
+            tries: Number(c.callbacks ?? 0),
+            lastTry: c.called_back_at ?? null,
+          },
+        ])
+      )
+  )
+  const stateOf = (c: Call) =>
+    work[c.id] ?? {
+      handledAt: c.handled_at ?? null,
+      tries: Number(c.callbacks ?? 0),
+      lastTry: c.called_back_at ?? null,
+    }
+
   const answered = calls.filter((c) => c.result !== 'nao_atendida').length
   const missed = calls.filter((c) => c.result === 'nao_atendida').length
+  const pendingWork = calls.filter((c) => !stateOf(c).handledAt).length
 
   return (
     <>
@@ -83,6 +120,14 @@ export function MessagesDay({
             <span className="font-mid">{missed}</span> {t.doneMissed.toLocaleLowerCase(locale)}
           </span>
         )}
+        {/* The figure the day is read for. Not drawn on a day with nothing
+            left: a zero here is the ordinary end of a morning, and a row of
+            counters that never changes is a row nobody reads. */}
+        {pendingWork > 0 && (
+          <span className="font-mid text-ink">
+            {dict.pacientes.callsPending.replace('{n}', String(pendingWork))}
+          </span>
+        )}
       </p>
 
       {calls.length === 0 ? (
@@ -92,7 +137,11 @@ export function MessagesDay({
       ) : (
         <ul className="flex flex-col gap-2">
           {calls.map((c) => (
-            <li key={c.id} className="card p-4">
+            // What is dealt with fades. Not a colour on what is pending,
+            // which would paint the whole list at nine in the morning: the
+            // list empties as the morning is worked through, and what is
+            // left is what is left.
+            <li key={c.id} className={`card p-4 ${stateOf(c).handledAt ? 'opacity-55' : ''}`}>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="font-mid text-lg text-ink">{formatTime(c.created_at, locale)}</span>
                 <span
@@ -127,28 +176,44 @@ export function MessagesDay({
                     opening a record on a bare number would put a row nobody
                     can read into the list that has to outlive this mode. So
                     that one carries the only mark it can: we rang back. */}
-                {c.from_phone &&
-                  (c.result === 'nao_atendida' &&
-                  !records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ? (
-                    <CallBack
-                      callId={c.id}
-                      callbacks={Number(c.callbacks ?? 0)}
-                      calledBackAt={c.called_back_at ?? null}
-                      dict={dict}
-                      locale={locale}
-                    />
-                  ) : (
-                    <FollowCaller
-                      phone={c.from_phone}
-                      patientId={records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? null}
-                      dict={dict}
-                    />
-                  ))}
+                {c.from_phone && (
+                  <FollowCaller
+                    phone={c.from_phone}
+                    patientId={records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? null}
+                    dict={dict}
+                  />
+                )}
               </div>
               {c.summary && (
                 <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-ink">
                   {c.summary}
                 </p>
+              )}
+              {/* ── AND WHAT HAS BEEN DONE ABOUT IT ────────────────────────
+                  On its own line, under the message, because it is the
+                  answer to the question the message asks. Above it the row
+                  says what happened; here it says whether anybody has dealt
+                  with it, and the two presses that change that. */}
+              {!readOnly && (
+                <div className="mt-3">
+                  <CallWork
+                    callId={c.id}
+                    handledAt={stateOf(c).handledAt}
+                    callbacks={stateOf(c).tries}
+                    calledBackAt={stateOf(c).lastTry}
+                    onHandled={(at) =>
+                      setWork((w) => ({ ...w, [c.id]: { ...stateOf(c), handledAt: at } }))
+                    }
+                    onCalledBack={(at) =>
+                      setWork((w) => ({
+                        ...w,
+                        [c.id]: { ...stateOf(c), tries: stateOf(c).tries + 1, lastTry: at },
+                      }))
+                    }
+                    dict={dict}
+                    locale={locale}
+                  />
+                </div>
               )}
             </li>
           ))}
@@ -201,12 +266,3 @@ export function MessagesDay({
   )
 }
 
-/** The day written as the week rows want it: "Quarta, 15/10". */
-export function weekRowLabel(iso: string, locale: Locale, tz: string): string {
-  const d = new Date(iso)
-  const weekday = d.toLocaleDateString(locale === 'pt' ? 'pt-PT' : locale === 'es' ? 'es-ES' : 'en-GB', {
-    weekday: 'long',
-    timeZone: tz,
-  })
-  return `${weekday.charAt(0).toLocaleUpperCase(locale)}${weekday.slice(1)}, ${formatDate(iso, locale)}`
-}

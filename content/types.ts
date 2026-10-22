@@ -470,6 +470,12 @@ export interface Dictionary {
     notes: string
     /** From a message to a record, on the day's list. See FollowCaller. */
     /** On a call nobody answered, which has no record to write it on. */
+    /** The day's list: whether a call has been dealt with, and the count of
+     *  the ones that have not. */
+    callDone: string
+    callDoneAt: string
+    callReopen: string
+    callsPending: string
     calledBack: string
     calledBackAgain: string
     calledBackAt: string

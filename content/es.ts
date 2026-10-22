@@ -446,6 +446,10 @@ export const es: Dictionary = {
     addPhoneHint: 'Nueve cifras, con o sin el prefijo del país.',
 
     notes: 'Notas',
+    callDone: 'Tratado',
+    callDoneAt: 'Tratado a las {time}',
+    callReopen: 'Reabrir',
+    callsPending: '{n} por tratar',
     calledBack: 'Ya he devuelto la llamada',
     calledBackAgain: 'He vuelto a llamar',
     calledBackAt: 'Devuelta a las {time}',

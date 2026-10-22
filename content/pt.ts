@@ -448,6 +448,10 @@ export const pt: Dictionary = {
     addPhoneHint: 'Nove algarismos, com ou sem o indicativo do país.',
 
     notes: 'Notas',
+    callDone: 'Tratado',
+    callDoneAt: 'Tratado às {time}',
+    callReopen: 'Reabrir',
+    callsPending: '{n} por tratar',
     calledBack: 'Já liguei de volta',
     calledBackAgain: 'Liguei outra vez',
     calledBackAt: 'Devolvida às {time}',

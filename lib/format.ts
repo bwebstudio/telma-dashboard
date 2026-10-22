@@ -67,3 +67,13 @@ export function currentMonthKey(): string {
   const now = new Date()
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`
 }
+
+/** The day written as the week rows want it: "Quarta, 15/10". */
+export function weekRowLabel(iso: string, locale: Locale, tz: string): string {
+  const d = new Date(iso)
+  const weekday = d.toLocaleDateString(locale === 'pt' ? 'pt-PT' : locale === 'es' ? 'es-ES' : 'en-GB', {
+    weekday: 'long',
+    timeZone: tz,
+  })
+  return `${weekday.charAt(0).toLocaleUpperCase(locale)}${weekday.slice(1)}, ${formatDate(iso, locale)}`
+}

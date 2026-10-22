@@ -114,6 +114,15 @@ export function IconCheck({ className }: P) {
     </svg>
   )
 }
+// A pencil. One path, because the band and the tip of a fuller drawing smudge
+// into each other at 16px, which is the size it is used at.
+export function IconEdit({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M16.8 3.6a2.3 2.3 0 0 1 3.6 2.8L8.2 18.6 3.5 20.5l1.9-4.7L16.8 3.6z" />
+    </svg>
+  )
+}
 export function IconClose({ className }: P) {
   return (
     <svg {...base} className={className}>

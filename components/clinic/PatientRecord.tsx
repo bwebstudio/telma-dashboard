@@ -9,6 +9,7 @@ import { formatDay, formatDate, formatDateTime, formatDuration, formatWeekdayDat
 import { recallMessage, defaultBody, segmentsFor, BODY_LIMIT } from '@/lib/recall-copy'
 import { fill } from '@/lib/fill'
 import { Badge, SectionTitle, APPOINTMENT_TONE, CALL_TONE } from '@/components/ui'
+import { IconEdit } from '@/components/icons'
 import {
   addPatientNote,
   deletePatientNote,
@@ -495,14 +496,23 @@ function PatientIdentity({
 
   return (
     <header>
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      {/* Centred, not baseline: a button with no text in it has no baseline
+          worth aligning to and sits low against the name. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <h1 className="text-3xl font-semibold text-ink">{patient.name}</h1>
+        {/* The pencil and not the words. "Corrigir dados" beside a name read
+            as a second heading and took as much room as the name itself; the
+            icon is what everybody already reaches for, and the words survive
+            as its label for anybody reading the screen out or hovering. */}
         {!readOnly && (
           <button
-            className="text-sm text-brand-accent hover:text-brand-hover"
+            type="button"
+            aria-label={t.identityEdit}
+            title={t.identityEdit}
+            className="rounded-input p-1.5 text-ink-mute transition-colors duration-fast ease-calm hover:bg-surface-sunken hover:text-ink"
             onClick={() => setEditing(true)}
           >
-            {t.identityEdit}
+            <IconEdit className="h-4 w-4" />
           </button>
         )}
       </div>

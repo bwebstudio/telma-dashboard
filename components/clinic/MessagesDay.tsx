@@ -7,7 +7,7 @@ import type { Call } from '@/lib/types'
 import { Badge, CALL_TONE } from '@/components/ui'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
 import { formatTime } from '@/lib/format'
-import { IconPhone, IconPhoneMissed, IconWhatsApp } from '@/components/icons'
+import { IconCheck, IconPhone, IconPhoneMissed, IconWhatsApp } from '@/components/icons'
 import { FollowCaller } from '@/components/clinic/FollowCaller'
 import { CallWork } from '@/components/clinic/CallWork'
 
@@ -32,6 +32,16 @@ import { CallWork } from '@/components/clinic/CallWork'
  * point of the row: a clinic reading this wants the fifteen words Telma wrote
  * down, not a list of telephone numbers to open one by one.
  */
+/** What has been done about one call, as this screen holds it. */
+type Work = { handledAt: string | null; tries: number; lastTry: string | null }
+
+/** What the server last said about it, which is where every row starts. */
+const asWritten = (c: Call): Work => ({
+  handledAt: c.handled_at ?? null,
+  tries: Number(c.callbacks ?? 0),
+  lastTry: c.called_back_at ?? null,
+})
+
 export function MessagesDay({
   calls,
   records,
@@ -46,9 +56,12 @@ export function MessagesDay({
 }: {
   /** The selected day's calls, newest first. */
   calls: Call[]
-  /** The record each caller already has, by the last nine digits they rang
-   *  from. Missing means there is none yet, and the row offers to open one. */
-  records: Record<string, string>
+  /** The records each caller already has, by the last nine digits they rang
+   *  from. Missing means there is none yet, and the row offers to open one.
+   *  A list rather than one record because a number is often a household;
+   *  the name comes with it, because a number reception recognises is a
+   *  person they can greet and nobody can read a number aloud to a patient. */
+  records: Record<string, Array<{ id: string; name: string; nameKey: string }>>
   /** One row per day of the last seven, oldest first. */
   week: Array<{ dayKey: string; label: string; answered: number; missed: number }>
   dayKey: string
@@ -72,25 +85,51 @@ export function MessagesDay({
   //
   // Seeded from the server and corrected by it on the next load; this is the
   // same morning's work, not a second source of truth.
-  const [work, setWork] = useState<Record<string, { handledAt: string | null; tries: number; lastTry: string | null }>>(
-    () =>
-      Object.fromEntries(
-        calls.map((c) => [
-          c.id,
-          {
-            handledAt: c.handled_at ?? null,
-            tries: Number(c.callbacks ?? 0),
-            lastTry: c.called_back_at ?? null,
-          },
-        ])
-      )
+  const [work, setWork] = useState<Record<string, Work>>(() =>
+    Object.fromEntries(calls.map((c) => [c.id, asWritten(c)]))
   )
-  const stateOf = (c: Call) =>
-    work[c.id] ?? {
-      handledAt: c.handled_at ?? null,
-      tries: Number(c.callbacks ?? 0),
-      lastTry: c.called_back_at ?? null,
-    }
+  const stateOf = (c: Call) => work[c.id] ?? asWritten(c)
+
+  // ── ONE PRESS CAN QUIETEN SEVERAL ROWS ───────────────────────────────────
+  // Marking a call dealt with closes everything that number had left open
+  // before it, because it was the same thing being asked twice. Most of those
+  // calls are on other days and the server has them; the ones that are on
+  // this screen have to go quiet now, with the figure above them.
+  const markHandled = (at: string | null, ids: string[]) =>
+    setWork((w) => {
+      const next = { ...w }
+      for (const id of ids) {
+        const call = calls.find((c) => c.id === id)
+        if (!call) continue
+        next[id] = { ...(w[id] ?? asWritten(call)), handledAt: at }
+      }
+      return next
+    })
+
+  // ── WHICH RECORD THIS CALL BELONGS TO ────────────────────────────────────
+  // One number, one person, almost always, and then the record is simply
+  // theirs. But the key has been (clinic, digits, name) since 0049 because a
+  // number is often a household: Ana and her husband ring from the same
+  // handset and hold two records. With two on the line the number alone does
+  // not say who rang, so the name Telma heard on this call decides, by the
+  // same prefix rule `remember_patient` uses -- "Ana" and "Ana Martins" on
+  // one number are one person.
+  //
+  // And when even that does not settle it, this stays silent: no name on the
+  // row and no record behind it, so the row offers to take the name instead.
+  // Writing "João" over Ana's call to fill a gap is the one outcome worth
+  // avoiding, and typing the name lands on the right record anyway.
+  const recordOf = (c: Call) => {
+    const people = records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? []
+    if (people.length <= 1) return people[0] ?? null
+    const heard = (c.patient_name ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+    if (!heard) return null
+    return (
+      people.find((p) => p.nameKey === heard) ??
+      people.find((p) => p.nameKey.startsWith(heard) || heard.startsWith(p.nameKey)) ??
+      null
+    )
+  }
 
   const answered = calls.filter((c) => c.result !== 'nao_atendida').length
   const missed = calls.filter((c) => c.result === 'nao_atendida').length
@@ -136,87 +175,136 @@ export function MessagesDay({
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {calls.map((c) => (
-            // What is dealt with fades. Not a colour on what is pending,
-            // which would paint the whole list at nine in the morning: the
-            // list empties as the morning is worked through, and what is
-            // left is what is left.
-            <li key={c.id} className={`card p-4 ${stateOf(c).handledAt ? 'opacity-55' : ''}`}>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="font-mid text-lg text-ink">{formatTime(c.created_at, locale)}</span>
-                <span
-                  className={c.channel === 'whatsapp' ? 'text-ok' : 'text-ink-mute'}
-                  aria-label={dict.status.channel[c.channel]}
-                >
-                  {c.channel === 'whatsapp' ? (
-                    <IconWhatsApp className="h-4 w-4" />
-                  ) : (
-                    <IconPhone className="h-4 w-4" />
+          {calls.map((c) => {
+            const done = stateOf(c).handledAt
+            const known = recordOf(c)
+            // The record's name first: it is the clinic's own spelling, kept
+            // on purpose. `patient_name` is what Telma heard on the call,
+            // which is better than nothing and worse than a record.
+            const name = known?.name || c.patient_name
+            return (
+              // What is dealt with fades. Not a colour on what is pending,
+              // which would paint the whole list at nine in the morning: the
+              // list empties as the morning is worked through, and what is
+              // left is what is left.
+              //
+              // The green edge is drawn inset rather than as a border, so a
+              // card going quiet does not shift its own text sideways by the
+              // width of the line.
+              <li
+                key={c.id}
+                className={`card p-4 ${done ? 'shadow-[inset_3px_0_0_0_rgb(var(--ok))]' : ''}`}
+              >
+                {/* Everything that has already been read is dimmed together,
+                    and the mark underneath is deliberately outside it. */}
+                <div className={done ? 'opacity-55' : ''}>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="font-mid text-lg text-ink">
+                      {formatTime(c.created_at, locale)}
+                    </span>
+                    <span
+                      className={c.channel === 'whatsapp' ? 'text-ok' : 'text-ink-mute'}
+                      aria-label={dict.status.channel[c.channel]}
+                    >
+                      {c.channel === 'whatsapp' ? (
+                        <IconWhatsApp className="h-4 w-4" />
+                      ) : (
+                        <IconPhone className="h-4 w-4" />
+                      )}
+                    </span>
+                    {/* ── THE NAME AND THE NUMBER, IN THAT ORDER ─────────
+                        Whoever is about to ring back needs both and they are
+                        not the same kind of thing. The name is who it is, so
+                        it carries the weight of the hour beside it; the
+                        number is how you reach them, so it stays quiet and
+                        next to it, ready to be read out or copied. A caller
+                        with no record and no name keeps the number alone,
+                        which is all we know about them. */}
+                    {name ? (
+                      <span className="min-w-0 flex-1 truncate text-base">
+                        <span className="font-mid text-ink">{name}</span>
+                        {c.from_phone && <span className="text-ink-soft"> · {c.from_phone}</span>}
+                      </span>
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate text-base text-ink-soft">
+                        {c.from_phone || dict.common.noNumber}
+                      </span>
+                    )}
+                    {c.result && (
+                      <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>
+                    )}
+                    {/* Nothing was said on a call nobody answered, so there is
+                        nothing to open. The person is still worth following up:
+                        they rang and got nobody. */}
+                    {c.result !== 'nao_atendida' && (
+                      <Link
+                        href={`/conversas?c=${c.id}`}
+                        className="text-sm text-brand-accent hover:text-brand-hover"
+                      >
+                        {dict.agenda.openConversation}
+                      </Link>
+                    )}
+                    {/* ── TWO DIFFERENT THINGS, AND ONLY ONE AT A TIME ───────
+                        A call somebody spoke on has a person behind it, so the
+                        row leads to their record, where every attempt and note
+                        belongs. A call nobody answered has no person and no name;
+                        opening a record on a bare number would put a row nobody
+                        can read into the list that has to outlive this mode. So
+                        that one carries the only mark it can: we rang back. */}
+                    {c.from_phone && (
+                      <FollowCaller
+                        phone={c.from_phone}
+                        patientId={known?.id ?? null}
+                        dict={dict}
+                      />
+                    )}
+                  </div>
+                  {c.summary && (
+                    <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-ink">
+                      {c.summary}
+                    </p>
                   )}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-base text-ink-soft">
-                  {c.patient_name || c.from_phone || dict.common.noNumber}
-                </span>
-                {c.result && <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>}
-                {/* Nothing was said on a call nobody answered, so there is
-                    nothing to open. The person is still worth following up:
-                    they rang and got nobody. */}
-                {c.result !== 'nao_atendida' && (
-                  <Link
-                    href={`/conversas?c=${c.id}`}
-                    className="text-sm text-brand-accent hover:text-brand-hover"
-                  >
-                    {dict.agenda.openConversation}
-                  </Link>
-                )}
-                {/* ── TWO DIFFERENT THINGS, AND ONLY ONE AT A TIME ───────
-                    A call somebody spoke on has a person behind it, so the
-                    row leads to their record, where every attempt and note
-                    belongs. A call nobody answered has no person and no name;
-                    opening a record on a bare number would put a row nobody
-                    can read into the list that has to outlive this mode. So
-                    that one carries the only mark it can: we rang back. */}
-                {c.from_phone && (
-                  <FollowCaller
-                    phone={c.from_phone}
-                    patientId={records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? null}
-                    dict={dict}
-                  />
-                )}
-              </div>
-              {c.summary && (
-                <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-ink">
-                  {c.summary}
-                </p>
-              )}
-              {/* ── AND WHAT HAS BEEN DONE ABOUT IT ────────────────────────
-                  On its own line, under the message, because it is the
-                  answer to the question the message asks. Above it the row
-                  says what happened; here it says whether anybody has dealt
-                  with it, and the two presses that change that. */}
-              {!readOnly && (
-                <div className="mt-3">
-                  <CallWork
-                    callId={c.id}
-                    handledAt={stateOf(c).handledAt}
-                    callbacks={stateOf(c).tries}
-                    calledBackAt={stateOf(c).lastTry}
-                    onHandled={(at) =>
-                      setWork((w) => ({ ...w, [c.id]: { ...stateOf(c), handledAt: at } }))
-                    }
-                    onCalledBack={(at) =>
-                      setWork((w) => ({
-                        ...w,
-                        [c.id]: { ...stateOf(c), tries: stateOf(c).tries + 1, lastTry: at },
-                      }))
-                    }
-                    dict={dict}
-                    locale={locale}
-                  />
                 </div>
-              )}
-            </li>
-          ))}
+                {/* ── AND WHAT HAS BEEN DONE ABOUT IT ────────────────────────
+                    On its own line, under the message, because it is the
+                    answer to the question the message asks. Above it the row
+                    says what happened; here it says whether anybody has dealt
+                    with it, and the two presses that change that. */}
+                {readOnly ? (
+                  done && (
+                    <div className="mt-3">
+                      <span className="badge gap-1.5 bg-ok-soft text-ok">
+                        <IconCheck className="h-4 w-4" />
+                        {dict.pacientes.callDoneAt.replace('{time}', formatTime(done, locale))}
+                      </span>
+                    </div>
+                  )
+                ) : (
+                  <div className="mt-3">
+                    <CallWork
+                      callId={c.id}
+                      handledAt={done}
+                      callbacks={stateOf(c).tries}
+                      calledBackAt={stateOf(c).lastTry}
+                      onHandled={markHandled}
+                      onCalledBack={(at) =>
+                        setWork((w) => ({
+                          ...w,
+                          [c.id]: {
+                            ...(w[c.id] ?? asWritten(c)),
+                            tries: (w[c.id] ?? asWritten(c)).tries + 1,
+                            lastTry: at,
+                          },
+                        }))
+                      }
+                      dict={dict}
+                      locale={locale}
+                    />
+                  </div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
 

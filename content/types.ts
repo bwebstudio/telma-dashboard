@@ -474,6 +474,9 @@ export interface Dictionary {
      *  the ones that have not. */
     callDone: string
     callDoneAt: string
+    /** Said once, right after the press that closed somebody's older calls
+     *  along with this one. Not kept: tomorrow the number means nothing. */
+    callDoneAlso: string
     callReopen: string
     callsPending: string
     calledBack: string

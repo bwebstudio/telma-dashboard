@@ -412,17 +412,73 @@ export async function deletePatient(patientId: string) {
  * "This person still owes us something" is the follow-up on their record and
  * outlives any one call; this is the day's list saying a line can go quiet.
  * See migration 0080.
+ *
+ * ── IT CLOSES THE CONVERSATION, NOT THE LINE ───────────────────────────────
+ * Somebody rang on Monday and got nobody, rang again on Wednesday, rang again
+ * this morning. Reception finally speaks to them, and the two older lines are
+ * not pending any more: they were the same thing being asked three times.
+ * Leaving them open teaches the clinic that the day's list lies, and a list
+ * that lies is a list nobody works through.
+ *
+ * So pressing it closes every call this number has left open up to this one,
+ * and never anything after it: a call that came in later is something they
+ * rang about after we had spoken, which nobody has dealt with yet.
+ *
+ * ── AND IT CAN BE UNDONE WHOLE ─────────────────────────────────────────────
+ * Closing five lines with one press and reopening only one of them would be a
+ * trap, so everything closed together carries the same stamp -- one timestamp
+ * chosen here, not `now()` row by row -- and reopening looks for exactly that
+ * stamp. The group that went quiet together comes back together, and whatever
+ * was closed on another day stays closed.
+ *
+ * Returns the stamp and every call it reached, because the screen counts what
+ * is still open and has to move the other rows at the same time.
  */
-export async function setCallHandled(callId: string, done: boolean) {
+export async function setCallHandled(
+  callId: string,
+  done: boolean
+): Promise<{ at: string | null; ids: string[] }> {
   const cid = await writableClinicId()
-  const { error } = await createAdminClient()
+  const db = createAdminClient()
+
+  const { data: call, error: readErr } = await db
     .from('calls')
-    .update({ handled_at: done ? new Date().toISOString() : null })
+    .select('id, from_digits, created_at, handled_at')
     .eq('id', callId)
     .eq('clinic_id', cid)
+    .maybeSingle()
+  if (readErr) throw new Error(readErr.message)
+  if (!call) throw new Error('call not found')
+
+  // A call with no number at all is nobody: it cannot be grouped with
+  // anything, so it answers for itself alone.
+  const digits = (call.from_digits as string | null) ?? ''
+  const at = new Date().toISOString()
+
+  let q = db
+    .from('calls')
+    .update({ handled_at: done ? at : null })
+    .eq('clinic_id', cid)
+  if (!digits) {
+    q = q.eq('id', callId)
+  } else if (done) {
+    // `is null` as well, so a press never re-stamps something closed earlier
+    // and swallows an older group into this one.
+    q = q
+      .eq('from_digits', digits)
+      .lte('created_at', call.created_at as string)
+      .is('handled_at', null)
+  } else if (call.handled_at) {
+    q = q.eq('from_digits', digits).eq('handled_at', call.handled_at as string)
+  } else {
+    q = q.eq('id', callId)
+  }
+
+  const { data: touched, error } = await q.select('id')
   if (error) throw new Error(error.message)
   revalidatePath('/hoje')
   revalidatePath('/conversas')
+  return { at: done ? at : null, ids: ((touched ?? []) as Array<{ id: string }>).map((r) => r.id) }
 }
 
 /**

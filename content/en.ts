@@ -448,6 +448,7 @@ export const en: Dictionary = {
     notes: 'Notes',
     callDone: 'Dealt with',
     callDoneAt: 'Dealt with at {time}',
+    callDoneAlso: 'closed {n} earlier ones from this person',
     callReopen: 'Reopen',
     callsPending: '{n} still to do',
     calledBack: 'I rang them back',

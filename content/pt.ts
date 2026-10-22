@@ -450,6 +450,7 @@ export const pt: Dictionary = {
     notes: 'Notas',
     callDone: 'Tratado',
     callDoneAt: 'Tratado às {time}',
+    callDoneAlso: 'fechou {n} anteriores desta pessoa',
     callReopen: 'Reabrir',
     callsPending: '{n} por tratar',
     calledBack: 'Já liguei de volta',

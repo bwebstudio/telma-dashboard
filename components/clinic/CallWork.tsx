@@ -29,11 +29,17 @@ import { IconCheck } from '@/components/icons'
  * last month. That one lives on their record, which is where a history
  * belongs.
  *
- * ── WHY THE DONE ROW GOES QUIET ────────────────────────────────────────────
+ * ── WHY THE DONE ROW GOES QUIET AND THE MARK DOES NOT ──────────────────────
  * Not a colour for pending, which would paint the whole list amber at nine in
  * the morning and teach everybody to ignore it. The opposite: what is done
  * fades, so the list visibly empties as the morning is worked through, and
  * what is left is what is left.
+ *
+ * The one thing that does not fade is this mark. The row behind it is dim
+ * because nobody needs to read it again; the green tick is what somebody
+ * scrolling is looking for, and a dim tick is a tick you have to go looking
+ * for. So the card is held at the parent's opacity and this sits outside it,
+ * at full strength. See MessagesDay.
  */
 export function CallWork({
   callId,
@@ -49,8 +55,10 @@ export function CallWork({
   handledAt: string | null
   callbacks: number
   calledBackAt: string | null
-  /** Told to the list, which is where the day's figures are counted. */
-  onHandled: (at: string | null) => void
+  /** Told to the list, which is where the day's figures are counted. The ids
+   *  are every call the press reached: one person's older calls go quiet with
+   *  this one, and the rows have to move together. */
+  onHandled: (at: string | null, ids: string[]) => void
   onCalledBack: (at: string) => void
   dict: Dictionary
   locale: Locale
@@ -59,6 +67,10 @@ export function CallWork({
   const router = useRouter()
   const [pending, start] = useTransition()
   const [failed, setFailed] = useState(false)
+  // How many OTHER calls that press closed. Said once, as feedback for the
+  // thing that just happened, and not kept anywhere: tomorrow the number
+  // means nothing and the card is quiet either way.
+  const [alsoClosed, setAlsoClosed] = useState(0)
   // ── THE ROW DOES NOT REMEMBER, THE LIST DOES ─────────────────────────────
   // Both of these change a number in the day's heading as well as this line,
   // and two copies of the same fact drift. So the state is held once, by the
@@ -67,12 +79,11 @@ export function CallWork({
   const tries = callbacks
   const lastTry = calledBackAt
 
-  const act = (fn: () => Promise<void>, after: () => void) =>
+  const act = (fn: () => Promise<void>) =>
     start(async () => {
       setFailed(false)
       try {
         await fn()
-        after()
         router.refresh()
       } catch {
         setFailed(true)
@@ -81,18 +92,34 @@ export function CallWork({
 
   if (done) {
     return (
-      <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-mute">
-        <span className="flex items-center gap-1.5 text-ok">
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="badge gap-1.5 bg-ok-soft text-ok">
           <IconCheck className="h-4 w-4" />
           {t.callDoneAt.replace('{time}', formatTime(done, locale))}
         </span>
+        {alsoClosed > 0 && (
+          <span className="text-sm text-ink-mute">
+            {t.callDoneAlso.replace('{n}', String(alsoClosed))}
+          </span>
+        )}
         <button
           className="text-sm text-ink-mute underline decoration-line-strong underline-offset-4 hover:text-ink"
           disabled={pending}
-          onClick={() => act(() => setCallHandled(callId, false), () => onHandled(null))}
+          onClick={() =>
+            act(async () => {
+              const { ids } = await setCallHandled(callId, false)
+              setAlsoClosed(0)
+              onHandled(null, ids)
+            })
+          }
         >
           {t.callReopen}
         </button>
+        {failed && (
+          <span role="alert" className="text-sm font-medium text-danger">
+            {dict.common.errorGeneric}
+          </span>
+        )}
       </span>
     )
   }
@@ -103,10 +130,11 @@ export function CallWork({
         className="btn-secondary min-h-0 px-3 py-1.5 text-sm"
         disabled={pending}
         onClick={() =>
-          act(
-            () => setCallHandled(callId, true),
-            () => onHandled(new Date().toISOString())
-          )
+          act(async () => {
+            const { at, ids } = await setCallHandled(callId, true)
+            setAlsoClosed(Math.max(0, ids.length - 1))
+            onHandled(at ?? new Date().toISOString(), ids)
+          })
         }
       >
         {t.callDone}
@@ -115,7 +143,10 @@ export function CallWork({
         className="btn-ghost min-h-0 px-3 py-1.5 text-sm"
         disabled={pending}
         onClick={() =>
-          act(() => logCallback(callId), () => onCalledBack(new Date().toISOString()))
+          act(async () => {
+            await logCallback(callId)
+            onCalledBack(new Date().toISOString())
+          })
         }
       >
         {tries > 0 ? t.calledBackAgain : t.calledBack}

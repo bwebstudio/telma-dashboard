@@ -112,11 +112,21 @@ export default async function AgendaPage({
       }
     })
 
-    // ── WHICH OF THESE PEOPLE ALREADY HAVE A RECORD ──────────────────────
+    // ── WHICH OF THESE PEOPLE ALREADY HAVE A RECORD, AND WHAT THEY ARE CALLED
     // One query for the whole day, keyed on the nine digits a call carries,
     // so each row can either lead to the record or offer to open one. A
     // record is where every follow-up lives, and on this clinic nothing else
     // creates them. See components/clinic/FollowCaller.
+    //
+    // The name travels with it, because a row showing only a number makes
+    // reception look up who it is before they can ring back. If we hold the
+    // record we know, and the one thing a number cannot do is be greeted.
+    //
+    // A list per number and not one record, because a number is often a
+    // household: the key has been (clinic, digits, name) since 0049, on
+    // purpose, so Ana's history does not end up filed under João. Which of
+    // them rang is decided on the row, by the name Telma heard. See
+    // components/clinic/MessagesDay.
     const dayCalls = (dayCallsRes.data ?? []) as Call[]
     const digits = [
       ...new Set(
@@ -125,15 +135,25 @@ export default async function AgendaPage({
           .filter((d) => d.length === 9)
       ),
     ]
-    const records: Record<string, string> = {}
+    const records: Record<string, Array<{ id: string; name: string; nameKey: string }>> = {}
     if (digits.length) {
       const { data: known } = await supabase
         .from('patients')
-        .select('id, phone_digits')
+        .select('id, name, name_key, phone_digits')
         .eq('clinic_id', clinicId)
         .in('phone_digits', digits)
-      for (const row of (known ?? []) as Array<{ id: string; phone_digits: string }>) {
-        records[row.phone_digits] = row.id
+        .order('name')
+      for (const row of (known ?? []) as Array<{
+        id: string
+        name: string
+        name_key: string | null
+        phone_digits: string
+      }>) {
+        ;(records[row.phone_digits] ??= []).push({
+          id: row.id,
+          name: row.name,
+          nameKey: row.name_key ?? row.name.trim().toLowerCase(),
+        })
       }
     }
 

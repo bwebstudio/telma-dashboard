@@ -90,6 +90,8 @@ const config: Config = {
         // Panel only. A landing page has no overdue rows.
         ok: {
           DEFAULT: 'rgb(var(--ok) / <alpha-value>)',
+          // #1bc492 itself. Shapes, never words: it is 2.25:1 on white.
+          mark: 'rgb(var(--ok-mark) / <alpha-value>)',
           soft: 'rgb(var(--ok-soft) / <alpha-value>)',
         },
         warn: {
@@ -152,6 +154,17 @@ const config: Config = {
       },
       fontSize: {
         label: ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.14em' }],
+        /* ── THE READING SIZES, ONE STEP DOWN ────────────────────────────
+           The body is 14px, so Tailwind's own steps are redefined around it
+           rather than left at a 16px root. Without this, `text-base` would
+           stay 16 and `text-sm` would land on the body size, and the two
+           sizes a row is built from would be the same size. */
+        xs: ['0.6875rem', { lineHeight: '1.45' }],
+        sm: ['0.8125rem', { lineHeight: '1.5' }],
+        base: ['0.875rem', { lineHeight: '1.55' }],
+        lg: ['1rem', { lineHeight: '1.5' }],
+        xl: ['1.125rem', { lineHeight: '1.4' }],
+        '2xl': ['1.375rem', { lineHeight: '1.25' }],
         // Quieter than the landing's scale. This is a tool somebody opens forty
         // times a day between two visits, not a page that has to sell.
         h3: ['clamp(1.125rem, 1.05rem + 0.4vw, 1.25rem)', { lineHeight: '1.4' }],

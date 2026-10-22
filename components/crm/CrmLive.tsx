@@ -101,11 +101,11 @@ export function CrmLive({
       <span className="inline-flex items-center gap-2">
         <span className="relative flex h-2.5 w-2.5">
           {online && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-60" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok-mark opacity-60" />
           )}
           <span
             className={`relative inline-flex h-2.5 w-2.5 rounded-full ${
-              online ? 'bg-ok' : 'bg-warn'
+              online ? 'bg-ok-mark' : 'bg-warn'
             }`}
           />
         </span>

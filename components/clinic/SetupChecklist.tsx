@@ -98,7 +98,7 @@ export function SetupChecklist({
         </p>
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-brand-wash" role="presentation">
           <div
-            className="h-full rounded-full bg-ok transition-[width] duration-slow ease-calm"
+            className="h-full rounded-full bg-ok-mark transition-[width] duration-slow ease-calm"
             style={{ width: `${Math.round((done / stages.length) * 100)}%` }}
           />
         </div>

@@ -122,7 +122,18 @@
        figures carry a white label where `bg-ok` and friends are used solid.
        Ink on the softs is never below 16.7:1.
 
-       ok is macaw's hue at olive, which is the only green this palette has.
+       ok is the live green, #1bc492, and it is the one colour in the panel
+       from outside the four ramps. It is here because there was already a
+       green doing this job: the dot that says the screen is live. Keeping
+       macaw's olive beside it would have left two greens for one idea, a dot
+       in one and a dealt-with mark in the other, so everything that means
+       "this is happening" or "this is done" is now this hue.
+
+       It cannot be a word at full strength: #1bc492 on white is 2.25:1, which
+       is a mark and not text. So the family splits. --ok is the same hue taken
+       down until it reads on white, and --ok-mark is #1bc492 itself, for the
+       shapes that carry nothing to read -- the live dot, the edge down a card
+       somebody has dealt with. Ink is never set in --ok-mark.
        warn keeps its ochre: the palette holds no amber, and borrowing red's
        hue for it would have left warn and danger looking like each other,
        which is the one thing a warning may not do. None of this is decorative
@@ -145,8 +156,9 @@
     --cat-7: 233 231 250;
     --cat-8: 249 226 231;
 
-    --ok: 82 92 16;
-    --ok-soft: 247 253 208;
+    --ok: 13 99 73;
+    --ok-mark: 27 196 146;
+    --ok-soft: 233 251 246;
     --warn: 140 84 10;
     --warn-soft: 250 240 224;
     --danger: 158 52 40;
@@ -247,12 +259,18 @@
     background-color: rgb(var(--bg));
     color: rgb(var(--ink));
     font-family: var(--font-sans), system-ui, sans-serif;
-    font-size: 1rem;
+    /* 14px, not 16. This is a tool somebody keeps open all day beside other
+       windows, and at 16 the day's list ran past the fold with four messages
+       on it. The headings keep their size, so the step between what the
+       screen calls itself and what it is saying got wider, not flatter.
+       Everything else is relative to this: the named sizes are redefined in
+       tailwind.config.ts so a row and a label keep their proportions. */
+    font-size: 0.875rem;
     line-height: 1.6;
     /* Matter is drawn tight already and needs no help at reading sizes. The
        negative tracking DM Sans wanted here closes the counters on this face
-       and costs legibility at 16px, which is the size a receptionist reads a
-       patient's name at. */
+       and costs legibility at the size a receptionist reads a patient's name
+       at. */
     letter-spacing: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -341,9 +359,12 @@
     --accent-soft: 58 60 34;
     --accent-wash: 44 46 28;
 
-    /* Measured as text on --surface: ok 7.4:1, warn 7.1:1, danger 6.4:1. */
-    --ok: 173 194 92;
-    --ok-soft: 38 44 20;
+    /* Measured as text on --surface: ok 9.4:1, warn 7.1:1, danger 6.4:1. */
+    --ok: 77 213 173;
+    /* The mark keeps its one value: #1bc492 is 7.5:1 on this ground, so the
+       live dot is the same green in both panels. */
+    --ok-mark: 27 196 146;
+    --ok-soft: 18 48 39;
     --warn: 226 168 92;
     --warn-soft: 51 39 22;
     --danger: 240 140 128;
@@ -452,6 +473,19 @@
      indicator owes 3:1. So the ink border carries the contrast at 18.88:1 and
      the macaw ring sits behind it carrying the brand. Taking the ring away
      leaves it accessible; taking the border away does not. */
+  /* ── AND THE ONE PLACE 14px CANNOT GO ──────────────────────────────────
+     Safari on a touch screen zooms the whole page in when a field under 16px
+     takes focus, and it does not zoom back out. A tablet at the desk is a
+     real way to use this panel, so on a coarse pointer the fields alone go
+     back up. Nothing else on the screen moves. */
+  @media (pointer: coarse) {
+    .field-input,
+    select,
+    textarea {
+      font-size: 1rem;
+    }
+  }
+
   .field-input {
     @apply min-h-[3rem] w-full rounded-input border border-line-strong bg-surface px-3.5 text-base text-ink shadow-1 transition-colors duration-fast ease-calm placeholder:text-ink-mute/70 hover:border-ink/20 focus:border-ink focus:outline-none focus:ring-2 focus:ring-accent;
   }

@@ -190,10 +190,12 @@ export function MessagesDay({
               //
               // The green edge is drawn inset rather than as a border, so a
               // card going quiet does not shift its own text sideways by the
-              // width of the line.
+              // width of the line. --ok-mark and not --ok: it is the same
+              // green as the live dot, which is the one green in the panel
+              // that means "now" and "done".
               <li
                 key={c.id}
-                className={`card p-4 ${done ? 'shadow-[inset_3px_0_0_0_rgb(var(--ok))]' : ''}`}
+                className={`card p-4 ${done ? 'shadow-[inset_3px_0_0_0_rgb(var(--ok-mark))]' : ''}`}
               >
                 {/* Everything that has already been read is dimmed together,
                     and the mark underneath is deliberately outside it. */}

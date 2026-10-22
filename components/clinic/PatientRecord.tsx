@@ -15,6 +15,7 @@ import {
   logContactAttempt,
   setFollowUp,
   savePatientTaxId,
+  savePatientIdentity,
   mergePatients,
   setReminders,
   setMarketing,
@@ -103,26 +104,14 @@ export function PatientRecord({
 
   return (
     <div className="flex flex-col gap-14">
-      <header>
-        <h1 className="text-3xl font-semibold text-ink">{patient.name}</h1>
-        <p className="mt-1 flex flex-wrap items-center gap-3">
-          <a
-            href={`tel:${patient.phone}`}
-            className="text-lg text-ink-soft underline decoration-line-strong underline-offset-4"
-          >
-            {patient.phone}
-          </a>
-          <span className="text-base text-ink-mute">
-            {visits === 1 ? t.visitsOne : fill(t.visits, { n: visits })}
-          </span>
-          {/* Since when this clinic has known them. The one fact about a person
-              that a receptionist uses before they have read anything else. */}
-          <span className="text-base text-ink-mute">
-            {fill(t.since, { when: formatDate(patient.created_at, locale) })}
-          </span>
-          {patient.reminders_opt_out_at && <Badge tone="neutral">{t.optedOut}</Badge>}
-        </p>
-      </header>
+      <PatientIdentity
+        patient={patient}
+        visits={visits}
+        t={t}
+        dict={dict}
+        locale={locale}
+        readOnly={readOnly}
+      />
 
       {error && (
         <p role="alert" className="text-base font-medium text-danger">
@@ -371,6 +360,172 @@ function DeleteRecord({
 
 type Copy = Dictionary['pacientes']
 type Run = (fn: () => Promise<void>) => void
+
+/**
+ * Who this is, and the two fields that say so.
+ *
+ * ── WHY IT CAN BE CORRECTED NOW ────────────────────────────────────────────
+ * Every name in here used to be typed by nobody: Telma wrote down what the
+ * caller said and corrected it the next time they rang. Since the clinic can
+ * open a record by hand, somebody types it at the desk with the telephone
+ * ringing, and a name typed in a hurry is a name with a letter missing. A
+ * record nobody can fix is one that gets abandoned and opened again, which is
+ * how one person becomes three.
+ *
+ * ── NOT A FORM, A CORRECTION ───────────────────────────────────────────────
+ * So it reads as a heading until somebody says otherwise. Two fields behind
+ * one quiet press, rather than a record that permanently looks like a form
+ * waiting to be filled in: nothing here is edited often, and a screen full of
+ * open inputs invites an accidental change to the one thing the calls hang
+ * from.
+ *
+ * The line under the fields is there because the number is not just a field.
+ * The record shows the calls whose last nine digits match it, so correcting a
+ * digit moves the history, and somebody about to change it should know that
+ * before they press save rather than after.
+ */
+function PatientIdentity({
+  patient,
+  visits,
+  t,
+  dict,
+  locale,
+  readOnly,
+}: {
+  patient: Patient
+  visits: number
+  t: Copy
+  dict: Dictionary
+  locale: Locale
+  readOnly: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(patient.name)
+  const [phone, setPhone] = useState(patient.phone)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, start] = useTransition()
+
+  const close = () => {
+    setEditing(false)
+    setError(null)
+    setName(patient.name)
+    setPhone(patient.phone)
+  }
+
+  const save = () =>
+    start(async () => {
+      setError(null)
+      try {
+        // A value, not an exception: Next strips the message off anything
+        // thrown out of a server action in production. See the action.
+        const res = await savePatientIdentity(patient.id, name, phone)
+        if (res.ok) return setEditing(false)
+        setError(
+          res.why === 'name'
+            ? t.identityNameRequired
+            : res.why === 'phone'
+              ? t.identityPhoneRequired
+              : res.why === 'duplicate'
+                ? t.identityDuplicate
+                : dict.common.errorGeneric
+        )
+      } catch {
+        setError(dict.common.errorGeneric)
+      }
+    })
+
+  if (editing) {
+    return (
+      <header>
+        {/* Capped, so two fields do not stretch across a wide screen and turn
+            the top of a record into a form the width of the page. */}
+        <div className="flex max-w-2xl flex-wrap items-end gap-3">
+          <label className="min-w-0 flex-1 basis-64">
+            <span className="label-caps mb-1.5 block">{dict.common.name}</span>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !pending) save()
+                if (e.key === 'Escape') close()
+              }}
+              className="field-input"
+            />
+          </label>
+          <label className="min-w-0 flex-1 basis-52">
+            <span className="label-caps mb-1.5 block">{dict.common.phone}</span>
+            <input
+              value={phone}
+              inputMode="tel"
+              onChange={(e) => setPhone(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !pending) save()
+                if (e.key === 'Escape') close()
+              }}
+              className="field-input"
+            />
+          </label>
+        </div>
+        <p className="mt-2 text-sm text-ink-mute">{t.identityHint}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            className="btn-primary min-h-0 px-4 py-2 text-sm"
+            disabled={pending}
+            onClick={save}
+          >
+            {dict.common.save}
+          </button>
+          <button
+            className="btn-ghost min-h-0 px-3 py-2 text-sm"
+            disabled={pending}
+            onClick={close}
+          >
+            {dict.common.cancel}
+          </button>
+          {error && (
+            <span role="alert" className="text-sm font-medium text-danger">
+              {error}
+            </span>
+          )}
+        </div>
+      </header>
+    )
+  }
+
+  return (
+    <header>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h1 className="text-3xl font-semibold text-ink">{patient.name}</h1>
+        {!readOnly && (
+          <button
+            className="text-sm text-brand-accent hover:text-brand-hover"
+            onClick={() => setEditing(true)}
+          >
+            {t.identityEdit}
+          </button>
+        )}
+      </div>
+      <p className="mt-1 flex flex-wrap items-center gap-3">
+        <a
+          href={`tel:${patient.phone}`}
+          className="text-lg text-ink-soft underline decoration-line-strong underline-offset-4"
+        >
+          {patient.phone}
+        </a>
+        <span className="text-base text-ink-mute">
+          {visits === 1 ? t.visitsOne : fill(t.visits, { n: visits })}
+        </span>
+        {/* Since when this clinic has known them. The one fact about a person
+            that a receptionist uses before they have read anything else. */}
+        <span className="text-base text-ink-mute">
+          {fill(t.since, { when: formatDate(patient.created_at, locale) })}
+        </span>
+        {patient.reminders_opt_out_at && <Badge tone="neutral">{t.optedOut}</Badge>}
+      </p>
+    </header>
+  )
+}
 
 /**
  * Following somebody up: what was done, when, and whether it is finished.

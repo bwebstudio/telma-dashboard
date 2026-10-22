@@ -326,6 +326,77 @@ export async function createPatient(name: string, phone: string): Promise<string
 }
 
 /**
+ * Correcting who this is.
+ *
+ * ── WHY A RECORD HAS TO BE EDITABLE AT ALL ─────────────────────────────────
+ * Until the clinic could open a record by hand, every name in here was typed
+ * by nobody: `remember_patient` wrote what the caller said and corrected it
+ * the next time they rang. Now somebody at the desk types it while the
+ * telephone is ringing, and a name typed in a hurry is a name with a letter
+ * missing. A record nobody can fix is a record that gets abandoned and opened
+ * again, which is how one person becomes three.
+ *
+ * ── THE NUMBER IS NOT JUST A FIELD ─────────────────────────────────────────
+ * It is the key the calls hang from: the record shows the calls whose last
+ * nine digits match, so changing it moves the history. That is the point. A
+ * record opened on a mistyped number shows no calls at all, and fixing the
+ * digit is what makes the person's own calls appear under them.
+ *
+ * What it does NOT do is keep the old number in `other_digits`, where a merge
+ * puts the numbers it would otherwise lose. The two cases cannot be told
+ * apart from here -- a typo and a person who changed their telephone look the
+ * same -- so this takes the safer error. Keeping a mistyped number would file
+ * a stranger's calls under a patient, which is a leak and silent; dropping a
+ * number somebody really did change detaches old calls from the record while
+ * leaving every one of them in Conversas, which is visible and undoable by
+ * typing the old number back.
+ *
+ * ── AND THE COLLISION ──────────────────────────────────────────────────────
+ * The key is (clinic, digits, name) since 0049, so an edit can land exactly on
+ * a record that already exists. That is said plainly rather than swallowed:
+ * the two are duplicates of one person and the screen already knows how to
+ * merge them.
+ *
+ * ── AND WHY IT RETURNS INSTEAD OF THROWING ─────────────────────────────────
+ * Next strips the message off anything thrown out of a server action in a
+ * production build and hands the browser a digest instead, so a screen that
+ * reads `error.message` to choose its wording works all through development
+ * and says "something went wrong" to the clinic. Every answer this can give
+ * is one somebody has to act on -- a name is missing, that number is not a
+ * number, this person is already in the list -- so they come back as a value.
+ */
+export async function savePatientIdentity(
+  patientId: string,
+  name: string,
+  phone: string
+): Promise<{ ok: true } | { ok: false; why: 'name' | 'phone' | 'duplicate' | 'refused' }> {
+  const cid = await writableClinicId()
+  const clean = name.trim().replace(/\s+/g, ' ')
+  const number = normalisePhone(phone.trim())
+  if (clean.length < 2) return { ok: false, why: 'name' }
+  if (!plausiblePhone(number)) return { ok: false, why: 'phone' }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('patients')
+    .update({ name: clean, phone: number })
+    .eq('id', patientId)
+    .eq('clinic_id', cid)
+    .select('id')
+    .maybeSingle()
+
+  // 23505 is the unique index on (clinic, digits, name): this person is
+  // already in the list under exactly these details.
+  if (error) return { ok: false, why: error.code === '23505' ? 'duplicate' : 'refused' }
+  // Nothing changed is a failure. A refused write filters rows rather than
+  // raising, so without this the screen would say saved and show the old name
+  // back half a second later.
+  if (!data) return { ok: false, why: 'refused' }
+  refresh(patientId)
+  return { ok: true }
+}
+
+/**
  * The NIF, typed at the desk.
  *
  * Telma never asks for it, and this is the only door it comes through. The

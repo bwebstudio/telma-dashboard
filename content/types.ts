@@ -523,6 +523,13 @@ export interface Dictionary {
     noteDelete: string
     noteDeleteConfirm: string
     /** The identifier a receptionist types and Telma never asks for. */
+    /** Correcting a record somebody typed at the desk. The number is the
+     *  key the calls hang from, so the hint says so before it is changed. */
+    identityEdit: string
+    identityHint: string
+    identityDuplicate: string
+    identityNameRequired: string
+    identityPhoneRequired: string
     taxId: string
     taxIdHint: string
     /** Two records that look like one person. */

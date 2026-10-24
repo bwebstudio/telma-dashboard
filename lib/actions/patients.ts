@@ -100,14 +100,23 @@ export async function setFollowUp(patientId: string, open: boolean, reason = '')
   // its own is a line that says something ended without saying what: the
   // reason is the only thing that makes the entry worth having been written.
   let closing = ''
+  let theirDigits: string[] = []
   if (!open) {
     const { data } = await supabase
       .from('patients')
-      .select('follow_up_reason')
+      .select('follow_up_reason, phone_digits, other_digits')
       .eq('id', patientId)
       .eq('clinic_id', cid)
       .maybeSingle()
-    closing = ((data as { follow_up_reason?: string | null } | null)?.follow_up_reason ?? '').trim()
+    const row = data as {
+      follow_up_reason?: string | null
+      phone_digits?: string | null
+      other_digits?: string[] | null
+    } | null
+    closing = (row?.follow_up_reason ?? '').trim()
+    theirDigits = [row?.phone_digits ?? '', ...(row?.other_digits ?? [])].filter(
+      (d) => d.length === 9
+    )
   }
 
   const { error } = await supabase
@@ -137,6 +146,33 @@ export async function setFollowUp(patientId: string, open: boolean, reason = '')
     body: (open ? why : closing) || '—',
   })
   if (logError) throw new Error(logError.message)
+
+  // ── AND THE CALLS GO QUIET WITH IT ────────────────────────────────────
+  // "Resolvido" is a stronger sentence than "this call is dealt with": it
+  // says there is nothing outstanding with this person at all. Leaving their
+  // calls sitting on the day's list as "por tratar" afterwards would be the
+  // record and the day telling the desk two different things about the same
+  // person, and the one that got looked at second would win.
+  //
+  // Up to now and never after: a call that comes in later is something they
+  // rang about after we had closed it, and nobody has dealt with that yet.
+  // Stamped all together like any other group close, so reopening one of
+  // them brings the group back. See setCallHandled.
+  //
+  // One direction only, on purpose. Marking a call dealt with does not close
+  // the follow-up: somebody wrote a reason for opening it, and a press on an
+  // unrelated line is not an answer to it.
+  if (!open && theirDigits.length) {
+    const { error: callsError } = await createAdminClient()
+      .from('calls')
+      .update({ handled_at: new Date().toISOString() })
+      .eq('clinic_id', cid)
+      .in('from_digits', theirDigits)
+      .is('handled_at', null)
+    if (callsError) throw new Error(callsError.message)
+    revalidatePath('/hoje')
+    revalidatePath('/conversas')
+  }
 
   refresh(patientId)
 }
@@ -563,26 +599,106 @@ export async function setCallHandled(
  * recalls: the clinic may not write on the calls table directly, and the
  * clinic this writes for is the one this session belongs to.
  */
-export async function logCallback(callId: string) {
+export async function logCallback(callId: string): Promise<{ attempts: number; at: string }> {
   const cid = await writableClinicId()
   const admin = createAdminClient()
+  const at = new Date().toISOString()
 
-  // Read then write, because a counter needs its own previous value and this
-  // is one press by one person at a desk, not a race.
-  const { data } = await admin
+  const { data: call } = await admin
     .from('calls')
-    .select('callbacks')
+    .select('callbacks, from_digits, patient_name, created_at')
     .eq('id', callId)
     .eq('clinic_id', cid)
     .maybeSingle()
-  const before = Number((data as { callbacks?: number } | null)?.callbacks ?? 0)
+  if (!call) throw new Error('call not found')
 
+  // ── WHERE THERE IS A PERSON, IT GOES IN THEIR HISTORY ──────────────────
+  // Same table, same kind of row, as the record's own "registar tentativa de
+  // contacto", because it is the same act. Written from the day's list it
+  // says nothing about whether anybody picked up -- the press is one press
+  // and asking would make it two -- so `reached` is left null and the record
+  // reads that as "we rang back", which is all that was claimed.
+  const patientId = await recordForCall(admin, cid, call as CallBits)
+  if (patientId) {
+    const { error } = await admin.from('patient_notes').insert({
+      clinic_id: cid,
+      patient_id: patientId,
+      kind: 'contacto',
+      reached: null,
+      body: '—',
+    })
+    if (error) throw new Error(error.message)
+    const { count } = await admin
+      .from('patient_notes')
+      .select('*', { count: 'exact', head: true })
+      .eq('clinic_id', cid)
+      .eq('patient_id', patientId)
+      .eq('kind', 'contacto')
+      .gte('created_at', call.created_at as string)
+    revalidatePath('/hoje')
+    revalidatePath('/conversas')
+    refresh(patientId)
+    return { attempts: count ?? 1, at }
+  }
+
+  // ── AND WHERE THERE IS NOT, ON THE CALL ────────────────────────────────
+  // A caller with no record has no history to write into, so the count lives
+  // on the call. Nothing can contradict it there: they have no second screen.
+  //
+  // Read then write, because a counter needs its own previous value and this
+  // is one press by one person at a desk, not a race.
+  const before = Number((call as { callbacks?: number }).callbacks ?? 0)
   const { error } = await admin
     .from('calls')
-    .update({ callbacks: before + 1, called_back_at: new Date().toISOString() })
+    .update({ callbacks: before + 1, called_back_at: at })
     .eq('id', callId)
     .eq('clinic_id', cid)
   if (error) throw new Error(error.message)
   revalidatePath('/hoje')
   revalidatePath('/conversas')
+  return { attempts: before + 1, at }
+}
+
+interface CallBits {
+  from_digits?: string | null
+  patient_name?: string | null
+}
+
+/**
+ * Which record a call belongs to, decided the same way the day's list decides
+ * it on screen.
+ *
+ * One number is usually one person and then there is nothing to decide. But
+ * the key has been (clinic, digits, name) since 0049 because a number is
+ * often a household, and with two records on one line the number alone does
+ * not say who rang: the name Telma heard on the call does, by the same prefix
+ * rule `remember_patient` uses. Where even that does not settle it this
+ * answers null and the caller is treated as having no record, which is the
+ * safe end: nothing gets written into the wrong person's history.
+ *
+ * It has to agree with components/clinic/MessagesDay, or a row would offer
+ * "ver ficha" and then file the attempt somewhere else.
+ */
+async function recordForCall(
+  db: ReturnType<typeof createAdminClient>,
+  clinicId: string,
+  call: CallBits
+): Promise<string | null> {
+  const digits = (call.from_digits ?? '').trim()
+  if (digits.length !== 9) return null
+  const { data } = await db
+    .from('patients')
+    .select('id, name_key')
+    .eq('clinic_id', clinicId)
+    .eq('phone_digits', digits)
+  const people = (data ?? []) as Array<{ id: string; name_key: string | null }>
+  if (people.length === 1) return people[0].id
+  if (!people.length) return null
+  const heard = (call.patient_name ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+  if (!heard) return null
+  const named = people.filter((p) => (p.name_key ?? '').length > 0)
+  const hit =
+    named.find((p) => p.name_key === heard) ??
+    named.find((p) => p.name_key!.startsWith(heard) || heard.startsWith(p.name_key!))
+  return hit?.id ?? null
 }

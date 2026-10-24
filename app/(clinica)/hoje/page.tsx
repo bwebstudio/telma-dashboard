@@ -135,11 +135,14 @@ export default async function AgendaPage({
           .filter((d) => d.length === 9)
       ),
     ]
-    const records: Record<string, Array<{ id: string; name: string; nameKey: string }>> = {}
+    const records: Record<
+      string,
+      Array<{ id: string; name: string; nameKey: string; followUpSince: string | null }>
+    > = {}
     if (digits.length) {
       const { data: known } = await supabase
         .from('patients')
-        .select('id, name, name_key, phone_digits')
+        .select('id, name, name_key, phone_digits, follow_up_since')
         .eq('clinic_id', clinicId)
         .in('phone_digits', digits)
         .order('name')
@@ -148,12 +151,43 @@ export default async function AgendaPage({
         name: string
         name_key: string | null
         phone_digits: string
+        follow_up_since: string | null
       }>) {
         ;(records[row.phone_digits] ??= []).push({
           id: row.id,
           name: row.name,
           nameKey: row.name_key ?? row.name.trim().toLowerCase(),
+          followUpSince: row.follow_up_since,
         })
+      }
+    }
+
+    // ── AND WHAT HAS BEEN TRIED SINCE ────────────────────────────────────
+    // "Já liguei de volta" is an attempt to reach a person, not a thing that
+    // happened to a call, so it is written in that person's history: the same
+    // log the record's own "registar tentativa" writes and counts. The day's
+    // rows read it back from there rather than keeping their own tally, which
+    // is how the two screens stopped being able to disagree.
+    //
+    // Only today's, because the question each row asks is "has anybody rung
+    // back since this came in" and not "how many times have we ever tried".
+    // The record asks the second one and answers it over the whole history.
+    const known = Object.values(records).flat()
+    const attempts: Record<string, string[]> = {}
+    if (known.length) {
+      const { data: tries } = await supabase
+        .from('patient_notes')
+        .select('patient_id, created_at')
+        .eq('clinic_id', clinicId)
+        .eq('kind', 'contacto')
+        .in(
+          'patient_id',
+          known.map((k) => k.id)
+        )
+        .gte('created_at', dayStart.toISOString())
+        .order('created_at', { ascending: false })
+      for (const row of (tries ?? []) as Array<{ patient_id: string; created_at: string }>) {
+        ;(attempts[row.patient_id] ??= []).push(row.created_at)
       }
     }
 
@@ -204,6 +238,7 @@ export default async function AgendaPage({
         <MessagesDay
           calls={dayCalls}
           records={records}
+          attempts={attempts}
           week={week}
           dayKey={dayKeyIn(tz, day)}
           todayKey={dayKeyIn(tz, now)}

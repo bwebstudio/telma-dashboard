@@ -214,6 +214,7 @@ export function PatientRecord({
           notes={notes}
           calls={calls}
           appointments={appointments}
+          readOnly={readOnly}
           dict={dict}
           locale={locale}
         />

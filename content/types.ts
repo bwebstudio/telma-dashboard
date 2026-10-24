@@ -482,6 +482,10 @@ export interface Dictionary {
     calledBack: string
     calledBackAgain: string
     calledBackAt: string
+    /** The same thing on another day. An attempt now comes out of the
+     *  person's history, which does not end at midnight, and an hour
+     *  with no date on it would read as this morning. */
+    calledBackOn: string
     calledBackTimes: string
     followCaller: string
     openRecord: string
@@ -501,6 +505,10 @@ export interface Dictionary {
     followQueueTitle: string
     followTitle: string
     followOpen: string
+    /** On a row in the day's list, where the person behind the call has
+     *  something open on their record. Read only: a follow-up is the
+     *  person's, and it is closed where its reason can be read. */
+    followOpenTag: string
     followClosed: string
     /** One of them, and more than one: "(s)" on a line a clinic reads every
      *  day is a form, not a product. */
@@ -516,6 +524,9 @@ export interface Dictionary {
     attemptMissed: string
     attemptReachedTag: string
     attemptMissedTag: string
+    /** The one press on the day's list: the clinic rang back and said
+     *  nothing about whether anybody picked up. `reached` is null. */
+    attemptRangBack: string
     notesHint: string
     noteAdd: string
     notePlaceholder: string

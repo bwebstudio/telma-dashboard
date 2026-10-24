@@ -6,7 +6,7 @@ import type { Dictionary, Locale } from '@/content'
 import type { Call } from '@/lib/types'
 import { Badge, CALL_TONE } from '@/components/ui'
 import { DaySwitcher } from '@/components/clinic/DaySwitcher'
-import { formatTime } from '@/lib/format'
+import { formatDate, formatTime } from '@/lib/format'
 import { IconCheck, IconPhone, IconPhoneMissed, IconWhatsApp } from '@/components/icons'
 import { FollowCaller } from '@/components/clinic/FollowCaller'
 import { CallWork } from '@/components/clinic/CallWork'
@@ -45,6 +45,7 @@ const asWritten = (c: Call): Work => ({
 export function MessagesDay({
   calls,
   records,
+  attempts,
   week,
   dayKey,
   todayKey,
@@ -61,7 +62,13 @@ export function MessagesDay({
    *  A list rather than one record because a number is often a household;
    *  the name comes with it, because a number reception recognises is a
    *  person they can greet and nobody can read a number aloud to a patient. */
-  records: Record<string, Array<{ id: string; name: string; nameKey: string }>>
+  records: Record<
+    string,
+    Array<{ id: string; name: string; nameKey: string; followUpSince: string | null }>
+  >
+  /** Today's attempts to reach each of those people, newest first, read out
+   *  of their own history. The row counts the ones since the call it is on. */
+  attempts: Record<string, string[]>
   /** One row per day of the last seven, oldest first. */
   week: Array<{ dayKey: string; label: string; answered: number; missed: number }>
   dayKey: string
@@ -88,7 +95,24 @@ export function MessagesDay({
   const [work, setWork] = useState<Record<string, Work>>(() =>
     Object.fromEntries(calls.map((c) => [c.id, asWritten(c)]))
   )
-  const stateOf = (c: Call) => work[c.id] ?? asWritten(c)
+  // ── TWO FACTS, AND THEY DO NOT LIVE IN THE SAME PLACE ───────────────────
+  // Whether this call is dealt with is a fact about the call, so it is on the
+  // call. How many times somebody has been rung back is a fact about the
+  // person, so where they have a record it is read out of their history and
+  // not out of a counter on a line: three calls from one person this morning
+  // are not three separate attempts to reach them.
+  //
+  // Only the ones since this call, because that is the question the row is
+  // asking. A caller with no record has no history and keeps the counter on
+  // the call, which is the only place it can be and contradicts nothing.
+  const [rung, setRung] = useState<Record<string, string[]>>(attempts)
+  const stateOf = (c: Call) => {
+    const mine = work[c.id] ?? asWritten(c)
+    const who = recordOf(c)
+    if (!who) return mine
+    const since = (rung[who.id] ?? []).filter((at) => at >= c.created_at)
+    return { ...mine, tries: since.length, lastTry: since[0] ?? null }
+  }
 
   // ── ONE PRESS CAN QUIETEN SEVERAL ROWS ───────────────────────────────────
   // Marking a call dealt with closes everything that number had left open
@@ -119,6 +143,21 @@ export function MessagesDay({
   // row and no record behind it, so the row offers to take the name instead.
   // Writing "João" over Ana's call to fill a gap is the one outcome worth
   // avoiding, and typing the name lands on the right record anyway.
+  // ── WHAT TO SAY ABOUT THE ATTEMPTS ──────────────────────────────────────
+  // One attempt gets the hour, which is what somebody wants on a morning's
+  // work: "rung back at 11:40". But an attempt now comes out of the person's
+  // history and that does not end at midnight, so an hour on its own would
+  // read as today when it was Tuesday. More than one gets the count, and the
+  // record holds the dates.
+  const triedLabel = (c: Call) => {
+    const { tries, lastTry } = stateOf(c)
+    if (tries === 0) return null
+    if (tries > 1 || !lastTry) return dict.pacientes.calledBackTimes.replace('{n}', String(tries))
+    return formatDate(lastTry, locale) === formatDate(c.created_at, locale)
+      ? dict.pacientes.calledBackAt.replace('{time}', formatTime(lastTry, locale))
+      : dict.pacientes.calledBackOn.replace('{date}', formatDate(lastTry, locale))
+  }
+
   const recordOf = (c: Call) => {
     const people = records[(c.from_phone ?? '').replace(/\D/g, '').slice(-9)] ?? []
     if (people.length <= 1) return people[0] ?? null
@@ -235,6 +274,17 @@ export function MessagesDay({
                     {c.result && (
                       <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>
                     )}
+                    {/* ── AND WHAT THE PERSON HAS OPEN ───────────────────
+                        A follow-up belongs to the person, not to this call,
+                        so the row shows it and does not offer to close it:
+                        it was opened with a reason somebody wrote, and it is
+                        closed on the record where that reason can be read.
+                        Without it, a line could be ticked off as dealt with
+                        while the person was still owed something, which is
+                        the day and the record saying different things. */}
+                    {known?.followUpSince && (
+                      <Badge tone="warn">{dict.pacientes.followOpenTag}</Badge>
+                    )}
                     {/* Nothing was said on a call nobody answered, so there is
                         nothing to open. The person is still worth following up:
                         they rang and got nobody. */}
@@ -287,17 +337,21 @@ export function MessagesDay({
                       callId={c.id}
                       handledAt={done}
                       callbacks={stateOf(c).tries}
-                      calledBackAt={stateOf(c).lastTry}
+                      calledBackLabel={triedLabel(c)}
                       onHandled={markHandled}
+                      // On the person where there is one, so their other
+                      // rows this morning move with it.
                       onCalledBack={(at) =>
-                        setWork((w) => ({
-                          ...w,
-                          [c.id]: {
-                            ...(w[c.id] ?? asWritten(c)),
-                            tries: (w[c.id] ?? asWritten(c)).tries + 1,
-                            lastTry: at,
-                          },
-                        }))
+                        known
+                          ? setRung((r) => ({ ...r, [known.id]: [at, ...(r[known.id] ?? [])] }))
+                          : setWork((w) => ({
+                              ...w,
+                              [c.id]: {
+                                ...(w[c.id] ?? asWritten(c)),
+                                tries: (w[c.id] ?? asWritten(c)).tries + 1,
+                                lastTry: at,
+                              },
+                            }))
                       }
                       dict={dict}
                       locale={locale}

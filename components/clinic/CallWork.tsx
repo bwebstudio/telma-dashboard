@@ -8,7 +8,7 @@ import { formatTime } from '@/lib/format'
 import { IconCheck } from '@/components/icons'
 
 /**
- * Whether anybody has dealt with this call, and the two presses that say so.
+ * "This call is dealt with", and the way back out of it.
  *
  * ── WHAT THE DAY IS FOR ────────────────────────────────────────────────────
  * Reception reads the list from the top and asks one question of every line:
@@ -17,17 +17,15 @@ import { IconCheck } from '@/components/icons'
  * fifteen messages nobody opens fifteen records. So the list could be read
  * and not worked through, which is the only thing it exists for.
  *
- * ── TWO SENTENCES, NOT ONE ─────────────────────────────────────────────────
- * "I rang them back" is the work, and it can happen three times without
- * anything being resolved. "This is dealt with" is the end of it. They are
- * different facts and both are worth one press, so there are two buttons and
- * never a hidden rule that one implies the other.
- *
- * What is NOT here is the person's follow-up. "This call is dealt with" and
- * "this person still owes us something" are different scopes: somebody can
- * have a message sorted out this morning and a report still pending from
- * last month. That one lives on their record, which is where a history
- * belongs.
+ * ── ONE FACT, TWO SCREENS, NO COPY OF IT ───────────────────────────────────
+ * This is its own component because the day's list is not the only place the
+ * question gets asked. Somebody opening a person's record wants the same
+ * answer about the same calls, and used to get a history that said a call had
+ * happened and nothing about whether anybody had done anything about it. Both
+ * screens draw this, both read `calls.handled_at` and both call the same
+ * action, so there is nothing to keep in step: the state is in one place and
+ * each screen is a view of it. Anything else is two truths about one call,
+ * and whichever got looked at second would be the wrong one.
  *
  * ── WHY THE DONE ROW GOES QUIET AND THE MARK DOES NOT ──────────────────────
  * Not a colour for pending, which would paint the whole list amber at nine in
@@ -40,26 +38,26 @@ import { IconCheck } from '@/components/icons'
  * scrolling is looking for, and a dim tick is a tick you have to go looking
  * for. So the card is held at the parent's opacity and this sits outside it,
  * at full strength. See MessagesDay.
+ *
+ * What is NOT here is the person's follow-up. "This call is dealt with" and
+ * "this person still owes us something" are different scopes: somebody can
+ * have a message sorted out this morning and a report still pending from
+ * last month. That one lives on their record, and it reaches in the other
+ * direction: closing it closes the calls. See setFollowUp.
  */
-export function CallWork({
+export function CallHandled({
   callId,
   handledAt,
-  callbacks,
-  calledBackAt,
   onHandled,
-  onCalledBack,
   dict,
   locale,
 }: {
   callId: string
   handledAt: string | null
-  callbacks: number
-  calledBackAt: string | null
-  /** Told to the list, which is where the day's figures are counted. The ids
-   *  are every call the press reached: one person's older calls go quiet with
-   *  this one, and the rows have to move together. */
+  /** Told to whichever list is drawing this. The ids are every call the press
+   *  reached: one person's older calls go quiet with this one, and the rows
+   *  have to move together. */
   onHandled: (at: string | null, ids: string[]) => void
-  onCalledBack: (at: string) => void
   dict: Dictionary
   locale: Locale
 }) {
@@ -76,8 +74,6 @@ export function CallWork({
   // and two copies of the same fact drift. So the state is held once, by the
   // list, and this is told what to draw and what to call. See MessagesDay.
   const done = handledAt
-  const tries = callbacks
-  const lastTry = calledBackAt
 
   const act = (fn: () => Promise<void>) =>
     start(async () => {
@@ -139,25 +135,102 @@ export function CallWork({
       >
         {t.callDone}
       </button>
+      {failed && (
+        <span role="alert" className="text-sm font-medium text-danger">
+          {dict.common.errorGeneric}
+        </span>
+      )}
+    </span>
+  )
+}
+
+/**
+ * And on the day's list, the other half: ringing them back.
+ *
+ * Two sentences, not one. "I rang them back" is the work and can happen three
+ * times without anything being resolved; "this is dealt with" is the end of
+ * it. Neither implies the other, so there are two presses.
+ *
+ * ── WHY THE COUNT IS NOT ALWAYS THE CALL'S OWN ─────────────────────────────
+ * An attempt is a thing that happened to a person, not to a call: somebody
+ * who rang three times this week and was rung back once has been rung back
+ * once, however many lines that spreads over. So where the caller has a
+ * record, this writes into their history and reads the count back from it,
+ * which is the same history the record's own "registar tentativa" writes to
+ * and the same one it counts. One log, two doors into it.
+ *
+ * Where the caller has no record there is no history to write to, and the
+ * count on the call itself is the only place it can live. Nothing contradicts
+ * anything there either: a caller with no record has no second screen.
+ */
+export function CallWork({
+  callId,
+  handledAt,
+  callbacks,
+  calledBackLabel,
+  onHandled,
+  onCalledBack,
+  dict,
+  locale,
+}: {
+  callId: string
+  handledAt: string | null
+  /** How many times this person has been rung back, from their record where
+   *  they have one and from the call itself where they do not. */
+  callbacks: number
+  /** Written out by the list, because only it knows which day this call was
+   *  on and therefore whether an hour on its own says enough. */
+  calledBackLabel: string | null
+  onHandled: (at: string | null, ids: string[]) => void
+  onCalledBack: (at: string) => void
+  dict: Dictionary
+  locale: Locale
+}) {
+  const t = dict.pacientes
+  const router = useRouter()
+  const [pending, start] = useTransition()
+  const [failed, setFailed] = useState(false)
+
+  if (handledAt) {
+    return (
+      <CallHandled
+        callId={callId}
+        handledAt={handledAt}
+        onHandled={onHandled}
+        dict={dict}
+        locale={locale}
+      />
+    )
+  }
+
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <CallHandled
+        callId={callId}
+        handledAt={null}
+        onHandled={onHandled}
+        dict={dict}
+        locale={locale}
+      />
       <button
         className="btn-ghost min-h-0 px-3 py-1.5 text-sm"
         disabled={pending}
         onClick={() =>
-          act(async () => {
-            await logCallback(callId)
-            onCalledBack(new Date().toISOString())
+          start(async () => {
+            setFailed(false)
+            try {
+              await logCallback(callId)
+              onCalledBack(new Date().toISOString())
+              router.refresh()
+            } catch {
+              setFailed(true)
+            }
           })
         }
       >
-        {tries > 0 ? t.calledBackAgain : t.calledBack}
+        {callbacks > 0 ? t.calledBackAgain : t.calledBack}
       </button>
-      {tries > 0 && (
-        <span className="text-sm text-ink-mute">
-          {tries === 1 && lastTry
-            ? t.calledBackAt.replace('{time}', formatTime(lastTry, locale))
-            : t.calledBackTimes.replace('{n}', String(tries))}
-        </span>
-      )}
+      {calledBackLabel && <span className="text-sm text-ink-mute">{calledBackLabel}</span>}
       {failed && (
         <span role="alert" className="text-sm font-medium text-danger">
           {dict.common.errorGeneric}

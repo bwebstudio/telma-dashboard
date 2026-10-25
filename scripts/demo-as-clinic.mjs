@@ -5,6 +5,14 @@
 //   node scripts/demo-as-clinic.mjs --as <id da clínica>   copia a configuração
 //   node scripts/demo-as-clinic.mjs --restore              devolve a demo
 //   node scripts/demo-as-clinic.mjs --show                 diz como está agora
+//   node scripts/demo-as-clinic.mjs --limpar-dia [data]    apaga as chamadas desse dia
+//
+// ── PORQUE É QUE APAGAR O DIA ESTÁ AQUI ────────────────────────────────────
+// Entre duas rondas de ensaio quer-se o ecrã vazio, para que as chamadas
+// seguintes se leiam sem as anteriores à volta. Isso não tem nada que ver com
+// despir a demo, e estava a uma palavra de distância: `--restore`, que a
+// despe. Quem queria limpar o dia devolveu a clínica ao que era e teve de
+// voltar a vesti-la. Dois trabalhos diferentes, dois comandos.
 //
 // ── PORQUE É QUE ISTO EXISTE ───────────────────────────────────────────────
 // Uma clínica entra em funcionamento num dia marcado, e na véspera a única
@@ -114,6 +122,9 @@ const args = process.argv.slice(2)
 const as = args[args.indexOf('--as') + 1]
 const wantRestore = args.includes('--restore')
 const wantShow = args.includes('--show')
+const clearAt = args.indexOf('--limpar-dia')
+const wantClear = clearAt !== -1
+const clearDay = wantClear && args[clearAt + 1]?.startsWith('20') ? args[clearAt + 1] : null
 
 const hoursOf = (id) =>
   rest(`availability_slots?clinic_id=eq.${id}&select=weekday,start_time,end_time,resource_id&order=weekday,start_time`)
@@ -133,6 +144,62 @@ async function show() {
     for (const s of snaps) console.log(`   ${s.taken_at.slice(0, 19)}  ${s.note ?? ''}`)
   }
   console.log()
+}
+
+/**
+ * Apagar as chamadas de um dia na demo, e só na demo.
+ *
+ * O contador de minutos não desanda sozinho quando se apaga uma chamada: é um
+ * medidor que o webhook vai somando, e apagar a linha não lhe toca. Um painel
+ * de demonstração com o dia vazio e dezassete minutos gastos levanta a
+ * pergunta errada no meio de uma demonstração, por isso recalcula-se a partir
+ * do que sobrou.
+ */
+async function clearDayCalls(day) {
+  const [clinic] = await rest(`clinics?id=eq.${DEMO}&select=timezone`)
+  const tz = clinic?.timezone ?? 'Europe/Lisbon'
+  const date =
+    day ??
+    new Intl.DateTimeFormat('en-CA', { timeZone: tz, dateStyle: 'short' }).format(new Date())
+
+  // O dia inteiro na hora da clínica, convertido para o instante que a base
+  // guarda. Sem isto, apagar "hoje" às 00:30 em Lisboa apagaria ontem.
+  const offset = (() => {
+    const d = new Date(`${date}T12:00:00Z`)
+    const local = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour12: false, hour: '2-digit',
+    }).format(d)
+    return Number(local) - 12
+  })()
+  const pad = (n) => String(Math.abs(n)).padStart(2, '0')
+  const zone = `${offset >= 0 ? '+' : '-'}${pad(offset)}:00`
+  const from = `${date}T00:00:00${zone}`
+  const to = `${date}T23:59:59${zone}`
+
+  const doomed = await rest(
+    `calls?clinic_id=eq.${DEMO}&created_at=gte.${encodeURIComponent(from)}&created_at=lte.${encodeURIComponent(to)}&select=id`
+  )
+  if (!doomed.length) {
+    console.log(`\n  Não há chamadas em ${date}. Nada para apagar.\n`)
+    return
+  }
+  await rest(
+    `calls?clinic_id=eq.${DEMO}&created_at=gte.${encodeURIComponent(from)}&created_at=lte.${encodeURIComponent(to)}`,
+    { method: 'DELETE' }
+  )
+
+  const month = `${date.slice(0, 7)}-01`
+  const left = await rest(
+    `calls?clinic_id=eq.${DEMO}&created_at=gte.${month}&select=duration_seconds`
+  )
+  const minutes = left.reduce((t, c) => t + (c.duration_seconds ?? 0), 0) / 60
+  await rest(`usage?clinic_id=eq.${DEMO}&month=eq.${month}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ calls_count: left.length, minutes: Number(minutes.toFixed(2)) }),
+  })
+
+  console.log(`\n  ${doomed.length} chamadas de ${date} apagadas.`)
+  console.log(`  O mês fica em ${left.length} chamadas e ${minutes.toFixed(2)} minutos.\n`)
 }
 
 async function snapshot(note) {
@@ -210,6 +277,7 @@ async function restore() {
 
 try {
   if (wantShow) await show()
+  else if (wantClear) await clearDayCalls(clearDay)
   else if (wantRestore) await restore()
   else if (as) await apply(as)
   else {
@@ -217,6 +285,9 @@ try {
   node scripts/demo-as-clinic.mjs --as <id>   a demo passa a atender como essa clínica
   node scripts/demo-as-clinic.mjs --restore   volta a ser a demo
   node scripts/demo-as-clinic.mjs --show      como está agora
+
+  node scripts/demo-as-clinic.mjs --limpar-dia           apaga as chamadas de hoje
+  node scripts/demo-as-clinic.mjs --limpar-dia 2026-10-25  apaga as desse dia
 `)
   }
 } catch (e) {

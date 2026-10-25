@@ -70,6 +70,16 @@ export async function POST(request: Request) {
     callbackDigits.length >= 9 && callbackDigits.slice(-9) !== fromDigits.slice(-9)
       ? `Ligar para ${callback}.`
       : null
+  // ── E SE VIER CURTO, ALGUÉM TEM DE LHO DIZER ───────────────────────────
+  // Contar nove algarismos de cabeça, a meio de uma conversa, é a coisa que o
+  // modelo falha mais vezes: medido, acerta duas ou três em três. A instrução
+  // está escrita e ajuda, mas não é de confiar sozinha, e o que está em jogo é
+  // o número para onde a clínica vai ligar.
+  //
+  // Aqui conta-se sem margem de erro. A chamada fica registada na mesma -- o
+  // recado é bom, só o número é que não -- e a resposta diz-lho enquanto a
+  // pessoa ainda está ao telefone, que é o único momento em que se arranja.
+  const callbackShort = callbackDigits.length > 0 && callbackDigits.length < 9
   if (callbackNote) {
     const said = String(body.summary ?? '').trim()
     body.summary = said ? `${callbackNote} ${said}` : callbackNote
@@ -525,6 +535,18 @@ export async function POST(request: Request) {
   // Release any remaining hold created during this call.
   if (body.call_ref) {
     await admin.rpc('release_slot_by_ref', { p_call_ref: body.call_ref as string })
+  }
+
+  if (callbackShort) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'callback_phone_short',
+        message: `A chamada ficou registada, mas o número para lhe ligarem de volta não: ouviu ${callbackDigits.length} algarismos e em Portugal e em Espanha são nove. Diga-lhe quantos ouviu, peça o número completo e volte a registar.`,
+        ...(data as object),
+      },
+      { status: 422 }
+    )
   }
 
   return NextResponse.json({ ok: true, ...(data as object) })

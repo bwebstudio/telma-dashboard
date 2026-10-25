@@ -254,7 +254,14 @@ const TOOLS = [
           callback_phone: {
             type: 'string',
             description:
-              'Só quando a pessoa pediu que lhe liguem para um número DIFERENTE daquele de onde está a ligar. Os nove algarismos, como ela os confirmou. Se é o mesmo número da chamada, ou se não pediu nada disso, omite este campo.',
+              // Diz também o que NÃO se faz, porque os campos que a plataforma
+              // preenche sozinha -- from_phone, clinic_id, a duração -- não
+              // admitem descrição nenhuma: ou se liga o campo a uma variável
+              // ou se lhe escreve uma descrição, nunca as duas. E sem uma
+              // palavra que o impeça, o modelo escreve neles: numa chamada
+              // verdadeira pôs o número ditado em from_phone, que é deitado
+              // fora ao substituir-se a variável, e o número perdeu-se.
+              'O ÚNICO sítio onde se escreve um número que a pessoa ditou. Preenche-o sempre que ela peça que lhe liguem para um número diferente daquele de onde está a ligar: os nove algarismos, como os confirmaste. O campo from_phone não é para isso e o que lá escreveres é deitado fora. Se o número é o mesmo da chamada, omite este campo.',
           },
           appointments: {
             type: 'array',

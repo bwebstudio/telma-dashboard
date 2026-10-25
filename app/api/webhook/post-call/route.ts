@@ -74,7 +74,10 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
   const duration = Math.round(call?.metadata?.call_duration_secs ?? 0)
-  const summary = call?.analysis?.transcript_summary ?? null
+  // O resumo da plataforma já não é usado: vem em inglês e a clínica lê o
+  // painel na sua língua. O que o substitui está mais abaixo. Os campos
+  // concretos que a mesma análise apanha -- o nome, o número -- continuam a
+  // ser lidos, porque esses não são prosa.
 
   // What was said out loud, gone and fetched afterwards.
   //
@@ -97,6 +100,30 @@ export async function POST(request: Request) {
   const rescuedPhone = field('paciente_telefone')
   const rescuedBooking = field('marcacao_pedida')
 
+  // ── E NÃO NA LÍNGUA DA PLATAFORMA ───────────────────────────────────────
+  // `transcript_summary` é escrito pela ElevenLabs, e por omissão escreve em
+  // inglês. Numa chamada que a Telma registou isso não se vê, porque o resumo
+  // dela ganha; aqui é o único que há, e apareceu no painel de uma clínica
+  // portuguesa uma linha a dizer "The agent, Telma from Ímpar, initiated the
+  // conversation with a greeting". Entre o inglês e uma frase nossa na língua
+  // da clínica, o inglês é a pior das duas: diz menos e diz-se mal.
+  //
+  // O que estas chamadas têm em comum é terem acabado sem recado -- é por isso
+  // que nada as registou -- e é isso que a clínica precisa de ler. O que a
+  // análise tivesse apanhado de concreto, o nome e o número, vai à frente na
+  // mesma.
+  const { data: lang } = await admin
+    .from('clinics')
+    .select('language')
+    .eq('id', clinicId)
+    .maybeSingle()
+  const noMessage: Record<string, string> = {
+    pt: 'Esta chamada não deixou recado.',
+    es: 'Esta llamada no dejó recado.',
+    en: 'This call left no message.',
+  }
+  const said = noMessage[((lang as { language?: string } | null)?.language ?? 'pt')] ?? noMessage.pt
+
   const { data: seen } = await admin
     .from('calls')
     .select('id, summary, duration_seconds')
@@ -110,7 +137,7 @@ export async function POST(request: Request) {
     // the model believed when it called it, which is always short of the end.
     await admin
       .from('calls')
-      .update({ duration_seconds: duration, summary: existing.summary ?? summary })
+      .update({ duration_seconds: duration, summary: existing.summary ?? said })
       .eq('id', existing.id)
     return NextResponse.json({ ok: true, call_id: existing.id, corrected: true })
   }
@@ -125,7 +152,7 @@ export async function POST(request: Request) {
   // The summary is what the panel puts at the top of an opened call, so this is
   // where somebody reading it will find the number to ring.
   const rescued = [rescuedName, rescuedPhone, rescuedBooking].filter(Boolean).join(' · ')
-  const fullSummary = rescued ? [rescued, summary].filter(Boolean).join('\n\n') : summary
+  const fullSummary = rescued ? `${rescued}\n\n${said}` : said
 
   const { data, error } = await admin.rpc('record_call', {
     p_clinic_id: clinicId,

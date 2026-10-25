@@ -10,6 +10,7 @@ import {
   type Specialty,
 } from '@/lib/onboarding/catalog'
 import { voiceId } from '@/lib/onboarding/elevenlabs'
+import { toolsForCall } from '@/lib/onboarding/tools'
 import { DEFAULT_ONBOARDING_LOCALE, isOnboardingLocale } from '@/lib/onboarding/locale'
 import {
   baseLanguageFor,
@@ -289,11 +290,31 @@ export async function POST(request: Request) {
   // branch that does not have them.
   const procedures = process.env.TELMA_PROCEDURES_IN_PROMPT !== '1'
 
+  // ── AND WHICH TOOLS SHE HAS ───────────────────────────────────────────────
+  // For a clinic without a diary, the four diary tools are taken off her hand
+  // for this call instead of merely forbidden in the sheet. Three real calls
+  // ended with "let me just check that" and a reach for telma_ver_marcacoes on
+  // a clinic that has nothing to check, with the sentence saying not to sitting
+  // right there in the prompt. See lib/onboarding/tools.ts.
+  const tools = toolsForCall({
+    agentId: body.agent_id,
+    // The same reading the sheet makes of it: anything but an explicit no is
+    // a clinic with a diary.
+    takesBookings: variables.takes_bookings !== false,
+    canTransfer: transfersAllowed,
+  })
+
   return NextResponse.json({
     type: 'conversation_initiation_client_data',
     conversation_config_override: {
       agent: {
-        prompt: { prompt: procedures ? built.nodes.core : built.text },
+        prompt: {
+          prompt: procedures ? built.nodes.core : built.text,
+          // Absent, rather than empty, where there is nothing to narrow: the
+          // platform reads an empty array as "no tools at all", and a call
+          // Telma cannot file is worse than the bug this fixes.
+          ...(tools?.length ? { tool_ids: tools } : {}),
+        },
         // The opening line, authored rather than improvised, so the recording
         // notice is always in it and always in the right language.
         first_message: greetingLine(

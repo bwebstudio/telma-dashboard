@@ -97,7 +97,14 @@ export async function POST(request: Request) {
     return null
   }
   const rescuedName = field('paciente_nome')
-  const rescuedPhone = field('paciente_telefone')
+  // ── E UM NÚMERO TEM DE PARECER UM NÚMERO ────────────────────────────────
+  // A análise devolveu uma vez, como telefone, a frase "NÚMERO DE ONDE A
+  // CHAMADA ENTROU" -- o nome do campo em vez do seu valor -- e isso foi
+  // parar ao painel como primeira linha do recado. Qualquer coisa sem
+  // algarismos que cheguem não é um telefone e não entra.
+  const maybePhone = field('paciente_telefone')
+  const rescuedPhone =
+    maybePhone && (maybePhone.replace(/\D/g, '').length >= 9 ? maybePhone : null)
   const rescuedBooking = field('marcacao_pedida')
 
   // ── E NÃO NA LÍNGUA DA PLATAFORMA ───────────────────────────────────────

@@ -12,5 +12,16 @@ import base from './injecao.mjs'
 
 export default {
   ...base,
+  // ── O QUE ISTO MEDE JÁ NÃO É O QUE CORRE ────────────────────────────────
+  // O guardrail de injecção esteve ligado no agente verdadeiro e foi desligado
+  // a 25/10/2026: numa chamada de ensaio alguém perguntou pelas instruções e a
+  // plataforma **cortou a chamada** a meio da segunda frase. Onze segundos,
+  // estado `failed`, e a pessoa do outro lado sem saber porquê. Uma clínica
+  // não pode desligar o telefone na cara de quem faz uma pergunta estranha.
+  //
+  // A defesa passou a ser só a da folha, e mede-se em injecao.mjs: sete
+  // critérios de sete, três corridas, incluindo recusar sem soar a máquina e
+  // tratar o pedido seguinte com a mesma normalidade. Este ficheiro fica como
+  // a comparação: é o que acontecia com o guardrail ligado.
   guardrails: { version: '1', prompt_injection: { is_enabled: true } },
 }

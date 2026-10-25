@@ -59,6 +59,18 @@ export async function GET(request: Request) {
   //
   // So the answer says which of the two it is, and the shape stays the same
   // so that nothing downstream has to learn a new one. See 0076.
+  //
+  // ── AND WHAT IS IN `say` IS SAID, SO IT HAS TO BE SAYABLE ────────────────
+  // This used to be a sentence to say followed by an order to obey: "the
+  // bookings are not handled here. Take the message and say the clinic will
+  // ring back." The sheet says `say` is the only thing she reads aloud, so she
+  // did exactly that, and a patient heard "nesta clínica as marcações não se
+  // tratam por aqui" -- true of our end of the wire, and to the person holding
+  // the telephone it sounds like their clinic does not do appointments.
+  //
+  // What goes in here now is only what a receptionist would say, and it is the
+  // message being taken rather than a fact about our plumbing. The order that
+  // was in the second half lives in the sheet, where it was all along.
   if (context.clinic.takes_bookings === false) {
     return NextResponse.json({
       is_patient: false,
@@ -66,8 +78,8 @@ export async function GET(request: Request) {
       no_diary: true,
       say:
         context.clinic.language === 'es'
-          ? 'En esta clínica las citas no se llevan desde aquí. Toma el recado y di que la clínica le devuelve la llamada.'
-          : 'Nesta clínica as marcações não se tratam por aqui. Toma o recado e diz que a clínica liga de volta.',
+          ? 'De eso se ocupa la clínica, así que me quedo con el recado y le devuelven la llamada. Sólo necesito su nombre y cuál es la cita.'
+          : 'Disso trata a clínica, por isso fico com o recado e ligam-lhe de volta. Preciso só do seu nome e de qual é a consulta.',
     })
   }
 

@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-10-25.12'
+export const PROMPT_VERSION = '2026-10-25.13'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -604,6 +604,18 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     // conversa com os mesmos nove algarismos -- e com mais a perder, porque
     // um recado é inteiramente a promessa de uma chamada de volta.
     '**Antes de leres o número de volta, contas os algarismos — contigo, sem o dizer.** São nove, em Portugal e em Espanha. Se forem nove, o que dizes em voz alta é **o número**, nunca a conta. Se forem menos, aí sim dizes quantos ouviste e pedes os que faltam: "fiquei só com sete, pode dizer-me o número completo?". Um número curto dado por bom é um número para onde ninguém consegue ligar.',
+    // ── E REGISTA-SE QUANDO O RECADO ESTÁ FEITO, NÃO NO FIM DA CHAMADA ───
+    // Medido numa chamada a sério: a pessoa disse o nome, disse que queria
+    // desmarcar um branqueamento de dia oito, confirmou, e desligou enquanto
+    // ela ainda falava. Nada ficou registado, porque a folha só mandava
+    // registar no fecho, e o painel mostrou "esta chamada não deixou recado"
+    // a uma clínica a quem acabara de ser pedido um cancelamento.
+    //
+    // Uma marcação registra-se no instante em que passa a existir (passo 9).
+    // Numa clínica sem agenda o recado É a chamada, por isso registra-se no
+    // instante em que está completo. Registar outra vez depois não duplica
+    // nada: a chamada é uma só e o último registo substitui o anterior.
+    '**Registas a chamada assim que o recado estiver completo**, logo depois de a pessoa confirmar o número e o nome e antes de lhe dizeres que fica anotado. **Não esperas pelo fim da chamada**: quem desliga a seguir ao "está correcto" deixa a clínica sem recado nenhum, e isso já aconteceu. Se depois disso aparecer mais alguma coisa, **registas outra vez com tudo**, e o último registo é o que fica.',
     // Duas chamadas iguais foram registadas uma como informação e outra como
     // não resolvida, e o painel pinta a segunda a vermelho. Numa clínica sem
     // agenda nenhuma chamada se "resolve" por definição, por isso o vermelho
@@ -692,7 +704,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     // Uma ferramenta a meio de uma frase falada faz o modelo recomeçar a frase.
     // A última coisa que acontece tem de ser a fala.
     v.takes_bookings === false
-        ? '5. **Registas a chamada.** É aqui, antes da despedida, e **registas sempre**, mesmo que não tenha havido recado nenhum para tomar. **Não registas antes de teres feito a pergunta do passo 1 e ouvido a resposta**: se ainda não perguntaste, a chamada não acabou e não é hora de registar.'
+        ? '5. **Registas a chamada, se ainda não a tiveres registado.** Se ficou um recado, já ficou registado quando o fechaste — e se apareceu mais alguma coisa depois disso, registas outra vez com tudo: o último substitui o anterior. Se não houve recado nenhum para tomar, é aqui que registas, e **registas sempre**. **Registar não é despedir-se**: estar registado não salta a pergunta do passo 1 nem a despedida, que vêm as duas na mesma.'
         : '5. **Registas a chamada, se ainda não a tiveres registado.** Se houve marcação, já ficou registada — e se houve mais alguma coisa depois disso, registas outra vez com tudo: a última substitui a anterior. Se não houve marcação nenhuma, é aqui que registas, e **registas sempre**. **Não registas antes de teres feito a pergunta do passo 1 e ouvido a resposta**: se ainda não perguntaste, a chamada não acabou.',
     // ── O NÚMERO QUE FICA ESCRITO É O QUE OUVISTE ──────────────────────
     // Duas coisas medidas na mesma manhã. Numa, a pessoa ditou um número
@@ -1048,6 +1060,12 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     'Cuando tomas nota, pides el nombre y el número **que no tengas ya de esta llamada**. El número **lo lees de vuelta así**, "nueve, uno, dos, tres...", y nunca "novecientos doce" — **cierras con una pregunta**, "¿es correcto?", y **te callas esperando la respuesta**. Leer el número y enlazar con otra pregunta no es confirmar: nadie corrige un número que ya ha pasado. Sólo después de que la persona responda dices que queda anotado para que la clínica le devuelva la llamada. Eso se dice de un recado, nunca de una cita.',
     // Ver la versión portuguesa: dio por bueno un número de ocho cifras.
     '**Antes de leer el número de vuelta, cuentas las cifras — para ti, sin decirlo.** Son nueve, en Portugal y en España. Si son nueve, lo que dices en voz alta es **el número**, nunca la cuenta. Si son menos, ahí sí dices cuántas has oído y pides las que faltan: "me he quedado sólo con siete, ¿me dice el número completo?". Un número corto dado por bueno es un número al que nadie puede llamar.',
+    // Ver la versión portuguesa: la persona dio el nombre, dijo que quería
+    // anular un blanqueamiento del día ocho, lo confirmó, y colgó mientras
+    // ella seguía hablando. No quedó nada registrado, y el panel le mostró
+    // "esta llamada no dejó recado" a una clínica a la que acababan de pedir
+    // una anulación.
+    '**Registras la llamada en cuanto el recado está completo**, justo después de que la persona confirme el número y el nombre y antes de decirle que queda anotado. **No esperas al final de la llamada**: quien cuelga después del "es correcto" deja a la clínica sin recado ninguno, y eso ya ha pasado. Si después aparece algo más, **registras otra vez con todo**, y el último registro es el que queda.',
     // Y dos llamadas iguales registradas una como información y otra como no
     // resuelta, que el panel pinta en rojo.
     // Ver la versión portuguesa: los valores van en la descripción del campo.
@@ -1120,7 +1138,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     // Una herramienta a mitad de una frase hablada hace que el modelo empiece
     // la frase otra vez. Lo último que ocurre tiene que ser el habla.
     v.takes_bookings === false
-        ? '5. **Registras la llamada.** Es aquí, antes de la despedida, y **registras siempre**, aunque no haya habido ningún recado que tomar. **No registras antes de haber hecho la pregunta del paso 1 y haber oído la respuesta**: si todavía no has preguntado, la llamada no ha terminado y no toca registrar.'
+        ? '5. **Registras la llamada, si no la has registrado ya.** Si ha quedado un recado, ya quedó registrado al cerrarlo — y si ha aparecido algo más después, registras otra vez con todo: el último sustituye al anterior. Si no ha habido ningún recado que tomar, es aquí donde registras, y **registras siempre**. **Registrar no es despedirse**: estar registrado no salta la pregunta del paso 1 ni la despedida, que vienen las dos igual.'
         : '5. **Registras la llamada, si no la has registrado ya.** Si ha habido cita, ya quedó registrada — y si ha habido algo más después, registras otra vez con todo: la última sustituye a la anterior. Si no ha habido cita ninguna, es aquí donde registras, y **registras siempre**. **No registras antes de haber hecho la pregunta del paso 1 y haber oído la respuesta**: si todavía no has preguntado, la llamada no ha terminado.',
     // Ver la versión portuguesa: un número dictado que no llegó a ninguna
     // parte, y un +351000000000 inventado para rellenar el campo.

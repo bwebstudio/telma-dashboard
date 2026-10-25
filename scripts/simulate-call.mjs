@@ -321,7 +321,12 @@ try {
         const said = (turn.message ?? '').trim()
         if (said) console.log(`  ${who} | ${wrap(said)}\n`)
         for (const call of turn.tool_calls ?? []) {
-          console.log(`        > ferramenta: ${call.tool_name ?? call.name}\n`)
+          // Com o que lhe foi passado, cortado. O nome sozinho não chega:
+          // metade do que se mede aqui é o que ela escreveu no recado, e isso
+          // só está nos parâmetros -- um número ditado que não lá está, ou um
+          // +351000000000 inventado para encher o campo.
+          const args = call.params_as_json ?? JSON.stringify(call.tool_details ?? {})
+          console.log(`        > ${call.tool_name ?? call.name}  ${String(args).slice(0, 300)}\n`)
         }
       }
     }

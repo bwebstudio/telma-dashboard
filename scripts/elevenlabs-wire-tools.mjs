@@ -231,7 +231,21 @@ const TOOLS = [
           summary: {
             type: 'string',
             description:
-              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça: que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém, porque isso é trabalho para alguém e perde-se se não ficar escrito.',
+              'Duas ou três frases sobre o que a pessoa queria e o que ficou combinado, na língua da clínica. É o que a rececionista vai ler no painel. Inclui SEMPRE o que a pessoa pediu que a clínica faça: que lhe liguem por causa do preço, que confirmem alguma coisa, que falem com alguém, porque isso é trabalho para alguém e perde-se se não ficar escrito. E se a pessoa pediu que lhe liguem para um número DIFERENTE daquele de onde está a ligar, escreve esse número aqui com todos os algarismos, assim: "ligar para 913021212". O painel guarda sozinho o número de onde veio a chamada e mais nenhum: "ligar para o contacto indicado" não indica contacto nenhum e a clínica liga para o número errado.',
+          },
+          // ── UM CAMPO, PORQUE A PROSA NÃO CHEGOU ─────────────────────────
+          // A instrução de escrever o número no resumo foi dada três vezes, em
+          // três sítios, e medida: ela escrevia "ligar para o contacto
+          // indicado". O número vinha da pessoa, e a base diz-lhe, logo no
+          // princípio, para não escrever no painel as palavras da pessoa.
+          //
+          // Um campo não tem essa ambiguidade. E sabe-se que ela os preenche:
+          // sem nenhum para isto, chegou a meter o número numa marcação, numa
+          // clínica que não marca, só para o ter onde o pôr.
+          callback_phone: {
+            type: 'string',
+            description:
+              'Só quando a pessoa pediu que lhe liguem para um número DIFERENTE daquele de onde está a ligar. Os nove algarismos, como ela os confirmou. Se é o mesmo número da chamada, ou se não pediu nada disso, omite este campo.',
           },
           appointments: {
             type: 'array',

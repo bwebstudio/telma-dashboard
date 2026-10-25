@@ -51,6 +51,30 @@ export async function POST(request: Request) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clinicId)) {
     return NextResponse.json({ error: 'clinic_not_found' }, { status: 404 })
   }
+  // ── O NÚMERO PARA ONDE A PESSOA PEDIU QUE LIGASSEM ─────────────────────
+  // `from_phone` é de onde a chamada veio, e é o que a rede sabe. Quando
+  // alguém pede que lhe liguem para outro -- o do trabalho, o do filho, o que
+  // tem cobertura em casa -- esse número só existe se for dito, e durante uma
+  // manhã inteira de ensaios não chegou a lado nenhum: a Telma lia-o de volta,
+  // a pessoa confirmava, e no painel ficava escrito "ligar para o contacto
+  // indicado". A clínica ligaria ao número da chamada, que é precisamente o
+  // que a pessoa pediu para não fazer.
+  //
+  // Escrito à cabeça do recado e não num campo próprio, porque é na primeira
+  // linha da mensagem que a recepção olha, e porque um número que vive só numa
+  // coluna que nenhum ecrã mostra é a mesma perda com outra forma.
+  const callback = String(body.callback_phone ?? '').trim()
+  const callbackDigits = callback.replace(/\D/g, '')
+  const fromDigits = String(body.from_phone ?? '').replace(/\D/g, '')
+  const callbackNote =
+    callbackDigits.length >= 9 && callbackDigits.slice(-9) !== fromDigits.slice(-9)
+      ? `Ligar para ${callback}.`
+      : null
+  if (callbackNote) {
+    const said = String(body.summary ?? '').trim()
+    body.summary = said ? `${callbackNote} ${said}` : callbackNote
+  }
+
   const result = body.result as string | undefined
   if (result && !RESULTS.includes(result)) {
     return NextResponse.json({ error: 'invalid_result' }, { status: 400 })

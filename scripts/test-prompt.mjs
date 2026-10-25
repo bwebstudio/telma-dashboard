@@ -1507,12 +1507,22 @@ test('she addresses people by one name, not by all of them', () => {
 // out, so the only fix is for it not to be written. The example teaches the
 // manner without naming it.
 test('the words that are for her are not in her mouth', () => {
-  const OURS = ['algarismo a algarismo', 'cifra a cifra']
+  const OURS = ['algarismo a algarismo', 'cifra a cifra', 'dígito a dígito']
   for (const lang of ['pt', 'es']) {
-    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
-    for (const phrase of OURS) {
-      assert.ok(!text.includes(phrase), `${lang}: "${phrase}" is written down, so it can be read out`)
+    // Both shapes of clinic. The rule is about anything written down, and the
+    // sheet a clinic with no diary gets is a different sheet: the message is
+    // the whole of what it does, so the digits are read back there more often
+    // than anywhere else, and that is where the phrase crept back in.
+    const sheets = [
+      buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang).text,
+      buildPrompt({ ...CASES['cannot-book'], can_book: false, takes_bookings: false }, lang).text,
+    ]
+    for (const text of sheets) {
+      for (const phrase of OURS) {
+        assert.ok(!text.includes(phrase), `${lang}: "${phrase}" is written down, so it can be read out`)
+      }
     }
+    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(RULES[lang].readBackNumber), `${lang}: nothing shows how to say the digits`)
   }
 })

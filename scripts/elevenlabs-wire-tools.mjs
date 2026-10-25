@@ -261,7 +261,12 @@ const TOOLS = [
               // palavra que o impeça, o modelo escreve neles: numa chamada
               // verdadeira pôs o número ditado em from_phone, que é deitado
               // fora ao substituir-se a variável, e o número perdeu-se.
-              'O ÚNICO sítio onde se escreve um número que a pessoa ditou. Preenche-o sempre que ela peça que lhe liguem para um número diferente daquele de onde está a ligar: os nove algarismos, como os confirmaste. O campo from_phone não é para isso e o que lá escreveres é deitado fora. Se o número é o mesmo da chamada, omite este campo.',
+              // Sem a condição "só se for diferente", que ela não consegue
+              // avaliar com segurança: pergunta sempre o número, por isso
+              // nunca sabe ao certo se o que lhe deram é o mesmo de onde a
+              // chamada veio. Preenche sempre, e quem compara é o servidor,
+              // que tem os dois números à frente.
+              'O número que a pessoa confirmou para a clínica lhe ligar de volta, com os nove algarismos. Escreve-o sempre que o tenhas, seja ele o mesmo de onde a chamada veio ou outro: não tens de comparar, isso é feito do outro lado. É aqui e só aqui: o campo from_phone não é para isto e o que lá escreveres é deitado fora. Se a pessoa não deu nenhum número, omite este campo.',
           },
           appointments: {
             type: 'array',

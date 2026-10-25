@@ -970,60 +970,52 @@ test('the pieces contain the whole base and nothing new', () => {
   }
 })
 
-test('what is behind a trigger is what is rare', () => {
+test('nothing is behind a trigger any more', () => {
   const built = buildPrompt({ ...CASES['open-can-book'], can_book: true }, 'es')
   const { core, booking, cancelling, closing, difficult } = built.nodes
 
-  // The booking lives in the core, and that is a correction rather than a
-  // default. It was a procedure for a day, and a timed call showed the cost:
-  // nine seconds between the caller finishing and Telma speaking, five of them
-  // `start_procedure`. Loading a procedure is a tool call, a tool call is a
-  // round trip, and booking is the path of nearly every call.
+  // This test used to assert the opposite, and the reversal is the point.
   //
-  // This fails if somebody moves it back out, which is the point: the reason
-  // is a measurement and measurements are easy to forget.
-  // The goodbye is here for the same reason and the same measurement: its own
-  // start_procedure was heard as a silence at the end of a call, and every
-  // call ends.
-  for (const [name, piece] of Object.entries({ booking, closing })) {
-    for (const line of piece.split('\n')) {
-      const needle = line.trim()
-      if (needle.length < 12) continue
-      assert.ok(core.includes(needle), `the ${name} left the core: ${needle.slice(0, 60)}`)
-    }
-  }
-
-  // And the three that stayed behind a trigger are still real. A procedure
-  // that came out empty means the split missed it, and nothing would say so:
-  // the conversation would simply never be told what to do.
-  for (const [name, piece] of Object.entries({ cancelling, difficult })) {
+  // The booking and the goodbye were pulled into the core first, and for a
+  // measurement: a timed call showed nine seconds between the caller
+  // finishing and Telma speaking, five of them `start_procedure`. Loading a
+  // procedure is a tool call, a tool call is a round trip, and the round trip
+  // is heard as silence.
+  //
+  // The other two followed for two reasons the clock did not show.
+  //
+  // A procedure is agent configuration: one copy for every clinic, cut from a
+  // clinic that books. On a clinic with no diary the core said "you have no
+  // diary" and the procedure loaded on top said "look the booking up". Three
+  // layers of text were written to contain that; none of them removes it.
+  //
+  // And the difficult-call trigger fires on what the caller says. One of its
+  // cases is the caller going quiet, and a silence says nothing: the four
+  // lines telling her to ask twice before hanging up were not loaded in the
+  // one case they exist for.
+  //
+  // What it costs is about 670 tokens of context on every call. What it buys
+  // is a round trip saved on every cancellation and a whole class of
+  // contradiction that cannot happen any more.
+  for (const [name, piece] of Object.entries({ booking, cancelling, closing, difficult })) {
     assert.ok(piece.length > 200, `${name} came out empty, which means the split missed it`)
     for (const line of piece.split('\n')) {
       const needle = line.trim()
       if (needle.length < 12) continue
-      assert.ok(!core.includes(needle), `${name} is also in the core, so it is read twice: ${needle.slice(0, 50)}`)
+      assert.ok(core.includes(needle), `${name} left the core: ${needle.slice(0, 60)}`)
     }
   }
 
-  // Something is still outside it. If this ever fails the graph has collapsed
-  // back into one sheet and the procedures are decoration.
+  // And the core is now the whole sheet. If this ever fails, something was
+  // put back behind a trigger and the agent has to be told about it: the
+  // procedures on it were deleted, so a section that leaves the core is a
+  // section nobody reads.
   assert.ok(
-    core.length < built.text.length * 0.92,
-    `the core is ${core.length} of ${built.text.length}, so nothing is behind a trigger any more`
+    core.length >= built.text.length * 0.98,
+    `the core is ${core.length} of ${built.text.length}, so something is outside it and nothing on the agent carries it`
   )
 })
 
-// The architecture, guarded.
-//
-// The node graph lives on one agent shared by every clinic, and the core is the
-// only part generated per call. So a procedure that changes from clinic to
-// clinic cannot be a node, and this is what stops one becoming one again: the
-// day somebody puts an opening hour or a price inside the booking steps, this
-// fails instead of quietly making the split impossible.
-//
-// `can_book: false` is excluded on purpose. That is not a variation of the
-// booking procedure, it is a different procedure, and it belongs in a node of
-// its own rather than in this one.
 test('the procedures are the same for every clinic', () => {
   const one = { ...CASES['open-can-book'], can_book: true }
   const others = [

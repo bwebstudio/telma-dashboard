@@ -148,7 +148,19 @@ const REFERENCE = {
 // The triggers are in English on purpose. They are read by the model deciding
 // what to load, not spoken to anybody, and the one thing they have to do
 // reliably is tell a Portuguese call from a Spanish one.
-const PIECES = [
+// ── E AGORA NÃO HÁ NENHUM ──────────────────────────────────────────────────
+// Os dois que aqui estavam voltaram para o núcleo. Um procedimento é
+// configuração do agente: uma só cópia para todas as clínicas, recortada de
+// uma que marca. Numa clínica sem agenda, o de cancelamentos contradizia o
+// núcleo palavra por palavra. E o da chamada difícil disparava com o que a
+// pessoa diz, o que o deixava de fora no caso que mais importa: o silêncio,
+// que não diz nada.
+//
+// A lista fica vazia em vez de o ficheiro ser apagado, porque `--prune`
+// continua a ser a forma de os tirar do agente, e porque a conta de tokens
+// que está no cabeçalho continua a ser verdade -- só mudou o que decidimos
+// fazer com ela.
+const PIECES_RETIRED = [
   {
     node: 'cancelling',
     slug: 'cancelamentos',
@@ -166,6 +178,8 @@ const PIECES = [
     },
   },
 ]
+
+const PIECES = []
 
 // A name we can recognise later. --prune only removes procedures whose name
 // starts with this, so a procedure somebody wrote by hand in the console is

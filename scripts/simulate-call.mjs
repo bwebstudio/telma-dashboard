@@ -226,10 +226,13 @@ if (PROCEDURES) {
   // path. Keep this list the same as the one in elevenlabs-procedures.mjs or
   // the harness measures a shape nobody runs, which is the mistake 451bff4
   // exists to stop repeating.
-  const pieces = [
-    ['cancelamentos', 'cancelling', 'The caller wants to cancel or move an appointment they already have.'],
-    ['dificil', 'difficult', 'The caller has gone quiet, has said they will leave it for another time, or is being abusive.'],
-  ]
+  // Vazio, e é esse o ponto: desde que os cancelamentos e a chamada difícil
+  // voltaram para o núcleo, o agente verdadeiro não tem procedimento nenhum.
+  // A bandeira fica porque é ela que diz "corre na forma que está em
+  // produção", e a forma que está em produção é esta. Pô-los aqui outra vez
+  // seria medir um agente que ninguém tem -- que é o erro que esta bandeira
+  // existe para não repetir.
+  const pieces = []
   const branch = (await api('GET', `/v1/convai/agents/${agent.agent_id}/branches`)).results.find(
     (b) => !b.is_archived
   )
@@ -250,13 +253,7 @@ if (PROCEDURES) {
   await api('PATCH', `/v1/convai/agents/${agent.agent_id}?branch_id=${branch.id}`, {
     name: agent.name,
   })
-  const live = (
-    await api('GET', `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures`)
-  ).procedures.filter((x) => !x.has_draft)
-  if (live.length !== pieces.length) {
-    throw new Error(`só ${live.length} de ${pieces.length} procedimentos ficaram publicados`)
-  }
-  console.log(`  ${live.length} procedimentos publicados no agente de ensaio\n`)
+  console.log(`  núcleo inteiro, sem procedimentos — como o agente verdadeiro\n`)
 }
 
 try {

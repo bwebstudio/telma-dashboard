@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-10-25.7'
+export const PROMPT_VERSION = '2026-10-25.8'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -685,8 +685,8 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     // Uma ferramenta a meio de uma frase falada faz o modelo recomeçar a frase.
     // A última coisa que acontece tem de ser a fala.
     v.takes_bookings === false
-        ? '5. **Registas a chamada.** É aqui, antes da despedida, e **registas sempre**, mesmo que não tenha havido recado nenhum para tomar.'
-        : '5. **Registas a chamada, se ainda não a tiveres registado.** Se houve marcação, já ficou registada — e se houve mais alguma coisa depois disso, registas outra vez com tudo: a última substitui a anterior. Se não houve marcação nenhuma, é aqui que registas, e **registas sempre**.',
+        ? '5. **Registas a chamada.** É aqui, antes da despedida, e **registas sempre**, mesmo que não tenha havido recado nenhum para tomar. **Não registas antes de teres feito a pergunta do passo 1 e ouvido a resposta**: se ainda não perguntaste, a chamada não acabou e não é hora de registar.'
+        : '5. **Registas a chamada, se ainda não a tiveres registado.** Se houve marcação, já ficou registada — e se houve mais alguma coisa depois disso, registas outra vez com tudo: a última substitui a anterior. Se não houve marcação nenhuma, é aqui que registas, e **registas sempre**. **Não registas antes de teres feito a pergunta do passo 1 e ouvido a resposta**: se ainda não perguntaste, a chamada não acabou.',
     // ── O NÚMERO QUE FICA ESCRITO É O QUE OUVISTE ──────────────────────
     // Duas coisas medidas na mesma manhã. Numa, a pessoa ditou um número
     // diferente daquele de onde ligava, ela leu-o de volta, a pessoa
@@ -1114,8 +1114,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     // Una herramienta a mitad de una frase hablada hace que el modelo empiece
     // la frase otra vez. Lo último que ocurre tiene que ser el habla.
     v.takes_bookings === false
-        ? '5. **Registras la llamada.** Es aquí, antes de la despedida, y **registras siempre**, aunque no haya habido ningún recado que tomar.'
-        : '5. **Registras la llamada, si no la has registrado ya.** Si ha habido cita, ya quedó registrada — y si ha habido algo más después, registras otra vez con todo: la última sustituye a la anterior. Si no ha habido cita ninguna, es aquí donde registras, y **registras siempre**.',
+        ? '5. **Registras la llamada.** Es aquí, antes de la despedida, y **registras siempre**, aunque no haya habido ningún recado que tomar. **No registras antes de haber hecho la pregunta del paso 1 y haber oído la respuesta**: si todavía no has preguntado, la llamada no ha terminado y no toca registrar.'
+        : '5. **Registras la llamada, si no la has registrado ya.** Si ha habido cita, ya quedó registrada — y si ha habido algo más después, registras otra vez con todo: la última sustituye a la anterior. Si no ha habido cita ninguna, es aquí donde registras, y **registras siempre**. **No registras antes de haber hecho la pregunta del paso 1 y haber oído la respuesta**: si todavía no has preguntado, la llamada no ha terminado.',
     // Ver la versión portuguesa: un número dictado que no llegó a ninguna
     // parte, y un +351000000000 inventado para rellenar el campo.
     '   **Nunca inventas un número**, ni de ejemplo ni lleno de ceros: sin número es mejor que con uno falso. **El número que la persona ha confirmado para que le llamen va siempre en `callback_phone`**, sea el mismo desde el que llama u otro — no tienes que decidir si coincide. **Nunca en `from_phone`**, que llega solo y tira lo que pongas ahí.',

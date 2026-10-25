@@ -18,8 +18,52 @@
  */
 import { shared } from './so-recados.mjs'
 
+/**
+ * A clínica de onde saem os procedimentos do agente, que não é esta.
+ *
+ * No agente verdadeiro há um procedimento de cancelamentos só, partilhado por
+ * todas as clínicas e cortado de uma clínica que marca -- diz para chamar a
+ * telma_ver_marcacoes e para perguntar se marcaram de outro telefone. O
+ * gatilho é a pessoa dizer que quer desmarcar, por isso carrega-se também
+ * numa clínica sem agenda nenhuma.
+ *
+ * É essa a contradição que esta simulação tem de reproduzir: o núcleo diz que
+ * não há agenda, o procedimento diz para a consultar. Corta-se igual à
+ * referência de scripts/elevenlabs-procedures.mjs.
+ */
+const BOOKING_CLINIC = {
+  clinic_name: 'Clínica',
+  specialty: null,
+  address: null,
+  phone: null,
+  timezone: 'Europe/Lisbon',
+  caller_id: null,
+  veterinary: false,
+  professionals: [],
+  services: ['Consulta'],
+  custom_services: null,
+  opening_hours: [],
+  appointment_duration_minutes: 30,
+  languages: ['Português'],
+  formality: 'formal',
+  price_info: null,
+  fallback_policy: 'message',
+  fallback_number: null,
+  briefing: null,
+  can_book: true,
+  takes_bookings: true,
+  within_opening_hours: true,
+  emergency_number: null,
+  emergency_protocol: null,
+  recording: true,
+  after_hours_transfer: false,
+  after_hours_patients_only: false,
+  after_hours_number: null,
+}
+
 export default {
   ...shared,
+  proceduresFrom: BOOKING_CLINIC,
   firstMessage: 'Boa tarde, eu queria anular a minha consulta de quinta-feira.',
   caller: `És um paciente que já tem uma consulta marcada e quer anulá-la.
 Chamas-te Teresa Marques e a consulta é na quinta-feira de manhã.

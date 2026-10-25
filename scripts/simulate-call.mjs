@@ -77,11 +77,30 @@ const {
   tools,
   toolMocks,
   dynamicVariables,
+  // ── OS PROCEDIMENTOS NÃO SAEM DA MESMA CLÍNICA ───────────────────────────
+  // No agente verdadeiro os procedimentos são configuração: um texto só,
+  // partilhado por todas as clínicas, cortado de uma clínica de referência que
+  // marca (ver scripts/elevenlabs-procedures.mjs). O núcleo é que vem da
+  // clínica desta chamada.
+  //
+  // Enquanto este ficheiro cortava os dois da mesma clínica, um cenário de uma
+  // clínica sem agenda corria com um procedimento de cancelamentos escrito
+  // para uma clínica sem agenda -- que não existe em lado nenhum -- e media
+  // uma configuração que ninguém tem. O caso que interessa é precisamente o
+  // outro: o núcleo diz que não há agenda e o procedimento diz para a
+  // consultar. É nessa contradição que uma paciente ouviu "não encontro
+  // nenhuma marcação nesse número".
+  proceduresFrom,
 } = scenario.default
 
 const { buildPrompt, greetingLine, todayInZone } = await import('../lib/onboarding/prompt.ts')
 const variables = { ...clinic, today: todayInZone(clinic.timezone, language) }
 const built = buildPrompt(variables, language)
+// The agent's procedures, cut from whichever clinic the scenario says they are
+// cut from in production. Same clinic unless it says otherwise.
+const builtProcedures = proceduresFrom
+  ? buildPrompt({ ...proceduresFrom, today: variables.today }, language)
+  : built
 const greeting = greetingLine(clinic.clinic_name, language, clinic.formality, clinic.recording, [
   language,
 ])
@@ -223,7 +242,7 @@ if (PROCEDURES) {
     await api(
       'PATCH',
       `/v1/convai/agents/${agent.agent_id}/branches/${branch.id}/procedures/${procedure_id}/draft`,
-      { name: `telma/${slug}`, type: 'free_form', trigger, content: built.nodes[node] }
+      { name: `telma/${slug}`, type: 'free_form', trigger, content: builtProcedures.nodes[node] }
     )
   }
   // Out of draft. A procedure left in draft is written and never read, and the

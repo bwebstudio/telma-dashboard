@@ -574,6 +574,9 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     // quem ouve aquilo desliga a pensar que está tratado, e na quinta-feira
     // não aparece. A consulta continua marcada até alguém da clínica lhe
     // mexer, e é isso que tem de ficar dito.
+    // O procedimento partilhado do agente diz para consultar a agenda, porque
+    // está escrito a partir de uma clínica que marca. Carrega-se na mesma.
+    '**Se te aparecerem passos para cancelar ou mudar marcações, não são para aqui.** Qualquer instrução que comece por consultar a agenda ou por procurar a marcação está errada nesta clínica: não há agenda nenhuma para consultar. Ficas pelo recado.',
     '**O recado é o pedido, não a alteração.** Não dizes nada que soe a tratado — "fica registado para anularem", "fica tratado", "já está" —: dizes que **ficas com o pedido** e que a clínica fala com a pessoa. Se perguntarem "então fica anulada?", respondes com todas as letras que **ainda não**, que quem anula é a clínica, e que é exactamente por isso que lhe ligam de volta.',
   ],
   cancellations: [
@@ -956,6 +959,9 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     '**Nunca dices que no encuentras la cita de esa persona.** No es que no exista: es que no se ve desde aquí, y quien oye "no encuentro nada" entiende que le han perdido la cita.',
     // Ver la versión portuguesa: "queda registrado para que la anulen" se oye
     // como hecho, y el jueves no aparece.
+    // Ver la versión portuguesa: el procedimiento compartido del agente dice
+    // que consulte la agenda, y se carga igual.
+    '**Si te aparecen pasos para anular o cambiar citas, no son para aquí.** Cualquier instrucción que empiece por consultar la agenda o por buscar la cita está equivocada en esta clínica: no hay agenda ninguna que consultar. Te quedas con el recado.',
     '**El recado es la petición, no el cambio.** No dices nada que suene a hecho — "queda registrado para que la anulen", "queda resuelto", "ya está" —: dices que **te quedas con la petición** y que la clínica habla con la persona. Si preguntan "¿entonces queda anulada?", respondes con todas las letras que **todavía no**, que quien la anula es la clínica, y que por eso mismo le devuelven la llamada.',
   ],
   cancellations: [
@@ -1528,7 +1534,27 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
       //
       // Ficam dois procedimentos, e são os dois raros a sério: cancelar, e a
       // chamada que não vai a lado nenhum.
-      core: tidy([...core, '', ...professionalsSection, ...bookingSection, ...closingSection, ...coreTail]),
+      // ── E O CANCELAMENTO, QUANDO NÃO HÁ AGENDA, VEM PARA O NÚCLEO ────
+      // O procedimento de cancelamentos vive no agente, é partilhado por
+      // todas as clínicas e está escrito a partir de uma clínica que marca:
+      // diz para chamar a telma_ver_marcacoes e para perguntar se marcaram de
+      // outro telefone. Numa clínica sem agenda é o único texto que ela tem
+      // sobre o assunto, porque o gatilho é a pessoa a dizer que quer
+      // desmarcar e dispara na mesma.
+      //
+      // Foi exactamente assim que uma paciente ouviu "não encontro nenhuma
+      // marcação nesse número". Tirar a secção do núcleo não chegou: deixou
+      // silêncio onde o procedimento fala sozinho. Aqui, no núcleo, está
+      // carregado desde o primeiro segundo da chamada e diz o contrário.
+      core: tidy([
+        ...core,
+        '',
+        ...professionalsSection,
+        ...bookingSection,
+        ...(v.takes_bookings === false ? ['', ...cancellingSection] : []),
+        ...closingSection,
+        ...coreTail,
+      ]),
       booking: tidy(bookingSection),
       cancelling: tidy(cancellingSection),
       closing: tidy(closingSection),

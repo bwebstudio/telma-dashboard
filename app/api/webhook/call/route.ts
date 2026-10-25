@@ -83,12 +83,15 @@ export async function POST(request: Request) {
   const { data: lengths } = await admin
     .from('clinics')
     .select(
-      'service_durations, appointment_duration_minutes, slot_minutes, services, custom_services, language, appointments_auto_confirmed'
+      'service_durations, appointment_duration_minutes, slot_minutes, services, custom_services, language, appointments_auto_confirmed, takes_bookings'
     )
     .eq('id', clinicId)
     .maybeSingle()
   const clinicLengths = (lengths ?? {}) as DurationSource
-  const clinic = (lengths ?? {}) as { appointments_auto_confirmed?: boolean | null }
+  const clinic = (lengths ?? {}) as {
+    appointments_auto_confirmed?: boolean | null
+    takes_bookings?: boolean | null
+  }
   const minutesFor = (a: Record<string, unknown>) =>
     resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
 
@@ -133,7 +136,22 @@ export async function POST(request: Request) {
 
   if (appointment) {
     const at = appointment.scheduled_at
-    if (typeof at !== 'string' || Number.isNaN(Date.parse(at))) {
+    // ── A CLINIC THAT DOES NOT BOOK ───────────────────────────────────────
+    // First, because none of the checks below mean anything here: there is no
+    // hour to validate against a diary that does not exist.
+    //
+    // The prompt already tells her not to book on these clinics and she does
+    // not, measured. But the prompt is the only thing that was stopping it,
+    // and the cost of it being wrong once is the worst shape a failure can
+    // take: an appointment written into a diary the clinic never opens --
+    // their day screen does not even show one -- for a patient who was told
+    // out loud that it was booked. Nobody finds out until somebody arrives.
+    //
+    // So it is refused here too. The call is still filed with its summary,
+    // which is the thing the clinic actually wanted from it. See 0076.
+    if (clinic.takes_bookings === false) {
+      rejected = 'clinic_without_diary'
+    } else if (typeof at !== 'string' || Number.isNaN(Date.parse(at))) {
       rejected = 'scheduled_at_not_a_time'
     } else if (!plausiblePhone(appointment.patient_phone) && !plausiblePhone(body.from_phone)) {
       // An appointment nobody can be rung about is barely an appointment. On a
@@ -448,7 +466,9 @@ export async function POST(request: Request) {
         // Written for the agent to read mid-call, because it is the only party
         // still talking to the patient and the only one who can put it right.
         message:
-          rejected === 'patient_phone_not_plausible'
+          rejected === 'clinic_without_diary'
+            ? 'A chamada ficou registada mas a marcação não: esta clínica não tem agenda e as marcações são tratadas por pessoas. Não diga que ficou marcada. Tome o recado com o nome, o número e o motivo, e diga que a clínica liga de volta.'
+            : rejected === 'patient_phone_not_plausible'
             ? 'A chamada ficou registada mas a marcação não: o telefone não parece um número completo. Peça-o outra vez à pessoa, diga quantos algarismos ouviu, e volte a registar. Em Espanha e em Portugal são nove algarismos.'
             : rejected === 'patient_name_missing'
               ? 'A chamada ficou registada mas a marcação não: falta o nome de quem vem. Peça o nome, repita-o para confirmar, e volte a registar.'

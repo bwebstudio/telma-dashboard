@@ -271,20 +271,6 @@ export function MessagesDay({
                         {c.from_phone || dict.common.noNumber}
                       </span>
                     )}
-                    {c.result && (
-                      <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>
-                    )}
-                    {/* ── AND WHAT THE PERSON HAS OPEN ───────────────────
-                        A follow-up belongs to the person, not to this call,
-                        so the row shows it and does not offer to close it:
-                        it was opened with a reason somebody wrote, and it is
-                        closed on the record where that reason can be read.
-                        Without it, a line could be ticked off as dealt with
-                        while the person was still owed something, which is
-                        the day and the record saying different things. */}
-                    {known?.followUpSince && (
-                      <Badge tone="warn">{dict.pacientes.followOpenTag}</Badge>
-                    )}
                     {/* Nothing was said on a call nobody answered, so there is
                         nothing to open. The person is still worth following up:
                         they rang and got nobody. */}
@@ -309,6 +295,26 @@ export function MessagesDay({
                         patientId={known?.id ?? null}
                         dict={dict}
                       />
+                    )}
+                    {/* ── THE COLOURED ONES LAST ─────────────────────────
+                        Chips and links were interleaved, so the right hand
+                        end of every row was a different shape: a colour, then
+                        two words, then a colour again on the next line down.
+                        The links go first and the colours end the row, which
+                        gives the list one edge to read down instead of three.
+                        ── AND WHAT THE PERSON HAS OPEN ───────────────────
+                        A follow-up belongs to the person, not to this call,
+                        so the row shows it and does not offer to close it:
+                        it was opened with a reason somebody wrote, and it is
+                        closed on the record where that reason can be read.
+                        Without it, a line could be ticked off as dealt with
+                        while the person was still owed something, which is
+                        the day and the record saying different things. */}
+                    {known?.followUpSince && (
+                      <Badge tone="warn">{dict.pacientes.followOpenTag}</Badge>
+                    )}
+                    {c.result && (
+                      <Badge tone={CALL_TONE[c.result]}>{dict.status.call[c.result]}</Badge>
                     )}
                   </div>
                   {c.summary && (

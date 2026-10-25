@@ -86,8 +86,53 @@ export async function claimSlot(
       : { ok: false, because: 'taken' }
   }
 
-  // The hour is not on offer: full, outside the hours, or on a blocked day.
-  if (message.includes('slot_not_available')) return { ok: false, because: 'taken' }
+  // ── THE HOUR IS NOT ON OFFER ───────────────────────────────────────────
+  // Full, outside the hours, on a blocked day -- or held by this very call.
+  //
+  // That last one is not a corner case, it is the ordinary path. Telma holds
+  // the hour the moment somebody chooses it and the lock lasts three minutes;
+  // then she takes the name and the number and files the call. On the clinics
+  // that run one diary, her own lock is what leaves the hour with nothing
+  // free, so `hold_slot` never reaches the unique index and raises
+  // `slot_not_available` rather than `slot_locked` -- and the branch above,
+  // which exists precisely so that a call is not refused by its own hold,
+  // never runs.
+  //
+  // What the patient hears is "essa hora foi ocupada entretanto", about an
+  // hour that is free and that they were told a moment ago was theirs, and
+  // the booking is thrown away. Only on calls that end inside three minutes,
+  // which is why it survived: a slower call lets the lock lapse first and the
+  // booking goes through. The faster the call, the likelier it is lost.
+  //
+  // So the lock is read before believing it. Ours, and nothing written into
+  // the hour in the meantime, means the hour is ours and the claim stands.
+  if (message.includes('slot_not_available')) {
+    if (!input.callRef) return { ok: false, because: 'taken' }
+    const { data: lock } = await admin
+      .from('slot_locks')
+      .select('call_ref')
+      .eq('clinic_id', input.clinicId)
+      .eq('slot_start', input.scheduledAt)
+      .maybeSingle()
+    if ((lock as { call_ref: string | null } | null)?.call_ref !== input.callRef) {
+      return { ok: false, because: 'taken' }
+    }
+    // Our own hold, and still worth one more question: a lock stops other
+    // calls, not another part of this system, so the one thing that would
+    // make this a double booking is an appointment already standing in the
+    // hour. The four states that are not in the hour any more -- refused,
+    // cancelled, expired, and the one already copied into the clinic's own
+    // software -- do not count. Listed rather than inverted so that a status
+    // added later is treated as occupying the hour until somebody says it
+    // does not, which is the safe direction for a diary.
+    const { count } = await admin
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('clinic_id', input.clinicId)
+      .eq('scheduled_at', input.scheduledAt)
+      .not('status', 'in', '(rejeitada,cancelada,expirada,copiada)')
+    return (count ?? 0) > 0 ? { ok: false, because: 'taken' } : { ok: true, held: false }
+  }
 
   return { ok: false, because: 'unknown', error: message }
 }

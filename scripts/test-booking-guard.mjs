@@ -26,16 +26,23 @@ const { claimSlot } = await import('../lib/slot-claim.ts')
 const { plausibleName } = await import('../lib/phone.ts')
 
 /** A Postgres that answers however this test needs it to. */
-function stub({ rpc, lock }) {
+function stub({ rpc, lock, booked = 0 }) {
   return {
     rpc: async () => rpc,
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          eq: () => ({ maybeSingle: async () => ({ data: lock ?? null }) }),
-        }),
-      }),
-    }),
+    from: (table) =>
+      table === 'appointments'
+        ? {
+            // "Is anything already standing in this hour?" The count is what
+            // decides whether our own hold can be claimed.
+            select: () => ({ eq: () => ({ eq: () => ({ not: async () => ({ count: booked }) }) }) }),
+          }
+        : {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({ maybeSingle: async () => ({ data: lock ?? null }) }),
+              }),
+            }),
+          },
   }
 }
 
@@ -73,6 +80,49 @@ test('our own hold is not a clash', async () => {
 
 test('an hour that is no longer on offer is refused', async () => {
   const r = await claimSlot(stub({ rpc: { data: null, error: { message: 'slot_not_available' } } }), slot)
+  assert.deepEqual(r, { ok: false, because: 'taken' })
+})
+
+// ── THE HOUR THIS CALL IS ITSELF HOLDING ────────────────────────────────────
+// Telma holds the hour the moment somebody chooses it, then files the call.
+// On a clinic with one diary that hold is what leaves the hour with nothing
+// free, so the database never reaches the unique index: it answers
+// `slot_not_available`, not `slot_locked`, and the escape hatch above never
+// runs. The booking was thrown away and the patient was told the hour had
+// just gone, about an hour that was theirs. Only on calls that ended inside
+// the three minutes a lock lives, which is why it went unnoticed: a slower
+// call lets the lock lapse and books fine.
+test('an hour made unavailable by our own hold is still ours', async () => {
+  const r = await claimSlot(
+    stub({
+      rpc: { data: null, error: { message: 'slot_not_available' } },
+      lock: { call_ref: 'conversation-a' },
+    }),
+    slot
+  )
+  assert.equal(r.ok, true)
+})
+
+test('our own hold does not override an appointment already in the hour', async () => {
+  const r = await claimSlot(
+    stub({
+      rpc: { data: null, error: { message: 'slot_not_available' } },
+      lock: { call_ref: 'conversation-a' },
+      booked: 1,
+    }),
+    slot
+  )
+  assert.deepEqual(r, { ok: false, because: 'taken' })
+})
+
+test('somebody else holding an unavailable hour is still refused', async () => {
+  const r = await claimSlot(
+    stub({
+      rpc: { data: null, error: { message: 'slot_not_available' } },
+      lock: { call_ref: 'conversation-b' },
+    }),
+    slot
+  )
   assert.deepEqual(r, { ok: false, because: 'taken' })
 })
 

@@ -266,12 +266,18 @@ const TOOLS = [
               // palavra que o impeça, o modelo escreve neles: numa chamada
               // verdadeira pôs o número ditado em from_phone, que é deitado
               // fora ao substituir-se a variável, e o número perdeu-se.
-              // Sem a condição "só se for diferente", que ela não consegue
-              // avaliar com segurança: pergunta sempre o número, por isso
-              // nunca sabe ao certo se o que lhe deram é o mesmo de onde a
-              // chamada veio. Preenche sempre, e quem compara é o servidor,
-              // que tem os dois números à frente.
-              'O número que a pessoa confirmou para a clínica lhe ligar de volta, com os nove algarismos. Escreve-o sempre que o tenhas, seja ele o mesmo de onde a chamada veio ou outro: não tens de comparar, isso é feito do outro lado. É aqui e só aqui: o campo from_phone não é para isto e o que lá escreveres é deitado fora. Se a pessoa não deu nenhum número, omite este campo.',
+              // A condição não é "só se for diferente", que ela não consegue
+              // avaliar -- pergunta sempre o número e nunca sabe ao certo se o
+              // que lhe deram é o mesmo de onde a chamada veio. A condição é
+              // "só se ouviste os algarismos", que é uma coisa que ela sabe.
+              //
+              // Dizia "escreve-o sempre que o tenhas, seja o mesmo ou outro", e
+              // numa chamada verdadeira a pessoa respondeu "é este mesmo", sem
+              // ditar nada, e ela escreveu 913021212: um número que ninguém
+              // disse e de onde ninguém ligou. Quem compara continua a ser o
+              // servidor; o que muda é que um campo vazio é agora a resposta
+              // certa, e não um campo por preencher.
+              'O número que a pessoa **ditou** para a clínica lhe ligar de volta, com os nove algarismos, tal como o confirmaste em voz alta. Se ela não ditou nenhum -- disse que servia o mesmo de onde está a ligar, ou não chegou a dar um --, **omite este campo por completo**: o número de onde a chamada entrou chega sozinho ao painel e é esse que a clínica vê. **Nunca o escrevas de memória nem com algarismos que não ouviste nesta chamada**: um número inventado é uma pessoa a quem a clínica não consegue ligar, e já aconteceu. É aqui e só aqui: o campo from_phone não é para isto e o que lá escreveres é deitado fora.',
           },
           appointments: {
             type: 'array',

@@ -152,6 +152,28 @@ export async function POST(request: Request) {
   const minutesFor = (a: Record<string, unknown>) =>
     resolveDuration(clinicLengths, (a.reason as string) ?? null).minutes
 
+  // ── WHAT HAPPENED, AND WHAT COULD NOT HAVE HAPPENED HERE ─────────────────
+  // `marcacao` and `cancelamento` mean an appointment that exists and one that
+  // was actually called off, which is a thing only a clinic with a diary can
+  // do. The two `pedido_` ones are the wanting, not the doing, and on a clinic
+  // with no diary the wanting is all there ever is. See 0084.
+  //
+  // She picks the value, and on a cancellation she picked `cancelamento`: a
+  // fair reading of "say what the person wanted", and in the panel it is the
+  // chip that says the appointment is off. Nothing was off. Nobody had looked.
+  //
+  // Translated here rather than argued about in the sheet, because this one
+  // does not depend on her reading anything: a clinic with no diary cannot
+  // have either of the two, whatever arrives in the field.
+  const filed =
+    clinic.takes_bookings === false
+      ? result === 'marcacao'
+        ? 'pedido_marcacao'
+        : result === 'cancelamento'
+          ? 'pedido_cancelamento'
+          : result
+      : result
+
   // Which diary this belongs to.
   //
   // Named, when the caller asked for somebody. Otherwise the diary that was
@@ -312,7 +334,7 @@ export async function POST(request: Request) {
         p_clinic_id: clinicId,
         p_from_phone: (body.from_phone as string) ?? null,
         p_duration: Number(body.duration_seconds) || 0,
-        p_result: rejected ? 'nao_resolvida' : (result ?? null),
+        p_result: rejected ? 'nao_resolvida' : (filed ?? null),
         p_summary: (body.summary as string) ?? null,
         p_recording_url: (body.recording_url as string) ?? null,
         p_external_ref: externalRef,
@@ -382,7 +404,7 @@ export async function POST(request: Request) {
     p_clinic_id: clinicId,
     p_from_phone: (body.from_phone as string) ?? null,
     p_duration: Number(body.duration_seconds) || 0,
-    p_result: rejected ? 'nao_resolvida' : (result ?? null),
+    p_result: rejected ? 'nao_resolvida' : (filed ?? null),
     p_summary: (body.summary as string) ?? null,
     p_recording_url: (body.recording_url as string) ?? null,
     p_external_ref: externalRef,

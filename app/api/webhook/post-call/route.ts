@@ -151,7 +151,10 @@ export async function POST(request: Request) {
   // appointment, and there is no appointment here -- that is the whole problem.
   // The summary is what the panel puts at the top of an opened call, so this is
   // where somebody reading it will find the number to ring.
-  const rescued = [rescuedName, rescuedPhone, rescuedBooking].filter(Boolean).join(' · ')
+  // O nome sai daqui: vai para a coluna, logo abaixo. O que fica são as duas
+  // coisas que não têm coluna nenhuma -- o número que ela apanhou e o que a
+  // pessoa queria marcar.
+  const rescued = [rescuedPhone, rescuedBooking].filter(Boolean).join(' · ')
   const fullSummary = rescued ? `${rescued}\n\n${said}` : said
 
   const { data, error } = await admin.rpc('record_call', {
@@ -168,6 +171,21 @@ export async function POST(request: Request) {
     p_appointment: null,
   })
   if (error) return NextResponse.json({ error: 'could_not_record' }, { status: 500 })
+
+  // ── E O NOME NA COLUNA, NÃO SÓ NO TEXTO ────────────────────────────────
+  // A análise apanha o nome de quem ligou mesmo quando a Telma não registou
+  // nada, e até aqui ele ia só para dentro do resumo. O painel escreve o nome
+  // a negrito ao lado do número quando está na coluna, e é dele que sai o
+  // nome já preenchido ao abrir uma ficha. No texto não serve para nenhuma
+  // das duas coisas: via-se "Domingos" como primeira linha do recado e a
+  // caixa da ficha abria vazia.
+  const newId = (data as { call_id?: string } | null)?.call_id
+  if (newId && rescuedName) {
+    await admin
+      .from('calls')
+      .update({ patient_name: rescuedName.trim().slice(0, 120) })
+      .eq('id', newId)
+  }
 
   return NextResponse.json({ ok: true, ...(data as object) })
 }

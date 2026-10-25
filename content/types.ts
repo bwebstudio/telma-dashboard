@@ -487,6 +487,8 @@ export interface Dictionary {
      *  with no date on it would read as this morning. */
     calledBackOn: string
     calledBackTimes: string
+    /** Opens the box that creates a record. It said "follow this person",
+     *  which named a feeling rather than the thing that happens. */
     followCaller: string
     openRecord: string
     callerName: string

@@ -355,7 +355,14 @@ const BUILT_IN_TOOLS = {
       end_call: {
         name: 'end_call',
         description:
-          'Termina a chamada. Usa assim que acabares a frase da despedida, sem esperar resposta, ou quando te pedirem para desligar. Não a uses enquanto a outra pessoa estiver a falar.',
+          // ── AS DUAS CONDIÇÕES, AQUI E NÃO NA FOLHA ──────────────────────
+          // A folha diz, em três sítios, que se pergunta antes de fechar e que
+          // se regista antes de desligar. Media-se em simulação e aguenta; em
+          // chamadas verdadeiras não aguentou, e a razão estava escrita aqui:
+          // "usa assim que acabares a frase da despedida, sem esperar
+          // resposta". A descrição da ferramenta é o que o modelo lê no
+          // momento de a usar, e ganha a um parágrafo que leu há dois minutos.
+          'Termina a chamada. Antes de a usares, duas coisas têm de estar feitas: (1) perguntaste se faltava mais alguma coisa e ouviste a resposta da pessoa, e (2) registaste a chamada com telma_registar_chamada. Nunca a uses no mesmo turno em que fazes uma pergunta, nem enquanto a outra pessoa fala. Depois da frase da despedida, sim, e aí sem esperar mais nenhuma resposta.',
       },
       skip_turn: {
         name: 'skip_turn',

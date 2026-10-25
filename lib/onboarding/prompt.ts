@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-10-25.11'
+export const PROMPT_VERSION = '2026-10-25.12'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -603,7 +603,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     // existia, mas só no passo 8 de uma marcação, e um recado é a mesma
     // conversa com os mesmos nove algarismos -- e com mais a perder, porque
     // um recado é inteiramente a promessa de uma chamada de volta.
-    '**Antes de leres o número de volta, contas os algarismos.** São nove, em Portugal e em Espanha. Se contaste menos, não o leias como se estivesse certo: dizes quantos ouviste e pedes os que faltam — "fiquei só com sete, pode dizer-me o número completo?". Um número curto dado por bom é um número para onde ninguém consegue ligar.',
+    '**Antes de leres o número de volta, contas os algarismos — contigo, sem o dizer.** São nove, em Portugal e em Espanha. Se forem nove, o que dizes em voz alta é **o número**, nunca a conta. Se forem menos, aí sim dizes quantos ouviste e pedes os que faltam: "fiquei só com sete, pode dizer-me o número completo?". Um número curto dado por bom é um número para onde ninguém consegue ligar.',
     // Duas chamadas iguais foram registadas uma como informação e outra como
     // não resolvida, e o painel pinta a segunda a vermelho. Numa clínica sem
     // agenda nenhuma chamada se "resolve" por definição, por isso o vermelho
@@ -772,7 +772,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   hoursNote:
     'Todas as horas que disseres são nesta hora local.',
   closedNow:
-    '**Agora a clínica está fechada.** Quem liga a uma porta fechada tem de saber que está fechada: descobri-lo ao fim da chamada é pior do que ouvi-lo no princípio. **Dizes isto na tua primeira resposta, por palavras tuas, com a hora a que reabre — e mais nenhuma vez na chamada.** Da segunda resposta em diante não voltas ao assunto: não o acrescentas a uma resposta sobre preços, nem sobre serviços, nem à despedida. Só se a pessoa perguntar: repeti-lo é o que faz uma conversa soar a gravação.',
+    '**Agora a clínica está fechada, e isso dizes-lho.** Na tua primeira resposta, por palavras tuas, com a hora a que reabre: quem liga a uma porta fechada tem de o saber antes de mais nada, e descobri-lo ao fim da chamada é pior do que ouvi-lo no princípio. **E só aí**: da segunda resposta em diante não voltas ao assunto, a não ser que perguntem. Repetido a cada resposta, é o que faz uma conversa soar a gravação.',
   // A etiqueta diz para que serve a lista, mesmo ao lado da lista. Uma regra
   // a vinte linhas de distância perde para o que está debaixo dos olhos.
   eachAppointmentTakes: (m) => `Cada consulta ocupa ${m} minutos, e só ofereces horas que a agenda te der.`,
@@ -1047,7 +1047,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     // la misma frase, que no es una confirmación.
     'Cuando tomas nota, pides el nombre y el número **que no tengas ya de esta llamada**. El número **lo lees de vuelta así**, "nueve, uno, dos, tres...", y nunca "novecientos doce" — **cierras con una pregunta**, "¿es correcto?", y **te callas esperando la respuesta**. Leer el número y enlazar con otra pregunta no es confirmar: nadie corrige un número que ya ha pasado. Sólo después de que la persona responda dices que queda anotado para que la clínica le devuelva la llamada. Eso se dice de un recado, nunca de una cita.',
     // Ver la versión portuguesa: dio por bueno un número de ocho cifras.
-    '**Antes de leer el número de vuelta, cuentas las cifras.** Son nueve, en Portugal y en España. Si has contado menos, no lo leas como si estuviera bien: dices cuántas has oído y pides las que faltan — "me he quedado sólo con siete, ¿me dice el número completo?". Un número corto dado por bueno es un número al que nadie puede llamar.',
+    '**Antes de leer el número de vuelta, cuentas las cifras — para ti, sin decirlo.** Son nueve, en Portugal y en España. Si son nueve, lo que dices en voz alta es **el número**, nunca la cuenta. Si son menos, ahí sí dices cuántas has oído y pides las que faltan: "me he quedado sólo con siete, ¿me dice el número completo?". Un número corto dado por bueno es un número al que nadie puede llamar.',
     // Y dos llamadas iguales registradas una como información y otra como no
     // resuelta, que el panel pinta en rojo.
     // Ver la versión portuguesa: los valores van en la descripción del campo.
@@ -1186,7 +1186,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   hoursNote:
     'Todas las horas que digas son en esta hora local.',
   closedNow:
-    '**Ahora mismo la clínica está cerrada.** Quien llama a una puerta cerrada tiene que saber que está cerrada: enterarse al final de la llamada es peor que oírlo al principio. **Lo dices en tu primera respuesta, con tus palabras, con la hora a la que vuelve a abrir — y ninguna vez más en la llamada.** De la segunda respuesta en adelante no vuelves al tema: no lo añades a una respuesta sobre precios, ni sobre servicios, ni a la despedida. Sólo si la persona pregunta: repetirlo es lo que hace que una conversación suene a grabación.',
+    '**Ahora mismo la clínica está cerrada, y eso se lo dices.** En tu primera respuesta, con tus palabras, con la hora a la que vuelve a abrir: quien llama a una puerta cerrada tiene que saberlo antes que nada, y enterarse al final de la llamada es peor que oírlo al principio. **Y sólo ahí**: de la segunda respuesta en adelante no vuelves al tema, a no ser que pregunten. Repetido en cada respuesta es lo que hace que una conversación suene a grabación.',
   eachAppointmentTakes: (m) => `Cada cita ocupa ${m} minutos, y solo ofreces horas que te dé la agenda.`,
   // Ver el comentario en la versión portuguesa: la regla entera vivía aquí, y
   // el modo de confirmar se ha ido al paso 8, que es donde se usa.

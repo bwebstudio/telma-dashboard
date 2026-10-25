@@ -1609,3 +1609,48 @@ test('the agent is told a name and nothing else about a known patient', () => {
     'the patient lookup selects more than the name, and the panel promises it does not'
   )
 })
+
+// ── AND SHE IS NEVER HANDED AN EMPTY HAND ───────────────────────────────────
+// lib/onboarding/tools.ts takes the four diary tools away from a clinic that
+// has no diary, because the sentence telling her not to use them lost three
+// times to the tools themselves being there. What it must never do is take the
+// filing tool as well, or return a list with nothing in it: the platform reads
+// an empty list as "no tools", and a call Telma cannot file leaves the clinic
+// with no record that the telephone rang at all.
+//
+// So this does not test the interesting case, it tests the dangerous one, in
+// every shape of clinic there is.
+test('every clinic keeps the tool that files the call', async () => {
+  const { toolsForCall, TELMA_TOOL_IDS, TELMA_AGENT_ID } = await import('../lib/onboarding/tools.ts')
+  for (const takesBookings of [true, false]) {
+    for (const canTransfer of [true, false]) {
+      for (const agentId of [TELMA_AGENT_ID, null, undefined, '']) {
+        const got = toolsForCall({ agentId, takesBookings, canTransfer })
+        const where = `books=${takesBookings} transfers=${canTransfer} agent=${agentId ?? 'none'}`
+        if (got === null) continue // no override: she keeps all six
+        assert.ok(got.length > 0, `${where}: an empty list is no tools at all`)
+        assert.ok(
+          got.includes(TELMA_TOOL_IDS.registar_chamada),
+          `${where}: the call could not be filed`
+        )
+      }
+    }
+  }
+
+  // A clinic with a diary needs all six, and a second copy of that list here is
+  // a list that falls out of step with the agent's.
+  assert.equal(toolsForCall({ takesBookings: true, canTransfer: true }), null)
+
+  // Another agent's tools are not these tools: the ids would be meaningless on
+  // it, which is worse than not narrowing at all.
+  assert.equal(
+    toolsForCall({ agentId: 'agent_somebody_else', takesBookings: false, canTransfer: false }),
+    null
+  )
+
+  // And the one it is all for: nothing to look up, so nothing to look up with.
+  const messages = toolsForCall({ takesBookings: false, canTransfer: false })
+  assert.deepEqual(messages, [TELMA_TOOL_IDS.registar_chamada])
+  const withTransfer = toolsForCall({ takesBookings: false, canTransfer: true })
+  assert.deepEqual(withTransfer, [TELMA_TOOL_IDS.registar_chamada, TELMA_TOOL_IDS.passar_chamada])
+})

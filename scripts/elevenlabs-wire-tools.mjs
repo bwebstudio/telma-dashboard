@@ -226,7 +226,12 @@ const TOOLS = [
           result: {
             type: 'string',
             description:
-              'Como acabou: "marcacao" se ficou uma marcação, "transferida" se passaste a chamada, "informacao" se só deste informação, "nao_resolvida" se não conseguiste ajudar.',
+              // O que a pessoa queria, e não o que se conseguiu fazer. Numa
+              // clínica que só toma recados nunca se faz nada: tudo saía como
+              // "informacao" e o dia era uma coluna de etiquetas iguais, onde
+              // distinguir um cancelamento de uma pergunta de preço obrigava
+              // a ler quinze resumos. Ver a migração 0084.
+              'O que a pessoa queria, não o que tu fizeste. "pedido_marcacao" se queria uma consulta e ficou o recado; "pedido_cancelamento" se queria desmarcar ou mudar uma e ficou o recado; "urgencia" se descreveu uma urgência; "informacao" se foi só uma pergunta e ficou respondida; "marcacao" se ficou mesmo uma marcação na agenda; "cancelamento" se anulaste mesmo uma; "transferida" se passaste a chamada; "nao_resolvida" só quando nem o recado conseguiste tomar.',
           },
           summary: {
             type: 'string',

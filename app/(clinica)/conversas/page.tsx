@@ -10,6 +10,11 @@ export const dynamic = 'force-dynamic'
 
 const RESULTS: CallResult[] = [
   'marcacao',
+  'cancelamento',
+  // Lo que la gente pidió, que en una clínica sin agenda es todo lo que hay.
+  'pedido_marcacao',
+  'pedido_cancelamento',
+  'urgencia',
   'transferida',
   'informacao',
   'nao_resolvida',

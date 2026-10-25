@@ -40,7 +40,18 @@ export function holdsAnHour(status: AppointmentStatus): boolean {
 
 export type AppointmentOrigin = 'telefone' | 'whatsapp'
 export type CallResult =
+  /** An appointment that exists in the diary, or one that was cancelled in
+   *  it. Only a clinic that books can produce either. */
   | 'marcacao'
+  | 'cancelamento'
+  /** What somebody asked for, which is all a clinic without a diary records:
+   *  they want an appointment, or they want one undone, and a person will
+   *  ring them back to do it. */
+  | 'pedido_marcacao'
+  | 'pedido_cancelamento'
+  /** Somebody described an emergency. It is its own result because at eight
+   *  in the morning that line has to be the one the desk sees first. */
+  | 'urgencia'
   | 'transferida'
   | 'informacao'
   | 'nao_resolvida'

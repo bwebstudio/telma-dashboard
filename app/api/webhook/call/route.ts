@@ -13,7 +13,16 @@ import {
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-const RESULTS = ['marcacao', 'transferida', 'informacao', 'nao_resolvida']
+const RESULTS = [
+  'marcacao',
+  'cancelamento',
+  'pedido_marcacao',
+  'pedido_cancelamento',
+  'urgencia',
+  'transferida',
+  'informacao',
+  'nao_resolvida',
+]
 
 /** The conversation id, under either of the two names it arrives with. */
 function externalRefOf(body: Record<string, unknown>): string | null {

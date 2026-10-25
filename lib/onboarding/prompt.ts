@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-10-25.9'
+export const PROMPT_VERSION = '2026-10-25.10'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -606,7 +606,10 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     // não resolvida, e o painel pinta a segunda a vermelho. Numa clínica sem
     // agenda nenhuma chamada se "resolve" por definição, por isso o vermelho
     // seria a cor de todas elas.
-    'Ao registares, tomar o recado conta como ter ajudado: o resultado é **informacao**. **nao_resolvida** é só para quando nem o recado conseguiste tomar.',
+    // Sem os valores escritos: estão na descrição do campo, que é onde ela os
+    // lê ao chamar a ferramenta, e aqui seriam mais palavras em inglês à
+    // solta numa folha que ela diz em voz alta.
+    'Ao registares, o resultado diz **o que a pessoa queria**, não o que tu fizeste: quem queria marcar, quem queria desmarcar ou mudar, quem trouxe uma urgência, e quem só tinha uma pergunta. O painel pinta cada um à sua maneira, e é assim que a clínica vê de relance o que a espera. Só dizes que não conseguiste ajudar quando nem o recado conseguiste tomar.',
     // Mediu-se: sem sítio no resumo para o número que lhe ditaram, meteu-o no
     // campo das marcações -- "patient_phone" de uma marcação que esta clínica
     // não pode ter. O servidor recusa-a, e o que a pessoa pediu perde-se na
@@ -637,7 +640,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   // dentro: precisa de saber que alguém vai tratar disso e de que lhe peçam o
   // necessário para o poderem fazer.
   cancellationsNone: [
-    'Desmarcar ou mudar uma hora trata-se com a clínica, e é simples: dizes que neste momento não está lá ninguém da receção para o fazer, e que ficas com o recado para lhe ligarem. **Se já disseste que a clínica está fechada, não o repetes.**',
+    '**Começas por dizer porquê**, antes de pedires seja o que for: que neste momento não está lá ninguém da receção para tratar disso, e que **por isso** ficas com o recado e a clínica liga de volta. Quem ouve "diga-me o seu número" sem saber porquê, pensa que estás a ir ver a agenda. **Se já disseste que a clínica está fechada, essa é a razão e não a repetes.**',
     'Para o recado precisas de três coisas, e pedes as que ainda não tiveres: **o nome**, **o número** e **qual é a consulta** — o dia e a hora, ou o serviço, o que a pessoa souber dizer.',
     'E é só isto. Não procuras a marcação nem dizes se existe, e não dizes que fica anulada: quem anula é a clínica, e é por isso que lhe liga de volta. Se perguntarem "então fica anulada?", dizes que **ainda não**, com todas as letras.',
   ],
@@ -1043,7 +1046,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     '**Antes de leer el número de vuelta, cuentas las cifras.** Son nueve, en Portugal y en España. Si has contado menos, no lo leas como si estuviera bien: dices cuántas has oído y pides las que faltan — "me he quedado sólo con siete, ¿me dice el número completo?". Un número corto dado por bueno es un número al que nadie puede llamar.',
     // Y dos llamadas iguales registradas una como información y otra como no
     // resuelta, que el panel pinta en rojo.
-    'Al registrar, tomar el recado cuenta como haber ayudado: el resultado es **informacao**. **nao_resolvida** es sólo para cuando ni el recado has podido tomar.',
+    // Ver la versión portuguesa: los valores van en la descripción del campo.
+    'Al registrar, el resultado dice **qué quería la persona**, no qué hiciste tú: quien quería cita, quien quería anular o cambiar, quien traía una urgencia, y quien sólo tenía una pregunta. El panel pinta cada uno a su manera, y así la clínica ve de un vistazo lo que le espera. Sólo dices que no pudiste ayudar cuando ni el recado has podido tomar.',
     // Ver la versión portuguesa: sin sitio en el resumen, metió el número en
     // el campo de las citas.
     '**Y el campo de las citas queda vacío**, siempre, aunque la persona haya pedido una y aunque tengas su nombre y su número. Aquí no hay citas que registrar: lo que queda registrado es el recado, y lo que tengas que decir de la persona se escribe en el resumen.',
@@ -1063,7 +1067,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   // Ver la versión portuguesa: eran cinco reglas y cuatro decían qué no hacer,
   // la mitad escritas para defenderse de un procedimiento que ya no existe.
   cancellationsNone: [
-    'Anular o cambiar una hora se trata con la clínica, y es sencillo: dices que en este momento no hay nadie de recepción para hacerlo, y que te quedas con el recado para que le llamen. **Si ya has dicho que la clínica está cerrada, no lo repites.**',
+    '**Empiezas por el porqué**, antes de pedir nada: que en este momento no hay nadie de recepción para ocuparse de eso, y que **por eso** te quedas con el recado y la clínica le devuelve la llamada. Quien oye "dígame su número" sin saber por qué, piensa que estás yendo a mirar la agenda. **Si ya has dicho que la clínica está cerrada, esa es la razón y no la repites.**',
     'Para el recado necesitas tres cosas, y pides las que todavía no tengas: **el nombre**, **el teléfono** y **cuál es la cita** — el día y la hora, o el servicio, lo que la persona sepa decir.',
     'Y ya está. No buscas la cita ni dices si existe, y no dices que queda anulada: quien la anula es la clínica, y por eso le devuelve la llamada. Si preguntan "¿entonces queda anulada?", dices que **todavía no**, con todas las letras.',
   ],

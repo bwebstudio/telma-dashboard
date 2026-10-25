@@ -21,6 +21,16 @@ export const APPOINTMENT_TONE: Record<AppointmentStatus, Tone> = {
 
 export const CALL_TONE: Record<CallResult, Tone> = {
   marcacao: 'ok',
+  // Hecho y deshecho son las dos caras de lo mismo: una agenda que se movió.
+  cancelamento: 'ok',
+  // Lo que alguien pidió. Gris, porque en una clínica que sólo toma recados
+  // es la mitad del día y pintarlo todo de ámbar enseña a no mirar el color.
+  pedido_marcacao: 'neutral',
+  // Menos esta: un cancelamento sin devolver la llamada es una silla vacía o
+  // alguien que se presenta a una cita que creía anulada. Tiene plazo.
+  pedido_cancelamento: 'warn',
+  // La única roja por lo que es, no por lo que salió mal.
+  urgencia: 'danger',
   transferida: 'info',
   informacao: 'neutral',
   nao_resolvida: 'danger',

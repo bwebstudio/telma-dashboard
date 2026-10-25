@@ -53,6 +53,10 @@ export const es: Dictionary = {
     clinic: { ativa: 'Activa', por_configurar: 'Por configurar', pausada: 'Pausada', cancelada: 'Cancelada' },
     call: {
       marcacao: 'Cita',
+      cancelamento: 'Cancelada',
+      pedido_marcacao: 'Quiere cita',
+      pedido_cancelamento: 'Quiere cancelar',
+      urgencia: 'Urgencia',
       transferida: 'Transferida',
       informacao: 'Información',
       nao_resolvida: 'Sin resolver',

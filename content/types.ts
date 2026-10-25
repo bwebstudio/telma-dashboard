@@ -71,8 +71,20 @@ export interface Dictionary {
       string
     >
     clinic: Record<'ativa' | 'por_configurar' | 'pausada' | 'cancelada', string>
+    /** One per value of `call_result`. Written out rather than imported from
+     *  lib/types so that adding a result there fails here until somebody has
+     *  written what it is called in all three languages: a chip with no word
+     *  in it is worse than no chip. */
     call: Record<
-      'marcacao' | 'transferida' | 'informacao' | 'nao_resolvida' | 'nao_atendida',
+      | 'marcacao'
+      | 'cancelamento'
+      | 'pedido_marcacao'
+      | 'pedido_cancelamento'
+      | 'urgencia'
+      | 'transferida'
+      | 'informacao'
+      | 'nao_resolvida'
+      | 'nao_atendida',
       string
     >
     origin: Record<'telefone' | 'whatsapp', string>

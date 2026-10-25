@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { spokenDateTime, type SpokenLang } from '@/lib/spoken-time'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { allServices, canonicalReason, resolveDuration, resolveResource } from '@/lib/service-duration'
 import { serviceLabel } from '@/lib/onboarding/catalog'
@@ -188,16 +189,13 @@ export async function GET(request: Request) {
   // back when holding and recording, and `say` is the only thing meant to be
   // read out.
   const zone = context.clinic.timezone
-  const locale = context.clinic.language === 'es' ? 'es-ES' : 'pt-PT'
-  const spoken = new Intl.DateTimeFormat(locale, {
-    timeZone: zone,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
+  // ── E DITA COMO SE DIZ, NÃO COMO SE ESCREVE ───────────────────────────
+  // `Intl` com `hour: '2-digit'` dá "quinta-feira, 6 de novembro às 10:30",
+  // que é notação de ecrã: o sintetizador decide sozinho como a lê, um relógio
+  // de 24 horas dito em voz alta é linguagem de horário de autocarros, e o dia
+  // chega como algarismo no meio de palavras. Ver lib/spoken-time.ts.
+  const lang: SpokenLang = context.clinic.language === 'es' ? 'es' : 'pt'
+  const spoken = { format: (at: Date) => spokenDateTime(at, zone, lang) }
   const clock = new Intl.DateTimeFormat('en-GB', {
     timeZone: zone,
     hour: '2-digit',

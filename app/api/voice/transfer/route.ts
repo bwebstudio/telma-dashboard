@@ -50,18 +50,24 @@ export async function POST(request: Request) {
   // E em duas línguas. Isto era português fixo no código, de modo que o
   // paciente de uma clínica espanhola ouvia a Telma mudar de língua a meio da
   // chamada para lhe dizer que não a conseguia passar.
+  //
+  // A redacção é a da auditoria de língua: "ahora mismo" em vez de "en este
+  // momento", "lo siento" em vez de "le pido disculpas" -- que é escrito e não
+  // falado em espanhol, ao contrário de "peço desculpa", que em português é
+  // natural --, e "diga-me o seu nome" em vez de "fico com o seu nome", porque
+  // o que a pessoa precisa de ouvir é o que lhe estão a pedir.
   const SAYS = {
     pt: {
-      cannot: 'Peço desculpa, não consigo passar a chamada agora. Fico com o seu nome e o seu número e a clínica liga-lhe de volta.',
-      going: 'Vou passar a chamada agora. Um momento, por favor.',
-      emergency: 'Peço desculpa, não consigo passar a chamada. Se houver perigo imediato, ligue 112 ou vá às urgências. Caso contrário, fico com o seu nome e o seu número e a clínica liga-lhe de volta.',
-      nobody: 'Peço desculpa, não estou a conseguir falar com ninguém neste momento. Fico com o seu nome e o seu número e a clínica liga-lhe de volta.',
+      cannot: 'Peço desculpa, neste momento não consigo passar-lhe a chamada. Diga-me o seu nome e o seu número, e a clínica liga-lhe de volta.',
+      going: 'Vou passar-lhe a chamada. Um momento, por favor.',
+      emergency: 'Peço desculpa, não consigo passar-lhe a chamada. Se houver perigo imediato, ligue 112 ou dirija-se às urgências. Se não for esse o caso, diga-me o seu nome e o seu número e a clínica liga-lhe de volta.',
+      nobody: 'Peço desculpa, neste momento ninguém está a atender. Diga-me o seu nome e o seu número, e a clínica liga-lhe de volta.',
     },
     es: {
-      cannot: 'Le pido disculpas, no puedo pasar la llamada ahora. Me quedo con su nombre y su teléfono y la clínica le devuelve la llamada.',
-      going: 'Voy a pasar la llamada ahora. Un momento, por favor.',
-      emergency: 'Le pido disculpas, no puedo pasar la llamada. Si hay peligro inmediato, llame al 112 o vaya a urgencias. Si no, me quedo con su nombre y su teléfono y la clínica le devuelve la llamada.',
-      nobody: 'Le pido disculpas, no estoy consiguiendo hablar con nadie en este momento. Me quedo con su nombre y su teléfono y la clínica le devuelve la llamada.',
+      cannot: 'Lo siento, ahora mismo no puedo pasarle la llamada. Dígame su nombre y su teléfono, y la clínica le devolverá la llamada.',
+      going: 'Voy a pasarle la llamada. Un momento, por favor.',
+      emergency: 'Lo siento, no puedo pasarle la llamada. Si hay peligro inmediato, llame al 112 o acuda a urgencias. Si no es el caso, dígame su nombre y su teléfono y la clínica le devolverá la llamada.',
+      nobody: 'Lo siento, ahora mismo no responde nadie. Dígame su nombre y su teléfono, y la clínica le devolverá la llamada.',
     },
   } as const
 

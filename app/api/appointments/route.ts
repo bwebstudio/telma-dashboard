@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { spokenDateTime, type SpokenLang } from '@/lib/spoken-time'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { authorizedWebhook } from '@/lib/api-auth'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
@@ -76,10 +77,12 @@ export async function GET(request: Request) {
       is_patient: false,
       appointments: [],
       no_diary: true,
+      // Três ideias curtas em vez de uma frase com um "por isso" pelo meio: a
+      // auditoria de língua pediu-o para tudo o que se ouve, e isto ouve-se.
       say:
         context.clinic.language === 'es'
-          ? 'De eso se ocupa la clínica, así que me quedo con el recado y le devuelven la llamada. Sólo necesito su nombre y cuál es la cita.'
-          : 'Disso trata a clínica, por isso fico com o recado e ligam-lhe de volta. Preciso só do seu nome e de qual é a consulta.',
+          ? 'En ese caso, queda el recado para la clínica. Le devolverán la llamada. Dígame solo su nombre y qué cita es, por favor.'
+          : 'Nesse caso, fica o recado para a clínica. Depois ligam-lhe de volta. Diga-me só o seu nome e qual é a consulta, por favor.',
     })
   }
 
@@ -90,16 +93,9 @@ export async function GET(request: Request) {
   ])
 
   const zone = context.clinic.timezone
-  const locale = context.clinic.language === 'es' ? 'es-ES' : 'pt-PT'
-  const spoken = new Intl.DateTimeFormat(locale, {
-    timeZone: zone,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
+  // Dita como se diz. Ver lib/spoken-time.ts e o comentário em /api/availability.
+  const lang: SpokenLang = context.clinic.language === 'es' ? 'es' : 'pt'
+  const spoken = { format: (at: Date) => spokenDateTime(at, zone, lang) }
 
   return NextResponse.json({
     is_patient: patient === true,

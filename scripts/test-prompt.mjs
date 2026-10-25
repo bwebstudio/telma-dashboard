@@ -182,7 +182,7 @@ const RULES = {
     noServiceList: 'Não enumeras a lista de serviços',
     neverRecitesAll: '**Nunca recitas uma lista.**',
     refusalHelps: 'recusas em três tempos',
-    bridgeIsNotAnEcho: '**A ponte é uma palavra tua, nunca as palavras da pessoa**',
+    bridgeIsNotAnEcho: 'é uma palavra tua e nunca as palavras da pessoa',
     noPaperworkAloud: 'Registar é coisa tua e não se anuncia',
     alwaysFiles: '**Registas a chamada, se ainda não a tiveres registado.**',
     lastWordWins: '**vale sempre o último**',
@@ -226,7 +226,7 @@ const RULES = {
     noServiceList: 'No enumeras la lista de servicios',
     neverRecitesAll: '**Nunca recitas una lista.**',
     refusalHelps: 'te niegas en tres tiempos',
-    bridgeIsNotAnEcho: '**El puente es una palabra tuya, nunca las palabras de la persona**',
+    bridgeIsNotAnEcho: 'es una palabra tuya y nunca las palabras de la persona',
     noPaperworkAloud: 'Registrar es cosa tuya y no se anuncia',
     alwaysFiles: '**Registras la llamada, si no la has registrado ya.**',
     lastWordWins: '**vale siempre lo último**',
@@ -507,8 +507,8 @@ test('the spoken hour comes from the clinic, not from a UTC string', () => {
 // The empty chair is the cost of a closed question.
 test('the two times are offered as an open question', () => {
   for (const [lang, open, closed] of [
-    ['pt', 'alguma destas serve-lhe?', 'nunca "qual lhe fica melhor"'],
-    ['es', '¿alguna de estas le sirve?', 'nunca "¿cuál le viene mejor?"'],
+    ['pt', 'algum destes horários lhe serve?', 'nunca "qual lhe fica melhor"'],
+    ['es', '¿le viene bien alguna de estas horas?', 'nunca "¿cuál le viene mejor?"'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(open), `${lang}: no open wording offered`)
@@ -517,14 +517,20 @@ test('the two times are offered as an open question', () => {
 })
 
 // "Le dijo un lifting y pasa a decirme los horarios sin ninguna palabra que
-// sirva de puente." She was right, and it is the difference between a
-// receptionist and a form: a human says "of course, an assessment for a lifting"
-// before offering anything, and that one sentence is most of what makes the call
-// feel like a person.
-test('she picks up what was said before moving on, in both languages', () => {
+// sirva de puente." She was right at the time, and the rule written for it said
+// to pick up what the person had just said before moving on.
+//
+// The language audit reversed it, and it is the most important thing that audit
+// brought back: with that rule the calls came out "Percebo, senhor Coelho" at
+// the head of every single turn. A receptionist does not confirm out loud each
+// thing she hears; often she just asks the next question. So the bridge is a
+// resource for where it earns its place -- something long explained, a change
+// of mind, bad news -- and never a prefix. What it still must never be is an
+// echo of the caller's own words.
+test('the acknowledgement is a resource and not a prefix, in both languages', () => {
   for (const [lang, phrase, example] of [
-    ['pt', '**Antes de avançares, recolhes o que a pessoa acabou de dizer**', 'nem o motivo da consulta'],
-    ['es', '**Antes de avanzar, recoges lo que la persona acaba de decir**', 'ni el motivo de la consulta'],
+    ['pt', '**Um acuse de recebido é um recurso, não um prefixo.**', 'nem o motivo da consulta'],
+    ['es', '**Un acuse de recibo es un recurso, no un prefijo.**', 'ni el motivo de la consulta'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(phrase), `${lang}: no bridging rule`)
@@ -575,7 +581,7 @@ test('a second booking in one call does not start from zero', () => {
 test('a booking is closed out loud', () => {
   for (const [lang, said] of [
     ['pt', 'fica marcada para'],
-    ['es', 'le queda para'],
+    ['es', 'queda para'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(said), `${lang}: a booking can end in silence`)
@@ -747,8 +753,11 @@ test('emergency services are named whatever the clinic looks like', () => {
 
 test('the emergency number comes before anything else is asked', () => {
   for (const [lang, first] of [
-    ['pt', '**a primeira coisa que dizes é que ligue já para o 112 ou vá às urgências**'],
-    ['es', '**lo primero que dices es que llame ya al 112 o vaya a urgencias**'],
+    // A frase passou a estar escrita, palavra por palavra, porque se diz a
+    // alguém assustado e não é hora de a improvisar. O que o teste protege é
+    // o mesmo: que venha antes de qualquer pergunta.
+    ['pt', '**a primeira coisa que dizes é esta frase**, antes de perguntares seja o que for: "Se for uma urgência ou houver perigo imediato, ligue 112 ou dirija-se às urgências."'],
+    ['es', '**lo primero que dices es esta frase**, antes de preguntar nada: "Si es una urgencia o hay peligro inmediato, llame al 112 o acuda a urgencias."'],
   ]) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
     assert.ok(text.includes(first), `${lang}: 112 is mentioned but not put first`)
@@ -1327,8 +1336,8 @@ test('the service a booking is filed under speaks the clinic language', async ()
 // kept it, which reads as a tic rather than as listening.
 test('the acknowledgement varies, and can be nothing', () => {
   const WORDS = {
-    pt: 'Nunca a mesma duas vezes seguidas',
-    es: 'Nunca la misma dos veces seguidas',
+    pt: 'Nunca o mesmo duas vezes seguidas',
+    es: 'Nunca el mismo dos veces seguidas',
   }
   for (const lang of ['pt', 'es']) {
     const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)

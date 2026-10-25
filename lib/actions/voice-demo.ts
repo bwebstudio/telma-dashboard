@@ -3,6 +3,7 @@
 import { headers } from 'next/headers'
 import { requireClinicContext } from '@/lib/clinic-context'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { spokenDateTime } from '@/lib/spoken-time'
 
 /**
  * Talking to Telma from inside the panel, and then proving what she did.
@@ -145,15 +146,12 @@ export async function lastCallOutcome(): Promise<CallOutcome | { error: string }
         patient_name: a.patient_name,
         patient_phone: a.patient_phone,
         reason: a.reason,
-        say: new Intl.DateTimeFormat(clinic.language === 'es' ? 'es-ES' : 'pt-PT', {
-          timeZone: clinic.timezone,
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        }).format(new Date(a.scheduled_at)),
+        // Dita como se diz, como no telefone. Ver lib/spoken-time.ts.
+        say: spokenDateTime(
+          new Date(a.scheduled_at),
+          clinic.timezone,
+          clinic.language === 'es' ? 'es' : 'pt'
+        ),
       }
     }
   }

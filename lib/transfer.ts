@@ -37,8 +37,15 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export type TransferKind = 'urgencia' | 'pessoa'
 
 export type TransferOutcome =
-  | { ok: true; to: string }
-  | { ok: false; because: 'no_number' | 'not_allowed' | 'no_call' | 'failed'; detail?: string }
+  | { ok: true; to: string; language: 'pt' | 'es' }
+  | {
+      ok: false
+      because: 'no_number' | 'not_allowed' | 'no_call' | 'failed'
+      detail?: string
+      /** The clinic's language, so the sentence she reads is in it. Absent only
+       *  when we never got as far as knowing which clinic this was. */
+      language?: 'pt' | 'es'
+    }
 
 interface ClinicRow {
   id: string
@@ -50,6 +57,7 @@ interface ClinicRow {
   fallback_number: string | null
   after_hours_transfer: boolean | null
   after_hours_number: string | null
+  language: string | null
 }
 
 /**
@@ -98,7 +106,7 @@ export async function transferCall(input: {
   const { data } = await admin
     .from('clinics')
     .select(
-      'id, name, phone, assigned_phone, emergency_number, fallback_policy, fallback_number, after_hours_transfer, after_hours_number'
+      'id, name, phone, assigned_phone, emergency_number, fallback_policy, fallback_number, after_hours_transfer, after_hours_number, language'
     )
     .eq('id', input.clinicId)
     .maybeSingle()
@@ -106,10 +114,17 @@ export async function transferCall(input: {
   const clinic = data as ClinicRow | null
   if (!clinic) return { ok: false, because: 'no_call', detail: 'clínica não encontrada' }
 
+  // Which language the caller is being spoken to in. Everything this file puts
+  // into somebody's ear was Portuguese, hardcoded, including the line Twilio
+  // reads when a transfer rings out: a Spanish clinic's patient heard European
+  // Portuguese from a second voice.
+  const language: 'pt' | 'es' = clinic.language === 'es' ? 'es' : 'pt'
+
   const to = destinationFor(clinic, input.kind)
   if (!to) {
     return {
       ok: false,
+      language,
       because: input.kind === 'pessoa' && clinic.fallback_policy !== 'transfer' ? 'not_allowed' : 'no_number',
     }
   }
@@ -119,7 +134,9 @@ export async function transferCall(input: {
   const keySecret = process.env.TWILIO_API_KEY_SECRET
   const token = process.env.TWILIO_AUTH_TOKEN
   const pair = keySid && keySecret ? `${keySid}:${keySecret}` : token ? `${account}:${token}` : null
-  if (!account || !pair) return { ok: false, because: 'failed', detail: 'twilio_not_configured' }
+  if (!account || !pair) {
+    return { ok: false, because: 'failed', language, detail: 'twilio_not_configured' }
+  }
 
   const from = (clinic.assigned_phone ?? '').replace(/[\s-]/g, '')
   // 30 seconds of ringing, then back to a message rather than a dead line: a
@@ -127,7 +144,9 @@ export async function transferCall(input: {
   const twiml =
     `<?xml version="1.0" encoding="UTF-8"?><Response>` +
     `<Dial timeout="30"${from ? ` callerId="${from}"` : ''}><Number>${to}</Number></Dial>` +
-    `<Say language="pt-PT">Não foi possível falar com a clínica. Por favor ligue mais tarde.</Say>` +
+    (language === 'es'
+      ? `<Say language="es-ES">No ha sido posible hablar con la clínica. Por favor, llame más tarde.</Say>`
+      : `<Say language="pt-PT">Não foi possível falar com a clínica. Por favor, ligue mais tarde.</Say>`) +
     `</Response>`
 
   const res = await fetch(
@@ -144,7 +163,7 @@ export async function transferCall(input: {
 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
-    return { ok: false, because: 'failed', detail: `twilio_${res.status}: ${body.slice(0, 200)}` }
+    return { ok: false, because: 'failed', language, detail: `twilio_${res.status}: ${body.slice(0, 200)}` }
   }
 
   // Written where the clinic will look for it. A transfer is the one thing
@@ -159,5 +178,5 @@ export async function transferCall(input: {
         : `Chamada passada para ${to} a pedido de quem ligou.`,
   })
 
-  return { ok: true, to }
+  return { ok: true, to, language }
 }

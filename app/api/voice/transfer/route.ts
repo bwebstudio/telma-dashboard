@@ -39,34 +39,55 @@ export async function POST(request: Request) {
   if (!clinicId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clinicId)) {
     return NextResponse.json({ error: 'clinic_id_required' }, { status: 400 })
   }
+  // ── O QUE VAI EM `diga` É DITO, LOGO TEM DE SER DIZÍVEL ───────────────────
+  // A folha manda seguir este campo tal e qual, e o que estava aqui era meia
+  // frase para dizer e meia ordem para cumprir: "Não diga que vai passar.
+  // Tome o nome e o número e diga que a clínica liga de volta." Já aconteceu
+  // o mesmo com o campo `say` da agenda e ouviu-se ao telefone: ela leu a
+  // ordem em voz alta. O que fica aqui é só o que uma rececionista diria; o
+  // que ela tem de fazer está na folha, que é onde sempre esteve.
+  //
+  // E em duas línguas. Isto era português fixo no código, de modo que o
+  // paciente de uma clínica espanhola ouvia a Telma mudar de língua a meio da
+  // chamada para lhe dizer que não a conseguia passar.
+  const SAYS = {
+    pt: {
+      cannot: 'Peço desculpa, não consigo passar a chamada agora. Fico com o seu nome e o seu número e a clínica liga-lhe de volta.',
+      going: 'Vou passar a chamada agora. Um momento, por favor.',
+      emergency: 'Peço desculpa, não consigo passar a chamada. Se houver perigo imediato, ligue 112 ou vá às urgências. Caso contrário, fico com o seu nome e o seu número e a clínica liga-lhe de volta.',
+      nobody: 'Peço desculpa, não estou a conseguir falar com ninguém neste momento. Fico com o seu nome e o seu número e a clínica liga-lhe de volta.',
+    },
+    es: {
+      cannot: 'Le pido disculpas, no puedo pasar la llamada ahora. Me quedo con su nombre y su teléfono y la clínica le devuelve la llamada.',
+      going: 'Voy a pasar la llamada ahora. Un momento, por favor.',
+      emergency: 'Le pido disculpas, no puedo pasar la llamada. Si hay peligro inmediato, llame al 112 o vaya a urgencias. Si no, me quedo con su nombre y su teléfono y la clínica le devuelve la llamada.',
+      nobody: 'Le pido disculpas, no estoy consiguiendo hablar con nadie en este momento. Me quedo con su nombre y su teléfono y la clínica le devuelve la llamada.',
+    },
+  } as const
+
   if (!callSid) {
     return NextResponse.json(
-      {
-        passou: false,
-        motivo: 'sem_identificador',
-        diga: 'Não consigo passar a chamada agora. Tome o nome e o número e diga que a clínica liga de volta já a seguir.',
-      },
+      { passou: false, motivo: 'sem_identificador', diga: SAYS.pt.cannot },
       { status: 200 }
     )
   }
 
   const result = await transferCall({ clinicId, callSid, kind })
 
+  const says = SAYS[result.language ?? 'pt']
+
   if (result.ok) {
     // She is about to stop being on this call. The sentence is for the moment
     // before it happens, not after.
-    return NextResponse.json({
-      passou: true,
-      diga: 'Vou passar a chamada agora. Um momento, por favor.',
-    })
+    return NextResponse.json({ passou: true, diga: says.going })
   }
 
   const diga =
     result.because === 'no_number'
-      ? 'Esta clínica não tem um número para onde passar a chamada. Não diga que vai passar. Se houver perigo imediato, diga para ligar 112 ou ir às urgências; caso contrário tome o nome e o número e diga que a clínica liga de volta.'
+      ? says.emergency
       : result.because === 'not_allowed'
-        ? 'Esta clínica não passa chamadas. Não diga que vai passar: tome o nome e o número e diga que alguém da clínica liga de volta.'
-        : 'Não foi possível passar a chamada. Volte à conversa, explique que não está a conseguir falar com ninguém neste momento, tome o nome e o número e diga que a clínica liga de volta.'
+        ? says.cannot
+        : says.nobody
 
   return NextResponse.json(
     { passou: false, motivo: result.because, detalhe: result.detail ?? null, diga },

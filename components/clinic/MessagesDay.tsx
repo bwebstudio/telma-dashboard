@@ -293,6 +293,7 @@ export function MessagesDay({
                       <FollowCaller
                         phone={c.from_phone}
                         patientId={known?.id ?? null}
+                        heardName={c.patient_name}
                         dict={dict}
                       />
                     )}

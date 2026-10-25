@@ -1562,9 +1562,12 @@ test('a known number saves a question and never volunteers a name', () => {
   // And it still has to ask whose number to write down, because that is the
   // whole correction: a booking filed under the handset's owner sends the
   // confirmation to the wrong telephone.
+  // Sem a palavra "marcação": a mesma pergunta faz-se numa clínica que só toma
+  // recados, e lá não há marcação nenhuma para que o contacto seja. A regra é
+  // a mesma, a palavra é que não servia as duas.
   const ASKS_WHOSE = {
-    pt: 'se o contacto para esta marcação é este mesmo número',
-    es: 'si el contacto para esta cita es este mismo número',
+    pt: 'se o contacto é este mesmo número',
+    es: 'si el contacto es este mismo número',
   }
   for (const lang of ['pt', 'es']) {
     const known = buildPrompt(

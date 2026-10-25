@@ -24,26 +24,41 @@ import { createPatient } from '@/lib/actions/patients'
  * already on it, because calls attach to a record by the number they came
  * from.
  *
- * The name is asked for rather than guessed. Telma hears it and writes it into
- * the message, but as prose: "Ana Martins quer remarcar" and "a senhora que
- * ligou ontem" look the same to a parser, and a record opened under the wrong
- * name is worse than one more field to fill.
+ * The name is confirmed rather than guessed. It used to be typed from nothing,
+ * because the only place a name existed was inside the message as prose --
+ * "Ana Martins quer remarcar" and "a senhora que ligou ontem" look the same to
+ * a parser, and a record opened under the wrong name is worse than one more
+ * field to fill. Now she sends the name she confirmed out loud in a field of
+ * its own, so the box opens with it already in it and what is left is to agree
+ * or to fix a letter. The field stays, because a name heard down a telephone
+ * and a name a clinic will use for years are not quite the same thing.
  */
 export function FollowCaller({
   phone,
   patientId,
+  heardName,
   dict,
 }: {
   /** The number the call came from, as it will be stored. */
   phone: string
   /** The record this caller already has, when they have one. */
   patientId: string | null
+  /** The name Telma heard on this call, where she heard one.
+   *
+   *  Asking for it again was asking the desk to type something the panel
+   *  already had on the line above: she asks the name on nearly every call,
+   *  reads it back, and the person confirms it. So the field opens with it
+   *  written in, and what is left to do is agree with it or correct a letter.
+   *  Still a field and not a silent copy: what she heard is what somebody
+   *  said down a telephone, and the record is what the clinic will call them
+   *  for years. */
+  heardName?: string | null
   dict: Dictionary
 }) {
   const t = dict.pacientes
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
+  const [name, setName] = useState(heardName?.trim() ?? '')
   const [error, setError] = useState(false)
   const [pending, start] = useTransition()
 

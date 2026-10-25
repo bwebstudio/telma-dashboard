@@ -1,0 +1,37 @@
+-- A clinic can delete a patient record. It has had the button all along.
+--
+-- ── WHAT WAS HAPPENING ─────────────────────────────────────────────────────
+-- `patients` was given select and update for the clinic in 0046, and a
+-- catch-all for the internal team, and that was the whole door. Delete was
+-- never granted to anybody but us.
+--
+-- So pressing "apagar esta ficha" matched no rows. Row level security does not
+-- raise on a delete it refuses -- it filters, and filtering everything leaves
+-- zero rows and no error -- so the action saw success, redirected to the list,
+-- and the record was still sitting there. The clinic pressed it again.
+--
+-- This is the fifth write on this panel to fail that exact way: activating a
+-- clinic, three settings, the follow-up log in 0075, and now this. The pattern
+-- is always the same: a screen offers something the policies never granted,
+-- and the refusal is silent by design.
+--
+-- ── WHY A POLICY AND NOT THE ADMIN CLIENT ──────────────────────────────────
+-- Because a patient record is the clinic's own row, the same as the notes in
+-- 0075. Reaching past the policies with the service role would work and would
+-- leave the next person to read this file believing a clinic may not delete
+-- its own patients, which is not what we decided -- it is only what we wrote.
+--
+-- ── AND WHAT GOES WITH IT ──────────────────────────────────────────────────
+-- The notes and the reminders, which cascade and have no meaning without the
+-- person. Not the appointments: those carry their own copy of the name and
+-- the telephone since they were written, and that copy is the clinic's record
+-- of an hour it worked. They keep it and lose only the link (`on delete set
+-- null`, 0046).
+--
+-- This is still not the right to be forgotten, which has to empty the
+-- appointments and the calls too and leave a receipt. That is `erase_patient`,
+-- on its own screen. This is housekeeping: a duplicate, a name misheard, a
+-- record opened for somebody who was never a patient.
+drop policy if exists patients_clinic_delete on patients;
+create policy patients_clinic_delete on patients for delete
+  using (public.is_internal() or clinic_id = public.current_clinic_id());

@@ -500,12 +500,18 @@ export async function mergePatients(keepId: string, dropId: string) {
 export async function deletePatient(patientId: string) {
   const cid = await writableClinicId()
   const supabase = await createClient()
-  const { error } = await supabase
+  // Checked for rows and not only for an error. There was no delete policy on
+  // `patients` until 0083, and a refused delete returns no error: it matches
+  // nothing. The button worked, the screen went back to the list, and the
+  // record was still on it. Nothing changed is a failure.
+  const { data: gone, error } = await supabase
     .from('patients')
     .delete()
     .eq('id', patientId)
     .eq('clinic_id', cid)
+    .select('id')
   if (error) throw new Error(error.message)
+  if (!gone?.length) throw new Error('not_deleted')
   revalidatePath('/pacientes')
   // La ficha ya no existe, así que quedarse en ella sería enseñar un 404 con
   // forma de error nuestro.

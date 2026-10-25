@@ -242,6 +242,15 @@ const TOOLS = [
           // Um campo não tem essa ambiguidade. E sabe-se que ela os preenche:
           // sem nenhum para isto, chegou a meter o número numa marcação, numa
           // clínica que não marca, só para o ter onde o pôr.
+          // O nome, pela mesma razão que o número de devolução: ela ouve-o,
+          // confirma-o, e numa clínica sem agenda não havia campo nenhum onde
+          // o pôr. A coluna no painel é a mesma que mostra o nome de um
+          // paciente com ficha, por isso a linha deixa de ser um número solto.
+          caller_name: {
+            type: 'string',
+            description:
+              'O nome de quem ligou, tal como o confirmaste em voz alta. Escreve-o sempre que o tenhas, mesmo que não haja marcação nenhuma: é o que a clínica lê ao lado do número no painel. Se a pessoa não o disse, omite este campo em vez de inventares.',
+          },
           callback_phone: {
             type: 'string',
             description:

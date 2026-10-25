@@ -75,6 +75,20 @@ export async function POST(request: Request) {
     body.summary = said ? `${callbackNote} ${said}` : callbackNote
   }
 
+  // ── O NOME DE QUEM LIGOU ───────────────────────────────────────────────
+  // Ela pergunta-o em quase todas as chamadas e, numa clínica sem agenda, não
+  // tinha onde o pôr: o nome só viajava dentro de uma marcação, e aqui não há
+  // marcações. Ficava dito em voz alta e perdido, e o painel mostrava uma
+  // linha com um número e mais nada -- e quem depois abria a ficha tinha de
+  // escrever à mão um nome que a Telma já tinha ouvido e confirmado.
+  //
+  // A coluna existe desde 0012. O que faltava era alguém escrevê-la.
+  const callerName = String(body.caller_name ?? '').trim().replace(/\s+/g, ' ')
+  const nameTheCall = async (callId: string | null | undefined) => {
+    if (!callId || !plausibleName(callerName)) return
+    await admin.from('calls').update({ patient_name: callerName.slice(0, 120) }).eq('id', callId)
+  }
+
   const result = body.result as string | undefined
   if (result && !RESULTS.includes(result)) {
     return NextResponse.json({ error: 'invalid_result' }, { status: 400 })
@@ -289,6 +303,8 @@ export async function POST(request: Request) {
         p_appointment: null,
       })
 
+      await nameTheCall(existing.id)
+
       const { data: already } = await admin
         .from('appointments')
         .select('scheduled_at, patient_phone')
@@ -362,6 +378,7 @@ export async function POST(request: Request) {
   // record_call, which would have created a second call row for a single
   // conversation and doubled the minutes.
   const callId = (data as { call_id?: string } | null)?.call_id
+  await nameTheCall(callId)
 
   if (callId && extras.length) {
     const usableExtras = extras

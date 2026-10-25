@@ -179,6 +179,25 @@ const WORKFLOW = nodes
     }
   : null
 
+// ── E AS FERRAMENTAS DO SISTEMA COMO ESTÃO NO AGENTE VERDADEIRO ────────────
+// `end_call` e `skip_turn` levam uma descrição nossa, e é essa descrição que o
+// modelo lê no momento de desligar ou de se calar -- ganha a um parágrafo da
+// folha lido há dois minutos, o que é precisamente por que estão escritas.
+// Aqui não estavam, por isso o agente de simulação corria com as descrições
+// por omissão da plataforma ("usa assim que acabares a despedida") e media uma
+// Telma mais apressada do que a que atende o telefone: "despediu-se sem voltar
+// a perguntar" falhava aqui e não falhava lá.
+//
+// Lidas do agente em vivo em vez de copiadas para cá, porque uma segunda cópia
+// é uma cópia que se desencontra.
+const LIVE_AGENT = 'agent_9701kzp690x6fnaba03rmp81kt9a'
+const liveBuiltIns = await api('GET', `/v1/convai/agents/${LIVE_AGENT}`)
+  .then((a) => a?.conversation_config?.agent?.prompt?.built_in_tools ?? null)
+  .catch(() => null)
+if (!liveBuiltIns) {
+  console.log('  aviso: não se leram as ferramentas do sistema do agente em vivo')
+}
+
 const agent = await api('POST', '/v1/convai/agents/create', {
   name: `zz-simulacao-${Date.now()}`,
   conversation_config: {
@@ -194,6 +213,7 @@ const agent = await api('POST', '/v1/convai/agents/create', {
         llm: LLM,
         max_tokens: 300,
         ...(tools ? { tool_ids: tools } : {}),
+        ...(liveBuiltIns ? { built_in_tools: liveBuiltIns } : {}),
       },
       first_message: greeting,
       language,

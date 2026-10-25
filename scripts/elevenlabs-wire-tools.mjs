@@ -372,12 +372,31 @@ const BUILT_IN_TOOLS = {
           // "usa assim que acabares a frase da despedida, sem esperar
           // resposta". A descrição da ferramenta é o que o modelo lê no
           // momento de a usar, e ganha a um parágrafo que leu há dois minutos.
-          'Termina a chamada. Antes de a usares, três coisas têm de estar feitas, por esta ordem: (1) perguntaste se faltava mais alguma coisa, (2) ouviste a resposta da pessoa, e (3) registaste a chamada com telma_registar_chamada. Se não perguntaste, não desligas: perguntas. Nunca a uses no mesmo turno em que fazes uma pergunta, nem enquanto a outra pessoa fala. Depois da frase da despedida, sim, e aí sem esperar mais nenhuma resposta.',
+          //
+          // ── E A RESPOSTA TEM DE SER UM "NÃO" ────────────────────────────
+          // Numa chamada verdadeira perguntou, ouviu "sim, quero passar a
+          // consulta para o dia dois", tratou disso e desligou. As três
+          // condições estavam cumpridas à letra: perguntou, ouviu, registou.
+          // O que faltava era que a resposta fosse um não.
+          '**O teste é a última coisa que a pessoa disse.** Só podes usar esta ferramenta se a última coisa que ela disse foi NÃO a "há mais alguma coisa em que possa ajudar?". Se a última coisa que ela disse foi um número, um nome, um dia, um "sim", um "é esse" ou um "está correcto", **não uses esta ferramenta**: falta a pergunta, e o que fazes a seguir é perguntar. Se a resposta à pergunta foi sim, tratas disso e perguntas outra vez; um "não" anterior ao último assunto não conta. E antes de desligares a chamada tem de estar registada com telma_registar_chamada. Com isso feito, dizes a frase da despedida e usas esta ferramenta, sem esperar mais nenhuma resposta. Nunca no mesmo turno em que fazes uma pergunta, nem enquanto a outra pessoa fala.',
       },
+      // ── skip_turn: FICA, E COM A DESCRIÇÃO APERTADA ───────────────────
+      // Serve para ela ficar calada enquanto a outra pessoa pensa, procura uma
+      // data ou fala com alguém ao lado. O que fazia na prática era outra
+      // coisa: numa chamada verdadeira a pessoa ditou o número, a Telma chamou
+      // esta ferramenta com a razão "a confirmar o número antes de registar" e
+      // ficou em silêncio, até a pessoa perguntar "estou?" e, a seguir, porque
+      // é que se tinha calado.
+      //
+      // Foi desligada por isso, e a medição disse que não: sem ela, quatro
+      // corridas de quatro acabaram com a chamada desligada logo a seguir a
+      // confirmar o número. É a válvula que lhe permite não fazer nada quando
+      // ainda falta fazer algo, e sem válvula o que lhe fica à mão é desligar.
+      // Volta, com a proibição escrita na descrição.
       skip_turn: {
         name: 'skip_turn',
         description:
-          'Não digas nada e espera. Usa quando a pessoa está a pensar, a procurar um dado ou a falar com alguém.',
+          'Não digas nada e espera. É para quando a outra pessoa ainda não acabou: está a pensar, a procurar um dado num papel, ou a falar com alguém ao lado. **Nunca a uses depois de a pessoa te responder a uma pergunta tua** -- aí a vez é tua, e ficar calada deixa-a a perguntar "está?" --, nunca para pensares, para confirmares uma coisa contigo ou antes de registares a chamada, e nunca duas vezes seguidas. Se tens algo para dizer ou para fazer, dizes ou fazes.',
       },
       // ── DETEÇÃO DE IDIOMA: DESLIGADA, E DESTA VEZ POR MEDIÇÃO ─────────
       // Esteve desligada, voltou a ser ligada com o argumento de que sem ela

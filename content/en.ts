@@ -464,6 +464,7 @@ export const en: Dictionary = {
     spokeOn: 'Spoke to them on {date}',
     noAnswerAt: 'No answer at {time}',
     noAnswerOn: 'No answer on {date}',
+    triedCount: 'attempt {n}',
     followCaller: 'Create record',
     openRecord: 'Open record',
     callerName: 'Name of the caller',

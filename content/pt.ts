@@ -466,6 +466,7 @@ export const pt: Dictionary = {
     spokeOn: 'Falámos com a pessoa a {date}',
     noAnswerAt: 'Não atendeu às {time}',
     noAnswerOn: 'Não atendeu a {date}',
+    triedCount: '{n}ª tentativa',
     followCaller: 'Criar ficha',
     openRecord: 'Ver ficha',
     callerName: 'Nome de quem ligou',

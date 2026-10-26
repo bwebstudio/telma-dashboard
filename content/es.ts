@@ -464,6 +464,7 @@ export const es: Dictionary = {
     spokeOn: 'Hablamos con la persona el {date}',
     noAnswerAt: 'No contestó a las {time}',
     noAnswerOn: 'No contestó el {date}',
+    triedCount: '{n}º intento',
     followCaller: 'Crear ficha',
     openRecord: 'Ver ficha',
     callerName: 'Nombre de quien llamó',

@@ -183,35 +183,45 @@ export function MessagesDay({
     const { tries, lastTry, lastReached, spokeAt } = stateOf(c)
     if (tries === 0) return null
     const t = dict.pacientes
-    // Somebody answered, so that is the whole sentence, whichever attempt it
-    // was and however many there were before it.
-    if (spokeAt) {
-      return formatDate(spokeAt, locale) === formatDate(c.created_at, locale)
-        ? t.spokeAt.replace('{time}', formatTime(spokeAt, locale))
-        : t.spokeOn.replace('{date}', formatDate(spokeAt, locale))
-    }
-    // Nobody did, and more than one try is a count rather than an hour: the
-    // record holds the dates and this screen holds the morning.
-    if (tries > 1 || !lastTry) return t.calledBackTimes.replace('{n}', String(tries))
-    const sameDay = formatDate(lastTry, locale) === formatDate(c.created_at, locale)
-    if (lastReached === false) {
+    // ── THE LATEST ATTEMPT, ALWAYS ──────────────────────────────────────────
+    // This read "whoever answered wins, however many came after", and the
+    // button next to it stopped doing anything you could see: a record with a
+    // "falei com a pessoa" on it kept that same line no matter how many times
+    // reception pressed "liguei outra vez". The press was written down, the
+    // record showed it, and this screen said what it had said before.
+    //
+    // So the line is about the last thing that happened, which is what a
+    // person looking at a morning is asking, and it ends with the count when
+    // there has been more than one. Every press moves it: the hour changes, or
+    // the count does.
+    const base = (() => {
+      if (!lastTry) return t.calledBackTimes.replace('{n}', String(tries))
+      const sameDay = formatDate(lastTry, locale) === formatDate(c.created_at, locale)
+      const time = formatTime(lastTry, locale)
+      const date = formatDate(lastTry, locale)
+      if (lastReached === true) {
+        return sameDay ? t.spokeAt.replace('{time}', time) : t.spokeOn.replace('{date}', date)
+      }
+      if (lastReached === false) {
+        return sameDay ? t.noAnswerAt.replace('{time}', time) : t.noAnswerOn.replace('{date}', date)
+      }
       return sameDay
-        ? t.noAnswerAt.replace('{time}', formatTime(lastTry, locale))
-        : t.noAnswerOn.replace('{date}', formatDate(lastTry, locale))
-    }
-    return sameDay
-      ? t.calledBackAt.replace('{time}', formatTime(lastTry, locale))
-      : t.calledBackOn.replace('{date}', formatDate(lastTry, locale))
+        ? t.calledBackAt.replace('{time}', time)
+        : t.calledBackOn.replace('{date}', date)
+    })()
+    return tries > 1 ? `${base} · ${t.triedCount.replace('{n}', String(tries))}` : base
   }
 
-  /** The same three outcomes, as a colour. Reception reads a morning by the
-   *  shape of it, and a line that says the matter is closed should not be the
-   *  same grey as one that says nobody picked up. The tones are the record's
-   *  own, so a person who looks at both screens sees one vocabulary. */
+  /** The same three outcomes, as a colour, and the last one decides. Reception
+   *  reads a morning by the shape of it, and a line that says the matter is
+   *  closed should not be the same grey as one that says nobody picked up. The
+   *  tones are the record's own, so a person who looks at both screens sees one
+   *  vocabulary. */
   const triedTone = (c: Call): 'ok' | 'warn' | 'mute' => {
-    const { spokeAt, lastReached, tries } = stateOf(c)
-    if (spokeAt) return 'ok'
-    if (tries === 1 && lastReached === false) return 'warn'
+    const { lastReached, tries } = stateOf(c)
+    if (tries === 0) return 'mute'
+    if (lastReached === true) return 'ok'
+    if (lastReached === false) return 'warn'
     return 'mute'
   }
 

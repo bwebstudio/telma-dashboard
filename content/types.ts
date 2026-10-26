@@ -508,6 +508,9 @@ export interface Dictionary {
     spokeOn: string
     noAnswerAt: string
     noAnswerOn: string
+    /** Appended when there has been more than one attempt, so that pressing
+     *  "liguei outra vez" always moves something on the line. */
+    triedCount: string
     /** Opens the box that creates a record. It said "follow this person",
      *  which named a feeling rather than the thing that happens. */
     followCaller: string

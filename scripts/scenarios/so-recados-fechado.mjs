@@ -15,6 +15,12 @@ import { shared } from './so-recados.mjs'
 export default {
   ...shared,
   clinic: { ...shared.clinic, within_opening_hours: false },
+  // ── E A FERRAMENTA DE REGISTAR, OU MEDE-SE OUTRA COISA ───────────────────
+  // Sem ela o modelo não pode cumprir o passo que manda registar, e o que faz
+  // em vez disso é desligar: três corridas de três acabaram a chamada sem
+  // registo nenhum, e o veredicto parecia ser sobre a Telma quando era sobre o
+  // banco de ensaio. No telefone esta ferramenta está sempre lá.
+  tools: ['tool_5301kzp690rye3kbgkk7kk17v6rn'],
   dynamicVariables: { ...shared.dynamicVariables, system__conversation_id: 'sim-recados-fechado' },
   firstMessage: 'Boa noite. Ainda estão abertos?',
   caller: `És alguém que liga à noite, fora de horas, a perguntar por um

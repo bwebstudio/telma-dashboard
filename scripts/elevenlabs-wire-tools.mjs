@@ -254,7 +254,7 @@ const TOOLS = [
           caller_name: {
             type: 'string',
             description:
-              'O nome de quem ligou, tal como o confirmaste em voz alta. Escreve-o sempre que o tenhas, mesmo que não haja marcação nenhuma: é o que a clínica lê ao lado do número no painel. Se a pessoa não o disse, omite este campo em vez de inventares.',
+              'O nome de quem ligou, tal como o confirmaste em voz alta. Escreve-o sempre que o tenhas, mesmo que não haja marcação nenhuma: é o que a clínica lê ao lado do número no painel. Se a pessoa não o disse, **omite este campo**: nunca escrevas "a pessoa", "o senhor", "a senhora" nem nada que não seja um nome, que no painel aparece como se fosse o nome dela.',
           },
           callback_phone: {
             type: 'string',
@@ -384,7 +384,7 @@ const BUILT_IN_TOOLS = {
           // consulta para o dia dois", tratou disso e desligou. As três
           // condições estavam cumpridas à letra: perguntou, ouviu, registou.
           // O que faltava era que a resposta fosse um não.
-          '**O teste é a última coisa que a pessoa disse.** Só podes usar esta ferramenta se a última coisa que ela disse foi NÃO a "há mais alguma coisa em que possa ajudar?". Se a última coisa que ela disse foi um número, um nome, um dia, um "sim", um "é esse" ou um "está correcto", **não uses esta ferramenta**: falta a pergunta, e o que fazes a seguir é perguntar. Se a resposta à pergunta foi sim, tratas disso e perguntas outra vez; um "não" anterior ao último assunto não conta. E antes de desligares a chamada tem de estar registada com telma_registar_chamada. Com isso feito, dizes a frase da despedida e usas esta ferramenta, sem esperar mais nenhuma resposta. Nunca no mesmo turno em que fazes uma pergunta, nem enquanto a outra pessoa fala.',
+          '**Primeiro: a chamada tem de estar registada com telma_registar_chamada.** Sem isso não usas esta ferramenta, nunca, nem quando a pessoa se despede, nem quando diz que não precisa de nada, nem quando a chamada parece acabada: uma chamada que a clínica paga e de que não fica registo nenhum é a pior coisa que te pode acontecer. Registas primeiro, e só depois desligas.\n**Segundo: o teste é a última coisa que a pessoa disse.** Só podes usar esta ferramenta se a última coisa que ela disse foi NÃO a \"há mais alguma coisa em que possa ajudar?\". Se a última coisa que ela disse foi um número, um nome, um dia, um \"sim\", um \"é esse\" ou um \"está correcto\", **não uses esta ferramenta**: falta a pergunta, e o que fazes a seguir é perguntar. Se a resposta à pergunta foi sim, tratas disso e perguntas outra vez; um \"não\" anterior ao último assunto não conta. Com as duas feitas, dizes a frase da despedida e usas esta ferramenta, sem esperar mais nenhuma resposta. Nunca no mesmo turno em que fazes uma pergunta, nem enquanto a outra pessoa fala.',
       },
       // ── skip_turn: FICA, E COM A DESCRIÇÃO APERTADA ───────────────────
       // Serve para ela ficar calada enquanto a outra pessoa pensa, procura uma

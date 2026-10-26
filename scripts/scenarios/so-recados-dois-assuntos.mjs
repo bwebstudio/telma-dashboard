@@ -67,6 +67,19 @@ não precisas de nada e despedes-te quando ela fechar.`,
       conversation_goal_prompt:
         'Depois de tratar do SEGUNDO pedido (passar a consulta para o dia dois), a assistente perguntou outra vez se havia mais alguma coisa, e só se despediu depois de ouvir que não. Falha se se despediu ou desligou sem voltar a perguntar.',
     },
+    // ── E OS DOIS REGISTADOS, NÃO SÓ DITOS ──────────────────────────────
+    // Numa chamada a sério: pediu uma marcação, ficou registada, pediu a
+    // seguir para anular uma consulta de amanhã, ouviu "fica anotado" e
+    // desligou. O painel da clínica tinha só a marcação, e o cancelamento de
+    // uma consulta de amanhã não existia em lado nenhum. Dizer que fica
+    // anotado não é anotar.
+    {
+      id: 'os_dois_registados',
+      name: 'os dois assuntos registados',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Olha para as chamadas à ferramenta telma_registar_chamada. O ÚLTIMO registo da conversa cobre o que a pessoa pediu: a consulta do dia sete e a passagem para o dia dois. Uma frase que diga as duas coisas de uma vez ("mudar a consulta do dia sete para o dia dois") cobre-as e PASSA. Falha se o último registo só fala de um dos dois assuntos sem relacionar o outro, e falha se o segundo pedido foi tratado em voz alta e não houve registo nenhum depois dele.',
+    },
     {
       id: 'os_dois_assuntos',
       name: 'os dois assuntos ficam ditos',

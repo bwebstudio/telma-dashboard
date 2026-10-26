@@ -1663,3 +1663,34 @@ test('every clinic keeps the tool that files the call', async () => {
   const withTransfer = toolsForCall({ takesBookings: false, canTransfer: true })
   assert.deepEqual(withTransfer, [TELMA_TOOL_IDS.registar_chamada, TELMA_TOOL_IDS.passar_chamada])
 })
+
+// ── E O NÚMERO DE ONDE A CHAMADA VEM ESTÁ SEMPRE LÁ ─────────────────────────
+// Três chamadas verdadeiras, a mesma avaria: a pessoa respondeu "é este mesmo"
+// à pergunta do contacto e a Telma não tinha os algarismos em sítio nenhum,
+// porque a folha trazia a linha do paciente conhecido EM VEZ da linha do número
+// de onde a chamada entra. Numa delas inventou um número e leu-o em voz alta a
+// quem tinha outro.
+//
+// O que isto protege é simples: se a plataforma nos deu um número, ele está na
+// folha, seja quem for quem liga.
+test('the number the call comes from is always in the sheet', async () => {
+  const SPOKEN = { pt: 'nove, um, dois, zero, zero, zero, um, um, um', es: 'nueve, uno, dos, cero, cero, cero, uno, uno, uno' }
+  for (const lang of ['pt', 'es']) {
+    for (const [who, known] of [['um estranho', null], ['um paciente com ficha', 'Teresa Marques']]) {
+      const { text } = buildPrompt(
+        {
+          ...CASES['cannot-book'],
+          can_book: false,
+          takes_bookings: false,
+          caller_id: '+351912000111',
+          known_patient: known,
+        },
+        lang
+      )
+      assert.ok(
+        text.includes(SPOKEN[lang]),
+        `${lang}, ${who}: the caller's number is nowhere in the sheet, so "this same one" has nothing to read back`
+      )
+    }
+  }
+})

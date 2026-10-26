@@ -169,6 +169,7 @@ export function CallWork({
   callbacks,
   calledBackLabel,
   calledBackTone = 'mute',
+  outcomes = false,
   onHandled,
   onCalledBack,
   dict,
@@ -188,8 +189,17 @@ export function CallWork({
    *  different outcomes in one grey is how the one that closes the matter
    *  gets missed. */
   calledBackTone?: 'ok' | 'warn' | 'mute'
+  /** Whether this caller has a record to write the outcome on.
+   *
+   *  With one, the two answers are two buttons: still one press, and the line
+   *  afterwards says which of them it was. Without one there is nowhere to
+   *  keep an outcome -- `calls` holds the count and the hour and nothing else
+   *  -- so the single button stays, and it claims only what it can: the clinic
+   *  rang back. Offering two answers and keeping neither would be worse than
+   *  offering one. */
+  outcomes?: boolean
   onHandled: (at: string | null, ids: string[]) => void
-  onCalledBack: (at: string) => void
+  onCalledBack: (at: string, reached: boolean | null) => void
   dict: Dictionary
   locale: Locale
 }) {
@@ -219,24 +229,33 @@ export function CallWork({
         dict={dict}
         locale={locale}
       />
-      <button
-        className="btn-ghost min-h-0 px-3 py-1.5 text-sm"
-        disabled={pending}
-        onClick={() =>
-          start(async () => {
-            setFailed(false)
-            try {
-              await logCallback(callId)
-              onCalledBack(new Date().toISOString())
-              router.refresh()
-            } catch {
-              setFailed(true)
-            }
-          })
-        }
-      >
-        {callbacks > 0 ? t.calledBackAgain : t.calledBack}
-      </button>
+      {(outcomes
+        ? ([
+            ['spoke', true, t.rangSpoke],
+            ['missed', false, t.rangNoAnswer],
+          ] as const)
+        : ([['rang', null, callbacks > 0 ? t.calledBackAgain : t.calledBack]] as const)
+      ).map(([key, reached, label]) => (
+        <button
+          key={key}
+          className="btn-ghost min-h-0 px-3 py-1.5 text-sm"
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              setFailed(false)
+              try {
+                await logCallback(callId, reached)
+                onCalledBack(new Date().toISOString(), reached)
+                router.refresh()
+              } catch {
+                setFailed(true)
+              }
+            })
+          }
+        >
+          {label}
+        </button>
+      ))}
       {calledBackLabel && (
         <span
           className={`text-sm ${

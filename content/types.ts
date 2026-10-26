@@ -511,6 +511,10 @@ export interface Dictionary {
     /** Appended when there has been more than one attempt, so that pressing
      *  "liguei outra vez" always moves something on the line. */
     triedCount: string
+    /** The two answers, as the two buttons on the day's list. One press each,
+     *  and the line afterwards says which it was. */
+    rangSpoke: string
+    rangNoAnswer: string
     /** Opens the box that creates a record. It said "follow this person",
      *  which named a feeling rather than the thing that happens. */
     followCaller: string

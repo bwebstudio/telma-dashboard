@@ -467,6 +467,8 @@ export const pt: Dictionary = {
     noAnswerAt: 'Não atendeu às {time}',
     noAnswerOn: 'Não atendeu a {date}',
     triedCount: '{n}ª tentativa',
+    rangSpoke: 'Liguei e falei',
+    rangNoAnswer: 'Liguei, não atendeu',
     followCaller: 'Criar ficha',
     openRecord: 'Ver ficha',
     callerName: 'Nome de quem ligou',

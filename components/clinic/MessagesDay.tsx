@@ -413,17 +413,17 @@ export function MessagesDay({
                       callbacks={stateOf(c).tries}
                       calledBackLabel={triedLabel(c)}
                       calledBackTone={triedTone(c)}
+                      // The two answers only where there is a record to keep
+                      // them on. See CallWork.
+                      outcomes={!!known}
                       onHandled={markHandled}
                       // On the person where there is one, so their other
                       // rows this morning move with it.
-                      onCalledBack={(at) =>
+                      onCalledBack={(at, reached) =>
                         known
                           ? setRung((r) => ({
                               ...r,
-                              // null, because this press says the clinic rang
-                              // back and nothing about who answered. The
-                              // record is where that gets decided.
-                              [known.id]: [{ at, reached: null }, ...(r[known.id] ?? [])],
+                              [known.id]: [{ at, reached }, ...(r[known.id] ?? [])],
                             }))
                           : setWork((w) => ({
                               ...w,
@@ -431,6 +431,10 @@ export function MessagesDay({
                                 ...(w[c.id] ?? asWritten(c)),
                                 tries: (w[c.id] ?? asWritten(c)).tries + 1,
                                 lastTry: at,
+                                // Null on purpose: a caller with no record has
+                                // no column for an outcome, and the single
+                                // button they get claims none.
+                                lastReached: null,
                               },
                             }))
                       }

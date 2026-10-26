@@ -595,17 +595,33 @@ export async function setCallHandled(
 }
 
 /**
- * "I rang this number back."
+ * "I rang this number back, and this is how it went."
  *
  * Only ever on a call nobody answered, which is the one case with no person to
  * write it on: a record is somebody with a name, and a record opened on a bare
  * number is a row nobody can read. See migration 0078.
  *
+ * ── AND NOW IT SAYS HOW IT WENT ────────────────────────────────────────────
+ * It used to take no argument and write `reached: null`: one press, nothing
+ * claimed about who picked up. The reasoning was that asking would make it two
+ * presses. What it produced was a line on the day's list that counted attempts
+ * and said nothing about any of them, while the record screen two clicks away
+ * had the answer in colour. A press that records nothing is a press that has
+ * to be made again somewhere else.
+ *
+ * So the day's list offers the two answers as two buttons, which is still one
+ * press, and this takes which one. `null` stays legal because the rows written
+ * before today carry it and because a caller with no record has nowhere to
+ * keep an outcome: `calls` has the count and the hour and no column for this.
+ *
  * Through the admin client and scoped by clinic, for the same reason as the
  * recalls: the clinic may not write on the calls table directly, and the
  * clinic this writes for is the one this session belongs to.
  */
-export async function logCallback(callId: string): Promise<{ attempts: number; at: string }> {
+export async function logCallback(
+  callId: string,
+  reached: boolean | null = null
+): Promise<{ attempts: number; at: string; outcomeKept: boolean }> {
   const cid = await writableClinicId()
   const admin = createAdminClient()
   const at = new Date().toISOString()
@@ -620,17 +636,15 @@ export async function logCallback(callId: string): Promise<{ attempts: number; a
 
   // ── WHERE THERE IS A PERSON, IT GOES IN THEIR HISTORY ──────────────────
   // Same table, same kind of row, as the record's own "registar tentativa de
-  // contacto", because it is the same act. Written from the day's list it
-  // says nothing about whether anybody picked up -- the press is one press
-  // and asking would make it two -- so `reached` is left null and the record
-  // reads that as "we rang back", which is all that was claimed.
+  // contacto", because it is the same act, and now with the same three
+  // outcomes: the day's list and the record write one kind of note.
   const patientId = await recordForCall(admin, cid, call as CallBits)
   if (patientId) {
     const { error } = await admin.from('patient_notes').insert({
       clinic_id: cid,
       patient_id: patientId,
       kind: 'contacto',
-      reached: null,
+      reached,
       body: '—',
     })
     if (error) throw new Error(error.message)
@@ -644,12 +658,17 @@ export async function logCallback(callId: string): Promise<{ attempts: number; a
     revalidatePath('/hoje')
     revalidatePath('/conversas')
     refresh(patientId)
-    return { attempts: count ?? 1, at }
+    return { attempts: count ?? 1, at, outcomeKept: true }
   }
 
   // ── AND WHERE THERE IS NOT, ON THE CALL ────────────────────────────────
   // A caller with no record has no history to write into, so the count lives
   // on the call. Nothing can contradict it there: they have no second screen.
+  //
+  // The outcome is lost here, and the day's list knows it: a row with no
+  // record keeps the single button that claims nothing, because offering two
+  // answers and keeping neither would be the worse kind of lie. `calls` would
+  // need a column of its own for it, which is a migration and not a Sunday.
   //
   // Read then write, because a counter needs its own previous value and this
   // is one press by one person at a desk, not a race.
@@ -662,7 +681,7 @@ export async function logCallback(callId: string): Promise<{ attempts: number; a
   if (error) throw new Error(error.message)
   revalidatePath('/hoje')
   revalidatePath('/conversas')
-  return { attempts: before + 1, at }
+  return { attempts: before + 1, at, outcomeKept: false }
 }
 
 interface CallBits {

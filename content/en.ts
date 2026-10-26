@@ -465,6 +465,8 @@ export const en: Dictionary = {
     noAnswerAt: 'No answer at {time}',
     noAnswerOn: 'No answer on {date}',
     triedCount: 'attempt {n}',
+    rangSpoke: 'Rang, spoke to them',
+    rangNoAnswer: 'Rang, no answer',
     followCaller: 'Create record',
     openRecord: 'Open record',
     callerName: 'Name of the caller',

@@ -1552,9 +1552,14 @@ test('a known number saves a question and never volunteers a name', () => {
   // was wrong: a handset can be a household, and the person booking may not be
   // the one whose number it is. What is saved is the nine digits, not the
   // question of whose number to write down.
+  // A redacção mudou quando o número passou a estar sempre na folha: em vez de
+  // "não pedes os nove algarismos outra vez", que dizia o que não fazer, a
+  // regra diz agora como se faz a pergunta -- com os algarismos dentro dela.
+  // O que o teste protege é o mesmo: os nove algarismos não se pedem a quem já
+  // os deu à clínica.
   const SAVES = {
-    pt: '**Não pedes os nove algarismos outra vez**',
-    es: '**No pides los nueve dígitos otra vez**',
+    pt: '**a pergunta do contacto faz-se com ele dentro**',
+    es: '**la pregunta del contacto se hace con él dentro**',
   }
   const SILENT = {
     pt: '**Nunca dizes tu o nome que tens em ficha**',
@@ -1567,8 +1572,8 @@ test('a known number saves a question and never volunteers a name', () => {
   // recados, e lá não há marcação nenhuma para que o contacto seja. A regra é
   // a mesma, a palavra é que não servia as duas.
   const ASKS_WHOSE = {
-    pt: 'se o contacto é este mesmo número',
-    es: 'si el contacto es este mismo número',
+    pt: '"o contacto é este mesmo?"',
+    es: '"¿el contacto es este mismo?"',
   }
   for (const lang of ['pt', 'es']) {
     const known = buildPrompt(

@@ -173,7 +173,8 @@ async function previewPrompt(
       recording,
       languageCodes,
       false,
-      typeof values.greeting === 'string' ? values.greeting : null
+      typeof values.greeting === 'string' ? values.greeting : null,
+      timezone
     ),
     greetingLanguage: greetingCode,
     baseLanguage: built.base_language,
@@ -374,7 +375,8 @@ export async function previewSummary(
       recording,
       [],
       false,
-      typeof values.greeting === 'string' ? values.greeting : null
+      typeof values.greeting === 'string' ? values.greeting : null,
+      region ? TIMEZONE[countryOfRegion(region)] : 'Europe/Lisbon'
     ),
     greetingLanguage: greetingCode,
     groups,

@@ -328,7 +328,12 @@ export async function POST(request: Request) {
           clinic.selected_languages?.length ? clinic.selected_languages : [promptLocale],
           false,
           // What the clinic wrote, where it wrote one. See 0079.
-          clinic.greeting ?? null
+          clinic.greeting ?? null,
+          // Its own clock, for "bom dia" or "boa tarde". The goodbye already
+          // follows the clinic's hour; now the hello does too, and from the
+          // same boundaries, so a call cannot open in the afternoon and close
+          // in the morning.
+          clinic.timezone
         ),
         language: promptLocale,
       },

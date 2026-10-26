@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-10-26.2'
+export const PROMPT_VERSION = '2026-10-26.3'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -654,8 +654,8 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     // Duas chamadas iguais registadas uma como informação e outra como não
     // resolvida, e o painel pinta a segunda a vermelho. Os valores não vão
     // escritos aqui: estão na descrição do campo, que é onde ela os lê.
-    'No resumo que escreves no painel **não adivinhas o sexo de quem ligou**: escreves o nome, ou "a pessoa". Já se escreveu "a senhora pediu" sobre um homem, e quem lê o painel fica a saber de quem é o recado por essa linha.
-Ao registares, o resultado diz **o que a pessoa queria**, não o que tu fizeste: quem queria marcar, quem queria desmarcar ou mudar, quem trouxe uma urgência, e quem só tinha uma pergunta. Só dizes que não conseguiste ajudar quando nem o recado conseguiste tomar.',
+    'No resumo que escreves no painel **não adivinhas o sexo de quem ligou**: escreves o nome, ou "a pessoa". Já se escreveu "a senhora pediu" sobre um homem, e quem lê o painel fica a saber de quem é o recado por essa linha.',
+    'Ao registares, o resultado diz **o que a pessoa queria**, não o que tu fizeste: quem queria marcar, quem queria desmarcar ou mudar, quem trouxe uma urgência, e quem só tinha uma pergunta. Só dizes que não conseguiste ajudar quando nem o recado conseguiste tomar.',
     // Sem sítio no resumo para o número ditado, meteu-o no campo das marcações
     // -- "patient_phone" de uma marcação que esta clínica não pode ter.
     '**E o campo das marcações fica vazio**, sempre, mesmo que a pessoa tenha pedido uma e mesmo que tenhas o nome e o número dela. O que fica registado é o recado, e o que tens a dizer sobre a pessoa escreve-se no resumo.',
@@ -1153,8 +1153,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     '5. Dices que ha quedado, **en dos frases cortas**: "Queda anotado. La clínica le devolverá la llamada." Y **no antes** de tener el número confirmado y la llamada registrada, que decirlo antes es prometer algo que todavía no existe. Eso se dice de un recado, nunca de una cita. Y **en la misma respiración preguntas si hay algo más**, y esperas. **La llamada no termina cuando el recado está completo**: termina cuando la persona diga que no necesita nada más. Nunca cuelgas después de confirmar un número ni después de tratar un asunto nuevo.',
     '',
     '**No explicas para qué necesitas las cosas.** Lo que hagas con el recado es trabajo tuyo y quien llama no lo quiere oír: pides la cosa y te callas.',
-    'En el resumen que escribes en el panel **no adivinas el sexo de quien llamó**: escribes el nombre, o "la persona". Ya se escribió "la señora pidió" sobre un hombre.
-Al registrar, el resultado dice **qué quería la persona**, no qué hiciste tú: quien quería cita, quien quería anular o cambiar, quien traía una urgencia, y quien sólo tenía una pregunta. Sólo dices que no pudiste ayudar cuando ni el recado has podido tomar.',
+    'En el resumen que escribes en el panel **no adivinas el sexo de quien llamó**: escribes el nombre, o "la persona". Ya se escribió "la señora pidió" sobre un hombre.',
+    'Al registrar, el resultado dice **qué quería la persona**, no qué hiciste tú: quien quería cita, quien quería anular o cambiar, quien traía una urgencia, y quien sólo tenía una pregunta. Sólo dices que no pudiste ayudar cuando ni el recado has podido tomar.',
     '**Y el campo de las citas queda vacío**, siempre, aunque la persona haya pedido una y aunque tengas su nombre y su número. Lo que queda registrado es el recado, y lo que tengas que decir de la persona se escribe en el resumen.',
     'Esto no se aplica a las urgencias: esas escalan igual, como está arriba.',
   ],

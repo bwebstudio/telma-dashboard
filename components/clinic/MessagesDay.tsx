@@ -33,13 +33,26 @@ import { CallWork } from '@/components/clinic/CallWork'
  * down, not a list of telephone numbers to open one by one.
  */
 /** What has been done about one call, as this screen holds it. */
-type Work = { handledAt: string | null; tries: number; lastTry: string | null }
+type Work = {
+  handledAt: string | null
+  tries: number
+  lastTry: string | null
+  /** How the last attempt went, where that is known. A caller with no record
+   *  keeps the count on the call itself and the call has no column for this,
+   *  so there it stays null: "the clinic rang back", which is all the press on
+   *  this screen ever claimed. */
+  lastReached: boolean | null
+  /** When somebody actually answered, if they did. */
+  spokeAt: string | null
+}
 
 /** What the server last said about it, which is where every row starts. */
 const asWritten = (c: Call): Work => ({
   handledAt: c.handled_at ?? null,
   tries: Number(c.callbacks ?? 0),
   lastTry: c.called_back_at ?? null,
+  lastReached: null,
+  spokeAt: null,
 })
 
 export function MessagesDay({
@@ -67,8 +80,13 @@ export function MessagesDay({
     Array<{ id: string; name: string; nameKey: string; followUpSince: string | null }>
   >
   /** Today's attempts to reach each of those people, newest first, read out
-   *  of their own history. The row counts the ones since the call it is on. */
-  attempts: Record<string, string[]>
+   *  of their own history. The row counts the ones since the call it is on.
+   *
+   *  `reached` is how the attempt went, and it has three values because the
+   *  desk has three answers: true for "falei com a pessoa", false for "não
+   *  atendeu", and null for the press on this screen, which says the clinic
+   *  rang back and claims nothing about who picked up. */
+  attempts: Record<string, Array<{ at: string; reached: boolean | null }>>
   /** One row per day of the last seven, oldest first. */
   week: Array<{ dayKey: string; label: string; answered: number; missed: number }>
   dayKey: string
@@ -105,13 +123,25 @@ export function MessagesDay({
   // Only the ones since this call, because that is the question the row is
   // asking. A caller with no record has no history and keeps the counter on
   // the call, which is the only place it can be and contradicts nothing.
-  const [rung, setRung] = useState<Record<string, string[]>>(attempts)
+  const [rung, setRung] = useState<Record<string, Array<{ at: string; reached: boolean | null }>>>(
+    attempts
+  )
   const stateOf = (c: Call) => {
     const mine = work[c.id] ?? asWritten(c)
     const who = recordOf(c)
     if (!who) return mine
-    const since = (rung[who.id] ?? []).filter((at) => at >= c.created_at)
-    return { ...mine, tries: since.length, lastTry: since[0] ?? null }
+    const since = (rung[who.id] ?? []).filter((a) => a.at >= c.created_at)
+    // The newest attempt where somebody answered. It outranks the count and
+    // the hour of the last try: once the clinic has spoken to them, three
+    // attempts is history and "falámos" is the news.
+    const spoke = since.find((a) => a.reached === true) ?? null
+    return {
+      ...mine,
+      tries: since.length,
+      lastTry: since[0]?.at ?? null,
+      lastReached: since[0]?.reached ?? null,
+      spokeAt: spoke?.at ?? null,
+    }
   }
 
   // ── ONE PRESS CAN QUIETEN SEVERAL ROWS ───────────────────────────────────
@@ -150,12 +180,39 @@ export function MessagesDay({
   // read as today when it was Tuesday. More than one gets the count, and the
   // record holds the dates.
   const triedLabel = (c: Call) => {
-    const { tries, lastTry } = stateOf(c)
+    const { tries, lastTry, lastReached, spokeAt } = stateOf(c)
     if (tries === 0) return null
-    if (tries > 1 || !lastTry) return dict.pacientes.calledBackTimes.replace('{n}', String(tries))
-    return formatDate(lastTry, locale) === formatDate(c.created_at, locale)
-      ? dict.pacientes.calledBackAt.replace('{time}', formatTime(lastTry, locale))
-      : dict.pacientes.calledBackOn.replace('{date}', formatDate(lastTry, locale))
+    const t = dict.pacientes
+    // Somebody answered, so that is the whole sentence, whichever attempt it
+    // was and however many there were before it.
+    if (spokeAt) {
+      return formatDate(spokeAt, locale) === formatDate(c.created_at, locale)
+        ? t.spokeAt.replace('{time}', formatTime(spokeAt, locale))
+        : t.spokeOn.replace('{date}', formatDate(spokeAt, locale))
+    }
+    // Nobody did, and more than one try is a count rather than an hour: the
+    // record holds the dates and this screen holds the morning.
+    if (tries > 1 || !lastTry) return t.calledBackTimes.replace('{n}', String(tries))
+    const sameDay = formatDate(lastTry, locale) === formatDate(c.created_at, locale)
+    if (lastReached === false) {
+      return sameDay
+        ? t.noAnswerAt.replace('{time}', formatTime(lastTry, locale))
+        : t.noAnswerOn.replace('{date}', formatDate(lastTry, locale))
+    }
+    return sameDay
+      ? t.calledBackAt.replace('{time}', formatTime(lastTry, locale))
+      : t.calledBackOn.replace('{date}', formatDate(lastTry, locale))
+  }
+
+  /** The same three outcomes, as a colour. Reception reads a morning by the
+   *  shape of it, and a line that says the matter is closed should not be the
+   *  same grey as one that says nobody picked up. The tones are the record's
+   *  own, so a person who looks at both screens sees one vocabulary. */
+  const triedTone = (c: Call): 'ok' | 'warn' | 'mute' => {
+    const { spokeAt, lastReached, tries } = stateOf(c)
+    if (spokeAt) return 'ok'
+    if (tries === 1 && lastReached === false) return 'warn'
+    return 'mute'
   }
 
   const recordOf = (c: Call) => {
@@ -345,12 +402,19 @@ export function MessagesDay({
                       handledAt={done}
                       callbacks={stateOf(c).tries}
                       calledBackLabel={triedLabel(c)}
+                      calledBackTone={triedTone(c)}
                       onHandled={markHandled}
                       // On the person where there is one, so their other
                       // rows this morning move with it.
                       onCalledBack={(at) =>
                         known
-                          ? setRung((r) => ({ ...r, [known.id]: [at, ...(r[known.id] ?? [])] }))
+                          ? setRung((r) => ({
+                              ...r,
+                              // null, because this press says the clinic rang
+                              // back and nothing about who answered. The
+                              // record is where that gets decided.
+                              [known.id]: [{ at, reached: null }, ...(r[known.id] ?? [])],
+                            }))
                           : setWork((w) => ({
                               ...w,
                               [c.id]: {

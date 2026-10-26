@@ -173,11 +173,23 @@ export default async function AgendaPage({
     // back since this came in" and not "how many times have we ever tried".
     // The record asks the second one and answers it over the whole history.
     const known = Object.values(records).flat()
-    const attempts: Record<string, string[]> = {}
+    // ── AND HOW EACH ATTEMPT WENT, NOT ONLY THAT THERE WAS ONE ──────────────
+    // `reached` was not read here, so the day's list turned three different
+    // facts into one: somebody who did not pick up, somebody the clinic spoke
+    // to, and a press on this screen that claims nothing either way all came
+    // out as "the clinic tried". Reception logged "falei com a pessoa" on the
+    // record, came back to the day, and read the same grey line as for a
+    // missed call -- so the one piece of news, that the matter is settled,
+    // was the piece that disappeared.
+    //
+    // The record screen has had the three outcomes since it was written. This
+    // is the same column, read the same way, so the two screens say the same
+    // thing about the same note. See PatientActivity.
+    const attempts: Record<string, Array<{ at: string; reached: boolean | null }>> = {}
     if (known.length) {
       const { data: tries } = await supabase
         .from('patient_notes')
-        .select('patient_id, created_at')
+        .select('patient_id, created_at, reached')
         .eq('clinic_id', clinicId)
         .eq('kind', 'contacto')
         .in(
@@ -186,8 +198,12 @@ export default async function AgendaPage({
         )
         .gte('created_at', dayStart.toISOString())
         .order('created_at', { ascending: false })
-      for (const row of (tries ?? []) as Array<{ patient_id: string; created_at: string }>) {
-        ;(attempts[row.patient_id] ??= []).push(row.created_at)
+      for (const row of (tries ?? []) as Array<{
+        patient_id: string
+        created_at: string
+        reached: boolean | null
+      }>) {
+        ;(attempts[row.patient_id] ??= []).push({ at: row.created_at, reached: row.reached })
       }
     }
 

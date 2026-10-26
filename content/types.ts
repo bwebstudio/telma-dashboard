@@ -499,6 +499,15 @@ export interface Dictionary {
      *  with no date on it would read as this morning. */
     calledBackOn: string
     calledBackTimes: string
+    /** The three outcomes of an attempt, said on the day's list. `calledBack*`
+     *  is the one that claims nothing; these two are what the desk chose on
+     *  the record, and the day has to say them or the only piece of news in a
+     *  morning -- that somebody was actually spoken to -- reads as another
+     *  attempt. */
+    spokeAt: string
+    spokeOn: string
+    noAnswerAt: string
+    noAnswerOn: string
     /** Opens the box that creates a record. It said "follow this person",
      *  which named a feeling rather than the thing that happens. */
     followCaller: string

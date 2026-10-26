@@ -168,6 +168,7 @@ export function CallWork({
   handledAt,
   callbacks,
   calledBackLabel,
+  calledBackTone = 'mute',
   onHandled,
   onCalledBack,
   dict,
@@ -181,6 +182,12 @@ export function CallWork({
   /** Written out by the list, because only it knows which day this call was
    *  on and therefore whether an hour on its own says enough. */
   calledBackLabel: string | null
+  /** How that attempt went, as a colour: green where the clinic spoke to
+   *  them, amber where nobody picked up, grey where the press claimed
+   *  nothing. Reception reads a morning by the shape of it, and three
+   *  different outcomes in one grey is how the one that closes the matter
+   *  gets missed. */
+  calledBackTone?: 'ok' | 'warn' | 'mute'
   onHandled: (at: string | null, ids: string[]) => void
   onCalledBack: (at: string) => void
   dict: Dictionary
@@ -230,7 +237,19 @@ export function CallWork({
       >
         {callbacks > 0 ? t.calledBackAgain : t.calledBack}
       </button>
-      {calledBackLabel && <span className="text-sm text-ink-mute">{calledBackLabel}</span>}
+      {calledBackLabel && (
+        <span
+          className={`text-sm ${
+            calledBackTone === 'ok'
+              ? 'font-medium text-ok'
+              : calledBackTone === 'warn'
+                ? 'font-medium text-warn'
+                : 'text-ink-mute'
+          }`}
+        >
+          {calledBackLabel}
+        </span>
+      )}
       {failed && (
         <span role="alert" className="text-sm font-medium text-danger">
           {dict.common.errorGeneric}

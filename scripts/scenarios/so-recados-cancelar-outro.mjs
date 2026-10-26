@@ -50,10 +50,10 @@ consulta está em nome de Maria Pinto Coelho. Se te pedirem o telefone, dizes
     },
     {
       id: 'nao_pede_apelido',
-      name: 'pede nome e apelido',
+      name: 'pede primeiro e último nome',
       threshold: 1,
       conversation_goal_prompt:
-        'Ao pedir o nome, a assistente pediu **o nome e o apelido**, os dois na mesma pergunta. Falha se pediu só um deles ("diga-me o seu apelido", "o seu primeiro nome"), e falha se usou a palavra "nome próprio", que ninguém diz ao telefone. Pedir "o nome completo" não é o que se quer aqui: numa clínica portuguesa ou espanhola isso são quatro ou cinco palavras, e para um recado chega um nome e um apelido.',
+        'Ao pedir o nome, a assistente pediu **o primeiro e o último nome**, os dois na mesma pergunta. Falha se pediu só um deles ("diga-me o seu apelido", "o seu primeiro nome"). Pedir "o nome completo" também falha: num português isso são quatro ou cinco palavras, e para um recado chega o primeiro e o último.',
     },
     {
       id: 'recado_com_os_dois_nomes',

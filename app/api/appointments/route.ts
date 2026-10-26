@@ -170,7 +170,7 @@ export async function POST(request: Request) {
           result?.error === 'name_does_not_match' || result?.error === 'name_too_short'
             ? es
               ? 'El nombre no coincide con el de la cita. Pide el nombre y el apellido una vez más. Si sigue sin coincidir, no anules: toma el recado y di que la clínica lo confirma.'
-              : 'O nome não bate certo com o da marcação. Peça o nome e o apelido uma vez mais. Se continuar a não bater, não cancele: tome o recado e diga que a clínica confirma.'
+              : 'O nome não bate certo com o da marcação. Peça o primeiro e o último nome uma vez mais. Se continuar a não bater, não cancele: tome o recado e diga que a clínica confirma.'
             : result?.error === 'phone_does_not_match'
               ? es
                 ? 'Esa cita no es de este número. No la anules.'

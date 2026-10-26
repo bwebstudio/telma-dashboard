@@ -179,7 +179,7 @@ const TOOLS = [
   {
     name: 'telma_cancelar_marcacao',
     description:
-      'Cancela uma marcação. Só chama isto depois de a pessoa dizer o nome e o apelido, e passa-os tal como os ouviste: é o servidor que confere se bate certo com o da marcação. Se responder que não bate, não insistas nem canceles outra: toma o recado.',
+      'Cancela uma marcação. Só chama isto depois de a pessoa dizer o primeiro e o último nome, e passa-os tal como os ouviste: é o servidor que confere se bate certo com o da marcação. Se responder que não bate, não insistas nem canceles outra: toma o recado.',
     api_schema: {
       url: `${BASE}/api/appointments`,
       method: 'POST',
@@ -196,7 +196,7 @@ const TOOLS = [
           phone: { type: 'string', description: 'O mesmo número usado na consulta.' },
           name: {
             type: 'string',
-            description: 'O nome e o apelido, tal como a pessoa os disse. Não os corrijas nem os completes.',
+            description: 'O primeiro e o último nome, tal como a pessoa os disse. Não os corrijas nem os completes.',
           },
           reason: {
             type: 'string',

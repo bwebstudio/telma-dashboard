@@ -42,8 +42,6 @@ type Work = {
    *  so there it stays null: "the clinic rang back", which is all the press on
    *  this screen ever claimed. */
   lastReached: boolean | null
-  /** When somebody actually answered, if they did. */
-  spokeAt: string | null
 }
 
 /** What the server last said about it, which is where every row starts. */
@@ -52,7 +50,6 @@ const asWritten = (c: Call): Work => ({
   tries: Number(c.callbacks ?? 0),
   lastTry: c.called_back_at ?? null,
   lastReached: null,
-  spokeAt: null,
 })
 
 export function MessagesDay({
@@ -123,24 +120,20 @@ export function MessagesDay({
   // Only the ones since this call, because that is the question the row is
   // asking. A caller with no record has no history and keeps the counter on
   // the call, which is the only place it can be and contradicts nothing.
-  const [rung, setRung] = useState<Record<string, Array<{ at: string; reached: boolean | null }>>>(
-    attempts
-  )
+  // Read and not written any more: the day's list has one action, "tratado",
+  // and an attempt is logged on the person's record. So this is the server's
+  // answer and nothing on this screen changes it.
+  const rung = attempts
   const stateOf = (c: Call) => {
     const mine = work[c.id] ?? asWritten(c)
     const who = recordOf(c)
     if (!who) return mine
     const since = (rung[who.id] ?? []).filter((a) => a.at >= c.created_at)
-    // The newest attempt where somebody answered. It outranks the count and
-    // the hour of the last try: once the clinic has spoken to them, three
-    // attempts is history and "falámos" is the news.
-    const spoke = since.find((a) => a.reached === true) ?? null
     return {
       ...mine,
       tries: since.length,
       lastTry: since[0]?.at ?? null,
       lastReached: since[0]?.reached ?? null,
-      spokeAt: spoke?.at ?? null,
     }
   }
 
@@ -180,20 +173,17 @@ export function MessagesDay({
   // read as today when it was Tuesday. More than one gets the count, and the
   // record holds the dates.
   const triedLabel = (c: Call) => {
-    const { tries, lastTry, lastReached, spokeAt } = stateOf(c)
+    const { tries, lastTry, lastReached } = stateOf(c)
     if (tries === 0) return null
     const t = dict.pacientes
-    // ── THE LATEST ATTEMPT, ALWAYS ──────────────────────────────────────────
-    // This read "whoever answered wins, however many came after", and the
-    // button next to it stopped doing anything you could see: a record with a
-    // "falei com a pessoa" on it kept that same line no matter how many times
-    // reception pressed "liguei outra vez". The press was written down, the
-    // record showed it, and this screen said what it had said before.
+    // ── THE LATEST ATTEMPT, AND WHAT CAME OF IT ─────────────────────────
+    // The line is about the last thing that happened, which is what a person
+    // looking at a morning is asking, and it ends with the count when there
+    // has been more than one.
     //
-    // So the line is about the last thing that happened, which is what a
-    // person looking at a morning is asking, and it ends with the count when
-    // there has been more than one. Every press moves it: the hour changes, or
-    // the count does.
+    // Read-only, since reception asked for one action on this screen: an
+    // attempt is logged on the person's record, and this is how the day says
+    // somebody has already been rung without their having to go and look.
     const base = (() => {
       if (!lastTry) return t.calledBackTimes.replace('{n}', String(tries))
       const sameDay = formatDate(lastTry, locale) === formatDate(c.created_at, locale)
@@ -410,34 +400,9 @@ export function MessagesDay({
                     <CallWork
                       callId={c.id}
                       handledAt={done}
-                      callbacks={stateOf(c).tries}
                       calledBackLabel={triedLabel(c)}
                       calledBackTone={triedTone(c)}
-                      // The two answers only where there is a record to keep
-                      // them on. See CallWork.
-                      outcomes={!!known}
                       onHandled={markHandled}
-                      // On the person where there is one, so their other
-                      // rows this morning move with it.
-                      onCalledBack={(at, reached) =>
-                        known
-                          ? setRung((r) => ({
-                              ...r,
-                              [known.id]: [{ at, reached }, ...(r[known.id] ?? [])],
-                            }))
-                          : setWork((w) => ({
-                              ...w,
-                              [c.id]: {
-                                ...(w[c.id] ?? asWritten(c)),
-                                tries: (w[c.id] ?? asWritten(c)).tries + 1,
-                                lastTry: at,
-                                // Null on purpose: a caller with no record has
-                                // no column for an outcome, and the single
-                                // button they get claims none.
-                                lastReached: null,
-                              },
-                            }))
-                      }
                       dict={dict}
                       locale={locale}
                     />

@@ -511,8 +511,11 @@ export interface Dictionary {
     /** Appended when there has been more than one attempt, so that pressing
      *  "liguei outra vez" always moves something on the line. */
     triedCount: string
-    /** The two answers, as the two buttons on the day's list. One press each,
-     *  and the line afterwards says which it was. */
+    /** The two answers, as two buttons on the day's list. Written, measured
+     *  against reception, and taken off again the same afternoon: they asked
+     *  for one action on that screen, "tratado", and for an attempt to be
+     *  logged on the person's record where there is room to say what was
+     *  said. Kept because the ask was "later", not "never". */
     rangSpoke: string
     rangNoAnswer: string
     /** Opens the box that creates a record. It said "follow this person",

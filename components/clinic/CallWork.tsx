@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import type { Dictionary, Locale } from '@/content'
-import { logCallback, setCallHandled } from '@/lib/actions/patients'
+import { setCallHandled } from '@/lib/actions/patients'
 import { formatTime } from '@/lib/format'
 import { IconCheck } from '@/components/icons'
 
@@ -145,69 +145,45 @@ export function CallHandled({
 }
 
 /**
- * And on the day's list, the other half: ringing them back.
+ * And on the day's list, what else the row says about the work.
  *
- * Two sentences, not one. "I rang them back" is the work and can happen three
- * times without anything being resolved; "this is dealt with" is the end of
- * it. Neither implies the other, so there are two presses.
+ * ── THE CALLBACK BUTTONS ARE GONE, AND THAT WAS ASKED FOR ──────────────────
+ * This had "liguei e falei" and "liguei, não atendeu" beside "tratado", which
+ * wrote the attempt into the person's history from the day's list. Reception
+ * asked for one action on this screen and only one: today is for reading what
+ * happened and closing what is done, and ringing somebody back is work that
+ * belongs on their record, where the form has room for what was said.
  *
- * ── WHY THE COUNT IS NOT ALWAYS THE CALL'S OWN ─────────────────────────────
- * An attempt is a thing that happened to a person, not to a call: somebody
- * who rang three times this week and was rung back once has been rung back
- * once, however many lines that spreads over. So where the caller has a
- * record, this writes into their history and reads the count back from it,
- * which is the same history the record's own "registar tentativa" writes to
- * and the same one it counts. One log, two doors into it.
+ * The line stays. Where the record already holds an attempt, the row says so
+ * -- "falámos com a pessoa às 13:46", in green, with the count -- because that
+ * is the one thing somebody closing a morning needs to know and did not want
+ * to go and look for.
  *
- * Where the caller has no record there is no history to write to, and the
- * count on the call itself is the only place it can live. Nothing contradicts
- * anything there either: a caller with no record has no second screen.
+ * `logCallback` in lib/actions/patients is intact and now has no screen
+ * calling it. It is left there, with its own note, for when this comes back.
  */
 export function CallWork({
   callId,
   handledAt,
-  callbacks,
   calledBackLabel,
   calledBackTone = 'mute',
-  outcomes = false,
   onHandled,
-  onCalledBack,
   dict,
   locale,
 }: {
   callId: string
   handledAt: string | null
-  /** How many times this person has been rung back, from their record where
-   *  they have one and from the call itself where they do not. */
-  callbacks: number
   /** Written out by the list, because only it knows which day this call was
    *  on and therefore whether an hour on its own says enough. */
   calledBackLabel: string | null
-  /** How that attempt went, as a colour: green where the clinic spoke to
-   *  them, amber where nobody picked up, grey where the press claimed
-   *  nothing. Reception reads a morning by the shape of it, and three
-   *  different outcomes in one grey is how the one that closes the matter
-   *  gets missed. */
+  /** How the last attempt went, as a colour: green where the clinic spoke to
+   *  them, amber where nobody picked up, grey where whoever pressed it claimed
+   *  nothing. Reception reads a morning by the shape of it. */
   calledBackTone?: 'ok' | 'warn' | 'mute'
-  /** Whether this caller has a record to write the outcome on.
-   *
-   *  With one, the two answers are two buttons: still one press, and the line
-   *  afterwards says which of them it was. Without one there is nowhere to
-   *  keep an outcome -- `calls` holds the count and the hour and nothing else
-   *  -- so the single button stays, and it claims only what it can: the clinic
-   *  rang back. Offering two answers and keeping neither would be worse than
-   *  offering one. */
-  outcomes?: boolean
   onHandled: (at: string | null, ids: string[]) => void
-  onCalledBack: (at: string, reached: boolean | null) => void
   dict: Dictionary
   locale: Locale
 }) {
-  const t = dict.pacientes
-  const router = useRouter()
-  const [pending, start] = useTransition()
-  const [failed, setFailed] = useState(false)
-
   if (handledAt) {
     return (
       <CallHandled
@@ -229,33 +205,6 @@ export function CallWork({
         dict={dict}
         locale={locale}
       />
-      {(outcomes
-        ? ([
-            ['spoke', true, t.rangSpoke],
-            ['missed', false, t.rangNoAnswer],
-          ] as const)
-        : ([['rang', null, callbacks > 0 ? t.calledBackAgain : t.calledBack]] as const)
-      ).map(([key, reached, label]) => (
-        <button
-          key={key}
-          className="btn-ghost min-h-0 px-3 py-1.5 text-sm"
-          disabled={pending}
-          onClick={() =>
-            start(async () => {
-              setFailed(false)
-              try {
-                await logCallback(callId, reached)
-                onCalledBack(new Date().toISOString(), reached)
-                router.refresh()
-              } catch {
-                setFailed(true)
-              }
-            })
-          }
-        >
-          {label}
-        </button>
-      ))}
       {calledBackLabel && (
         <span
           className={`text-sm ${
@@ -267,11 +216,6 @@ export function CallWork({
           }`}
         >
           {calledBackLabel}
-        </span>
-      )}
-      {failed && (
-        <span role="alert" className="text-sm font-medium text-danger">
-          {dict.common.errorGeneric}
         </span>
       )}
     </span>

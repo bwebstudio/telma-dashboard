@@ -609,10 +609,21 @@ export async function setCallHandled(
  * had the answer in colour. A press that records nothing is a press that has
  * to be made again somewhere else.
  *
- * So the day's list offers the two answers as two buttons, which is still one
- * press, and this takes which one. `null` stays legal because the rows written
- * before today carry it and because a caller with no record has nowhere to
- * keep an outcome: `calls` has the count and the hour and no column for this.
+ * So it takes which of the two it was. `null` stays legal because the rows
+ * written before today carry it and because a caller with no record has
+ * nowhere to keep an outcome: `calls` has the count and the hour and no column
+ * for this.
+ *
+ * ── AND RIGHT NOW NOTHING CALLS IT ─────────────────────────────────────────
+ * The two buttons lived on the day's list for about an hour. Reception asked
+ * for one action on that screen and only one, "tratado": today is for reading
+ * what happened and closing what is done, and ringing somebody back is work
+ * that belongs on their record, where the form has room for what was said.
+ *
+ * This is left whole, and not deleted, because the request was "later we will
+ * look at it again" rather than "never". The screen that used it is
+ * components/clinic/CallWork, which still reads the attempts out and says how
+ * the last one went; what it no longer does is write one.
  *
  * Through the admin client and scoped by clinic, for the same reason as the
  * recalls: the clinic may not write on the calls table directly, and the

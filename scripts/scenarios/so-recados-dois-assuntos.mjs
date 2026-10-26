@@ -79,7 +79,7 @@ não precisas de nada e despedes-te quando ela fechar.`,
       name: 'nao explica a sua papelada',
       threshold: 1,
       conversation_goal_prompt:
-        'A assistente NUNCA explicou para que precisava dos dados nem o que ia fazer com eles: nada de "para eu registar bem", "para ficar bem identificado", "para não me enganar", "para deixar o recado corretamente". Falha se disse qualquer coisa desse género.',
+        'A assistente NUNCA explicou a sua própria papelada: nada de "para eu registar bem", "para ficar bem identificado", "para não me enganar", "para deixar o recado corretamente". Falha se disse qualquer coisa desse género. ATENÇÃO: dizer para que serve o número ("para a clínica lhe ligar", "para lhe ligarem da clínica") NÃO é isso e passa, que é o que diria qualquer rececionista.',
     },
     {
       id: 'nao_anula',

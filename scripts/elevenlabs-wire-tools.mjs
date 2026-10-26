@@ -277,7 +277,7 @@ const TOOLS = [
               // disse e de onde ninguém ligou. Quem compara continua a ser o
               // servidor; o que muda é que um campo vazio é agora a resposta
               // certa, e não um campo por preencher.
-              'O número que a pessoa **ditou** para a clínica lhe ligar de volta, com os nove algarismos, tal como o confirmaste em voz alta. Se ela não ditou nenhum -- disse que servia o mesmo de onde está a ligar, ou não chegou a dar um --, **omite este campo por completo**: o número de onde a chamada entrou chega sozinho ao painel e é esse que a clínica vê. **Nunca o escrevas de memória nem com algarismos que não ouviste nesta chamada**: um número inventado é uma pessoa a quem a clínica não consegue ligar, e já aconteceu. É aqui e só aqui: o campo from_phone não é para isto e o que lá escreveres é deitado fora.',
+              'O número que a pessoa **ditou** para a clínica lhe ligar de volta, com os nove algarismos. **Só escreves aqui um número que já leste de volta em voz alta e que a pessoa confirmou**: um número que entrou mas não foi confirmado é um algarismo trocado à espera de acontecer, e o recado inteiro é a promessa de uma chamada de volta. Se ela não ditou nenhum -- disse que servia o mesmo de onde está a ligar, ou não chegou a dar um --, **omite este campo por completo**: o número de onde a chamada entrou chega sozinho ao painel e é esse que a clínica vê. **Nunca o escrevas de memória nem com algarismos que não ouviste nesta chamada**: um número inventado é uma pessoa a quem a clínica não consegue ligar, e já aconteceu. É aqui e só aqui: o campo from_phone não é para isto e o que lá escreveres é deitado fora.',
           },
           appointments: {
             type: 'array',

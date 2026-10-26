@@ -77,7 +77,7 @@ export const shared = {
       name: 'nao inventa agenda',
       threshold: 1,
       conversation_goal_prompt:
-        'A assistente NUNCA disse que a agenda está cheia, que não há vagas, que não há horas disponíveis, nem nada que descreva o estado da agenda. Falha se disse qualquer coisa sobre disponibilidade: ela não tem agenda nenhuma para consultar.',
+        'A assistente NUNCA disse que a agenda está cheia, que não há vagas, que não há horas disponíveis, nem nada que descreva o estado da agenda da clínica. Falha se disse qualquer coisa sobre horas ou vagas: ela não tem agenda nenhuma para consultar. ATENÇÃO: dizer que a clínica está fechada, ou que neste momento não está ninguém da receção, NÃO é isso e passa: é a razão por que fica com o recado, e a folha manda dizê-la.',
     },
     {
       id: 'recado_completo',
@@ -105,7 +105,45 @@ export const shared = {
       name: 'nao passa chamada',
       threshold: 1,
       conversation_goal_prompt:
-        'A assistente NUNCA disse que ia passar a chamada a alguém, nem que ia transferir, nem que alguém vai atender já a seguir. Falha se o disse, mesmo que depois não tenha acontecido.',
+        'A assistente NUNCA disse que ia passar a chamada a alguém, nem que ia transferir, nem que alguém vai atender já a seguir. Falha se o disse, mesmo que depois não tenha acontecido. ATENÇÃO: dizer que NÃO consegue passar a chamada, ou que não há ninguém a quem passar, é o contrário disso e passa.',
+    },
+    // ── E AGORA O QUE SE OUVE, E NÃO SÓ O QUE SE DIZ ─────────────────────
+    // Os critérios acima medem se a chamada faz o que tem de fazer. Nenhum
+    // deles apanha a razão por que uma chamada soa a máquina, que é sempre a
+    // mesma: a repetição. Uma conversa pode cumprir tudo e ainda assim
+    // começar quatro respostas com "percebo" e fazer a pergunta do fecho
+    // três vezes palavra por palavra, e é por aí que se percebe de fora.
+    //
+    // Vão nos critérios partilhados porque valem para qualquer chamada, e
+    // porque uma regra de estilo que ninguém mede é uma regra que se perde na
+    // versão seguinte.
+    {
+      id: 'nao_comeca_sempre_igual',
+      name: 'nao comeca sempre igual',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Olha para a PRIMEIRA palavra de cada resposta da assistente. Falha se a mesma abertura aparece em três ou mais respostas, por exemplo "Percebo" ou "Muito bem" ou "Com certeza" à cabeça de tudo. Passa se as aberturas variam, e passa também se algumas respostas começam logo pela resposta, sem nenhuma palavra de encaixe.',
+    },
+    {
+      id: 'pergunta_de_fecho_varia',
+      name: 'pergunta de fecho varia',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Se a assistente perguntou mais do que uma vez se havia mais alguma coisa, não o fez sempre com a mesma frase exacta. Falha se repetiu a mesma pergunta de fecho palavra por palavra três vezes ou mais. Passa se só a fez uma ou duas vezes.',
+    },
+    {
+      id: 'sem_linguagem_de_call_center',
+      name: 'sem linguagem de call center',
+      threshold: 1,
+      conversation_goal_prompt:
+        'A assistente NUNCA usou frases de atendimento ao cliente: "lamento o incómodo", "agradeço a sua compreensão", "fico ao seu dispor", "qualquer dúvida não hesite em contactar", "é um prazer ajudar" ou parecidas. Falha se usou qualquer uma: ninguém fala assim ao telefone.',
+    },
+    {
+      id: 'nao_narra_o_que_faz',
+      name: 'nao narra o que faz',
+      threshold: 1,
+      conversation_goal_prompt:
+        'A assistente NUNCA narrou o que estava a fazer por dentro nem porque pedia os dados: nada de "para eu registar", "fica tudo registado", "vou terminar a chamada agora", "para ficar bem identificado", "estava a confirmar", "para não me enganar". Falha se disse qualquer coisa do género. ATENÇÃO: nada disto é isso e tudo isto passa: "fica anotado", "fico com o recado", "a clínica liga-lhe de volta", e dizer para que serve o número ("para a clínica lhe ligar", "para lhe ligarem da clínica"). São o que ela diz à pessoa sobre o recado dela, não sobre a sua própria papelada.',
     },
   ],
 }

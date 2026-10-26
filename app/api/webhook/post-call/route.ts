@@ -106,6 +106,16 @@ export async function POST(request: Request) {
   const rescuedPhone =
     maybePhone && (maybePhone.replace(/\D/g, '').length >= 9 ? maybePhone : null)
   const rescuedBooking = field('marcacao_pedida')
+  // ── E O QUE A PESSOA QUERIA, QUANDO NADA FICOU REGISTADO ────────────────
+  // Esta manhã: alguém pediu para anular a consulta de amanhã, deu o nome,
+  // confirmou o número, e desligou antes de a Telma registar. O painel da
+  // clínica mostrou "Esta chamada não deixou recado", que é falso e é a pior
+  // linha possível: havia recado, e ninguém o leu.
+  //
+  // `assunto` é um campo da análise da plataforma, escrito na língua da
+  // clínica, e corre sobre a transcrição acabada: não depende de a Telma se ter
+  // lembrado de nada. Quando existe, é ele o resumo.
+  const rescuedSubject = field('assunto')
 
   // ── E NÃO NA LÍNGUA DA PLATAFORMA ───────────────────────────────────────
   // `transcript_summary` é escrito pela ElevenLabs, e por omissão escreve em
@@ -162,7 +172,10 @@ export async function POST(request: Request) {
   // coisas que não têm coluna nenhuma -- o número que ela apanhou e o que a
   // pessoa queria marcar.
   const rescued = [rescuedPhone, rescuedBooking].filter(Boolean).join(' · ')
-  const fullSummary = rescued ? `${rescued}\n\n${said}` : said
+  // O que a pessoa queria ganha à frase nossa. "Esta chamada não deixou
+  // recado" fica para as chamadas em que, de facto, não houve recado nenhum.
+  const whatHappened = rescuedSubject ?? said
+  const fullSummary = rescued ? `${rescued}\n\n${whatHappened}` : whatHappened
 
   const { data, error } = await admin.rpc('record_call', {
     p_clinic_id: clinicId,
@@ -171,7 +184,12 @@ export async function POST(request: Request) {
     // rule explaining is not the same thing.
     p_from_phone: rescuedPhone ?? vars.system__caller_id ?? null,
     p_duration: duration,
-    p_result: 'nao_resolvida',
+    // `nao_resolvida` é o vermelho do painel e está certo para uma chamada que
+    // acabou sem nada: sem recado, sem pedido, sem pergunta respondida. Quando
+    // a análise diz que ficou trabalho para a clínica, o que esta chamada é é
+    // um pedido que não chegou a ser registado, e `informacao` é a cor honesta:
+    // há aqui uma coisa para ler, e não um erro para investigar.
+    p_result: collected.ficou_por_fazer?.value === true ? 'informacao' : 'nao_resolvida',
     p_summary: fullSummary,
     p_recording_url: null,
     p_external_ref: conversationId,

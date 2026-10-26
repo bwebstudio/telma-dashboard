@@ -148,15 +148,36 @@ export async function POST(request: Request) {
   if (!result?.ok) {
     // Told in words the agent can act on. A refusal she cannot explain becomes
     // an apology and a dead end, and the person rings back angrier.
+    //
+    // ── AND IN THE CLINIC'S OWN LANGUAGE ──────────────────────────────────
+    // These were Portuguese fixed in the code, like the transfer sentences
+    // were: what the model reads it tends to echo, and a Spanish clinic's
+    // Telma reading an instruction written in Portuguese is one step from
+    // saying it. The name it asks for again is a name and a surname, which is
+    // what the sheet asks for everywhere else.
+    // One read, and only on the path that needs it: a refusal is the rare
+    // case and the happy path should not pay for a column it never prints.
+    const { data: row } = await admin
+      .from('clinics')
+      .select('language')
+      .eq('id', clinicId)
+      .maybeSingle()
+    const es = (row as { language?: string } | null)?.language === 'es'
     return NextResponse.json(
       {
         ...result,
         message:
           result?.error === 'name_does_not_match' || result?.error === 'name_too_short'
-            ? 'O nome não bate certo com o da marcação. Peça o nome completo uma vez mais. Se continuar a não bater, não cancele: tome o recado e diga que a clínica confirma.'
+            ? es
+              ? 'El nombre no coincide con el de la cita. Pide el nombre y el apellido una vez más. Si sigue sin coincidir, no anules: toma el recado y di que la clínica lo confirma.'
+              : 'O nome não bate certo com o da marcação. Peça o nome e o apelido uma vez mais. Se continuar a não bater, não cancele: tome o recado e diga que a clínica confirma.'
             : result?.error === 'phone_does_not_match'
-              ? 'Essa marcação não é deste número. Não cancele.'
-              : 'Não foi possível cancelar. Tome o recado e diga que a clínica trata disso.',
+              ? es
+                ? 'Esa cita no es de este número. No la anules.'
+                : 'Essa marcação não é deste número. Não cancele.'
+              : es
+                ? 'No se ha podido anular. Toma el recado y di que la clínica se ocupa.'
+                : 'Não foi possível cancelar. Tome o recado e diga que a clínica trata disso.',
       },
       { status: 409 }
     )

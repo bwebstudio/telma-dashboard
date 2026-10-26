@@ -29,8 +29,8 @@ export default {
 Chamas-te Domingos Pinto Coelho e és um homem.
 **Não dizes o teu nome nem de quem é a consulta até te perguntarem.** Se a
 assistente der por assente que a consulta é tua, corriges: "não, não é para
-mim". Se te pedirem o nome, dizes o teu nome completo e dizes que a consulta
-está em nome de Maria Pinto Coelho. Se te pedirem o telefone, dizes
+mim". Se te pedirem o nome, dizes "Domingos Pinto Coelho" e dizes que a
+consulta está em nome de Maria Pinto Coelho. Se te pedirem o telefone, dizes
 "nove, um, dois, zero, zero, zero, um, um, um". Despedes-te quando ela fechar.`,
   criteria: [
     ...shared.criteria.filter((c) => c.id !== 'nao_marca' && c.id !== 'recado_completo'),
@@ -50,10 +50,10 @@ está em nome de Maria Pinto Coelho. Se te pedirem o telefone, dizes
     },
     {
       id: 'nao_pede_apelido',
-      name: 'pede o nome completo',
+      name: 'pede nome e apelido',
       threshold: 1,
       conversation_goal_prompt:
-        'Ao pedir o nome, a assistente pediu o NOME COMPLETO. Falha se pediu "o apelido", "o sobrenome" ou "o nome próprio": essas são palavras das instruções dela, não perguntas que se fazem ao telefone.',
+        'Ao pedir o nome, a assistente pediu **o nome e o apelido**, os dois na mesma pergunta. Falha se pediu só um deles ("diga-me o seu apelido", "o seu primeiro nome"), e falha se usou a palavra "nome próprio", que ninguém diz ao telefone. Pedir "o nome completo" não é o que se quer aqui: numa clínica portuguesa ou espanhola isso são quatro ou cinco palavras, e para um recado chega um nome e um apelido.',
     },
     {
       id: 'recado_com_os_dois_nomes',

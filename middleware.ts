@@ -26,9 +26,14 @@ export const config = {
   // nothing. scripts/test-middleware.mjs now checks this list against the
   // routes, because reading it carefully has failed three times out of three.
   //
+  // A fourth time was caught by the test rather than by production:
+  // `api/whatsapp`, which Twilio calls when a patient writes, carrying its
+  // secret in the query string. The test refused the commit, which is what it
+  // is for.
+  //
   // /api/crm is deliberately included: the offline queue on the phone posts
   // there and needs a refreshed session.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/cron|api/availability|api/appointments|api/clinic-context|api/service-check|api/voice|dev/voz|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|webmanifest|woff2)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/webhook|api/cron|api/availability|api/appointments|api/clinic-context|api/service-check|api/voice|api/whatsapp|dev/voz|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|webp|avif|ico|webmanifest|woff2)$).*)',
   ],
 }

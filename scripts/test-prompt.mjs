@@ -1611,10 +1611,11 @@ test('a known number saves a question and never volunteers a name', () => {
 // variable -- so this reads the route instead, which is crude and is the only
 // place the guarantee actually lives.
 test('the agent is told a name and nothing else about a known patient', () => {
-  const route = readFileSync(
-    join(here, '..', 'app', 'api', 'voice', 'init', 'route.ts'),
-    'utf8'
-  )
+  // The lookup moved out of the route and into lib/onboarding/variables when
+  // WhatsApp needed the same facts as the telephone. The guarantee did not
+  // move: it is still one `select('name')`, and it is still the only thing
+  // standing behind what the panel tells a clinic about its own notes.
+  const route = readFileSync(join(here, '..', 'lib', 'onboarding', 'variables.ts'), 'utf8')
   const lookup = route.match(/\.from\('patients'\)\s*\n\s*\.select\('([^']*)'\)/)
   assert.ok(lookup, 'the patient lookup has moved, and this guarantee moved with it')
   assert.equal(

@@ -152,6 +152,12 @@ export async function POST(request: Request) {
       clinicId,
       inbound,
       digits,
+      minutesExhausted: context.minutes.exhausted,
+      // Our own origin, taken from the request that brought the message
+      // rather than from an environment variable somebody has to remember:
+      // the tools are called over HTTP so that both channels go through one
+      // door, and this is the door.
+      baseUrl: new URL(request.url).origin,
     })
     return NextResponse.json({ received: true, ...outcome })
   } catch (e) {

@@ -1,5 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { buildPrompt } from '@/lib/onboarding/prompt'
+import { promptVariablesFor } from '@/lib/onboarding/variables'
 import { WINDOW_MS, sendWhatsappReply } from '@/lib/whatsapp'
+import { TEXT_TOOLS, runTextTool } from '@/lib/whatsapp-tools'
 import type { Clinic } from '@/lib/types'
 
 /**
@@ -39,6 +42,13 @@ export interface AnswerInput {
   /** The last nine digits of the patient's number, which is how every other
    *  part of this product matches a telephone. */
   digits: string
+  /** Whether the plan's minutes are spent. The sheet reads it to decide
+   *  whether she may book, and the caller has already read the plan. */
+  minutesExhausted: boolean
+  /** Where our own endpoints are, taken from the request that brought the
+   *  message. The tools are called over HTTP so that both channels go through
+   *  one door with one token. */
+  baseUrl: string
 }
 
 export interface AnswerOutcome {
@@ -154,7 +164,7 @@ export async function answerWhatsapp(input: AnswerInput): Promise<AnswerOutcome>
     return { replied: false, ignored: 'brain_not_configured', thread: threadId }
   }
 
-  const reply = await composeReply(input, turns)
+  const reply = await composeReply(input, turns, threadId)
   if (!reply) return { replied: false, ignored: 'no_reply_composed', thread: threadId }
 
   const sent = await sendWhatsappReply({
@@ -176,13 +186,132 @@ export async function answerWhatsapp(input: AnswerInput): Promise<AnswerOutcome>
 }
 
 /**
- * The reply itself, which is the half that is not built yet.
+ * The reply itself: the clinic's own sheet, the same tools, and a model.
  *
- * Deliberately a seam and not a stub that answers something: see
- * `textBrainConfigured`. What goes in here is the sheet from
- * lib/onboarding/variables with `channel: 'whatsapp'`, the same HTTP tools the
- * telephone uses, and the turns above as the conversation so far.
+ * ── WHY NOT THE VOICE PLATFORM ─────────────────────────────────────────────
+ * ElevenLabs runs a text conversation as a WebSocket session opened by an SDK.
+ * There is no documented way to take a single turn over HTTP, and none to
+ * resume a conversation by its id. A WhatsApp thread is turns separated by
+ * minutes or hours, on a server that does not stay alive between requests, so
+ * the shape does not fit: we would be holding a socket open for a conversation
+ * that may continue tomorrow, or replaying the history into a new one each
+ * time and keeping the state ourselves anyway.
+ *
+ * Keeping the state ourselves is the part we want: the thread is a row in the
+ * panel, which is where the clinic reads it. What is left for the platform to
+ * add is the model, and we can call one directly with the sheet we already
+ * build per clinic. One sheet, two doors, and the voice stays where voice is
+ * worth paying for.
+ *
+ * ── THE LOOP, AND WHY IT IS SHORT ──────────────────────────────────────────
+ * Six rounds. A booking is three tools at the most -- look, hold, file -- and
+ * a model that has asked for eight is a model that has lost the thread. The
+ * cap is a cost ceiling and an honesty one: when it is reached nothing is
+ * sent, because a half-finished booking answered with a cheerful sentence is
+ * the failure this whole product is written against.
  */
-async function composeReply(_input: AnswerInput, _turns: TranscriptTurn[]): Promise<string | null> {
+async function composeReply(
+  input: AnswerInput,
+  turns: TranscriptTurn[],
+  threadId: string
+): Promise<string | null> {
+  const key = process.env.TELMA_TEXT_MODEL_KEY?.trim()
+  if (!key) return null
+  const model = process.env.TELMA_TEXT_MODEL?.trim() || 'gpt-5.4-mini'
+  const endpoint =
+    process.env.TELMA_TEXT_MODEL_URL?.trim() || 'https://api.openai.com/v1/chat/completions'
+  const token = process.env.TELMA_WEBHOOK_TOKEN?.trim()
+  if (!token) {
+    console.error('[whatsapp] no TELMA_WEBHOOK_TOKEN, so the tools cannot be called')
+    return null
+  }
+
+  const { variables, baseLanguage } = await promptVariablesFor({
+    clinicId: input.clinicId,
+    clinic: input.clinic,
+    minutesExhausted: input.minutesExhausted,
+    callerId: input.inbound.from.replace(/^whatsapp:/, ''),
+    channel: 'whatsapp',
+  })
+  const sheet = buildPrompt(variables, baseLanguage)
+
+  // The thread, oldest first, as the model expects it. A WhatsApp thread is
+  // the whole context: there is no summary of it anywhere else, which is the
+  // other reason the words are kept in `calls.transcript`.
+  const messages: Array<Record<string, unknown>> = [
+    { role: 'system', content: sheet.text },
+    ...turns.map((t) => ({
+      role: t.role === 'patient' ? 'user' : 'assistant',
+      content: t.text,
+    })),
+  ]
+
+  const ctx = {
+    clinicId: input.clinicId,
+    fromPhone: input.inbound.from.replace(/^whatsapp:/, ''),
+    // The thread's reference, so that filing updates the row that already
+    // holds the words. Opened with the first message's id; falls back to the
+    // row id for a thread whose first message arrived without one.
+    callRef: input.inbound.sid ? `wa_${input.inbound.sid}` : `wa_${threadId}`,
+    baseUrl: input.baseUrl,
+    token,
+  }
+
+  for (let round = 0; round < 6; round++) {
+    const r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages,
+        tools: TEXT_TOOLS,
+        // Short, for the same reason the voice agent has a ceiling: a
+        // paragraph is not a WhatsApp message.
+        max_tokens: 400,
+      }),
+      cache: 'no-store',
+    })
+
+    if (!r.ok) {
+      console.error('[whatsapp] the model refused:', r.status, (await r.text()).slice(0, 200))
+      return null
+    }
+
+    const data = (await r.json()) as {
+      choices?: Array<{
+        message?: {
+          content?: string | null
+          tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }>
+        }
+      }>
+    }
+    const reply = data.choices?.[0]?.message
+    if (!reply) return null
+
+    const calls = reply.tool_calls ?? []
+    if (!calls.length) {
+      const said = (reply.content ?? '').trim()
+      return said || null
+    }
+
+    messages.push(reply as Record<string, unknown>)
+    for (const call of calls) {
+      let args: Record<string, unknown> = {}
+      try {
+        args = JSON.parse(call.function.arguments || '{}') as Record<string, unknown>
+      } catch {
+        args = {}
+      }
+      const result = await runTextTool(call.function.name, args, ctx)
+      messages.push({
+        role: 'tool',
+        tool_call_id: call.id,
+        content: JSON.stringify(result),
+      })
+    }
+  }
+
+  // Six rounds and no sentence. Nothing is sent: see above.
+  console.error('[whatsapp] the model went round six times without answering')
   return null
 }

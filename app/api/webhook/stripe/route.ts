@@ -120,7 +120,14 @@ export async function POST(request: Request) {
         // unique and the upsert asks for the row back, so a redelivered
         // event writes nothing and logs nothing. Webhooks arrive at least
         // once and this is the table with the money in it.
-        const plan = (metadata.plan || 'essencial') as PlanType
+        // The invoice's own metadata is empty; what it carries is the
+        // subscription's, under `subscription_details`. Read in that order,
+        // and the fallback stays because a clinic signed up before today has
+        // a subscription with no plan on it and its renewal still has to
+        // produce a receipt. See the note in lib/onboarding/stripe-client.
+        const subMeta = ((object.subscription_details as { metadata?: Record<string, string> } | undefined)
+          ?.metadata ?? {}) as Record<string, string>
+        const plan = (metadata.plan || subMeta.plan || 'essencial') as PlanType
         const paid = typeof object.amount_paid === 'number' ? object.amount_paid / 100 : 0
 
         // Nothing was charged: the first invoice of a subscription that

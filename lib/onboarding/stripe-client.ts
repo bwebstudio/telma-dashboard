@@ -319,7 +319,18 @@ export async function createCheckoutSession(opts: {
     'metadata[clinic_id]': opts.clinicId,
     'metadata[plan]': opts.plan,
     'metadata[billing_cycle]': opts.billingCycle,
+    // ── AND THE SAME THREE ON THE SUBSCRIPTION ────────────────────────────
+    // The session's metadata is on the session, and a renewal is not a
+    // session: twelve months from now the only thing Stripe sends is an
+    // invoice, which carries the subscription's metadata and not this page's.
+    // `clinic_id` was already here, which is why the webhook finds the right
+    // clinic; `plan` was not, so `invoice.payment_succeeded` read it as
+    // missing and fell back to "essencial". Every receipt in the billing
+    // history of a clinic on another plan would have said Essencial, and the
+    // first one to notice would have been the clinic.
     'subscription_data[metadata][clinic_id]': opts.clinicId,
+    'subscription_data[metadata][plan]': opts.plan,
+    'subscription_data[metadata][billing_cycle]': opts.billingCycle,
     // The promotion code box on Stripe's own page. Ours to switch on, theirs
     // to render, validate and total up: a code typed into our form would have
     // to be re-checked here anyway, and the figure the reader needs to see is

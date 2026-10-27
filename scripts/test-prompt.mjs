@@ -1700,3 +1700,43 @@ test('the number the call comes from is always in the sheet', async () => {
     }
   }
 })
+
+// ── THE SHEET FOR A THREAD, AND THE ONE FOR A CALL ─────────────────────────
+// Half of this sheet is about speech: reading nine digits back one at a time,
+// waiting for an answer, not hanging up mid-sentence. In writing those rules
+// are not merely unnecessary, they are wrong -- the number the patient typed is
+// on their screen, there is no turn to wait for and no call to end -- and a
+// receptionist who confirms a written number digit by digit reads as a machine.
+//
+// So a WhatsApp sheet carries one more section, last, which says which parts it
+// replaces. What this protects is the other half: that asking for it changes
+// nothing at all for the telephone, which is every conversation until a clinic
+// buys the add-on.
+test('writing gets its own section and the telephone does not change', () => {
+  for (const lang of ['pt', 'es']) {
+    const base = { ...CASES['open-can-book'], can_book: true }
+    const call = buildPrompt(base, lang)
+    const thread = buildPrompt({ ...base, channel: 'whatsapp' }, lang)
+
+    const title = { pt: '# Isto é por escrito', es: '# Esto es por escrito' }[lang]
+    assert.ok(!call.text.includes(title), `${lang}: a call is told about writing`)
+    assert.ok(thread.text.includes(title), `${lang}: a thread is not told it is in writing`)
+
+    // The telephone's sheet, to the byte. `channel: 'telefone'` and no channel
+    // at all have to be the same thing, because every caller written before
+    // the add-on passes no channel.
+    assert.equal(
+      buildPrompt({ ...base, channel: 'telefone' }, lang).text,
+      call.text,
+      `${lang}: naming the channel changed the telephone's sheet`
+    )
+
+    // And the thread is the call plus that section, in that order: nothing of
+    // the clinic is dropped on the way.
+    assert.ok(
+      thread.text.startsWith(call.text.slice(0, 400)),
+      `${lang}: the thread's sheet does not start like the call's`
+    )
+    assert.ok(thread.text.endsWith(thread.text.slice(thread.text.indexOf(title))), `${lang}: the section is not last`)
+  }
+})

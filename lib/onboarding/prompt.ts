@@ -101,6 +101,19 @@ export interface PromptVariables {
   /** False when the clinic decided Telma does not book at all, which is a
    *  different sentence from "not today": see 0076. */
   takes_bookings?: boolean
+  /**
+   * Which way in this is: the telephone, or WhatsApp.
+   *
+   * It changes how she speaks and nothing about the clinic. Half of this
+   * sheet is about speech -- reading nine digits back one at a time, waiting
+   * for an answer, not hanging up mid-sentence -- and in writing those rules
+   * are not merely unnecessary, they are wrong: a number the patient typed is
+   * on the screen, there is no turn to wait for and no call to end.
+   *
+   * Absent means the telephone, because that is what every caller of this
+   * function meant before WhatsApp existed.
+   */
+  channel?: 'telefone' | 'whatsapp'
   /** Whether the clinic is open at the moment of the call, in its own timezone. */
   within_opening_hours: boolean
   /** Where an emergency goes. Null means the clinic named nobody. */
@@ -249,6 +262,11 @@ interface BaseCopy {
    *  made, moved or cancelled, and on a clinic with no diary there are none
    *  of those to talk about. */
   closing: (v: PromptVariables) => string[]
+  /** What changes when there is no voice. Added at the end for a WhatsApp
+   *  thread and absent on the telephone: it is the one section that
+   *  contradicts the rest on purpose, and it says which parts it replaces. */
+  writingTitle: string
+  writing: string[]
   /** The three ways a call ends without getting anywhere: silence, somebody
    *  who has changed their mind, and somebody shouting. None of them is the
    *  closing, and while they lived inside it they were read on every sentence
@@ -747,6 +765,19 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   ],
   transferFails:
     'Se passares a chamada e ninguém atender, voltas à linha e dizes o que se passa: que neste momento não estás a conseguir falar com ninguém. Pedes um número de contacto, repete-lo em voz alta para confirmar, e dizes que deixas o recado. Não tentas uma terceira vez nem deixas a pessoa a ouvir silêncio.',
+  writingTitle: '# Isto é por escrito',
+  writing: [
+    'Esta conversa é no WhatsApp e não ao telefone. **Tudo o que está acima vale**, menos o que é sobre falar, e isso é o que está aqui.',
+    '',
+    '- **O número e o nome ficam escritos**, por isso não os lês de volta nem os confirmas algarismo a algarismo: já estão à vista de quem os escreveu. Lê-os e segue.',
+    '- **Não há turnos para esperar nem silêncios para preencher.** Nada de "um momento", "só um segundo" nem avisos de que vais consultar a agenda: consultas e respondes.',
+    '- **Não há chamada para desligar.** O fecho é a última mensagem e mais nada: não te despedes duas vezes nem dizes que vais terminar.',
+    '- **Uma mensagem de cada vez, curta.** Duas ou três linhas, e uma pergunta só por mensagem. Quem escreve vê o que já disseste e não precisa que lho repitas.',
+    '- **Não se escreve o que não se diria.** Nada de listas com números, nada de maiúsculas para enfatizar, nada de emojis.',
+    '',
+    '**Na primeira mensagem dizes quem és**, uma vez: que és a Telma, a assistente virtual da clínica. Depois não voltas ao assunto.',
+    '**As horas escrevem-se como se escrevem**: "quinta-feira, 6 de novembro às 10:30". Por escrito os algarismos leem-se melhor do que as palavras.',
+  ],
   closingTitle: '# Como te despedes',
   closing: (v) => [
     'O fim de uma chamada também tem ordem, e é curta:',
@@ -1236,6 +1267,19 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   ],
   transferFails:
     'Si pasas la llamada y no contesta nadie, vuelves a la línea y dices lo que pasa: que en este momento no estás consiguiendo hablar con nadie. Pides un número de contacto, lo repites en voz alta para confirmarlo, y dices que dejas el recado. No lo intentas una tercera vez ni dejas a la persona oyendo silencio.',
+  writingTitle: '# Esto es por escrito',
+  writing: [
+    'Esta conversación es por WhatsApp y no por teléfono. **Todo lo de arriba vale**, menos lo que es sobre hablar, y eso es lo que está aquí.',
+    '',
+    '- **El número y el nombre quedan escritos**, así que no los lees de vuelta ni los confirmas cifra a cifra: los tiene delante quien los ha escrito. Los lees y sigues.',
+    '- **No hay turnos que esperar ni silencios que rellenar.** Nada de "un momento", "un segundo" ni avisos de que vas a mirar la agenda: la miras y respondes.',
+    '- **No hay llamada que colgar.** El cierre es el último mensaje y nada más: no te despides dos veces ni dices que vas a terminar.',
+    '- **Un mensaje cada vez, corto.** Dos o tres líneas, y una sola pregunta por mensaje. Quien escribe ve lo que ya has dicho y no necesita que se lo repitas.',
+    '- **No se escribe lo que no se diría.** Nada de listas numeradas, nada de mayúsculas para enfatizar, nada de emojis.',
+    '',
+    '**En el primer mensaje dices quién eres**, una vez: que eres Telma, la asistente virtual de la clínica. Después no vuelves al tema.',
+    '**Las horas se escriben como se escriben**: "jueves, 6 de noviembre a las 10:30". Por escrito las cifras se leen mejor que las palabras.',
+  ],
   closingTitle: '# Cómo te despides',
   closing: (v) => [
     'El final de una llamada también tiene orden, y es corta:',
@@ -1878,6 +1922,16 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     ...(v.briefing
       ? ['', t.briefingTitle, t.briefingLead, '', v.briefing, '', t.briefingFence(v)]
       : []),
+    // ── AND LAST, WHEN THERE IS NO VOICE ──────────────────────────────────
+    // After everything, because it is the one section written to contradict
+    // what is above it: in a thread the nine digits are on the screen, there
+    // is no turn to wait for and no call to hang up. Last is where a reader
+    // settles a contradiction, and the section says which parts it replaces
+    // rather than leaving her to work it out.
+    //
+    // Absent on the telephone, which is every conversation until a clinic
+    // buys the add-on, so the voice sheet is byte for byte what it was.
+    ...(v.channel === 'whatsapp' ? ['', t.writingTitle, ...t.writing] : []),
   ]
 
   const sections = [

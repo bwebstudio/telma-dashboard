@@ -55,6 +55,23 @@ const LLM = process.argv.find((a) => a.startsWith('--llm='))?.slice(6) || 'gpt-5
 // each behind the trigger that decides when it loads.
 const PROCEDURES = process.argv.includes('--procedures')
 
+// ── THE SAME SCENARIO, IN WRITING ──────────────────────────────────────────
+// `--whatsapp` builds the sheet with `channel: 'whatsapp'`, which drops the
+// half of it that is about speech and adds the section that says so.
+//
+// It costs nothing to have: this harness has always been text. It never makes
+// audio -- the platform simulates a caller against the agent and hands back a
+// transcript -- so running the written sheet through it is the written sheet,
+// answered by the same model the telephone uses, with the ElevenLabs key we
+// already pay for. No OpenAI account, no WhatsApp number, no migration.
+//
+// What it is not is the production path. In production the brain is ours
+// (lib/whatsapp-brain), because a WhatsApp thread is turns separated by hours
+// and ElevenLabs has no way to take one over HTTP or resume a conversation by
+// its id. So this previews the sheet and the model, which is where the
+// behaviour comes from, and not our loop around them.
+const WHATSAPP = process.argv.includes('--whatsapp')
+
 // The platform stops a simulation at about thirty agent turns and returns what
 // it has, mid-sentence, mid-tool-call, with no flag saying so. Three of twelve
 // runs in one measurement had been cut like that and were scored anyway, and a
@@ -94,7 +111,11 @@ const {
 } = scenario.default
 
 const { buildPrompt, greetingLine, todayInZone } = await import('../lib/onboarding/prompt.ts')
-const variables = { ...clinic, today: todayInZone(clinic.timezone, language) }
+const variables = {
+  ...clinic,
+  today: todayInZone(clinic.timezone, language),
+  ...(WHATSAPP ? { channel: 'whatsapp' } : {}),
+}
 const built = buildPrompt(variables, language)
 // The agent's procedures, cut from whichever clinic the scenario says they are
 // cut from in production. Same clinic unless it says otherwise.
@@ -105,7 +126,7 @@ const greeting = greetingLine(clinic.clinic_name, language, clinic.formality, cl
   language,
 ])
 
-console.log(`\n  cenário: ${scenarioPath}`)
+console.log(`\n  cenário: ${scenarioPath}${WHATSAPP ? '  (por escrito)' : ''}`)
 if (nodes) {
   const n = built.nodes
   console.log(`  núcleo:  ${n.core.length + n.closing.length} caracteres`)
@@ -191,11 +212,27 @@ const WORKFLOW = nodes
 // Lidas do agente em vivo em vez de copiadas para cá, porque uma segunda cópia
 // é uma cópia que se desencontra.
 const LIVE_AGENT = 'agent_9701kzp690x6fnaba03rmp81kt9a'
-const liveBuiltIns = await api('GET', `/v1/convai/agents/${LIVE_AGENT}`)
+let liveBuiltIns = await api('GET', `/v1/convai/agents/${LIVE_AGENT}`)
   .then((a) => a?.conversation_config?.agent?.prompt?.built_in_tools ?? null)
   .catch(() => null)
 if (!liveBuiltIns) {
   console.log('  aviso: não se leram as ferramentas do sistema do agente em vivo')
+}
+
+// ── E POR ESCRITO NÃO EXISTEM ──────────────────────────────────────────────
+// `end_call` e `skip_turn` são as duas do telefone. A nossa cabeça de texto
+// (lib/whatsapp-tools) não tem nenhuma delas, e não por esquecimento: não há
+// chamada para desligar, e um turno para passar não quer dizer nada numa
+// conversa em que o turno seguinte pode chegar daqui a três horas.
+//
+// Deixá-las aqui media uma Telma que não existe, e mediu: na primeira
+// passagem deste cenário ela chamou `skip_turn` nove vezes à espera de uma
+// agenda que nunca consultou, e o relógio que em produção não há foi o que
+// tapou o problema a sério -- a mensagem que anuncia e nunca volta.
+if (WHATSAPP && liveBuiltIns) {
+  // Nulas, e não removidas: é assim que a plataforma escreve uma ferramenta de
+  // sistema desligada, e todas as outras já lá estão nulas.
+  liveBuiltIns = { ...liveBuiltIns, end_call: null, skip_turn: null }
 }
 
 const agent = await api('POST', '/v1/convai/agents/create', {
@@ -215,7 +252,17 @@ const agent = await api('POST', '/v1/convai/agents/create', {
         ...(tools ? { tool_ids: tools } : {}),
         ...(liveBuiltIns ? { built_in_tools: liveBuiltIns } : {}),
       },
-      first_message: greeting,
+      // ── QUEM FALA PRIMEIRO ─────────────────────────────────────────────
+      // Ao telefone é ela: atende, e o cumprimento é a primeira coisa que se
+      // ouve. Por escrito é a pessoa, sempre -- uma conversa de WhatsApp
+      // começa porque alguém escreveu, e a Telma nunca abre uma. Deixar aqui o
+      // cumprimento falado punha-a a dizer "Fala a Telma" numa mensagem, e
+      // media uma conversa que em produção não existe.
+      //
+      // Vazio, a plataforma espera pela primeira linha do paciente, e a
+      // apresentação cai onde cai a sério: na primeira resposta dela, que é o
+      // que a folha manda fazer por escrito.
+      first_message: WHATSAPP ? '' : greeting,
       language,
     },
     // Required for any agent that is not in English, and the same model the

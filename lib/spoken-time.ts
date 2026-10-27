@@ -159,6 +159,34 @@ export function spokenDateTime(at: Date, zone: string, lang: SpokenLang): string
   return `${WEEKDAYS[lang][p.weekday]}, ${day} ${de} ${month}, ${spokenClock(p.hour, p.minute, lang)}`
 }
 
+/**
+ * The same instant, for a conversation that is read instead of heard.
+ *
+ *   pt  "segunda-feira, 2 de novembro às 09:00"
+ *   es  "lunes, 2 de noviembre a las 09:00"
+ *
+ * ── WHY IT IS NOT spokenDateTime ───────────────────────────────────────────
+ * Everything the comment at the top of this file says about numbers read out
+ * loud stops being true on a screen. "às nove da manhã" is longer to read than
+ * "às 09:00" and less exact -- half past three in the afternoon is a sentence,
+ * 15:30 is a time -- and the day as a word ("dois de novembro") reads like a
+ * cheque, not like a date.
+ *
+ * It is here rather than left to the model because the model takes whatever
+ * `say` holds and writes it down. Measured: with the written rule on the sheet
+ * and a spoken `say` in the response, three runs in three wrote "às nove da
+ * manhã" into a chat window. The field the model copies has to be the field
+ * that is right, so the endpoint formats it per channel and the sheet stops
+ * having an opinion.
+ */
+export function writtenDateTime(at: Date, zone: string, lang: SpokenLang): string {
+  const p = partsInZone(at, zone)
+  const month = MONTHS[lang][p.month - 1] ?? String(p.month)
+  const clock = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`
+  const at_ = lang === 'es' ? 'a las' : 'às'
+  return `${WEEKDAYS[lang][p.weekday]}, ${p.day} de ${month} ${at_} ${clock}`
+}
+
 /** Only the hour, for where the day is already established. */
 export function spokenTimeOnly(at: Date, zone: string, lang: SpokenLang): string {
   const p = partsInZone(at, zone)

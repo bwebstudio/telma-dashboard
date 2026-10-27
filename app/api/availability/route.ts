@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { spokenDateTime, type SpokenLang } from '@/lib/spoken-time'
+import { spokenDateTime, writtenDateTime, type SpokenLang } from '@/lib/spoken-time'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { allServices, canonicalReason, resolveDuration, resolveResource } from '@/lib/service-duration'
 import { serviceLabel } from '@/lib/onboarding/catalog'
@@ -195,7 +195,17 @@ export async function GET(request: Request) {
   // de 24 horas dito em voz alta é linguagem de horário de autocarros, e o dia
   // chega como algarismo no meio de palavras. Ver lib/spoken-time.ts.
   const lang: SpokenLang = context.clinic.language === 'es' ? 'es' : 'pt'
-  const spoken = { format: (at: Date) => spokenDateTime(at, zone, lang) }
+  // ── E ESCRITA COMO SE ESCREVE, QUANDO É PARA SER LIDA ─────────────────
+  // O add-on do WhatsApp lê esta mesma resposta, e lá tudo o que o comentário
+  // acima diz deixa de valer: num ecrã "às 09:00" é mais curto e mais exacto
+  // do que "às nove da manhã". O campo é o mesmo porque é o campo que o modelo
+  // copia -- deixá-lo falado e pedir na folha para o escrever de outra maneira
+  // mediu-se e deu três em três escritas por extenso.
+  const written = searchParams.get('channel') === 'whatsapp'
+  const spoken = {
+    format: (at: Date) =>
+      written ? writtenDateTime(at, zone, lang) : spokenDateTime(at, zone, lang),
+  }
   const clock = new Intl.DateTimeFormat('en-GB', {
     timeZone: zone,
     hour: '2-digit',

@@ -28,7 +28,8 @@ const SNAP_DIR = join(here, '__snapshots__')
 // the update silently does nothing.
 const UPDATE = process.env.UPDATE_SNAPSHOTS === '1'
 
-const { buildPrompt, PROMPT_VERSION, baseLanguageFor, greetingLine, todayInZone } = await import('../lib/onboarding/prompt.ts')
+const { buildPrompt, PROMPT_VERSION, baseLanguageFor, greetingLine, todayInZone, writtenDisclosure } =
+  await import('../lib/onboarding/prompt.ts')
 
 // A clinic with everything filled in. Each case below is this, changed in one
 // way, so a diff between two snapshots shows the effect of that one change.
@@ -1731,12 +1732,122 @@ test('writing gets its own section and the telephone does not change', () => {
       `${lang}: naming the channel changed the telephone's sheet`
     )
 
-    // And the thread is the call plus that section, in that order: nothing of
-    // the clinic is dropped on the way.
+    // The section comes last, and the clinic's own part -- who she is, this
+    // clinic's name, its services -- is the same opening in both.
     assert.ok(
       thread.text.startsWith(call.text.slice(0, 400)),
       `${lang}: the thread's sheet does not start like the call's`
     )
     assert.ok(thread.text.endsWith(thread.text.slice(thread.text.indexOf(title))), `${lang}: the section is not last`)
+  }
+})
+
+// ── AND THE SECTION IS NOT ENOUGH ON ITS OWN ───────────────────────────────
+// It was, for one afternoon: the whole written channel was that one section,
+// appended, saying "everything above applies except what is about speaking".
+// Three runs of scripts/scenarios/whatsapp-marcacao.mjs showed what a sheet
+// does when it contradicts itself. She wrote "só um momento, vou ver que
+// horários há" and never came back -- in a thread there is no second half of
+// the turn, so the announcement was the whole reply. She wrote nine digits
+// separated by commas to somebody who had just typed them. She closed with
+// "obrigada por ligar" on WhatsApp.
+//
+// None of those is a weak rule. Each is a strong rule from the telephone,
+// quoted with an example, beating a general sentence read later. So they are
+// swapped at the source, and this is what holds the swap in place.
+test('what is about the telephone is taken out of the written sheet', () => {
+  const telephone = {
+    pt: [
+      // The spoken bridge, which in writing is a message that never returns.
+      '**Antes de consultares a agenda dizes alguma coisa**',
+      // Step 8: nine digits said one by one, and the name read back.
+      '**Confirmas o telefone e o nome juntos',
+      // The goodbye, on a conversation nobody rang.
+      'agradeces por ligar',
+      '**Acabas a frase da despedida e desligas**',
+      // The one exception to saying nothing after a short answer.
+      '**Um número de telefone é a excepção**',
+    ],
+    es: [
+      '**Antes de consultar la agenda dices algo**',
+      '**Confirmas el teléfono y el nombre juntos',
+      'das las gracias por llamar',
+      '**Terminas la frase de la despedida y cuelgas**',
+      '**Un número de teléfono es la excepción**',
+    ],
+  }
+  const written = {
+    pt: [
+      '**Não anuncias que vais consultar: consultas e respondes na mesma mensagem.**',
+      '**Não confirmas o telefone nem o nome**',
+      'agradeces a mensagem',
+      '**A despedida é a última mensagem e acaba aí.**',
+      '**E por escrito nem o número é excepção**',
+    ],
+    es: [
+      '**No anuncias que vas a mirar: lo miras y respondes en el mismo mensaje.**',
+      '**No confirmas el teléfono ni el nombre**',
+      'das las gracias por el mensaje',
+      '**La despedida es el último mensaje y ahí se acaba.**',
+      '**Y por escrito ni el número es excepción**',
+    ],
+  }
+
+  for (const lang of ['pt', 'es']) {
+    const base = { ...CASES['open-can-book'], can_book: true }
+    const call = buildPrompt(base, lang).text
+    const thread = buildPrompt({ ...base, channel: 'whatsapp' }, lang).text
+
+    for (const phrase of telephone[lang]) {
+      assert.ok(call.includes(phrase), `${lang}: the telephone lost "${phrase}"`)
+      assert.ok(!thread.includes(phrase), `${lang}: a thread is still told "${phrase}"`)
+    }
+    for (const phrase of written[lang]) {
+      assert.ok(thread.includes(phrase), `${lang}: a thread is not told "${phrase}"`)
+      assert.ok(!call.includes(phrase), `${lang}: the telephone is told "${phrase}"`)
+    }
+  }
+})
+
+// The number the conversation arrives from is printed on the sheet, and
+// whatever shape it is printed in is the shape it comes back in. Spelled out
+// for the telephone, where it is said; in digits for a thread, where it is
+// read -- and the sheet with the spelled-out version is exactly where "nove,
+// um, dois, zero, zero, zero, um, um, um" in a chat window came from.
+test('the number on the sheet is written the way the channel writes it', () => {
+  for (const lang of ['pt', 'es']) {
+    const base = { ...CASES['open-can-book'], can_book: true, caller_id: '+351912000111' }
+    const call = buildPrompt(base, lang).text
+    const thread = buildPrompt({ ...base, channel: 'whatsapp' }, lang).text
+
+    // The caller's own number, spelled out in full. Not a prefix: the sheet
+    // also quotes a different number inside the rule against inventing one,
+    // and "nove, um, dois" matches that too.
+    const spelled =
+      lang === 'es'
+        ? 'nueve, uno, dos, cero, cero, cero, uno, uno, uno'
+        : 'nove, um, dois, zero, zero, zero, um, um, um'
+    assert.ok(call.includes(spelled), `${lang}: the telephone's number is not spelled out`)
+    assert.ok(!thread.includes(spelled), `${lang}: a thread's number is spelled out`)
+    assert.ok(thread.includes('+351912000111'), `${lang}: a thread has no digits to use`)
+  }
+})
+
+// ── E A APRESENTAÇÃO NÃO É UMA REGRA DA FOLHA ──────────────────────────────
+// Pedida à folha, saiu uma vez em três. Ao telefone nunca falta porque é
+// `greetingLine` que a escreve e a plataforma que a toca; por escrito é
+// `writtenDisclosure`, posta por lib/whatsapp-brain à frente da primeira
+// resposta da conversa. Aqui garante-se que diz as duas coisas que tem de
+// dizer, e que não diz as do telefone.
+test('the written disclosure says who she is, without a telephone in it', () => {
+  for (const [lang, name, bits, never] of [
+    ['pt', 'Clínica Ímpar', ['Telma', 'assistente virtual', 'Clínica Ímpar'], ['Fala a Telma', 'Em que posso ajudar']],
+    ['es', 'Clínica Sonrisa', ['Telma', 'asistente virtual', 'Clínica Sonrisa'], ['Le atiende Telma', 'En qué puedo ayudar']],
+  ]) {
+    const line = writtenDisclosure(name, lang, 'Europe/Lisbon')
+    for (const bit of bits) assert.ok(line.includes(bit), `${lang}: the disclosure is missing "${bit}"`)
+    for (const bit of never) assert.ok(!line.includes(bit), `${lang}: the disclosure still says "${bit}"`)
+    // One sentence and a salutation, not a greeting with a question on the end.
+    assert.ok(!line.includes('?'), `${lang}: the disclosure asks something`)
   }
 })

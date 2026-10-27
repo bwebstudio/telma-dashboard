@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { buildPrompt } from '@/lib/onboarding/prompt'
+import { buildPrompt, writtenDisclosure } from '@/lib/onboarding/prompt'
 import { promptVariablesFor } from '@/lib/onboarding/variables'
 import { WINDOW_MS, sendWhatsappReply } from '@/lib/whatsapp'
 import { TEXT_TOOLS, runTextTool } from '@/lib/whatsapp-tools'
@@ -223,6 +223,50 @@ export async function answerWhatsapp(input: AnswerInput): Promise<AnswerOutcome>
  * sent, because a half-finished booking answered with a cheerful sentence is
  * the failure this whole product is written against.
  */
+/**
+ * A reply that only promises to go and look.
+ *
+ * ── WHY THIS IS WORTH CODE ─────────────────────────────────────────────────
+ * On the telephone "só um momento, vou ver que horários há" is a bridge: the
+ * sentence buys the second it takes to call the diary, and the same turn comes
+ * back with the answer. In a thread there is no coming back. This loop ends
+ * when the model stops calling tools, so a message that only announces a
+ * lookup IS the whole reply, and the patient waits for a second one that will
+ * never be sent.
+ *
+ * The sheet says so twice over for the written channel, and it holds about two
+ * runs in three. The third is somebody left waiting, so the sheet is not where
+ * this ends: the reply is read, and if that is all it says, she is sent back to
+ * actually look.
+ *
+ * Deliberately narrow. It matches the announcement itself and only when it is
+ * most of the message -- a reply that offers hours and happens to contain the
+ * word "momento" is left alone.
+ */
+const ANNOUNCEMENTS = [
+  /\b(s[óo]|apenas)?\s*um\s+momento\b/i,
+  /\bs[óo]\s+um\s+segundo\b/i,
+  /\bum\s+instante\b/i,
+  /\bvou\s+(ver|consultar|verificar|confirmar)\b/i,
+  /\bj[áa]\s+(lhe\s+)?(digo|vejo|confirmo)\b/i,
+  /\bdeixe[\s-]me\s+(ver|consultar)\b/i,
+  /\b(un|solo\s+un|s[óo]lo\s+un)\s+momento\b/i,
+  /\bun\s+segundo\b/i,
+  /\bvoy\s+a\s+(ver|mirar|consultar|comprobar|confirmar)\b/i,
+  /\bahora\s+(mismo\s+)?(le\s+)?(digo|miro)\b/i,
+  /\bd[ée]jeme\s+(ver|mirar)\b/i,
+]
+
+function isOnlyAnAnnouncement(said: string): boolean {
+  const text = said.trim()
+  // Long enough to be carrying an answer as well, so it is not this.
+  if (text.length > 140) return false
+  if (!ANNOUNCEMENTS.some((re) => re.test(text))) return false
+  // An announcement that already came with hours, a day or a price is not an
+  // announcement: something was answered.
+  return !/\d{1,2}[:h]\d{2}|\d+\s*(€|euros)/i.test(text)
+}
+
 export async function composeReply(
   input: AnswerInput,
   turns: TranscriptTurn[],
@@ -270,6 +314,9 @@ export async function composeReply(
     token,
   }
 
+  // One nudge per reply, at most. See isOnlyAnAnnouncement.
+  let nudged = false
+
   for (let round = 0; round < 6; round++) {
     const r = await fetch(endpoint, {
       method: 'POST',
@@ -304,7 +351,39 @@ export async function composeReply(
     const calls = reply.tool_calls ?? []
     if (!calls.length) {
       const said = (reply.content ?? '').trim()
-      return said || null
+      if (!said) return null
+
+      // Nothing was called and nothing was answered: she announced. Sent back
+      // once, with the reason, and only once -- a second nudge would be this
+      // function arguing with a model instead of answering a patient.
+      if (!nudged && isOnlyAnAnnouncement(said)) {
+        nudged = true
+        messages.push(reply as Record<string, unknown>)
+        messages.push({
+          role: 'system',
+          content:
+            baseLanguage === 'es'
+              ? 'Esto es un mensaje escrito, no una llamada: no hay un segundo turno donde volver con la respuesta, así que un mensaje que sólo anuncia que vas a mirar es todo lo que la persona va a recibir. Usa ahora la herramienta que haga falta y responde con el resultado, en un solo mensaje y sin anunciar nada.'
+              : 'Isto é uma mensagem escrita, não uma chamada: não há um segundo turno onde voltar com a resposta, por isso uma mensagem que só anuncia que vais ver é tudo o que a pessoa vai receber. Usa agora a ferramenta que for preciso e responde com o resultado, numa só mensagem e sem anunciar nada.',
+        })
+        continue
+      }
+      // ── E A APRESENTAÇÃO VAI AQUI, NÃO NA FOLHA ────────────────────────
+      // Ao telefone quem se apresenta é `greetingLine`, tocado antes de o
+      // modelo dizer nada. Por escrito a folha pedia-lho e ele cumpria uma vez
+      // em três, medido: dois pacientes em três teriam sido atendidos por uma
+      // assistente virtual que nunca disse que o era.
+      //
+      // Só na primeira resposta da conversa. A seguir já está dita, e dizê-la
+      // outra vez é o outro erro.
+      const firstReply = !turns.some((t) => t.role === 'telma')
+      if (!firstReply) return said
+      const hello = writtenDisclosure(
+        input.clinic.name ?? '',
+        baseLanguage,
+        input.clinic.timezone ?? 'Europe/Lisbon'
+      )
+      return `${hello} ${said}`
     }
 
     messages.push(reply as Record<string, unknown>)

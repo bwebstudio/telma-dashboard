@@ -162,6 +162,14 @@ export async function runTextTool(
   const url = (path: string, query?: Record<string, string | undefined>) => {
     const u = new URL(`${ctx.baseUrl}${path}`)
     u.searchParams.set('clinic_id', ctx.clinicId)
+    // ── E QUE ISTO É PARA SER LIDO ──────────────────────────────────────────
+    // Os dois endpoints que devolvem horas trazem um campo `say`, e com isto
+    // trazem-no escrito -- "segunda-feira, 2 de novembro às 09:00" -- em vez de
+    // dito -- "segunda-feira, dois de novembro às nove da manhã". É o campo que
+    // o modelo copia tal e qual, por isso é o campo que tem de vir certo: pedir
+    // na folha para o reescrever mediu-se e deu três em três por extenso numa
+    // janela de chat.
+    u.searchParams.set('channel', 'whatsapp')
     for (const [k, v] of Object.entries(query ?? {})) if (v) u.searchParams.set(k, v)
     return u.toString()
   }

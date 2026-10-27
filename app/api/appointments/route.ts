@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { spokenDateTime, type SpokenLang } from '@/lib/spoken-time'
+import { spokenDateTime, writtenDateTime, type SpokenLang } from '@/lib/spoken-time'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { authorizedWebhook } from '@/lib/api-auth'
 import { getClinicWithPlan } from '@/lib/clinic-utils'
@@ -95,7 +95,12 @@ export async function GET(request: Request) {
   const zone = context.clinic.timezone
   // Dita como se diz. Ver lib/spoken-time.ts e o comentário em /api/availability.
   const lang: SpokenLang = context.clinic.language === 'es' ? 'es' : 'pt'
-  const spoken = { format: (at: Date) => spokenDateTime(at, zone, lang) }
+  // Escrita, quando quem a vai ler lê. Ver o comentário em /api/availability.
+  const written = searchParams.get('channel') === 'whatsapp'
+  const spoken = {
+    format: (at: Date) =>
+      written ? writtenDateTime(at, zone, lang) : spokenDateTime(at, zone, lang),
+  }
 
   return NextResponse.json({
     is_patient: patient === true,

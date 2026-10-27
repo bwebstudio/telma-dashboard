@@ -96,7 +96,20 @@ export async function POST(request: Request) {
   const { data: found } = await admin.rpc('clinic_by_own_number_any_status', {
     p_number: inbound.to,
   })
-  const clinicId = (found as string | null) ?? null
+
+  // ── AND THE ONE CASE WHERE THE NUMBER BELONGS TO NOBODY ─────────────────
+  // Twilio's WhatsApp sandbox: a shared number anybody can join from their own
+  // WhatsApp with a code word, with no registration with Meta, no display name
+  // review and no business verification. It is the only way to see this work
+  // from a real telephone before any of that exists, and the number it arrives
+  // at is Twilio's, not a clinic's.
+  //
+  // So TELMA_WHATSAPP_TEST_CLINIC names the clinic to answer as, the same way
+  // TELMA_VOICE_INIT_TEST_CLINIC does for the voice console. Unset in
+  // production, where a message to a number nobody owns is a message we have
+  // no business answering, and this whole branch disappears.
+  const testClinic = process.env.TELMA_WHATSAPP_TEST_CLINIC?.trim()
+  const clinicId = ((found as string | null) ?? null) || testClinic || null
   if (!clinicId) {
     console.warn('[whatsapp] a message to a number no clinic claims:', inbound.to)
     return NextResponse.json({ received: true, ignored: 'clinic_not_found' })
@@ -131,14 +144,6 @@ export async function POST(request: Request) {
   // not the product on the price list, so it is not offered there.
   if (clinic.takes_bookings === false) {
     return NextResponse.json({ received: true, ignored: 'clinic_without_diary' })
-  }
-
-  // The sender has to be the clinic's own number, registered with WhatsApp.
-  // Without one there is nothing to reply from: Twilio refuses the send and
-  // the patient is left waiting on a conversation that looked like it started.
-  if (!clinic.phone?.trim()) {
-    console.warn('[whatsapp] clinic with the add-on and no number of its own:', clinicId)
-    return NextResponse.json({ received: true, ignored: 'clinic_without_sender' })
   }
 
   const digits = digitsOf(inbound.from)

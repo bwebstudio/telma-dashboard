@@ -35,7 +35,8 @@
     "test:opening-hours": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-opening-hours.mjs",
     "test:schedule": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-schedule.mjs",
     "test:shared-line": "node --test scripts/test-shared-line.mjs",
-    "test:idempotency": "node scripts/test-idempotency.mjs"
+    "test:idempotency": "node scripts/test-idempotency.mjs",
+    "simulate:whatsapp": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs scripts/simulate-whatsapp.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

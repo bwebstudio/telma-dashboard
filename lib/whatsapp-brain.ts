@@ -168,7 +168,15 @@ export async function answerWhatsapp(input: AnswerInput): Promise<AnswerOutcome>
   if (!reply) return { replied: false, ignored: 'no_reply_composed', thread: threadId }
 
   const sent = await sendWhatsappReply({
-    from: input.clinic.phone ?? '',
+    // ── THE SENDER IS THE NUMBER THEY WROTE TO ────────────────────────────
+    // Not `clinic.phone` read back out of the row. In production the two are
+    // the same thing -- the clinic is found *by* the number the message
+    // arrived at -- so reading it again adds a way for them to disagree and
+    // nothing else. And it is what makes Twilio's sandbox work without a
+    // special case: there the number belongs to Twilio, the clinic is named
+    // by TELMA_WHATSAPP_TEST_CLINIC, and the reply still goes out from the
+    // number the tester wrote to.
+    from: inbound.to.replace(/^whatsapp:/, ''),
     to: inbound.from,
     text: reply,
     lastInboundAt: now,
@@ -187,6 +195,11 @@ export async function answerWhatsapp(input: AnswerInput): Promise<AnswerOutcome>
 
 /**
  * The reply itself: the clinic's own sheet, the same tools, and a model.
+ *
+ * Exported for scripts/simulate-whatsapp.mjs, which types a patient's lines at
+ * it and prints what comes back. That harness is the only way to read a thread
+ * before a WhatsApp sender exists, and it is the text half of what
+ * scripts/simulate-call.mjs does for a call.
  *
  * ── WHY NOT THE VOICE PLATFORM ─────────────────────────────────────────────
  * ElevenLabs runs a text conversation as a WebSocket session opened by an SDK.
@@ -210,7 +223,7 @@ export async function answerWhatsapp(input: AnswerInput): Promise<AnswerOutcome>
  * sent, because a half-finished booking answered with a cheerful sentence is
  * the failure this whole product is written against.
  */
-async function composeReply(
+export async function composeReply(
   input: AnswerInput,
   turns: TranscriptTurn[],
   threadId: string

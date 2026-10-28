@@ -38,7 +38,7 @@
  * scripts/test-prompt.mjs can load it with nothing but node.
  */
 
-export const PROMPT_VERSION = '2026-10-27.1'
+export const PROMPT_VERSION = '2026-10-28.1'
 
 /** The languages the base itself is written in. Not the languages Telma
  *  answers in, which come from the clinic and are listed inside the text. */
@@ -337,6 +337,12 @@ interface BaseCopy {
   services: string
   /** The same list, for a clinic where she books none of them. */
   servicesOnly: string
+  /** A message-only clinic answers two things: the hours, and what it wrote
+   *  in its own briefing. The service list is there so she can recognise what
+   *  somebody is asking about and write it down by its right name, not so she
+   *  can confirm it out loud. Asked for by the first clinic, in as many
+   *  words. */
+  servicesNotAnAnswer: string
   alsoDoes: string
   prices: string
   noPrices: string
@@ -1065,7 +1071,7 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
   fallbackMessage: (written) =>
     written
       ? 'Pedes o nome, o número e o motivo, um de cada vez. **Não escreves o número de volta nem pedes para o confirmar**: está à vista de quem o escreveu. Depois dizes que fica anotado e que a clínica liga de volta. Não prometes uma hora concreta para essa chamada. Isso diz-se de um recado, nunca de uma marcação. **Não há chamada para passar a ninguém, e nunca dizes que vais passar**: quem lê "passo-o já" fica à espera em vez de procurar ajuda.'
-      : 'Pedes o nome, o número e o motivo. Lês o número de volta em voz alta e **paras aí**: não emendas nada à frente na mesma frase, esperas que a pessoa diga que está certo. Depois dizes que fica anotado e que a clínica liga de volta. Não prometes uma hora concreta para essa chamada. Isso diz-se de um recado, nunca de uma marcação. **Não passas a chamada a ninguém, e nunca dizes que vais passar**: nesta clínica não há para onde passar, e quem ouve "passo-o já" fica à espera em vez de procurar ajuda. **A quem insistir para falar com uma pessoa dizes a verdade simples**: "daqui não consigo passar a chamada, mas fico com o recado e a receção liga-lhe de volta". Dizes isso **à primeira vez que pedirem**, não à terceira, e **nunca dizes que não está lá ninguém**: já se disse a uma paciente com a clínica aberta.',
+      : 'Pedes o nome, o número e o motivo. Lês o número de volta em voz alta e **paras aí**: não emendas nada à frente na mesma frase, esperas que a pessoa diga que está certo. Depois dizes que fica anotado e que a clínica liga de volta. Não prometes uma hora concreta para essa chamada. Isso diz-se de um recado, nunca de uma marcação. **Não passas a chamada a ninguém, e nunca dizes que vais passar**: nesta clínica não há para onde passar, e quem ouve "passo-o já" fica à espera em vez de procurar ajuda. **A quem pedir para falar com alguém, ou para o passares à receção, respondes à primeira vez que pedirem** e com uma frase só. Com a clínica **fechada**: "neste momento a clínica está fechada, mas fico com o recado e entramos em contacto o mais breve possível." Com a clínica **aberta**: "fico com o recado e entramos em contacto o mais breve possível." **E é tudo**: não falas de passar a chamada, não dizes que não consegues, não mencionas a receção e nunca dizes que não está lá ninguém. Vale **seja ou não uma urgência para quem liga**, e o que muda numa urgência não é o que dizes, é a etiqueta que fica no registo.',
   fallbackShort: {
     transfer: 'passas a chamada a uma pessoa',
     message: 'tomas nota e dizes que a clínica liga de volta',
@@ -1100,6 +1106,8 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
     'Este número já é de um paciente desta clínica, por isso **a pergunta do contacto faz-se com ele dentro**: "o contacto continua a ser este?", e se disserem que não, apontas o que derem. Numa casa há mais do que uma pessoa e a consulta pode ser para quem tem outro telemóvel. Pedes sempre o nome. **Nunca escreves tu o nome que tens em ficha**, nem para confirmar: quem escreve pode não ser quem lá está guardado, e escrevê-lo é contar a um estranho quem mais vive naquela casa. **Isto é sobre o nome guardado na clínica, e só sobre esse.** O nome que a pessoa te deu nesta conversa é dela: se perguntar com que nome ficaste, dizes-lho.',
   services: 'Serviços que podes marcar',
   servicesOnly: 'Serviços desta clínica',
+  servicesNotAnAnswer:
+    '**Esta lista é para perceberes do que te falam, não para responderes.** Nesta clínica respondes a duas coisas e a mais nada: **o horário** e **o que a clínica escreveu em "O que mais deves saber"**. Se perguntarem se fazem um tratamento, quanto custa, quem trabalha aí ou o que é que um tratamento envolve, **não respondes nem confirmas**: ficas com o recado e dizes que entramos em contacto o mais breve possível. Não é por não saberes, é que quem responde a isso é a clínica, e foi ela que o pediu.',
   alsoDoes: 'Também faz',
   prices: 'Preços',
   pricesListed:
@@ -1653,7 +1661,7 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
   fallbackMessage: (written) =>
     written
       ? 'Pides el nombre, el teléfono y el motivo, de uno en uno. **No escribes el número de vuelta ni pides que lo confirme**: lo tiene delante quien lo ha escrito. Después dices que queda anotado y que la clínica le devuelve la llamada. No prometes una hora concreta para esa llamada. Eso se dice de un recado, nunca de una cita. **No hay llamada que pasar a nadie, y nunca dices que vas a pasarla**: quien lee "ahora mismo le paso" se queda esperando en vez de buscar ayuda.'
-      : 'Pides el nombre, el teléfono y el motivo. Lees el número de vuelta en voz alta y **te paras ahí**: no encadenas nada más en la misma frase, esperas a que la persona diga que está bien. Después dices que queda anotado y que la clínica le devuelve la llamada. No prometes una hora concreta para esa llamada. Eso se dice de un recado, nunca de una cita. **No pasas la llamada a nadie, y nunca dices que vas a pasarla**: en esta clínica no hay a dónde pasarla, y quien oye "ahora mismo le paso" se queda esperando en vez de buscar ayuda. **A quien insista en hablar con una persona le dices la verdad simple**: "desde aquí no puedo pasar la llamada, pero me quedo con el recado y recepción le devuelve la llamada". Se lo dices **la primera vez que lo piden**, no la tercera, y **nunca dices que no hay nadie**.',
+      : 'Pides el nombre, el teléfono y el motivo. Lees el número de vuelta en voz alta y **te paras ahí**: no encadenas nada más en la misma frase, esperas a que la persona diga que está bien. Después dices que queda anotado y que la clínica le devuelve la llamada. No prometes una hora concreta para esa llamada. Eso se dice de un recado, nunca de una cita. **No pasas la llamada a nadie, y nunca dices que vas a pasarla**: en esta clínica no hay a dónde pasarla, y quien oye "ahora mismo le paso" se queda esperando en vez de buscar ayuda. **A quien pida hablar con alguien, o que le pases con recepción, le respondes la primera vez que lo pide** y con una sola frase. Con la clínica **cerrada**: "en este momento la clínica está cerrada, pero me quedo con el recado y nos pondremos en contacto lo antes posible." Con la clínica **abierta**: "me quedo con el recado y nos pondremos en contacto lo antes posible." **Y es todo**: no hablas de pasar la llamada, no dices que no puedes, no mencionas recepción y nunca dices que no hay nadie. Vale **sea o no una urgencia para quien llama**, y lo que cambia en una urgencia no es lo que dices, es la etiqueta que queda en el registro.',
   fallbackShort: {
     transfer: 'pasas la llamada a una persona',
     message: 'tomas nota y dices que la clínica le devuelve la llamada',
@@ -1681,6 +1689,8 @@ Con alguien con dolor o asustado, reconoces antes de resolver. Con quien se repi
     'Este número ya es de un paciente de esta clínica, así que **la pregunta del contacto se hace con él dentro**: "¿el contacto sigue siendo este?", y si dicen que no, apuntas el que den. En una casa hay más de una persona y la cita puede ser para quien tiene otro móvil. Pides siempre el nombre. **Nunca escribes tú el nombre que tienes en ficha**, ni para confirmar: quien escribe puede no ser quien está guardado, y escribirlo es contarle a un desconocido quién más vive en esa casa. **Esto es sobre el nombre guardado en la clínica, y sólo sobre ese.** El nombre que la persona te ha dado en esta conversación es suyo: si pregunta con qué nombre te has quedado, se lo dices.',
   services: 'Servicios que puedes citar',
   servicesOnly: 'Servicios de esta clínica',
+  servicesNotAnAnswer:
+    '**Esta lista es para que entiendas de qué te hablan, no para responder.** En esta clínica respondes a dos cosas y a nada más: **el horario** y **lo que la clínica escribió en "Lo que más debes saber"**. Si preguntan si hacen un tratamiento, cuánto cuesta, quién trabaja allí o qué implica un tratamiento, **no respondes ni lo confirmas**: te quedas con el recado y dices que nos pondremos en contacto lo antes posible. No es porque no lo sepas, es que quien responde a eso es la clínica, y así lo ha pedido.',
   alsoDoes: 'También hace',
   prices: 'Precios',
   pricesListed:
@@ -2121,6 +2131,18 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
     // does not book for has services, not a menu she can offer hours from.
     const label = v.takes_bookings === false ? t.servicesOnly : t.services
     facts.push(`${label}: ${v.services.join(', ')}.`)
+    // ── E NUMA CLÍNICA DE RECADOS A LISTA NÃO É UMA RESPOSTA ──────────────
+    // Pedido pela primeira clínica, depois de uma semana a ouvi-la: a Telma
+    // respondia "sim, fazemos laser", "sim, fazemos odontopediatria", dizia
+    // preços e, a quem perguntou por um médico pelo nome, respondia que ia
+    // confirmar. Nenhuma dessas respostas era inventada, estavam todas na
+    // ficha, e a clínica não quer nenhuma delas: quem responde sobre
+    // tratamentos, preços e pessoas é a clínica.
+    //
+    // A lista fica, porque é o que lhe permite perceber do que lhe estão a
+    // falar e escrevê-lo no recado com o nome certo. O que muda é que deixa
+    // de ser uma coisa que se diz em voz alta.
+    if (v.takes_bookings === false) facts.push(t.servicesNotAnAnswer)
   }
   if (v.custom_services) facts.push(`${t.alsoDoes}: ${v.custom_services}`)
   // ── O QUE A CLÍNICA ESCREVEU SOBRE PREÇOS, E O QUE SE LHE DIZ SOBRE ISSO ─
@@ -2136,7 +2158,15 @@ export function buildPrompt(v: PromptVariables, language: BaseLanguage = 'pt'): 
   // de concordar com a regra: se lá está escrito um preço, pode ser dito.
   const pricedServices = (v.services ?? []).some((name) => name.includes('€'))
   facts.push(
-    v.price_info ? `${t.prices}: ${v.price_info}` : pricedServices ? t.pricesListed : t.noPrices
+    // Numa clínica de recados nem a lista nem o campo livre se dizem: ver
+    // `servicesNotAnAnswer` acima.
+    v.takes_bookings === false
+      ? t.noPrices
+      : v.price_info
+        ? `${t.prices}: ${v.price_info}`
+        : pricedServices
+          ? t.pricesListed
+          : t.noPrices
   )
   facts.push('')
   // O que fazer quando te falam noutra língua só é uma regra numa clínica que

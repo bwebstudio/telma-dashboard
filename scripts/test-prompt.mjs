@@ -729,39 +729,82 @@ test('who sees patients is only mentioned when there is more than one', () => {
   }
 })
 
-// The one rule whose failure is not commercial.
+// The one rule whose failure is not commercial, and it changed owner.
 //
-// Before this, the only in-hours path for an emergency was "pass the call to
-// the clinic", and if nobody answered, `transferFails` takes a message. A child
-// bleeding heavily at eleven in the morning ended in a message. A closed clinic
-// that HAD an emergency number never heard about 112 either, because the only
-// mention of it lived in the branch for a closed clinic with nobody named.
-test('emergency services are named whatever the clinic looks like', () => {
+// It used to be ours: whatever the clinic looked like, an emergency heard
+// "ligue 112 ou dirija-se às urgências". It was put in because the only
+// in-hours path was "pass the call", and when nobody answered a child bleeding
+// heavily at eleven in the morning ended in a message.
+//
+// The first clinic asked for it out, twice, and the owner agreed: a 112 read to
+// somebody in pain who rang their own dentist is a door closed in their face,
+// and sending them anywhere is not ours to do. So the rule is now that an
+// emergency goes **where the clinic said it goes**: its emergency number or its
+// own protocol, where it configured one, and where it configured nothing, the
+// message, said as "entramos em contacto o mais breve possível", with the row
+// tagged `urgencia` so reception reads it first.
+//
+// What this still guards is that neither half can go missing: a clinic that
+// named a number has it said, and a clinic that named nothing gets the message
+// and no outside service invented for it.
+test('an emergency goes where the clinic said, and nowhere else', () => {
+  const named = ['+34911111111']
   const shapes = [
     { name: 'open, nobody named', within_opening_hours: true, emergency_number: null },
-    { name: 'open, number named', within_opening_hours: true, emergency_number: '+34911111111' },
+    { name: 'open, number named', within_opening_hours: true, emergency_number: named[0] },
     { name: 'closed, nobody named', within_opening_hours: false, emergency_number: null },
-    { name: 'closed, number named', within_opening_hours: false, emergency_number: '+34911111111' },
+    { name: 'closed, number named', within_opening_hours: false, emergency_number: named[0] },
     { name: 'cannot book at all', can_book: false, within_opening_hours: true, emergency_number: null },
   ]
+  const SAYS = { pt: 'entramos em contacto o mais breve possível', es: 'nos pondremos en contacto lo antes posible' }
   for (const lang of ['pt', 'es']) {
     for (const shape of shapes) {
       const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true, ...shape }, lang)
-      assert.ok(text.includes('112'), `${lang}, ${shape.name}: emergency services are never named`)
+      if (shape.emergency_number) {
+        assert.ok(
+          text.includes(shape.emergency_number),
+          `${lang}, ${shape.name}: the clinic's own emergency number is not said`
+        )
+      } else {
+        assert.ok(
+          text.includes(SAYS[lang]),
+          `${lang}, ${shape.name}: nothing configured and no message offered either`
+        )
+        assert.ok(
+          !/(ligue|liga|llame|llamar) (ao |al )?112/.test(text),
+          `${lang}, ${shape.name}: still sending somebody to 112 off its own bat`
+        )
+      }
     }
   }
 })
 
-test('the emergency number comes before anything else is asked', () => {
-  for (const [lang, first] of [
-    // A frase passou a estar escrita, palavra por palavra, porque se diz a
-    // alguém assustado e não é hora de a improvisar. O que o teste protege é
-    // o mesmo: que venha antes de qualquer pergunta.
-    ['pt', '**a primeira coisa que dizes é esta frase**, antes de perguntares seja o que for: "Se for uma urgência ou houver perigo imediato, ligue 112 ou dirija-se às urgências."'],
-    ['es', '**lo primero que dices es esta frase**, antes de preguntar nada: "Si es una urgencia o hay peligro inmediato, llame al 112 o acuda a urgencias."'],
+// Whatever the answer is, it comes before any question. Somebody describing an
+// emergency is not a form to fill in first.
+test('what happens in an emergency comes before anything is asked', () => {
+  for (const [lang, withNumber, withNothing] of [
+    [
+      'pt',
+      '**a primeira coisa que fazes é dizer para onde se liga agora**, antes de perguntares seja o que for',
+      '**ficas com o recado e dizes que entramos em contacto o mais breve possível**',
+    ],
+    [
+      'es',
+      '**lo primero que haces es decir a dónde se llama ahora**, antes de preguntar nada',
+      '**te quedas con el recado y dices que nos pondremos en contacto lo antes posible**',
+    ],
   ]) {
-    const { text } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
-    assert.ok(text.includes(first), `${lang}: 112 is mentioned but not put first`)
+    const named = buildPrompt(
+      { ...CASES['open-can-book'], can_book: true, emergency_number: '+351210000000' },
+      lang
+    )
+    assert.ok(named.text.includes(withNumber), `${lang}: where to ring is not put first`)
+
+    const nothing = buildPrompt(
+      { ...CASES['open-can-book'], can_book: true, emergency_number: null, emergency_protocol: null },
+      lang
+    )
+    assert.ok(nothing.text.includes(withNothing), `${lang}: the message is not put first either`)
   }
 })
 
@@ -772,8 +815,14 @@ test('an animal emergency does not go to 112', () => {
     const vet = buildPrompt({ ...CASES['veterinary'], can_book: true }, lang)
     assert.ok(vet.text.includes(never), `${lang}: a vet clinic still sends people to 112`)
 
-    const human = buildPrompt({ ...CASES['open-can-book'], can_book: true, veterinary: false }, lang)
-    assert.ok(human.text.includes('112'), `${lang}: a human clinic lost its 112`)
+    // The human half of this used to assert that a human clinic keeps its 112.
+    // It does not any more, by the clinic's own request: see the emergency test
+    // above. What stays true is that a clinic which named a number has it said.
+    const human = buildPrompt(
+      { ...CASES['open-can-book'], can_book: true, veterinary: false, emergency_number: '+351210000000' },
+      lang
+    )
+    assert.ok(human.text.includes('+351210000000'), `${lang}: a human clinic lost its own number`)
     assert.ok(!human.text.includes(never), `${lang}: a human clinic carries the animal rule`)
   }
 })

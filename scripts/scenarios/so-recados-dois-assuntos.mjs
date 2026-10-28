@@ -95,6 +95,17 @@ não precisas de nada e despedes-te quando ela fechar.`,
         'A assistente NUNCA explicou a sua própria papelada: nada de "para eu registar bem", "para ficar bem identificado", "para não me enganar", "para deixar o recado corretamente". Falha se disse qualquer coisa desse género. ATENÇÃO: dizer para que serve o número ("para a clínica lhe ligar", "para lhe ligarem da clínica") NÃO é isso e passa, que é o que diria qualquer rececionista.',
     },
     {
+      // ── E NUM SEGUNDO ASSUNTO NÃO SE PEDE O CONTACTO OUTRA VEZ ───────
+      // Pedido pela clínica depois de o ouvir numa chamada: quem já deu o
+      // nome e o número não os dá outra vez por trazer um segundo assunto. A
+      // única coisa que falta saber é de quem é o segundo.
+      id: 'nao_repete_o_contacto',
+      name: 'nao repete o contacto no segundo assunto',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Depois do SEGUNDO pedido (passar a consulta para o dia dois), a assistente NÃO voltou a pedir o nome nem o número nem a ler o número de volta: usou os que já tinha. Falha se pediu outra vez qualquer um dos dois, ou se leu o número de volta uma segunda vez. ATENÇÃO: perguntar se o segundo assunto é para a mesma pessoa ou para outra ("e esta é para o senhor ou para outra pessoa?") NÃO é pedir o contacto e passa.',
+    },
+    {
       id: 'nao_anula',
       name: 'nao anula',
       threshold: 1,

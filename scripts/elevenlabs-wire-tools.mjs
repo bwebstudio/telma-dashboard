@@ -399,10 +399,19 @@ const BUILT_IN_TOOLS = {
       // confirmar o número. É a válvula que lhe permite não fazer nada quando
       // ainda falta fazer algo, e sem válvula o que lhe fica à mão é desligar.
       // Volta, com a proibição escrita na descrição.
+      //
+      // ── E AS DUAS QUE SE PAGARAM NUMA CHAMADA A SÉRIO ─────────────────
+      // Um homem a dizer que o doutor o tinha operado, que a coroa saltou e
+      // que estava a sangrar. Cortou-a duas vezes a meio da frase, ela
+      // recomeçou a mesma frase as duas, e à terceira chamou esta ferramenta
+      // com a razão "a pessoa ainda não respondeu; preciso manter a linha".
+      // Ficou dezesseis segundos calada, com ele à espera, e foi ele que
+      // desligou. Quem foi cortado é quem tem a vez, e numa urgência o
+      // silêncio é a clínica a desligar-lhe na cara.
       skip_turn: {
         name: 'skip_turn',
         description:
-          'Não digas nada e espera. É para quando a outra pessoa ainda não acabou: está a pensar, a procurar um dado num papel, ou a falar com alguém ao lado. **Nunca a uses depois de a pessoa te responder a uma pergunta tua** -- aí a vez é tua, e ficar calada deixa-a a perguntar "está?" --, nunca para pensares, para confirmares uma coisa contigo ou antes de registares a chamada, e nunca duas vezes seguidas. Se tens algo para dizer ou para fazer, dizes ou fazes.',
+          'Não digas nada e espera. É para quando a outra pessoa ainda não acabou: está a pensar, a procurar um dado num papel, ou a falar com alguém ao lado. **Nunca a uses depois de a pessoa te responder a uma pergunta tua** -- aí a vez é tua, e ficar calada deixa-a a perguntar "está?" --, nunca para pensares, para confirmares uma coisa contigo ou antes de registares a chamada, e nunca duas vezes seguidas. **Nunca a uses se foste tu a ser cortada a meio de uma frase**: aí a vez é tua e o que falta é acabares a frase, curta. **E nunca numa urgência**, nem quando a pessoa fala de dores, de sangue ou de um problema a acontecer agora: ficar calada a quem está à espera de ti é o que a faz desligar. Se tens algo para dizer ou para fazer, dizes ou fazes.',
       },
       // ── DETEÇÃO DE IDIOMA: DESLIGADA, E DESTA VEZ POR MEDIÇÃO ─────────
       // Esteve desligada, voltou a ser ligada com o argumento de que sem ela

@@ -182,7 +182,12 @@ export function spokenDateTime(at: Date, zone: string, lang: SpokenLang): string
 export function writtenDateTime(at: Date, zone: string, lang: SpokenLang): string {
   const p = partsInZone(at, zone)
   const month = MONTHS[lang][p.month - 1] ?? String(p.month)
-  const clock = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`
+  // ── E O RELÓGIO NA FORMA EM QUE SE ESCREVE UMA HORA, NÃO NUM HORÁRIO ────
+  // "9h" e "15h30", não "09:00" e "15:30". É a forma do guia de conversa
+  // PT-PT, e é a que uma rececionista escreve numa mensagem: o zero à frente e
+  // os dois pontos são notação de tabela de partidas. Os minutos só aparecem
+  // quando existem.
+  const clock = p.minute ? `${p.hour}h${String(p.minute).padStart(2, '0')}` : `${p.hour}h`
   const at_ = lang === 'es' ? 'a las' : 'às'
   return `${WEEKDAYS[lang][p.weekday]}, ${p.day} de ${month} ${at_} ${clock}`
 }

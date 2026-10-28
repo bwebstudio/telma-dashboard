@@ -1809,6 +1809,84 @@ test('what is about the telephone is taken out of the written sheet', () => {
   }
 })
 
+// ── E O QUE O GUIA PT-PT ACRESCENTOU ───────────────────────────────────────
+// TELMA_GUIA_CONVERSACIONAL_PT_PT.md, aplicado ao canal escrito. Quatro coisas
+// que a folha não dizia e uma que dizia ao contrário, e cada uma delas tem aqui
+// o seu fio: o guia é um documento fora deste repositório, e o que impede que
+// se perca é isto.
+test('the written sheet follows the PT-PT conversation guide', () => {
+  const expected = {
+    pt: [
+      // §2: responder primeiro ao que foi perguntado.
+      '**Primeiro respondes ao que foi perguntado, e só depois propões o passo seguinte**',
+      // §16: as fórmulas de ofício, que não estavam em lado nenhum.
+      '"a sua solicitação"',
+      'nem "agendamento" nem "agendar"',
+      // §3 e a tabela do §15: o relógio como se escreve.
+      '"9h" e "15h30", nunca "09:00"',
+      // §5: e a pergunta de abertura, só quando a mensagem não diz nada.
+      'Só quando a mensagem não disser o que a pessoa quer',
+      // §12: duas tentativas, e a segunda decide o caminho.
+      '**Duas tentativas, nunca três**',
+      // §1: escreve como quem está na receção, não como quem fala ao telefone.
+      '- Escreves como escreve uma pessoa da receção',
+    ],
+    es: [
+      '**Primero respondes a lo que te han preguntado, y sólo después propones el paso siguiente**',
+      '"su solicitud"',
+      '"9h" y "15h30", nunca "09:00"',
+      'Sólo cuando el mensaje no diga qué quiere la persona',
+      '**Dos intentos, nunca tres**',
+      '- Escribes como escribe una persona de recepción',
+    ],
+  }
+  for (const lang of ['pt', 'es']) {
+    const base = { ...CASES['open-can-book'], can_book: true }
+    const thread = buildPrompt({ ...base, channel: 'whatsapp' }, lang).text
+    for (const phrase of expected[lang]) {
+      assert.ok(thread.includes(phrase), `${lang}: the guide's rule is gone: "${phrase}"`)
+    }
+  }
+})
+
+// ── E A TRANSFERÊNCIA, QUE POR ESCRITO NÃO EXISTE ──────────────────────────
+// A ferramenta não existe do lado do texto, de propósito: não há chamada para
+// passar. Mas a folha descrevia-a a partir da configuração da clínica, e numa
+// clínica com transferência ligada punha-a a prometer, por escrito, uma coisa
+// que não podia fazer. É o pior dos erros desta lista, porque quem o lê é
+// alguém que acabou de pedir para falar com uma pessoa.
+test('a thread is never told it can transfer a call', () => {
+  for (const lang of ['pt', 'es']) {
+    const transfersEverything = {
+      ...CASES['open-can-book'],
+      can_book: true,
+      fallback_policy: 'transfer',
+      fallback_number: '+351210000000',
+      after_hours_transfer: true,
+      after_hours_number: '+351210000001',
+      emergency_number: '+351210000002',
+    }
+    const call = buildPrompt(transfersEverything, lang).text
+    const thread = buildPrompt({ ...transfersEverything, channel: 'whatsapp' }, lang).text
+
+    assert.ok(call.includes('telma_passar_chamada'), `${lang}: the telephone lost the transfer`)
+    assert.ok(
+      !thread.includes('telma_passar_chamada'),
+      `${lang}: a thread is told about the transfer tool`
+    )
+    // Frases que prometem, e não as que o proíbem: a folha escrita diz
+    // "não há chamada para passar a ninguém, e nunca dizes que vais passar",
+    // e um teste que procurasse "vais passar" apanhava essa.
+    const promises = {
+      pt: ['Passas a chamada para', 'Passas a chamada imediatamente', 'Passas a chamada, ou'],
+      es: ['Pasas la llamada al', 'Pasas la llamada inmediatamente', 'Pasas la llamada, o'],
+    }[lang]
+    for (const phrase of promises) {
+      assert.ok(!thread.includes(phrase), `${lang}: a thread may promise "${phrase}"`)
+    }
+  }
+})
+
 // The number the conversation arrives from is printed on the sheet, and
 // whatever shape it is printed in is the shape it comes back in. Spelled out
 // for the telephone, where it is said; in digits for a thread, where it is

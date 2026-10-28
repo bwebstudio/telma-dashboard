@@ -93,9 +93,9 @@ export default {
       // lhe chega `channel=whatsapp`. Posto aqui na mesma forma, senão este
       // cenário mede horas que em produção não chegam assim.
       slots: [
-        { slot_start: `${MONDAY}T09:00:00Z`, local_time: '09:00', say: 'segunda-feira, 2 de novembro às 09:00' },
-        { slot_start: `${MONDAY}T15:30:00Z`, local_time: '15:30', say: 'segunda-feira, 2 de novembro às 15:30' },
-        { slot_start: `${TUESDAY}T10:00:00Z`, local_time: '10:00', say: 'terça-feira, 3 de novembro às 10:00' },
+        { slot_start: `${MONDAY}T09:00:00Z`, local_time: '09:00', say: 'segunda-feira, 2 de novembro às 9h' },
+        { slot_start: `${MONDAY}T15:30:00Z`, local_time: '15:30', say: 'segunda-feira, 2 de novembro às 15h30' },
+        { slot_start: `${TUESDAY}T10:00:00Z`, local_time: '10:00', say: 'terça-feira, 3 de novembro às 10h' },
       ],
     },
     telma_reservar_hora_demo: { ok: true, held_until: '2026-11-02T08:10:00Z' },
@@ -159,6 +159,31 @@ Se te pedirem o telefone, escreves "912000111". Despedes-te quando ela fechar.`,
       threshold: 1,
       conversation_goal_prompt:
         'A assistente ofereceu horas concretas e, depois de a pessoa escolher uma, disse que a consulta ficou marcada para esse dia e hora. Falha se nunca ofereceu horas, se as inventou sem consultar, ou se acabou a conversa sem dizer que ficou marcada.',
+    },
+    // ── E ESTES VÊM DA CHECKLIST DO GUIA ───────────────────────────────────
+    // §19, a lista com que o guia manda aprovar ou recusar uma resposta.
+    // Postos aqui os que uma simulação consegue julgar: os outros ("poderia
+    // ser mais curta?") são de uma pessoa a ler.
+    {
+      id: 'sem_linguagem_de_oficio',
+      name: 'sem linguagem de oficio',
+      threshold: 1,
+      conversation_goal_prompt:
+        'A assistente nunca escreveu linguagem burocrática nem de atendimento ao cliente. Falha se usou "procederei", "a sua solicitação", "efetuado com sucesso", "de acordo com os dados do sistema", "informamos que", "agradecemos o seu contacto", "fico ao seu dispor", "qualquer dúvida não hesite", ou a palavra "agendamento"/"agendar" em vez de marcar/marcação.',
+    },
+    {
+      id: 'responde_antes_de_oferecer',
+      name: 'responde antes de oferecer',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Sempre que a pessoa fez uma pergunta — um preço, um horário, se a clínica faz um tratamento — a assistente respondeu a essa pergunta ANTES de propor marcar ou oferecer horas. Falha se alguma vez respondeu a uma pergunta com uma oferta de marcação sem a ter respondido primeiro. Se a pessoa não fez perguntas destas, passa.',
+    },
+    {
+      id: 'sem_narrar_ferramentas',
+      name: 'sem narrar ferramentas',
+      threshold: 1,
+      conversation_goal_prompt:
+        'A assistente nunca falou do que faz por dentro: nada de nomes de ferramentas, campos, sistema, agenda como software, IDs ou integrações. Falha se escreveu qualquer um, incluindo "vou registar na agenda" ou "fica no sistema".',
     },
   ],
 }

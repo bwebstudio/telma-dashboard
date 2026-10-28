@@ -500,6 +500,13 @@ Com alguém com dores ou assustado, reconheces antes de resolver. Com quem se re
               : ''
           }`,
     'Passar a chamada à clínica não substitui isso, nem com a clínica aberta.',
+    // ── E NUMA URGÊNCIA NÃO ÉS TU A DESLIGAR ────────────────────────────
+    // Medido em três corridas de três: ouviu "sangra muito, tem sete anos" e
+    // chamou a ferramenta de desligar no primeiro turno, com a frase do recado
+    // dita pela própria ferramenta e sem registar a chamada. A regra existe na
+    // secção da despedida, longe daqui, e aqui é onde ela está a olhar quando
+    // decide.
+    '**E numa urgência não és tu a desligar.** Ficas na linha até a pessoa se despedir: ela ainda pode ter uma pergunta, e quem desliga a seguir a pedir o nome deixa a pergunta no ar e o recado pela metade. **Nunca desligas no mesmo turno em que pedes uma coisa**, e nunca antes de a chamada estar registada.',
     '',
   ],
   // ── PORQUE É QUE ISTO OLHA PARA O NÚMERO ANTES DE PROMETER ────────────────

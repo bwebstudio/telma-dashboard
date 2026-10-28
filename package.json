@@ -36,7 +36,8 @@
     "test:schedule": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs --test scripts/test-schedule.mjs",
     "test:shared-line": "node --test scripts/test-shared-line.mjs",
     "test:idempotency": "node scripts/test-idempotency.mjs",
-    "simulate:whatsapp": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs scripts/simulate-whatsapp.mjs"
+    "simulate:whatsapp": "node --experimental-strip-types --import ./scripts/resolve-alias.mjs scripts/simulate-whatsapp.mjs",
+    "chat": "node --experimental-strip-types scripts/chat-telma.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

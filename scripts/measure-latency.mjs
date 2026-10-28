@@ -35,11 +35,21 @@
 // si el primer mensaje no admitía interrupción. En los dos casos, silencio
 // hasta el tiempo límite.
 //
-// O sea que mide el hueco que deja una pregunta que el agente no oye. Para
-// arreglarlo hay que hablarle como le habla un teléfono, con
-// `user_audio_chunk`, y eso es escribir el envío de audio que este script
-// nunca tuvo. Hasta entonces la latencia se juzga con un oído en una llamada
-// de verdad, que es como se juzgó la última vez.
+// O sea que mide el hueco que deja una pregunta que el agente no oye.
+//
+// ── Y POR QUÉ NO OYE, QUE YA SE SABE ───────────────────────────────────────
+// Aquí decía que la salida era escribir el envío de audio. No lo era: un
+// agente de voz no escucha texto, y la plataforma tiene un interruptor para
+// ponerlo a escuchar. `conversation.text_only`, en el agente o en el override,
+// y entonces `{type:'user_message'}` contesta. Está hecho y funcionando en
+// scripts/chat-telma.mjs, que es una conversación escrita a mano contra la
+// hoja de este repositorio.
+//
+// Lo que eso no arregla es esto: en modo texto no hay audio, y lo que este
+// script mide es el primer trozo de audio. Para medir la latencia de verdad
+// sigue haciendo falta hablarle con `user_audio_chunk`. Hasta entonces se
+// juzga con un oído en una llamada de verdad, que es como se juzgó la última
+// vez.
 
 import { readFileSync } from 'node:fs'
 

@@ -79,6 +79,25 @@ No fim dizes que só queres que te liguem com urgência e despedes-te.`,
         'A assistente pediu o nome E o número antes de a chamada acabar, e o registo em telma_registar_chamada leva o nome de quem ligou (Andreia, Andreia Fernandes) e não "a pessoa" nem vazio. Falha se a chamada acabou sem o nome ou sem o número.',
     },
     {
+      // ── E QUANDO INSISTEM, A EXPLICAÇÃO E A PERGUNTA ────────────────
+      // Chamada de 29/10 às 16:34: à insistência respondeu "fico com o
+      // recado" e calou-se. O homem, com uma coroa saltada, ficou a
+      // perguntar "está aí?". A clínica pediu a explicação inteira numa
+      // fala, e uma pergunta no fim para não ficar silêncio.
+      id: 'explica_quando_insistem',
+      name: 'explica quando insistem',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Quando a pessoa insistiu em falar com alguém, a assistente explicou numa só fala o que pode fazer (que quem atende as chamadas é ela e que o que pode fazer é ficar com o recado) E disse que fica escrito como urgente para a clínica entrar em contacto o mais breve possível. Falha se apenas repetiu "fico com o recado e entramos em contacto o mais breve possível" sem explicar o que pode fazer, ou se nunca disse que fica registado como urgente.',
+    },
+    {
+      id: 'acaba_com_pergunta',
+      name: 'acaba com pergunta',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Nenhuma fala da assistente acabou a deixar a conversa no ar: sempre que respondeu à insistência, acabou com uma pergunta ("posso ajudar em mais alguma coisa?") ou com uma pergunta do recado. Falha se alguma resposta à insistência acabou sem pergunta nenhuma e sem nada a seguir, que é onde a pessoa fica a perguntar se a assistente ainda está na linha.',
+    },
+    {
       id: 'registo_urgencia',
       name: 'registo como urgencia',
       threshold: 1,

@@ -580,6 +580,31 @@ export async function POST(request: Request) {
     )
   }
 
-  return NextResponse.json({ ok: true, ...(data as object) })
+  // ── E A RESPOSTA DIZ-LHE O QUE JÁ TEM ─────────────────────────────────────
+  // A clínica pediu que ela não voltasse a pedir o nome e o número a quem já
+  // os deu, e cinco maneiras de o escrever na folha não pegaram: numa urgência
+  // que chega depois do recado, pediu o nome outra vez em quatro de cada cinco
+  // medições, uma delas a seguir a ouvir "já lhe dei isso". Uma condição numa
+  // folha lida há dois minutos perde para o procedimento, que recomeça a cada
+  // assunto novo.
+  //
+  // Isto não é a folha: é o que ela acabou de ler, no turno anterior ao que
+  // decide. Vai só quando há mesmo nome ou número para lembrar, e diz o que
+  // ela tem, não o que deve fazer com isso, que a instrução já está escrita
+  // em dois sítios.
+  const got = [
+    plausibleName(callerName) ? callerName : null,
+    callbackDigits.length >= 9 ? callbackDigits.slice(-9) : fromDigits.slice(-9) || null,
+  ].filter(Boolean)
+
+  return NextResponse.json({
+    ok: true,
+    ...(data as object),
+    ...(got.length
+      ? {
+          message: `Recado registado. Já tens ${got.join(' e ')} desta chamada: se a pessoa trouxer outro assunto ou uma urgência, usa o que já tens e não voltes a pedir o nome nem o número.`,
+        }
+      : {}),
+  })
 }
 

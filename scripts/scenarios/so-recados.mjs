@@ -117,6 +117,18 @@ export const shared = {
     // Vão nos critérios partilhados porque valem para qualquer chamada, e
     // porque uma regra de estilo que ninguém mede é uma regra que se perde na
     // versão seguinte.
+    // ── E A PERGUNTA DO FECHO, QUE É O QUE A CLÍNICA OUVE QUANDO FALTA ───
+    // Chamada de 29/10 às 17:06: "Fica anotado. A clínica liga-lhe de volta.
+    // Obrigada por ligar. Tenha uma boa tarde." e desligou, logo a seguir a
+    // um "é isso" de confirmação do número. Vale para qualquer chamada, por
+    // isso mora nos critérios partilhados.
+    {
+      id: 'pergunta_antes_de_desligar',
+      name: 'pergunta antes de desligar',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Antes de se despedir ou de usar end_call, a assistente perguntou se havia mais alguma coisa em que pudesse ajudar e esperou pela resposta. Falha se se despediu ou desligou no mesmo turno em que disse que o recado fica anotado, e falha se a última coisa que a pessoa disse antes da despedida foi um número, um nome ou uma confirmação ("é isso", "está correto") em vez de dizer que não precisava de mais nada.',
+    },
     {
       id: 'nao_comeca_sempre_igual',
       name: 'nao comeca sempre igual',

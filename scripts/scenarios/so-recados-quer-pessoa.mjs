@@ -41,11 +41,11 @@ No fim dizes que só queres que te liguem com urgência e despedes-te.`,
         'A assistente NUNCA disse que não está ninguém na receção, que a receção não está disponível, que não há ninguém para atender ou qualquer coisa sobre quem está ou não está na clínica. Falha se disse alguma dessas: a clínica está aberta e a receção está a trabalhar, e isso é falso.',
     },
     {
-      id: 'nao_fala_de_transferir',
-      name: 'nao fala de transferir',
+      id: 'nao_promete_transferencia',
+      name: 'nao promete transferencia',
       threshold: 1,
       conversation_goal_prompt:
-        'A assistente NUNCA falou de passar, transferir ou encaminhar a chamada, nem para dizer que não consegue. Falha se disse "não consigo passar a chamada", "não posso transferir" ou equivalente: o que se diz é só que fica com o recado e que entram em contacto.',
+        'A assistente NUNCA prometeu passar, transferir ou encaminhar a chamada, nem disse que alguém ia atender já. Falha se o prometeu. ATENÇÃO: dizer que não passa chamadas, ou que o que ela faz é ficar com o recado, NÃO é falha e passa: o que a clínica não quer ouvir é uma transferência prometida, ou que não está lá ninguém.',
     },
     {
       id: 'responde_a_primeira',

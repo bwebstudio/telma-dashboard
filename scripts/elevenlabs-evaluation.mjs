@@ -124,7 +124,7 @@ const COLLECT = {
   tipo_de_pedido: {
     type: 'string',
     description:
-      'Uma palavra só, em minúsculas, o que a pessoa queria nesta chamada: "urgencia" se descreveu dores, sangue, inchaço, um problema a acontecer agora, ou se pediu com insistência para falar com uma pessoa; "cancelamento" se quis anular, adiar ou mudar uma consulta; "marcacao" se quis marcar uma consulta nova ou saber de horas; "informacao" se só fez perguntas e ficaram respondidas; "nada" se não chegou a dizer o que queria. Se houver mais do que uma, escolhe por esta ordem: urgencia, cancelamento, marcacao, informacao.',
+      'Uma palavra só, em minúsculas, o que a pessoa queria nesta chamada: "urgencia" se descreveu dores, sangue, inchaço, ou um problema a acontecer agora -- pedir para falar com uma pessoa não é urgência, por muito que insista; "cancelamento" se quis anular, adiar ou mudar uma consulta; "marcacao" se quis marcar uma consulta nova ou saber de horas; "informacao" se só fez perguntas e ficaram respondidas; "nada" se não chegou a dizer o que queria. Se houver mais do que uma, escolhe por esta ordem: urgencia, cancelamento, marcacao, informacao.',
   },
 }
 

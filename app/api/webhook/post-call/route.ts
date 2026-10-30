@@ -117,6 +117,33 @@ export async function POST(request: Request) {
   // lembrado de nada. Quando existe, é ele o resumo.
   const rescuedSubject = field('assunto')
 
+  // ── E A ETIQUETA, QUE ERA SEMPRE A MESMA ────────────────────────────────
+  // Duas chamadas de seis, na mesma tarde, acabaram sem a Telma chamar a
+  // ferramenta: a pessoa desligou a seguir ao "obrigada" e o registo ficou
+  // para este caminho. Uma delas era alguém a pedir insistentemente para
+  // falar com uma assistente, que a clínica quer ver como urgência, e as duas
+  // chegaram ao painel como "informação" -- porque era isso que esta linha
+  // sabia escrever.
+  //
+  // `tipo_de_pedido` é um campo da análise, escrito sobre a transcrição
+  // acabada, e não depende de a Telma se ter lembrado de nada. Quando vem,
+  // manda ele. Quando não vem, fica a regra antiga.
+  const requestType = field('tipo_de_pedido')?.toLowerCase() ?? null
+  const BY_TYPE: Record<string, string> = {
+    urgencia: 'urgencia',
+    marcacao: 'pedido_marcacao',
+    cancelamento: 'pedido_cancelamento',
+    informacao: 'informacao',
+  }
+  const rescuedResult =
+    (requestType && BY_TYPE[requestType]) ??
+    // `nao_resolvida` é o vermelho do painel e está certo para uma chamada que
+    // acabou sem nada: sem recado, sem pedido, sem pergunta respondida. Quando
+    // a análise diz que ficou trabalho para a clínica, o que esta chamada é é
+    // um pedido que não chegou a ser registado, e `informacao` é a cor honesta:
+    // há aqui uma coisa para ler, e não um erro para investigar.
+    (collected.ficou_por_fazer?.value === true ? 'informacao' : 'nao_resolvida')
+
   // ── E NÃO NA LÍNGUA DA PLATAFORMA ───────────────────────────────────────
   // `transcript_summary` é escrito pela ElevenLabs, e por omissão escreve em
   // inglês. Numa chamada que a Telma registou isso não se vê, porque o resumo
@@ -184,12 +211,7 @@ export async function POST(request: Request) {
     // rule explaining is not the same thing.
     p_from_phone: rescuedPhone ?? vars.system__caller_id ?? null,
     p_duration: duration,
-    // `nao_resolvida` é o vermelho do painel e está certo para uma chamada que
-    // acabou sem nada: sem recado, sem pedido, sem pergunta respondida. Quando
-    // a análise diz que ficou trabalho para a clínica, o que esta chamada é é
-    // um pedido que não chegou a ser registado, e `informacao` é a cor honesta:
-    // há aqui uma coisa para ler, e não um erro para investigar.
-    p_result: collected.ficou_por_fazer?.value === true ? 'informacao' : 'nao_resolvida',
+    p_result: rescuedResult,
     p_summary: fullSummary,
     p_recording_url: null,
     p_external_ref: conversationId,

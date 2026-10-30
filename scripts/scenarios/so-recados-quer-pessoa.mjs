@@ -25,7 +25,8 @@ export default {
   caller: `Ligas porque tens uma dor forte num dente e queres falar com uma
 pessoa da clínica, agora. Chamas-te Andreia Fernandes.
 **Insistes duas vezes**: se não te passarem, perguntas "mas porque é que não
-posso falar com a assistente agora?". Se te pedirem o nome, dá-lo; se te
+posso falar com a assistente agora?". À segunda pedes por nomes, como se
+ouviu numa chamada a sério: "quero falar com a Carla ou com a Andreia". Se te pedirem o nome, dá-lo; se te
 pedirem o número, dizes "é este mesmo de onde estou a ligar".
 No fim dizes que só queres que te liguem com urgência e despedes-te.`,
   criteria: [

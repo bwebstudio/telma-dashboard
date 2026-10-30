@@ -71,5 +71,49 @@ export function plausibleName(value: unknown): boolean {
   if (typeof value !== 'string') return false
   const name = value.trim()
   if (name.length < 2) return false
-  return /\p{L}{2}/u.test(name)
+  if (!/\p{L}{2}/u.test(name)) return false
+  return !PLACEHOLDER_NAMES.has(
+    name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
+      .replace(/[.\s]+/g, ' ')
+      .trim()
+  )
 }
+
+/**
+ * ── E O QUE ELA ESCREVE QUANDO NÃO TEM NOME ─────────────────────────────────
+ *
+ * Numa chamada a sério registou `caller_name: "não confirmado"`, e o painel da
+ * clínica mostrou uma linha chamada "não confirmado". Não é um nome: é a
+ * maneira de o modelo dizer que não ficou com nenhum, e o campo tem uma
+ * maneira melhor de o dizer, que é vir vazio. Vazio o painel mostra o número;
+ * com isto mostrava uma pessoa que não existe.
+ *
+ * Comparado sem acentos e sem pontos, porque "n/a" e "N.A." são o mesmo.
+ */
+const PLACEHOLDER_NAMES = new Set([
+  'nao confirmado',
+  'no confirmado',
+  'nao informado',
+  'no informado',
+  'nao disse',
+  'no lo dijo',
+  'nao fornecido',
+  'no facilitado',
+  'desconhecido',
+  'desconocido',
+  'sem nome',
+  'sin nombre',
+  'a pessoa',
+  'la persona',
+  'o paciente',
+  'el paciente',
+  'anonimo',
+  'n a',
+  'na',
+  'nd',
+  'unknown',
+  'not provided',
+])

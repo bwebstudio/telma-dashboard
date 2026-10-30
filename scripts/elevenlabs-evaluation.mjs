@@ -78,15 +78,21 @@ const CRITERIA = [
   },
 ]
 
-// Four fields, and no more. Everything here is something the clinic needs in
+// Six fields, and no more. Everything here is something the clinic needs in
 // order to act on a call that was not filed, and nothing here is about the
 // caller's health: what somebody says about their own body stays in the
 // conversation, which is the same rule the base gives Telma for the panel.
+//
+// ── E ESTA LISTA JÁ ESTEVE ATRÁS DO AGENTE ──────────────────────────────────
+// `assunto` e o texto de `paciente_nome` foram escritos diretamente no agente
+// numa sessão anterior e nunca voltaram para cá, por isso correr este script
+// teria apagado um campo de que o webhook de fim de chamada depende. Está
+// outra vez igual ao que está publicado. Quem mexer num, mexe nos dois.
 const COLLECT = {
   paciente_nome: {
     type: 'string',
     description:
-      'O nome completo de quem a consulta é para, tal como foi dito ao telefone. Deixa vazio se nunca foi dito.',
+      'O primeiro e o último nome de quem a consulta é para, tal como foram ditos ao telefone. Se a pessoa disse os nomes todos, escreve-os como os disse. Deixa vazio se nunca foi dito.',
   },
   paciente_telefone: {
     type: 'string',
@@ -101,7 +107,24 @@ const COLLECT = {
   ficou_por_fazer: {
     type: 'boolean',
     description:
-      'Verdadeiro SÓ se a clínica tem de fazer alguma coisa a seguir a esta chamada: ligar de volta, responder a um recado, ou resolver uma coisa que ficou por resolver. Uma marcação normal é FALSO, mesmo ficando sujeita a confirmação pela clínica: isso é como todas as marcações ficam e não é trabalho pendente.',
+      'Verdadeiro SÓ se a clínica tem de fazer alguma coisa a seguir a esta chamada: ligar de volta, responder a um recado, ou resolver uma coisa que ficou por resolver. Uma marcação normal é FALSO, mesmo ficando sujeita a confirmação pela clínica — isso é como todas as marcações ficam e não é trabalho pendente.',
+  },
+  assunto: {
+    type: 'string',
+    description:
+      'Numa ou duas frases, na língua da clínica (português de Portugal para uma clínica portuguesa, espanhol para uma espanhola), o que a pessoa queria e o que ficou dito. Escreve-o como a rececionista o escreveria no painel: "pediu para anular a consulta de amanhã às nove", "quer marcar uma avaliação para terça de manhã". **Nunca em inglês.** Não escrevas "o senhor" nem "a senhora" se não souberes: usa o nome, ou "a pessoa". Deixa vazio só se a pessoa não chegou a dizer nada.',
+  },
+  // ── E A ETIQUETA DA LINHA, PARA QUANDO NADA FOI REGISTADO ─────────────────
+  // Duas chamadas de seis numa tarde acabaram sem a Telma chamar a ferramenta,
+  // porque a pessoa desligou a seguir ao "obrigada". O webhook de fim de
+  // chamada escreve-as, e sem este campo escrevia-as todas como "informação" --
+  // uma delas era alguém a pedir insistentemente para falar com uma assistente,
+  // que é a linha que a clínica quer ver primeiro. A análise corre sobre a
+  // transcrição acabada, por isso sabe dizê-lo mesmo quando ela se esqueceu.
+  tipo_de_pedido: {
+    type: 'string',
+    description:
+      'Uma palavra só, em minúsculas, o que a pessoa queria nesta chamada: "urgencia" se descreveu dores, sangue, inchaço, um problema a acontecer agora, ou se pediu com insistência para falar com uma pessoa; "cancelamento" se quis anular, adiar ou mudar uma consulta; "marcacao" se quis marcar uma consulta nova ou saber de horas; "informacao" se só fez perguntas e ficaram respondidas; "nada" se não chegou a dizer o que queria. Se houver mais do que uma, escolhe por esta ordem: urgencia, cancelamento, marcacao, informacao.',
   },
 }
 

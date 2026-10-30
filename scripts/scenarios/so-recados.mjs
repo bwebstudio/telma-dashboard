@@ -127,7 +127,26 @@ export const shared = {
       name: 'pergunta antes de desligar',
       threshold: 1,
       conversation_goal_prompt:
-        'Antes de se despedir ou de usar end_call, a assistente perguntou se havia mais alguma coisa em que pudesse ajudar e esperou pela resposta. Falha se se despediu ou desligou no mesmo turno em que disse que o recado fica anotado, e falha se a última coisa que a pessoa disse antes da despedida foi um número, um nome ou uma confirmação ("é isso", "está correto") em vez de dizer que não precisava de mais nada.',
+        'Em algum momento antes da despedida, a assistente perguntou se havia mais alguma coisa em que pudesse ajudar, e esperou pela resposta. Falha se nunca o perguntou, e falha se juntou essa pergunta e a despedida na mesma fala. ATENCAO: se a pessoa se despediu primeiro ("adeus", "é tudo, obrigada"), a assistente podia despedir-se logo a seguir e isso PASSA, mesmo sem voltar a perguntar.',
+    },
+    // ── OS DOIS CRITÉRIOS DO FECHO, NUM MUNDO SEM DESLIGAR ──────────────
+    // Medidos numa corrida em que ela fez tudo bem: perguntou duas vezes se
+    // faltava algo, a pessoa disse "adeus", e ela despediu-se. Falharam os
+    // dois -- um por ela não ter perguntado outra vez a quem acabara de se
+    // despedir, o outro por ela ter respondido a quem continuou a falar
+    // depois da despedida. Nenhuma das duas coisas é defeito. O que se mede é
+    // não juntar a pergunta à despedida, e não falar para o vazio.
+    // ── E DEPOIS DA DESPEDIDA, SILÊNCIO ─────────────────────────────────
+    // A ferramenta de desligar saiu do agente em 30/10. O risco do outro lado
+    // é este: ela despedir-se e continuar a falar, ou perguntar "está aí?"
+    // três vezes a uma linha onde já ninguém está, com a clínica a pagar os
+    // segundos. A despedida tem de ser a última coisa que diz.
+    {
+      id: 'cala_se_depois_da_despedida',
+      name: 'cala-se depois da despedida',
+      threshold: 1,
+      conversation_goal_prompt:
+        'Depois de se despedir, a assistente só voltou a falar se a pessoa tiver dito alguma coisa entretanto. Falha se falou para o vazio: uma segunda despedida, ou um "está aí?" sem ninguém ter dito nada. E falha se perguntou "está aí?" ou "consegue ouvir-me?" três vezes ou mais em toda a chamada, que duas é o limite. ATENCAO: responder a quem continuou a falar depois da despedida é o correto e passa.',
     },
     {
       id: 'nao_comeca_sempre_igual',

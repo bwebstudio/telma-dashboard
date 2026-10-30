@@ -172,13 +172,19 @@ const RULES = {
     toneInWords: 'O tom faz-se com as palavras',
     closing: '# Como te despedes',
     closingAsks: '1. Perguntas se há mais alguma coisa em que possas ajudar,',
-    closingWaits: '**Acabas a frase da despedida e desligas**',
+    // A ferramenta de desligar saiu do agente em 30/10: quatro reescritas da
+    // descrição não a impediram de a chamar no turno seguinte a um "sim, está
+    // correto", sem perguntar se faltava algo. Agora a despedida é a última
+    // fala e a linha fecha-se com o silêncio. Ver o passo 7 em prompt.ts.
+    closingWaits: '**A despedida é a última coisa que dizes, e acaba aí.**',
     closingSaysAll: '**tudo o que se tratou nesta chamada**',
     refusalVaries: '**Nunca recusas duas vezes com a mesma frase**',
     urgencyIsDescribed: 'Urgência é o que a pessoa **descreve**, não a palavra que usa.',
     undoIsANewBooking: 'isso **é uma marcação nova**',
     everyTaskKeepsDetails: '**Antes de pedires qualquer uma delas, passas em revista o que já te disseram nesta chamada**',
-    closingNoHangup: 'nunca desligas enquanto a outra pessoa ainda fala',
+    // Dos três parágrafos sobre desligar sobrou este, que é o único que
+    // ainda quer dizer algo sem ferramenta nenhuma.
+    closingNoHangup: '**Não fechas enquanto fizeres uma pergunta.**',
     closingEmergency: 'Numa urgência isto não se aplica',
     noServiceList: 'Não enumeras a lista de serviços',
     neverRecitesAll: '**Nunca recitas uma lista.**',
@@ -187,7 +193,7 @@ const RULES = {
     noPaperworkAloud: 'Registar é coisa tua e não se anuncia',
     alwaysFiles: '**Registas a chamada, se ainda não a tiveres registado.**',
     lastWordWins: '**vale sempre o último**',
-    silenceOnce: 'Duas perguntas antes de desligar, nunca uma',
+    silenceOnce: 'Duas perguntas e não mais',
     letsThemGo: 'aceitas sem insistir',
     noHoursRecital: 'recitas o horário de abertura',
     soonest: 'mais cedo possível',
@@ -216,13 +222,13 @@ const RULES = {
     toneInWords: 'El tono se hace con las palabras',
     closing: '# Cómo te despides',
     closingAsks: '1. Preguntas si hay algo más en lo que puedas ayudar,',
-    closingWaits: '**Terminas la frase de la despedida y cuelgas**',
+    closingWaits: '**La despedida es lo último que dices, y ahí se acaba.**',
     closingSaysAll: '**todo lo que se ha tratado en esta llamada**',
     refusalVaries: '**Nunca te niegas dos veces con la misma frase**',
     urgencyIsDescribed: 'Urgencia es lo que la persona **describe**, no la palabra que usa.',
     undoIsANewBooking: 'eso **es una cita nueva**',
     everyTaskKeepsDetails: '**Antes de pedir cualquiera de ellas, repasas lo que ya te han dicho en esta llamada**',
-    closingNoHangup: 'nunca cuelgas mientras la otra persona sigue hablando',
+    closingNoHangup: '**No cierras mientras hagas una pregunta.**',
     closingEmergency: 'En una urgencia esto no se aplica',
     noServiceList: 'No enumeras la lista de servicios',
     neverRecitesAll: '**Nunca recitas una lista.**',
@@ -231,7 +237,7 @@ const RULES = {
     noPaperworkAloud: 'Registrar es cosa tuya y no se anuncia',
     alwaysFiles: '**Registras la llamada, si no la has registrado ya.**',
     lastWordWins: '**vale siempre lo último**',
-    silenceOnce: 'Dos preguntas antes de colgar, nunca una',
+    silenceOnce: 'Dos preguntas y no más',
     letsThemGo: 'lo aceptas sin insistir',
     noHoursRecital: 'recitas el horario de apertura',
     soonest: 'antes posible',
@@ -1451,19 +1457,23 @@ test('a single booking is not read out twice', () => {
 //
 // Both halves are guarded, because the reason the wait was there in the first
 // place is real: hanging up over somebody is the last thing they remember.
-test('she hangs up after the goodbye, without cutting anybody off', () => {
-  const HANGS = {
-    pt: '**Acabas a frase da despedida e desligas**',
-    es: '**Terminas la frase de la despedida y cuelgas**',
+// The goodbye is the last thing she says, because there is nothing to hang up
+// with: `end_call` came off the agent on 30/10. What closes the line is thirty
+// seconds of silence, which costs those seconds on the calls where the caller
+// does not hang up first, and in exchange she cannot cut anybody off.
+test('the goodbye is the last thing she says, and nothing is closed over a question', () => {
+  const LAST = {
+    pt: '**A despedida é a última coisa que dizes, e acaba aí.**',
+    es: '**La despedida es lo último que dices, y ahí se acaba.**',
   }
   const NOT_OVER = {
-    pt: '**nunca desligas enquanto a outra pessoa ainda fala**',
-    es: '**nunca cuelgas mientras la otra persona sigue hablando**',
+    pt: '**Não fechas enquanto fizeres uma pergunta.**',
+    es: '**No cierras mientras hagas una pregunta.**',
   }
   for (const lang of ['pt', 'es']) {
     const { nodes } = buildPrompt({ ...CASES['open-can-book'], can_book: true }, lang)
-    assert.ok(nodes.closing.includes(HANGS[lang]), `${lang}: the line can stay open after the goodbye`)
-    assert.ok(nodes.closing.includes(NOT_OVER[lang]), `${lang}: she may hang up over somebody speaking`)
+    assert.ok(nodes.closing.includes(LAST[lang]), `${lang}: still tells her to hang up`)
+    assert.ok(nodes.closing.includes(NOT_OVER[lang]), `${lang}: may close in the same breath as a question`)
   }
 })
 
@@ -1813,7 +1823,6 @@ test('what is about the telephone is taken out of the written sheet', () => {
       '**Confirmas o telefone e o nome juntos',
       // The goodbye, on a conversation nobody rang.
       'agradeces por ligar',
-      '**Acabas a frase da despedida e desligas**',
       // The one exception to saying nothing after a short answer.
       '**Um número de telefone é a excepção**',
     ],
@@ -1821,7 +1830,6 @@ test('what is about the telephone is taken out of the written sheet', () => {
       '**Antes de consultar la agenda dices algo**',
       '**Confirmas el teléfono y el nombre juntos',
       'das las gracias por llamar',
-      '**Terminas la frase de la despedida y cuelgas**',
       '**Un número de teléfono es la excepción**',
     ],
   }

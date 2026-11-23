@@ -5,13 +5,13 @@ import { getDict } from '@/lib/i18n'
 import { PageHeader, SectionTitle, Badge, APPOINTMENT_TONE } from '@/components/ui'
 import { CallItem } from '@/components/CallItem'
 import { openClinicPanel } from '@/lib/actions/view-clinic'
-import { formatDate, formatTime, currentMonthKey } from '@/lib/format'
+import { formatDate, formatTime } from '@/lib/format'
+import { billingPeriod, minutesUsedIn } from '@/lib/usage-period'
 import type {
   Clinic,
   AvailabilitySlot,
   Call,
   Appointment,
-  Usage,
   ClinicStatus,
 } from '@/lib/types'
 
@@ -35,17 +35,19 @@ export default async function FichaPage({ params }: { params: Promise<{ id: stri
   const clinic = clinicData as Clinic | null
   if (!clinic) notFound()
 
-  const [slotsRes, callsRes, apptsRes, usageRes] = await Promise.all([
+  // O mesmo número que a clínica vê no seu painel: o mês da subscrição, e os
+  // segundos corrigidos pela plataforma. Ver lib/usage-period.
+  const period = billingPeriod(clinic)
+  const [slotsRes, callsRes, apptsRes, used] = await Promise.all([
     supabase.from('availability_slots').select('*').eq('clinic_id', id),
     supabase.from('calls').select('*').eq('clinic_id', id).order('created_at', { ascending: false }).limit(10),
     supabase.from('appointments').select('*').eq('clinic_id', id).order('created_at', { ascending: false }).limit(10),
-    supabase.from('usage').select('*').eq('clinic_id', id).eq('month', currentMonthKey()).maybeSingle(),
+    minutesUsedIn(supabase, id, period),
   ])
 
   const slots = (slotsRes.data ?? []) as AvailabilitySlot[]
   const calls = (callsRes.data ?? []) as Call[]
   const appts = (apptsRes.data ?? []) as Appointment[]
-  const usage = usageRes.data as Usage | null
 
   const byWeekday = new Map<number, string[]>()
   for (const s of slots) {
@@ -85,7 +87,7 @@ export default async function FichaPage({ params }: { params: Promise<{ id: stri
             <Row label={dict.conta.plan} value={dict.plans[clinic.plan]} />
             <Row
               label={t.colUsage}
-              value={`${Math.round(Number(usage?.minutes ?? 0))} / ${clinic.minute_limit}`}
+              value={`${Math.round(used.minutes)} / ${clinic.minute_limit}`}
             />
             <Row label={dict.common.phone} value={clinic.phone} />
             <Row label="Email" value={clinic.contact_email} />

@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, Stat, SectionTitle } from '@/components/ui'
-import { formatEuro, currentMonthKey } from '@/lib/format'
+import { formatEuro } from '@/lib/format'
+import { minutesUsedByClinic } from '@/lib/usage-period'
 import { VOICE_COST_PER_MINUTE } from '@/lib/plans'
 import type { Clinic, Usage } from '@/lib/types'
 
@@ -12,17 +13,16 @@ export default async function ConsumoPage() {
   const t = dict.interno
   const supabase = await createClient()
 
-  const [clinicsRes, usageRes] = await Promise.all([
-    supabase.from('clinics').select('*'),
-    supabase.from('usage').select('*').eq('month', currentMonthKey()),
-  ])
+  const clinicsRes = await supabase.from('clinics').select('*')
 
   const clinics = (clinicsRes.data ?? []) as Clinic[]
-  const usage = (usageRes.data ?? []) as Usage[]
-  const usageByClinic = new Map(usage.map((u) => [u.clinic_id, u]))
+  // O mês de cada clínica é o da sua subscrição, e os minutos vêm das chamadas:
+  // a tabela `usage` conta o mês do calendário e fica curta. Ver lib/usage-period.
+  const usageByClinic = await minutesUsedByClinic(supabase, clinics)
+  const usage = [...usageByClinic.values()]
 
-  const totalCalls = usage.reduce((s, u) => s + u.calls_count, 0)
-  const totalMinutes = usage.reduce((s, u) => s + Number(u.minutes), 0)
+  const totalCalls = usage.reduce((s, u) => s + u.calls, 0)
+  const totalMinutes = usage.reduce((s, u) => s + u.minutes, 0)
   const estCost = totalMinutes * VOICE_COST_PER_MINUTE
   const contracted = clinics.reduce((s, c) => s + c.minute_limit, 0)
 
@@ -55,7 +55,7 @@ export default async function ConsumoPage() {
           <li key={clinic.id} className="card p-4">
             <p className="text-lg font-semibold text-ink">{clinic.name}</p>
             <dl className="mt-2 grid grid-cols-3 gap-3">
-              <Cell label={t.totalCalls} value={String(u?.calls_count ?? 0)} />
+              <Cell label={t.totalCalls} value={String(u?.calls ?? 0)} />
               <Cell
                 label={t.totalMinutes}
                 value={`${Math.round(Number(u?.minutes ?? 0))} / ${clinic.minute_limit}`}
@@ -83,7 +83,7 @@ export default async function ConsumoPage() {
             {rows.map(({ clinic, u }) => (
               <tr key={clinic.id} className="border-b border-line last:border-0">
                 <td className="px-4 py-3 font-medium text-ink">{clinic.name}</td>
-                <td className="px-4 py-3 text-ink-soft">{u?.calls_count ?? 0}</td>
+                <td className="px-4 py-3 text-ink-soft">{u?.calls ?? 0}</td>
                 <td className="px-4 py-3 text-ink-soft">
                   {Math.round(Number(u?.minutes ?? 0))} / {clinic.minute_limit}
                 </td>

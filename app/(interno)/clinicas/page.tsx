@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { getDict } from '@/lib/i18n'
 import { PageHeader, Badge } from '@/components/ui'
 import { IconPlus, IconSearch, IconChevron } from '@/components/icons'
-import { currentMonthKey, formatDate } from '@/lib/format'
-import type { Clinic, Usage, ActivityEvent, ClinicStatus } from '@/lib/types'
+import { formatDate } from '@/lib/format'
+import { minutesUsedByClinic } from '@/lib/usage-period'
+import type { Clinic, ActivityEvent, ClinicStatus } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,14 +30,15 @@ export default async function ClinicasPage({
   let clinicsQuery = supabase.from('clinics').select('*').order('name')
   if (q) clinicsQuery = clinicsQuery.ilike('name', `%${q}%`)
 
-  const [clinicsRes, usageRes, actRes] = await Promise.all([
+  const [clinicsRes, actRes] = await Promise.all([
     clinicsQuery,
-    supabase.from('usage').select('*').eq('month', currentMonthKey()),
     supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(500),
   ])
 
   const clinics = (clinicsRes.data ?? []) as Clinic[]
-  const usageByClinic = new Map((usageRes.data as Usage[] | null)?.map((u) => [u.clinic_id, u]) ?? [])
+  // Cada clínica tem o seu mês, o da subscrição, e os minutos vêm das
+  // chamadas, que é onde a plataforma corrige a duração. Ver lib/usage-period.
+  const usageByClinic = await minutesUsedByClinic(supabase, clinics)
   const lastActivity = new Map<string, string>()
   for (const a of (actRes.data as ActivityEvent[] | null) ?? []) {
     if (a.clinic_id && !lastActivity.has(a.clinic_id)) lastActivity.set(a.clinic_id, a.created_at)

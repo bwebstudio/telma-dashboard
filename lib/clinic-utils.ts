@@ -5,7 +5,7 @@ import { PLAN_MINUTES, PLAN_PRICE, EXTRA_MINUTE_PRICE } from '@/lib/plans'
 // `date_trunc('month', now())` since 0009 and now() on Supabase is UTC, so
 // reading the clinic's own month here would miss the meter's row for a few
 // hours around every month boundary.
-import { currentMonthKey } from '@/lib/format'
+import { billingPeriod, minutesUsedIn } from '@/lib/usage-period'
 import {
   COUPONS,
   addonStateFor,
@@ -156,18 +156,19 @@ export async function getClinicWithPlan(
   if (!row) return null
   const base = row as Clinic
 
-  const [planRow, { data: usageRow }] = await Promise.all([
+  // ── O MÊS QUE A CLÍNICA PAGA, E NÃO O DO CALENDÁRIO ───────────────────
+  // A tabela `usage` está indexada pelo mês do calendário e escreve a duração
+  // que a Telma julgava ter ao registar a chamada. As duas coisas estavam
+  // erradas para quem paga do dia 27 ao dia 27 e vê a percentagem no painel.
+  // Ver lib/usage-period.
+  const period = billingPeriod(base)
+  const [planRow, used] = await Promise.all([
     getPlanRow(base.plan),
-    admin
-      .from('usage')
-      .select('minutes')
-      .eq('clinic_id', clinicId)
-      .eq('month', currentMonthKey())
-      .maybeSingle(),
+    minutesUsedIn(admin, clinicId, period),
   ])
 
   const plan = planRow ?? fallbackPlan(base.plan)
-  const metered = Number((usageRow as { minutes?: number } | null)?.minutes ?? 0) || 0
+  const metered = used.minutes
 
   const clinic: Clinic = {
     ...base,

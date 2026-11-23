@@ -25,6 +25,35 @@ interface StripeEvent {
   data: { object: Record<string, unknown> }
 }
 
+/**
+ * Os metadados da subscrição, onde quer que a Stripe os ponha hoje.
+ *
+ * ── ONDE ELES PASSARAM A ESTAR ────────────────────────────────────────────
+ * Encontrado em 23/11, a perguntar porque é que a primeira clínica a pagar
+ * não tinha recibo nenhum no painel um mês depois de pagar. A fatura existe e
+ * está certa, 103,50 EUR em 27/10, e o evento chegou aqui: o que não chegou
+ * foi o `clinic_id`. Nas versões novas da API a fatura já não traz
+ * `subscription_details` na raiz, traz `parent.subscription_details`, e é lá
+ * que ele vai. Sem clínica, este webhook responde "ignored" e não escreve
+ * nada: nem a compra, nem a data de renovação, nem o registo de atividade.
+ *
+ * A metade pior não é o recibo em falta. `invoice.payment_failed` perde-se
+ * pelo mesmo caminho, e uma clínica cujo cartão falhasse nunca seria pausada:
+ * continuava a atender o telefone sem ninguém saber que tinha deixado de
+ * pagar.
+ *
+ * Lê-se nas duas formas. A antiga ainda chega de contas cuja versão da API
+ * está presa a uma anterior, e nenhuma das duas custa nada a tentar.
+ */
+function subscriptionMetadata(object: Record<string, unknown>): Record<string, string> {
+  const fromParent = (
+    object.parent as { subscription_details?: { metadata?: Record<string, string> } } | undefined
+  )?.subscription_details?.metadata
+  const fromRoot = (object.subscription_details as { metadata?: Record<string, string> } | undefined)
+    ?.metadata
+  return fromParent ?? fromRoot ?? {}
+}
+
 export async function POST(request: Request) {
   // Read the body as text, once. Re-serialising parsed JSON produces different
   // bytes from what Stripe signed, and the signature would never match again.
@@ -44,11 +73,8 @@ export async function POST(request: Request) {
 
   const object = event.data?.object ?? {}
   const metadata = (object.metadata ?? {}) as Record<string, string>
-  const clinicId =
-    metadata.clinic_id ||
-    ((object.subscription_details as { metadata?: Record<string, string> } | undefined)?.metadata
-      ?.clinic_id ??
-      '')
+  const subscriptionMeta = subscriptionMetadata(object)
+  const clinicId = metadata.clinic_id || subscriptionMeta.clinic_id || ''
 
   // An event about something that is not one of our clinics. Answering 200 is
   // deliberate: a 4xx makes Stripe retry an event that will never apply, and
@@ -125,9 +151,7 @@ export async function POST(request: Request) {
         // and the fallback stays because a clinic signed up before today has
         // a subscription with no plan on it and its renewal still has to
         // produce a receipt. See the note in lib/onboarding/stripe-client.
-        const subMeta = ((object.subscription_details as { metadata?: Record<string, string> } | undefined)
-          ?.metadata ?? {}) as Record<string, string>
-        const plan = (metadata.plan || subMeta.plan || 'essencial') as PlanType
+        const plan = (metadata.plan || subscriptionMeta.plan || 'essencial') as PlanType
         const paid = typeof object.amount_paid === 'number' ? object.amount_paid / 100 : 0
 
         // Nothing was charged: the first invoice of a subscription that
@@ -156,13 +180,21 @@ export async function POST(request: Request) {
           )
           .select('id')
 
-        // Stripe's own period end, rather than a month counted from today.
-        // With a week in front of it, counting from today is a week wrong,
-        // and the panel shows this date to the clinic.
+        // ── A DATA QUE A CLÍNICA LÊ É A DA LINHA, NÃO A DA FATURA ──────
+        // A fatura tem um período seu e a linha tem o dela, e na primeira
+        // fatura a seguir a uma semana de implementação são coisas
+        // diferentes: a fatura de 27/10 da primeira clínica diz 20/10 a
+        // 27/10, que é a semana, e a linha diz 27/10 a 27/11, que é o mês
+        // pago. "Renova a" é o fim do mês pago, por isso é a linha que manda.
+        // Nas renovações normais as duas coincidem e isto continua certo.
+        const lineEnd = ((object.lines as { data?: Array<{ period?: { end?: number } }> } | undefined)
+          ?.data ?? [])
+          .map((l) => l.period?.end)
+          .filter((t): t is number => typeof t === 'number')
+          .pop()
+        const end = lineEnd ?? (object as { period_end?: unknown }).period_end
         const periodEnd =
-          typeof (object as { period_end?: unknown }).period_end === 'number'
-            ? new Date((object.period_end as number) * 1000).toISOString().slice(0, 10)
-            : null
+          typeof end === 'number' ? new Date(end * 1000).toISOString().slice(0, 10) : null
         if (periodEnd) {
           await admin.from('clinics').update({ plan_renews_at: periodEnd }).eq('id', clinicId)
         }

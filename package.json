@@ -15,6 +15,7 @@
     "test:agenda": "node --experimental-strip-types --test scripts/test-agenda.mjs",
     "test:duration": "node --experimental-strip-types --test scripts/test-duration.mjs",
     "test:content": "node --experimental-strip-types --test scripts/test-content.mjs",
+    "relatorio": "node --experimental-strip-types scripts/relatorio-clinica.mjs",
     "simulate": "node --experimental-strip-types scripts/simulate-call.mjs",
     "evaluation": "node scripts/elevenlabs-evaluation.mjs",
     "validate:criteria": "node --experimental-strip-types scripts/validate-criteria.mjs",

@@ -135,14 +135,30 @@ export async function POST(request: Request) {
     cancelamento: 'pedido_cancelamento',
     informacao: 'informacao',
   }
+  // ── E O VERMELHO É PARA QUEM FALOU E FICOU POR RESOLVER ─────────────────
+  // Medido no painel da primeira clínica em 23/11: seis das últimas oito
+  // chamadas estavam a vermelho, e pelo menos duas não eram falha nenhuma.
+  // Uma delas era alguém a dizer "volto a ligar mais tarde, bom dia". Seis
+  // vermelhos em oito ensinam a receção a não olhar para a cor, que é o
+  // contrário do que a cor serve.
+  //
+  // A regra antiga também estava ao contrário: dava `informacao` cinzento à
+  // chamada que deixou trabalho por fazer, e vermelho à que não deixou nada.
+  // Agora:
+  //   ninguém falou          -> nao_atendida, âmbar, e o painel já a trata
+  //                             como o que é: um número para ligar de volta,
+  //                             sem conversa para abrir
+  //   falou e ficou pendente -> nao_resolvida, vermelho, porque a clínica tem
+  //                             de fazer alguma coisa e os dados não ficaram
+  //   falou e não ficou nada -> informacao, cinzento
+  const nobodySpoke = !rescuedSubject && !rescuedName && !rescuedPhone && !rescuedBooking
   const rescuedResult =
     (requestType && BY_TYPE[requestType]) ??
-    // `nao_resolvida` é o vermelho do painel e está certo para uma chamada que
-    // acabou sem nada: sem recado, sem pedido, sem pergunta respondida. Quando
-    // a análise diz que ficou trabalho para a clínica, o que esta chamada é é
-    // um pedido que não chegou a ser registado, e `informacao` é a cor honesta:
-    // há aqui uma coisa para ler, e não um erro para investigar.
-    (collected.ficou_por_fazer?.value === true ? 'informacao' : 'nao_resolvida')
+    (nobodySpoke
+      ? 'nao_atendida'
+      : collected.ficou_por_fazer?.value === true
+        ? 'nao_resolvida'
+        : 'informacao')
 
   // ── E NÃO NA LÍNGUA DA PLATAFORMA ───────────────────────────────────────
   // `transcript_summary` é escrito pela ElevenLabs, e por omissão escreve em
